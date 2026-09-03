@@ -8,17 +8,16 @@ enterprise auth, no generic "streaming platform" chrome.
 
 ## Status
 
-**Phase 2 complete: authentication.** Small, private multi-user auth is
-live — a `User` model, Argon2 password hashing, server-side sessions
-(Redis-backed, HttpOnly cookies), a "Who's watching?" profile picker,
-login/logout, and basic protected-route behavior.
+**Phase 3 complete: TMDB integration.** Trending, search, movie
+details, TV details, and season/episode listings are live, backed by
+Redis caching and normalized into CandyFlix's own schemas.
 
-No signup, OAuth, email verification, password reset, or 2FA — by
-design. Users are provisioned via `app/cli.py` (see below).
+No frontend UI for browsing yet — that's Phase 4. This phase is
+backend-only, verified via a mocked-TMDB test suite (see `backend/tests/`)
+plus live smoke-testing once you add your own TMDB key.
 
-No product features (TMDB browsing, watchlist, playback) are
-implemented yet — see `PHASE2_SUMMARY.md` (or the conversation history)
-for exactly what exists so far.
+Phase 2 (auth) remains as before — a `User` model, Argon2 hashing,
+sessions, "Who's watching?" picker, login/logout.
 
 ## Stack
 
@@ -98,11 +97,41 @@ docker compose exec backend python -m app.cli list-users
 Running without Docker: same commands, just `python -m app.cli ...`
 from inside `backend/` with your virtualenv active.
 
+## TMDB Setup
+
+CandyFlix uses TMDB for all movie/TV metadata. Get a free key:
+
+1. https://www.themoviedb.org/settings/api → request an API key ("Developer" use)
+2. Copy the **API Key (v3 auth)**
+3. Add it to `backend/.env`: `TMDB_API_KEY=your_key_here`
+
+Without a key, trending/search/detail endpoints return a clear
+`500 TMDB_API_KEY is not configured` rather than failing silently.
+
+### Media endpoints (Phase 3)
+
+```
+GET /api/trending                              # today, movies+tv mixed
+GET /api/search?q=...                          # movies+tv
+GET /api/movies/{tmdb_id}                      # movie details
+GET /api/tv/{tmdb_id}                          # tv show details + season list
+GET /api/tv/{tmdb_id}/season/{season_number}   # episode list for a season
+```
+
+Responses are cached in Redis (15 min for trending/search, 6 hours
+for details) to stay within TMDB's rate limits.
+
 ## Testing
 
-Frontend tests mount the real components (not mocks) in a simulated
-DOM and drive them with real clicks/typing; network calls go to a
-real running backend, so start the backend first:
+**Backend** (TMDB is mocked — no API key or network needed to run these):
+```
+cd backend
+python -m pytest tests/ -v
+```
+
+**Frontend** — mounts the real components and drives them with real
+clicks/typing; network calls go to a real running backend, so start
+the backend first:
 
 ```
 cd backend && ./entrypoint.sh &     # or: alembic upgrade head && uvicorn app.main:app --reload
@@ -114,7 +143,7 @@ npm run test
 
 1. ✅ Project setup
 2. ✅ Auth (User model, Argon2 hashing, sessions, "Who's watching?" UI)
-3. TMDB integration (trending, search, details, seasons/episodes)
+3. ✅ TMDB integration (trending, search, details, seasons/episodes)
 4. Candy UI (Candy at Night visual system, layout, navigation)
 5. Playback providers (`PlaybackSource` abstraction, mock providers)
 6. Candy Box (per-user watchlist)

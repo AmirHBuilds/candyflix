@@ -3,13 +3,14 @@ CandyFlix backend — FastAPI application entrypoint.
 
 Phase 1: application skeleton, health checks, DB/Redis connectivity.
 Phase 2: authentication (User model, sessions, login/logout).
-Remaining feature routers (TMDB, playback, watchlist, progress) are
-added in later phases per the approved implementation plan.
+Phase 3: TMDB integration (trending, search, movie/TV/season details).
+Remaining feature routers (playback, watchlist, progress) are added in
+later phases per the approved implementation plan.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, health
+from app.api.routes import auth, health, movies, search, trending, tv
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -30,6 +31,10 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(trending.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
+app.include_router(movies.router, prefix="/api")
+app.include_router(tv.router, prefix="/api")
 
 
 @app.get("/api")
