@@ -46,6 +46,8 @@ candyflix/
    ```
    docker compose up --build
    ```
+   (The backend container applies database migrations automatically
+   on startup — no manual `alembic upgrade head` step needed here.)
 3. Visit:
    - Frontend: http://localhost:3000
    - Backend: http://localhost:8000/api
@@ -58,6 +60,7 @@ candyflix/
 cd backend
 pip install -r requirements.txt --break-system-packages   # or use a venv
 cp .env.example .env    # edit DATABASE_URL/REDIS_URL if needed
+alembic upgrade head    # applies migrations — required before first run
 uvicorn app.main:app --reload
 ```
 
@@ -94,6 +97,18 @@ docker compose exec backend python -m app.cli list-users
 
 Running without Docker: same commands, just `python -m app.cli ...`
 from inside `backend/` with your virtualenv active.
+
+## Testing
+
+Frontend tests mount the real components (not mocks) in a simulated
+DOM and drive them with real clicks/typing; network calls go to a
+real running backend, so start the backend first:
+
+```
+cd backend && ./entrypoint.sh &     # or: alembic upgrade head && uvicorn app.main:app --reload
+cd frontend
+npm run test
+```
 
 ## Implementation Plan
 
