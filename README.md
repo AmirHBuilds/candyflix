@@ -8,16 +8,17 @@ enterprise auth, no generic "streaming platform" chrome.
 
 ## Status
 
-**Phase 3 complete: TMDB integration.** Trending, search, movie
-details, TV details, and season/episode listings are live, backed by
-Redis caching and normalized into CandyFlix's own schemas.
+**Phase 4 complete: Candy UI.** The actual browsing experience is
+live — Home (hero + Trending Today), Movies, Series, Search, and
+movie/TV detail pages with season/episode browsing, all in the
+"Candy at Night" visual language (Fraunces + Inter, dark cinematic
+background, raspberry/lilac/mint accents).
 
-No frontend UI for browsing yet — that's Phase 4. This phase is
-backend-only, verified via a mocked-TMDB test suite (see `backend/tests/`)
-plus live smoke-testing once you add your own TMDB key.
+Watch and Add to Candy Box buttons appear on detail pages but are
+intentionally disabled — playback (Phase 5) and the watchlist
+(Phase 6) aren't wired up yet.
 
-Phase 2 (auth) remains as before — a `User` model, Argon2 hashing,
-sessions, "Who's watching?" picker, login/logout.
+Phases 2–3 (auth, TMDB) remain as before.
 
 ## Stack
 
@@ -144,7 +145,7 @@ npm run test
 1. ✅ Project setup
 2. ✅ Auth (User model, Argon2 hashing, sessions, "Who's watching?" UI)
 3. ✅ TMDB integration (trending, search, details, seasons/episodes)
-4. Candy UI (Candy at Night visual system, layout, navigation)
+4. ✅ Candy UI (Candy at Night visual system, layout, navigation)
 5. Playback providers (`PlaybackSource` abstraction, mock providers)
 6. Candy Box (per-user watchlist)
 7. Continue Watching (per-user progress)

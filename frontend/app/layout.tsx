@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { fraunces, inter } from "./fonts";
 
 export const metadata: Metadata = {
   title: "CandyFlix",
@@ -12,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="bg-[#0B0B12] text-white antialiased min-h-screen">
         {children}
       </body>
