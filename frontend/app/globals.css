@@ -18,6 +18,19 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
+/* Native <select> dropdown fix: some browsers only honor color-scheme
+   when set directly on the form control (not inherited from :root), so
+   we set it here too. We also set explicit colors on <option> as a
+   fallback that doesn't depend on color-scheme support at all — this is
+   what actually fixes the white-background/white-text popup list. */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #15151f;
+  color: #ffffff;
+}
 /* Hide scrollbar on the horizontal trending row while keeping it scrollable */
 .overflow-x-auto {
   scrollbar-width: thin;
