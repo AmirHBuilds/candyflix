@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: candyflix-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: candyflix
+      POSTGRES_PASSWORD: candyflix
+      POSTGRES_DB: candyflix
+    ports:
+      - "5432:5432"
+    volumes:
+      - candyflix_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U candyflix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: candyflix-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: candyflix-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://candyflix:candyflix@db:5432/candyflix
+      REDIS_URL: redis://redis:6379/0
+      FRONTEND_ORIGIN: http://localhost:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: candyflix-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      # Used by code running in the browser — must be reachable from
+      # the host machine, hence localhost + the mapped port.
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+      # Used by code running server-side inside this container (e.g.
+      # Server Component fetches during SSR) — must use the Docker
+      # Compose service name, since "localhost" here means this
+      # container, not the backend one.
+      API_URL_INTERNAL: http://backend:8000/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+
+volumes:
+  candyflix_pgdata:

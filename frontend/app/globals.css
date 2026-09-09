@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --color-candy-bg: #0b0b12;
+  --color-candy-raspberry: #ff5fa2;
+  --color-candy-lilac: #c9a6ff;
+  --color-candy-mint: #8fe3c7;
+  /* Tells the browser to render native form controls (select dropdowns,
+     checkboxes, etc.) with a dark-appropriate palette. Without this, an
+     open <select>'s options list uses the browser's default light
+     background, and combined with our text-white on the select itself,
+     the option text becomes invisible white-on-white. */
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-candy-bg);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Hide scrollbar on the horizontal trending row while keeping it scrollable */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
