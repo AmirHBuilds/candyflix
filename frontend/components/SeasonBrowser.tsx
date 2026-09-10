@@ -54,24 +54,34 @@ export default function SeasonBrowser({
           {episodes.map((episode) => {
             const still = stillUrl(episode.still_path);
             return (
-              <li key={episode.episode_number} className="flex gap-4 py-4">
-                <div className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-lg bg-white/5">
-                  {still && (
-                    <Image
-                      src={still}
-                      alt={episode.name}
-                      fill
-                      sizes="120px"
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-white/90">
-                    {episode.episode_number}. {episode.name}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-sm text-white/50">{episode.overview}</p>
-                </div>
+              <li key={episode.episode_number}>
+                <a
+                  href={`/watch/tv/${tvId}/${selected}/${episode.episode_number}`}
+                  className="group flex gap-4 py-4"
+                >
+                  <div className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-lg bg-white/5">
+                    {still && (
+                      <Image
+                        src={still}
+                        alt={episode.name}
+                        fill
+                        sizes="120px"
+                        className="object-cover"
+                      />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white/90 group-hover:text-white">
+                      {episode.episode_number}. {episode.name}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-sm text-white/50">{episode.overview}</p>
+                  </div>
+                </a>
               </li>
             );
           })}

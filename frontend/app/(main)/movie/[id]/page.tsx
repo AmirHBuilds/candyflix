@@ -70,7 +70,7 @@ export default async function MovieDetailPage({
 
           <p className="max-w-2xl text-white/70">{shortenOverview(movie.overview)}</p>
 
-          <DetailActions />
+          <DetailActions watchHref={`/watch/movie/${movie.tmdb_id}`} />
         </div>
       </div>
 

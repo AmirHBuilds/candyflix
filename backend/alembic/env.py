@@ -15,6 +15,7 @@ from app.core.db import Base
 
 # Import models here so Alembic's autogenerate can see them.
 from app.models import user  # noqa
+from app.models import watch_progress  # noqa
 
 config = context.config
 

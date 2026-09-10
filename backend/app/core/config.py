@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     # CORS
     frontend_origin: str = "http://localhost:3000"
 
+    # Phase 5 — mock playback (folders you drop test files into; gitignored)
+    mock_videos_dir: str = "mock-videos"
+    mock_subtitles_dir: str = "mock-subtitles"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 

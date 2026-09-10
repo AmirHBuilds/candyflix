@@ -36,6 +36,19 @@ export function getApiBaseUrl(): string {
     : process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 }
 
+/**
+ * The mock video/subtitle folders are mounted at the backend's root
+ * (e.g. /mock-videos/movie.mp4), not under /api — this strips the
+ * /api suffix off the browser-facing base URL to get the plain
+ * origin. Only ever needed client-side (a <video> element's src and
+ * subtitle fetches both run in the browser), so this doesn't need the
+ * server/browser branching that getApiBaseUrl() does.
+ */
+export function getStaticOrigin(): string {
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+  return base.replace(/\/api\/?$/, "");
+}
+
 export async function getBackendHealth() {
   const res = await fetch(`${getApiBaseUrl()}/health/full`, { cache: "no-store" });
   if (!res.ok) {
