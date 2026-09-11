@@ -71,8 +71,15 @@ export default function VideoPlayer({
 
   const [upNextDismissed, setUpNextDismissed] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [skipPulse, setSkipPulse] = useState<{ side: "left" | "right"; nonce: number } | null>(null);
 
-  useWatchProgress(videoRef, identity);
+  // Becomes true once we've either applied the saved resume position or
+  // decided there's nothing to resume. useWatchProgress doesn't attach any
+  // save-triggering listeners until this flips — see its file header for why.
+  const [progressRestored, setProgressRestored] = useState(false);
+  const resumeAttemptedRef = useRef(false);
+
+  useWatchProgress(videoRef, identity, progressRestored);
 
   const videoUrl = `${getStaticOrigin()}${source.url}`;
 
@@ -111,14 +118,53 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    function onLoadedMetadata() {
-      if (!video) return;
-      setDuration(video.duration);
+    // Applies the saved resume position exactly once. Gated on a real,
+    // finite duration: some browsers briefly report duration as
+    // Infinity/NaN on the very first `loadedmetadata` for a range-seekable
+    // file that hasn't buffered enough yet, so relying on that single event
+    // could silently skip the resume seek. We retry on `durationchange` and
+    // `canplay`, and fall back to marking restoration "done" (with no seek)
+    // after a short timeout so autosave never stays disabled indefinitely.
+    //
+    // This function only ever DECIDES where to seek and flips
+    // `progressRestored` — it never itself sends anything to the backend.
+    // useWatchProgress is the thing that saves, and it refuses to attach
+    // any save-triggering listeners until `progressRestored` is true. That
+    // split is what actually fixes the "resume gets overwritten with 0"
+    // bug: previously, save listeners were live from the very first render,
+    // so any early pause/seeked event firing before this seek had actually
+    // taken effect — a legitimate spurious event during load, not a mistake
+    // in the seek logic itself — would read currentTime as 0 and post that,
+    // clobbering the real saved position. Now there is simply no listener
+    // registered yet for that to happen through.
+    function attemptResume() {
+      if (resumeAttemptedRef.current || !video) return;
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return;
       const resume = source.resume_position_seconds;
       if (resume && resume > 3 && resume < video.duration - 5) {
         video.currentTime = resume;
       }
+      resumeAttemptedRef.current = true;
+      setProgressRestored(true);
+    }
+
+    const resumeFallbackTimer = setTimeout(() => {
+      if (!resumeAttemptedRef.current) {
+        resumeAttemptedRef.current = true;
+        setProgressRestored(true);
+      }
+    }, 8000);
+
+    function onLoadedMetadata() {
+      if (!video) return;
+      setDuration(video.duration);
+      attemptResume();
       setBuffering(false);
+    }
+    function onDurationChange() {
+      if (!video) return;
+      setDuration(video.duration);
+      attemptResume();
     }
     function onTimeUpdate() {
       if (video) setCurrentTime(video.currentTime);
@@ -135,6 +181,7 @@ export default function VideoPlayer({
     }
     function onCanPlay() {
       setBuffering(false);
+      attemptResume();
     }
     function onVolumeChange() {
       if (!video) return;
@@ -160,6 +207,7 @@ export default function VideoPlayer({
     }
 
     video.addEventListener("loadedmetadata", onLoadedMetadata);
+    video.addEventListener("durationchange", onDurationChange);
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
@@ -175,7 +223,9 @@ export default function VideoPlayer({
     setPipSupported(typeof document !== "undefined" && "pictureInPictureEnabled" in document);
 
     return () => {
+      clearTimeout(resumeFallbackTimer);
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.removeEventListener("durationchange", onDurationChange);
       video.removeEventListener("timeupdate", onTimeUpdate);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
@@ -219,6 +269,12 @@ export default function VideoPlayer({
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, [scheduleHide]);
+
+  useEffect(() => {
+    if (!skipPulse) return;
+    const t = setTimeout(() => setSkipPulse(null), 550);
+    return () => clearTimeout(t);
+  }, [skipPulse]);
 
   // --- Controls ---
   function togglePlay() {
@@ -330,12 +386,17 @@ export default function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Mobile double-tap to skip ---
+  // --- Double-click (desktop) / double-tap (mobile) to skip ---
+  // A single click/tap on either half toggles play/pause, matching the
+  // rest of the video area. A second click/tap on the SAME half within
+  // DOUBLE_TAP_MS skips ±10s instead — this works identically for mouse
+  // clicks and touch taps since both fire ordinary "click" events.
   function handleTapZone(zone: "left" | "right") {
     const now = Date.now();
     const last = lastTapRef.current;
     if (last && last.zone === zone && now - last.time < DOUBLE_TAP_MS) {
       seekBy(zone === "left" ? -SKIP_SECONDS : SKIP_SECONDS);
+      setSkipPulse({ side: zone, nonce: now });
       lastTapRef.current = null;
     } else {
       lastTapRef.current = { zone, time: now };
@@ -357,29 +418,38 @@ export default function VideoPlayer({
       onMouseMove={handleActivity}
       onTouchStart={handleActivity}
     >
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="h-full w-full"
-        onClick={togglePlay}
-        playsInline
-      />
+      <video ref={videoRef} src={videoUrl} className="h-full w-full" playsInline />
 
-      {/* Touch zones for mobile double-tap skip — sit above the video,
-          below the controls, and don't block clicks on the controls
-          themselves since those have higher z-index. */}
-      <div className="absolute inset-0 flex sm:hidden">
+      {/* Click/tap zones — single click toggles play/pause, a second
+          click/tap on the same side within DOUBLE_TAP_MS skips ±10s.
+          Covers the full player on every screen size (desktop mouse
+          clicks and mobile taps both go through handleTapZone). Sits
+          above the video and below the control bar, which is later in
+          the DOM and paints on top so its own buttons stay clickable. */}
+      <div className="absolute inset-0 flex">
         <button
-          aria-label="Rewind 10 seconds (double tap)"
+          aria-label="Play/pause, or double-click to rewind 10 seconds"
           className="flex-1"
           onClick={() => handleTapZone("left")}
         />
         <button
-          aria-label="Forward 10 seconds (double tap)"
+          aria-label="Play/pause, or double-click to forward 10 seconds"
           className="flex-1"
           onClick={() => handleTapZone("right")}
         />
       </div>
+
+      {skipPulse && (
+        <div
+          key={skipPulse.nonce}
+          className={`pointer-events-none absolute top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-1 rounded-full bg-black/60 px-5 py-4 text-white animate-[skipPulse_0.55s_ease-out] ${
+            skipPulse.side === "left" ? "left-8" : "right-8"
+          }`}
+        >
+          {skipPulse.side === "left" ? <BackIcon /> : <ForwardIcon />}
+          <span className="text-xs">10s</span>
+        </div>
+      )}
 
       <SubtitleOverlay cues={cues} currentTime={currentTime} settings={subtitleSettings} />
 
@@ -454,13 +524,6 @@ export default function VideoPlayer({
           <button aria-label="Play/Pause" onClick={togglePlay}>
             {playing ? <PauseIcon /> : <PlayIcon />}
           </button>
-          <button aria-label="Back 10 seconds" onClick={() => seekBy(-SKIP_SECONDS)}>
-            <BackIcon />
-          </button>
-          <button aria-label="Forward 10 seconds" onClick={() => seekBy(SKIP_SECONDS)}>
-            <ForwardIcon />
-          </button>
-
           {prevEpisode && (
             <a href={prevEpisode.href} aria-label="Previous episode" className="text-white/70 hover:text-white">
               <PrevIcon />
@@ -575,23 +638,17 @@ function PauseIcon() {
 }
 function BackIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3 12a9 9 0 1 0 3-6.7" strokeLinecap="round" />
       <path d="M3 4v5h5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="12" y="15" fontSize="7" fill="currentColor" stroke="none" textAnchor="middle">
-        10
-      </text>
     </svg>
   );
 }
 function ForwardIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M21 12a9 9 0 1 1-3-6.7" strokeLinecap="round" />
       <path d="M21 4v5h-5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="12" y="15" fontSize="7" fill="currentColor" stroke="none" textAnchor="middle">
-        10
-      </text>
     </svg>
   );
 }

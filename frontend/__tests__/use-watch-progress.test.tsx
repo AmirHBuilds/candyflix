@@ -23,14 +23,16 @@ function Harness({
   mediaType = "movie" as const,
   seasonNumber,
   episodeNumber,
+  restored = true,
 }: {
   tmdbId?: number;
   mediaType?: "movie" | "tv";
   seasonNumber?: number | null;
   episodeNumber?: number | null;
+  restored?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  useWatchProgress(videoRef, { tmdbId, mediaType, seasonNumber, episodeNumber });
+  useWatchProgress(videoRef, { tmdbId, mediaType, seasonNumber, episodeNumber }, restored);
   return <video ref={videoRef} data-testid="video" />;
 }
 
@@ -133,6 +135,60 @@ describe("useWatchProgress — teardown-safe saves via sendBeacon", () => {
 
     expect(playback.saveWatchProgressBeacon).toHaveBeenCalledWith(
       expect.objectContaining({ position_seconds: 99 })
+    );
+  });
+});
+
+describe("useWatchProgress — restoration gate (resume-overwritten-with-0 regression)", () => {
+  // Real bug: VideoPlayer applies the saved resume position asynchronously
+  // (it has to wait for video metadata). Before this gate existed, a
+  // pause/seeked event firing during that window — while currentTime was
+  // still 0, before the resume seek had taken effect — got saved as-is,
+  // silently overwriting a real saved position with 0. `restored` must
+  // stay false until VideoPlayer confirms the resume attempt is done.
+  it("does not save on pause while restored=false, even with a real position", () => {
+    const { getByTestId } = render(<Harness restored={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 0, duration: 100 });
+
+    video.dispatchEvent(new Event("pause"));
+
+    expect(playback.saveWatchProgress).not.toHaveBeenCalled();
+  });
+
+  it("does not autosave every 10s while restored=false", async () => {
+    const { getByTestId } = render(<Harness restored={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 0, duration: 100, paused: false });
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(playback.saveWatchProgress).not.toHaveBeenCalled();
+  });
+
+  it("does not save via sendBeacon on pagehide while restored=false", () => {
+    const { getByTestId } = render(<Harness restored={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 0, duration: 100 });
+
+    window.dispatchEvent(new Event("pagehide"));
+
+    expect(playback.saveWatchProgressBeacon).not.toHaveBeenCalled();
+  });
+
+  it("starts saving normally once restored flips to true", () => {
+    const { getByTestId, rerender } = render(<Harness restored={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 219.76, duration: 581 });
+
+    video.dispatchEvent(new Event("seeked"));
+    expect(playback.saveWatchProgress).not.toHaveBeenCalled();
+
+    rerender(<Harness restored={true} />);
+    video.dispatchEvent(new Event("seeked"));
+
+    expect(playback.saveWatchProgress).toHaveBeenCalledWith(
+      expect.objectContaining({ position_seconds: 219.76 })
     );
   });
 });
