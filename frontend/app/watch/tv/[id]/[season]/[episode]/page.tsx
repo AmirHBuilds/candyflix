@@ -1,5 +1,6 @@
 import { getTVShow, getSeason, type TVShowDetail, type SeasonDetail } from "@/lib/media";
-import { getEpisodePlaybackSource, type PlaybackSource } from "@/lib/playback";
+import { getEpisodePlaybackSourceServer } from "@/lib/playback-server";
+import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
 
 export default async function WatchEpisodePage({
@@ -19,7 +20,7 @@ export default async function WatchEpisodePage({
     [show, seasonDetail, source] = await Promise.all([
       getTVShow(id),
       getSeason(id, seasonNum),
-      getEpisodePlaybackSource(id, seasonNum, episodeNum),
+      getEpisodePlaybackSourceServer(id, seasonNum, episodeNum),
     ]);
   } catch (e) {
     error = e instanceof Error ? e.message : "Couldn't load this video.";

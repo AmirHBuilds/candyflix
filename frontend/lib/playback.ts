@@ -46,25 +46,15 @@ async function handle<T>(res: Response, fallbackMessage: string): Promise<T> {
   return res.json();
 }
 
-export async function getMoviePlaybackSource(tmdbId: number | string): Promise<PlaybackSource> {
-  const res = await fetch(`${getApiBaseUrl()}/playback/movie/${tmdbId}`, {
-    credentials: "include",
-    cache: "no-store",
-  });
-  return handle(res, "Playback isn't available right now.");
-}
-
-export async function getEpisodePlaybackSource(
-  tmdbId: number | string,
-  season: number,
-  episode: number
-): Promise<PlaybackSource> {
-  const res = await fetch(`${getApiBaseUrl()}/playback/tv/${tmdbId}/${season}/${episode}`, {
-    credentials: "include",
-    cache: "no-store",
-  });
-  return handle(res, "Playback isn't available right now.");
-}
+// NOTE: getMoviePlaybackSource/getEpisodePlaybackSource used to live
+// here, but they're only ever called from Server Components during
+// SSR (the watch pages), where plain fetch() has no browser cookie
+// jar to attach — credentials:"include" is a no-op server-side. They
+// now live in lib/playback-server.ts, which forwards the incoming
+// request's cookies explicitly via next/headers, same pattern as
+// getServerCurrentUser() in lib/session.ts. Everything below this
+// point IS genuinely client-only (called from VideoPlayer /
+// useWatchProgress), where the browser attaches cookies for us.
 
 /**
  * Normal save path — used for the periodic autosave and on pause/seek,
@@ -103,6 +93,11 @@ export function saveWatchProgressBeacon(payload: WatchProgressPayload): void {
   navigator.sendBeacon(`${getApiBaseUrl()}/watch-progress`, blob);
 }
 
+// CLIENT-ONLY: like the save functions above, these rely on the
+// browser attaching cookies automatically. If a future Server
+// Component needs watch progress (e.g. a "Continue Watching" badge on
+// a detail page), add a cookie-forwarding version in
+// lib/playback-server.ts instead of calling these directly server-side.
 export async function getMovieWatchProgress(tmdbId: number | string): Promise<WatchProgress | null> {
   const res = await fetch(`${getApiBaseUrl()}/watch-progress/movie/${tmdbId}`, {
     credentials: "include",
