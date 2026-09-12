@@ -59,13 +59,15 @@ export default function VideoPlayer({
   const [muted, setMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
-  const [pipActive, setPipActive] = useState(false);
-  const [pipSupported, setPipSupported] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
+  // Single gear menu, YouTube-style: root list -> drill into "speed" or
+  // "subtitles" -> back arrow returns to root. Replaces the old separate
+  // speed-menu/subtitle-settings toggles now that both live behind one gear.
+  const [settingsMenu, setSettingsMenu] = useState<"root" | "speed" | "subtitles" | null>(null);
 
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const selectedLanguageRef = useRef<string | null>(null);
+  const lastSubtitleLanguageRef = useRef<string | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(loadSubtitleSettings());
 
@@ -183,6 +185,16 @@ export default function VideoPlayer({
       setBuffering(false);
       attemptResume();
     }
+    // Real, standalone bug (not introduced by the resume fix, but much more
+    // exposed by it): after the FIRST canplay, a stall mid-playback fires
+    // `waiting` and then recovers via `playing`, not `canplay` again. With
+    // no listener for `playing`, buffering stayed stuck at true forever
+    // after any seek into an unbuffered part of the file — including our
+    // resume seek, or just dragging the scrub bar — even though the video
+    // was actually running underneath.
+    function onPlaying() {
+      setBuffering(false);
+    }
     function onVolumeChange() {
       if (!video) return;
       setVolume(video.volume);
@@ -199,12 +211,6 @@ export default function VideoPlayer({
       setEnded(true);
       setPlaying(false);
     }
-    function onEnterPip() {
-      setPipActive(true);
-    }
-    function onLeavePip() {
-      setPipActive(false);
-    }
 
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     video.addEventListener("durationchange", onDurationChange);
@@ -213,14 +219,12 @@ export default function VideoPlayer({
     video.addEventListener("pause", onPause);
     video.addEventListener("waiting", onWaiting);
     video.addEventListener("canplay", onCanPlay);
+    video.addEventListener("playing", onPlaying);
     video.addEventListener("volumechange", onVolumeChange);
     video.addEventListener("ratechange", onRateChange);
     video.addEventListener("error", onError);
     video.addEventListener("ended", onEnded);
-    video.addEventListener("enterpictureinpicture", onEnterPip);
-    video.addEventListener("leavepictureinpicture", onLeavePip);
 
-    setPipSupported(typeof document !== "undefined" && "pictureInPictureEnabled" in document);
 
     return () => {
       clearTimeout(resumeFallbackTimer);
@@ -231,12 +235,11 @@ export default function VideoPlayer({
       video.removeEventListener("pause", onPause);
       video.removeEventListener("waiting", onWaiting);
       video.removeEventListener("canplay", onCanPlay);
+      video.removeEventListener("playing", onPlaying);
       video.removeEventListener("volumechange", onVolumeChange);
       video.removeEventListener("ratechange", onRateChange);
       video.removeEventListener("error", onError);
       video.removeEventListener("ended", onEnded);
-      video.removeEventListener("enterpictureinpicture", onEnterPip);
-      video.removeEventListener("leavepictureinpicture", onLeavePip);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source.url]);
@@ -263,12 +266,29 @@ export default function VideoPlayer({
     scheduleHide();
   }
 
+  const settingsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (settingsMenu === null) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [settingsMenu]);
+
   useEffect(() => {
     scheduleHide();
     return () => {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, [scheduleHide]);
+
+  useEffect(() => {
+    selectedLanguageRef.current = selectedLanguage;
+    if (selectedLanguage) lastSubtitleLanguageRef.current = selectedLanguage;
+  }, [selectedLanguage]);
 
   useEffect(() => {
     if (!skipPulse) return;
@@ -313,7 +333,6 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
     video.playbackRate = rate;
-    setSpeedMenuOpen(false);
   }
 
   async function toggleFullscreen() {
@@ -325,17 +344,15 @@ export default function VideoPlayer({
     }
   }
 
-  async function togglePip() {
-    const video = videoRef.current;
-    if (!video) return;
-    try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
-      } else {
-        await video.requestPictureInPicture();
-      }
-    } catch {
-      // PiP can reject (e.g. unsupported codec) — not fatal.
+  // Turns subtitles fully off, or back on at whichever language was last
+  // selected (falling back to the first available track) — this is what
+  // the main-bar CC button does; per-language choice and styling both
+  // live in the Settings > Subtitles submenu instead.
+  function toggleCaptions() {
+    if (selectedLanguageRef.current) {
+      setSelectedLanguage(null);
+    } else {
+      setSelectedLanguage(lastSubtitleLanguageRef.current ?? source.subtitles[0]?.language ?? null);
     }
   }
 
@@ -375,6 +392,9 @@ export default function VideoPlayer({
           break;
         case "f":
           void toggleFullscreen();
+          break;
+        case "c":
+          if (source.subtitles.length > 0) toggleCaptions();
           break;
         default:
           break;
@@ -429,12 +449,14 @@ export default function VideoPlayer({
       <div className="absolute inset-0 flex">
         <button
           aria-label="Play/pause, or double-click to rewind 10 seconds"
-          className="flex-1"
+          className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#FF5FA2]/70"
+          style={{ WebkitTapHighlightColor: "transparent" }}
           onClick={() => handleTapZone("left")}
         />
         <button
           aria-label="Play/pause, or double-click to forward 10 seconds"
-          className="flex-1"
+          className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#FF5FA2]/70"
+          style={{ WebkitTapHighlightColor: "transparent" }}
           onClick={() => handleTapZone("right")}
         />
       </div>
@@ -555,62 +577,99 @@ export default function VideoPlayer({
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-4" ref={settingsRef}>
+            {source.subtitles.length > 0 && (
+              <button
+                aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
+                aria-pressed={!!selectedLanguage}
+                onClick={toggleCaptions}
+                className="text-white/90 hover:text-white"
+              >
+                <CCIcon active={!!selectedLanguage} />
+              </button>
+            )}
+
             <div className="relative">
               <button
-                aria-label="Playback speed"
-                onClick={() => setSpeedMenuOpen((v) => !v)}
-                className="text-sm text-white/80 hover:text-white"
+                aria-label="Settings"
+                onClick={() => setSettingsMenu((v) => (v ? null : "root"))}
+                className="text-white/90 hover:text-white"
               >
-                {playbackRate}x
+                <GearIcon />
               </button>
-              {speedMenuOpen && (
-                <div className="absolute bottom-full right-0 mb-2 rounded-lg border border-white/10 bg-[#0b0b12]/95 p-1 shadow-xl">
+
+              {settingsMenu === "root" && (
+                <div className="absolute bottom-full right-0 mb-2 w-56 overflow-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                  <button
+                    onClick={() => setSettingsMenu("speed")}
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                  >
+                    <span>Playback speed</span>
+                    <span className="text-white/50">{playbackRate === 1 ? "Normal" : `${playbackRate}x`}</span>
+                  </button>
+                  {source.subtitles.length > 0 && (
+                    <button
+                      onClick={() => setSettingsMenu("subtitles")}
+                      className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                    >
+                      <span>Subtitles</span>
+                      <span className="text-white/50">
+                        {selectedLanguage
+                          ? (source.subtitles.find((t) => t.language === selectedLanguage)?.label ?? selectedLanguage)
+                          : "Off"}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {settingsMenu === "speed" && (
+                <div className="absolute bottom-full right-0 mb-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                  <button
+                    onClick={() => setSettingsMenu("root")}
+                    className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                  >
+                    <BackChevronIcon />
+                    Playback speed
+                  </button>
                   {SPEED_OPTIONS.map((s) => (
                     <button
                       key={s}
-                      onClick={() => changeRate(s)}
-                      className={`block w-full rounded px-3 py-1.5 text-left text-sm hover:bg-white/10 ${
-                        s === playbackRate ? "text-[#FF5FA2]" : "text-white/80"
+                      onClick={() => {
+                        changeRate(s);
+                        setSettingsMenu("root");
+                      }}
+                      className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
+                        s === playbackRate ? "text-[#FF5FA2]" : "text-white/90"
                       }`}
                     >
-                      {s}x
+                      {s === 1 ? "Normal" : `${s}x`}
                     </button>
                   ))}
                 </div>
               )}
+
+              {settingsMenu === "subtitles" && (
+                <div className="absolute bottom-full right-0 mb-2 flex flex-col items-end gap-1">
+                  <button
+                    onClick={() => setSettingsMenu("root")}
+                    className="flex w-56 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
+                  >
+                    <BackChevronIcon />
+                    Subtitles
+                  </button>
+                  <SubtitleSettingsPanel
+                    tracks={source.subtitles}
+                    selectedLanguage={selectedLanguage}
+                    onSelectLanguage={setSelectedLanguage}
+                    settings={subtitleSettings}
+                    onChange={updateSubtitleSettings}
+                  />
+                </div>
+              )}
             </div>
 
-            {source.subtitles.length > 0 && (
-              <div className="relative">
-                <button
-                  aria-label="Subtitle settings"
-                  onClick={() => setSettingsOpen((v) => !v)}
-                  className={selectedLanguage ? "text-[#FF5FA2]" : "text-white/80 hover:text-white"}
-                >
-                  <SubtitlesIcon />
-                </button>
-                {settingsOpen && (
-                  <div className="absolute bottom-full right-0 mb-2">
-                    <SubtitleSettingsPanel
-                      tracks={source.subtitles}
-                      selectedLanguage={selectedLanguage}
-                      onSelectLanguage={setSelectedLanguage}
-                      settings={subtitleSettings}
-                      onChange={updateSubtitleSettings}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {pipSupported && (
-              <button aria-label="Picture in picture" onClick={togglePip} className="text-white/80 hover:text-white">
-                <PipIcon active={pipActive} />
-              </button>
-            )}
-
-            <button aria-label="Fullscreen" onClick={toggleFullscreen} className="text-white/80 hover:text-white">
+            <button aria-label="Fullscreen" onClick={toggleFullscreen} className="text-white/90 hover:text-white">
               {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
             </button>
           </div>
@@ -702,27 +761,45 @@ function FullscreenExitIcon() {
     </svg>
   );
 }
-function PipIcon({ active }: { active: boolean }) {
+function CCIcon({ active }: { active: boolean }) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      className={active ? "text-[#FF5FA2]" : undefined}
-    >
-      <rect x="3" y="4" width="18" height="14" rx="1.5" />
-      <rect x="12" y="11" width="7" height="5" rx="1" fill="currentColor" stroke="none" />
+    <svg width="26" height="18" viewBox="0 0 26 18" fill="none">
+      <rect
+        x="0.75"
+        y="0.75"
+        width="24.5"
+        height="16.5"
+        rx="2.5"
+        stroke="currentColor"
+        strokeWidth={active ? 0 : 1.6}
+        fill={active ? "currentColor" : "none"}
+      />
+      <text
+        x="13"
+        y="12.7"
+        textAnchor="middle"
+        fontSize="8"
+        fontWeight="700"
+        fontFamily="Arial, Helvetica, sans-serif"
+        fill={active ? "#0b0b12" : "currentColor"}
+      >
+        CC
+      </text>
     </svg>
   );
 }
-function SubtitlesIcon() {
+function GearIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M7 10h4M7 14h7M14 10h3" strokeLinecap="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="2.8" />
+      <circle cx="12" cy="12" r="7.5" strokeDasharray="2.1 2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+function BackChevronIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
