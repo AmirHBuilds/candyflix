@@ -54,7 +54,17 @@ export default function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffering, setBuffering] = useState(true);
+  const bufferingRef = useRef(buffering);
+  useEffect(() => {
+    bufferingRef.current = buffering;
+  }, [buffering]);
   const [error, setError] = useState<string | null>(null);
+  // True when the resume-fallback timer fires and the video STILL hasn't
+  // reported a finite duration — the signature of the browser failing to
+  // locate the MP4's moov atom (metadata) for this particular load. Shows a
+  // manual retry affordance instead of leaving the person stuck behind an
+  // unexplained spinner with no way out except a full page reload.
+  const [videoStuck, setVideoStuck] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -139,12 +149,42 @@ export default function VideoPlayer({
     // in the seek logic itself — would read currentTime as 0 and post that,
     // clobbering the real saved position. Now there is simply no listener
     // registered yet for that to happen through.
+    // Temporary diagnostic instrumentation for tracking down an intermittent
+    // stall where the video stops requesting further data and buffering
+    // never clears. Logs to console so a repro can be captured and compared
+    // against what actually happened. Safe to remove once the underlying
+    // cause is confirmed and fixed; harmless to leave (console.debug only,
+    // this is a private single-developer-visible app, not shipped to users
+    // at large).
+    const log = (...args: unknown[]) => console.debug("[VideoPlayer]", ...args);
+    const watchdog = setInterval(() => {
+      const v = videoRef.current;
+      if (!v) return;
+      const buffered: Array<[number, number]> = [];
+      for (let i = 0; i < v.buffered.length; i++) buffered.push([v.buffered.start(i), v.buffered.end(i)]);
+      log("watchdog", {
+        buffering: bufferingRef.current,
+        paused: v.paused,
+        currentTime: v.currentTime.toFixed(1),
+        readyState: v.readyState, // 0=NOTHING 1=METADATA 2=CURRENT_DATA 3=FUTURE_DATA 4=ENOUGH_DATA
+        networkState: v.networkState, // 0=EMPTY 1=IDLE 2=LOADING 3=NO_SOURCE
+        buffered,
+        error: v.error ? { code: v.error.code, message: v.error.message } : null,
+      });
+    }, 3000);
+
     function attemptResume() {
       if (resumeAttemptedRef.current || !video) return;
-      if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+      if (!Number.isFinite(video.duration) || video.duration <= 0) {
+        log("attemptResume: duration not finite yet, waiting", video.duration);
+        return;
+      }
       const resume = source.resume_position_seconds;
       if (resume && resume > 3 && resume < video.duration - 5) {
+        log("attemptResume: seeking to saved position", resume);
         video.currentTime = resume;
+      } else {
+        log("attemptResume: nothing to resume", { resume, duration: video.duration });
       }
       resumeAttemptedRef.current = true;
       setProgressRestored(true);
@@ -152,37 +192,49 @@ export default function VideoPlayer({
 
     const resumeFallbackTimer = setTimeout(() => {
       if (!resumeAttemptedRef.current) {
+        const v = videoRef.current;
+        const stuck = !v || !Number.isFinite(v.duration) || v.duration <= 0;
+        log("attemptResume: 8s fallback fired", { stuck, duration: v?.duration });
         resumeAttemptedRef.current = true;
         setProgressRestored(true);
+        if (stuck) setVideoStuck(true);
       }
     }, 8000);
 
     function onLoadedMetadata() {
       if (!video) return;
+      log("loadedmetadata", { duration: video.duration, readyState: video.readyState });
       setDuration(video.duration);
       attemptResume();
       setBuffering(false);
     }
     function onDurationChange() {
       if (!video) return;
+      log("durationchange", video.duration);
       setDuration(video.duration);
+      if (Number.isFinite(video.duration) && video.duration > 0) setVideoStuck(false);
       attemptResume();
     }
     function onTimeUpdate() {
       if (video) setCurrentTime(video.currentTime);
     }
     function onPlay() {
+      log("play");
       setPlaying(true);
       setEnded(false);
     }
     function onPause() {
+      log("pause", { currentTime: videoRef.current?.currentTime });
       setPlaying(false);
     }
     function onWaiting() {
+      log("waiting (buffering=true)", { currentTime: videoRef.current?.currentTime });
       setBuffering(true);
     }
     function onCanPlay() {
+      log("canplay (buffering=false)");
       setBuffering(false);
+      setVideoStuck(false);
       attemptResume();
     }
     // Real, standalone bug (not introduced by the resume fix, but much more
@@ -193,7 +245,9 @@ export default function VideoPlayer({
     // resume seek, or just dragging the scrub bar — even though the video
     // was actually running underneath.
     function onPlaying() {
+      log("playing (buffering=false)");
       setBuffering(false);
+      setVideoStuck(false);
     }
     function onVolumeChange() {
       if (!video) return;
@@ -204,12 +258,20 @@ export default function VideoPlayer({
       if (video) setPlaybackRate(video.playbackRate);
     }
     function onError() {
+      log("error", videoRef.current?.error);
       setError("This video couldn't be played. Try refreshing the page.");
       setBuffering(false);
     }
     function onEnded() {
+      log("ended");
       setEnded(true);
       setPlaying(false);
+    }
+    function onStalled() {
+      log("stalled — browser expected data but the download has stopped");
+    }
+    function onSuspend() {
+      log("suspend — browser paused fetching data (often means it thinks it has enough for now)");
     }
 
     video.addEventListener("loadedmetadata", onLoadedMetadata);
@@ -224,10 +286,13 @@ export default function VideoPlayer({
     video.addEventListener("ratechange", onRateChange);
     video.addEventListener("error", onError);
     video.addEventListener("ended", onEnded);
+    video.addEventListener("stalled", onStalled);
+    video.addEventListener("suspend", onSuspend);
 
 
     return () => {
       clearTimeout(resumeFallbackTimer);
+      clearInterval(watchdog);
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
       video.removeEventListener("durationchange", onDurationChange);
       video.removeEventListener("timeupdate", onTimeUpdate);
@@ -240,6 +305,8 @@ export default function VideoPlayer({
       video.removeEventListener("ratechange", onRateChange);
       video.removeEventListener("error", onError);
       video.removeEventListener("ended", onEnded);
+      video.removeEventListener("stalled", onStalled);
+      video.removeEventListener("suspend", onSuspend);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source.url]);
@@ -361,6 +428,21 @@ export default function VideoPlayer({
     void videoRef.current?.play();
   }
 
+  // Forces a completely fresh fetch of the video resource, staying on the
+  // same page — recovers from the "browser never resolved a duration"
+  // stuck state without needing a full page reload. `.load()` resets the
+  // element's readyState/networkState and re-requests the src from scratch,
+  // giving the browser another chance to successfully locate the file's
+  // metadata.
+  function retryLoad() {
+    const video = videoRef.current;
+    if (!video) return;
+    resumeAttemptedRef.current = false;
+    setVideoStuck(false);
+    setBuffering(true);
+    video.load();
+  }
+
   // --- Keyboard shortcuts ---
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -475,8 +557,20 @@ export default function VideoPlayer({
 
       <SubtitleOverlay cues={cues} currentTime={currentTime} settings={subtitleSettings} />
 
-      {buffering && !error && (
-        <div className="absolute inset-0 flex items-center justify-center">
+      {videoStuck && !error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 px-6 text-center">
+          <p className="text-sm text-white/80">This is taking longer than expected to load.</p>
+          <button
+            onClick={retryLoad}
+            className="rounded-lg bg-[#FF5FA2] px-4 py-2 text-sm font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {buffering && !videoStuck && !error && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-[#FF5FA2]" />
         </div>
       )}

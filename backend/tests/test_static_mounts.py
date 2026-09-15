@@ -59,3 +59,44 @@ async def test_nonexistent_mock_file_returns_404():
         resp = await client.get("/mock-videos/definitely-does-not-exist.mp4")
 
     assert resp.status_code == 404
+
+
+async def test_mock_video_range_response_is_never_browser_cached():
+    """Regression test for a real bug: every "episode" resolves to the same
+    physical mock video file, so the browser issues many different Range
+    requests against one URL in a session. Without an explicit no-store
+    Cache-Control header, the browser's own heuristic caching of 206
+    responses gets confused by this pattern and can silently replay a
+    stale/mismatched cached response (visible in DevTools as "(from disk
+    cache)") instead of hitting the network — stalling playback with no
+    corresponding request ever reaching the server. Confirmed via a live
+    reproduction: DevTools showed a hung request served "(from disk cache)"
+    with zero matching backend log line. See NoCacheStaticFiles in main.py.
+    """
+    videos_dir = Path(get_settings().mock_videos_dir)
+    test_file = videos_dir / "_static_mount_cache_test.mp4"
+    test_file.write_bytes(b"0123456789" * 5)
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            resp = await client.get(
+                "/mock-videos/_static_mount_cache_test.mp4", headers={"Range": "bytes=0-4"}
+            )
+        assert resp.status_code == 206
+        assert resp.headers.get("cache-control") == "no-store"
+    finally:
+        test_file.unlink(missing_ok=True)
+
+
+async def test_mock_subtitle_response_is_never_browser_cached():
+    subs_dir = Path(get_settings().mock_subtitles_dir)
+    test_file = subs_dir / "_static_mount_cache_test.en.srt"
+    test_file.write_text("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            resp = await client.get("/mock-subtitles/_static_mount_cache_test.en.srt")
+        assert resp.status_code == 200
+        assert resp.headers.get("cache-control") == "no-store"
+    finally:
+        test_file.unlink(missing_ok=True)

@@ -26,6 +26,30 @@ settings = get_settings()
 os.makedirs(settings.mock_videos_dir, exist_ok=True)
 os.makedirs(settings.mock_subtitles_dir, exist_ok=True)
 
+
+class NoCacheStaticFiles(StaticFiles):
+    """StaticFiles that forbids browser caching of Range responses.
+
+    Real bug this fixes: every "episode" in the mock provider resolves to the
+    literal same physical video file, so the browser ends up issuing many
+    different `Range` requests against the exact same URL within one session.
+    Without an explicit Cache-Control header, browsers apply their own
+    heuristic caching to 206 Partial Content responses — and that heuristic
+    caching gets confused by repeated Range requests against one URL, at some
+    point silently replaying a stale/mismatched cached response instead of
+    hitting the network (visible in Chrome DevTools as "(from disk cache)").
+    When that happens the video pipeline stalls waiting on data it wrongly
+    believes it already has, with no new request ever reaching the server —
+    which is exactly why these stalls never show up in the backend logs.
+    Forcing `no-store` makes every Range request go to the network for real.
+    """
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+
 app = FastAPI(
     title=settings.app_name,
     description="Backend API for CandyFlix — a small, private movie & TV app.",
@@ -40,9 +64,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/mock-videos", StaticFiles(directory=settings.mock_videos_dir), name="mock-videos")
+app.mount("/mock-videos", NoCacheStaticFiles(directory=settings.mock_videos_dir), name="mock-videos")
 app.mount(
-    "/mock-subtitles", StaticFiles(directory=settings.mock_subtitles_dir), name="mock-subtitles"
+    "/mock-subtitles", NoCacheStaticFiles(directory=settings.mock_subtitles_dir), name="mock-subtitles"
 )
 
 app.include_router(health.router, prefix="/api")
