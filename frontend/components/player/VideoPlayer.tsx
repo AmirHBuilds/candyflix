@@ -289,6 +289,27 @@ export default function VideoPlayer({
     video.addEventListener("stalled", onStalled);
     video.addEventListener("suspend", onSuspend);
 
+    // Real bug this fixes: React's effects run AFTER the DOM commit that
+    // set the <video src>, on a separate tick from the actual attribute
+    // assignment. If the browser resolves metadata fast enough (e.g. a
+    // small/local/already-partially-cached fetch), `loadedmetadata` and
+    // `canplay` can fire and complete BEFORE this effect finishes attaching
+    // its listeners — the events fire into an empty room and are lost for
+    // good, since they don't fire again. This exactly matches a real
+    // observed case: the video's `duration` was fully known and readyState
+    // was HAVE_ENOUGH_DATA, yet none of our handlers had ever run, and only
+    // the 8s fallback timer eventually rescued things. Checking the
+    // element's actual current state right here, once, covers whatever we
+    // already missed.
+    if (video.readyState >= 1) {
+      log("readyState already >= HAVE_METADATA on listener attach — event was missed, running handler manually");
+      onLoadedMetadata();
+    }
+    if (video.readyState >= 3) {
+      log("readyState already >= HAVE_FUTURE_DATA on listener attach — event was missed, running handler manually");
+      onCanPlay();
+    }
+
 
     return () => {
       clearTimeout(resumeFallbackTimer);
