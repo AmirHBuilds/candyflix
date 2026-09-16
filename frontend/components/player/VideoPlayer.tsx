@@ -53,6 +53,10 @@ export default function VideoPlayer({
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [bufferedEnd, setBufferedEnd] = useState(0);
+  const [scrubHover, setScrubHover] = useState(false);
+  const [scrubDragging, setScrubDragging] = useState(false);
+  const scrubTrackRef = useRef<HTMLDivElement>(null);
   const [buffering, setBuffering] = useState(true);
   const bufferingRef = useRef(buffering);
   useEffect(() => {
@@ -84,6 +88,7 @@ export default function VideoPlayer({
   const [upNextDismissed, setUpNextDismissed] = useState(false);
   const [ended, setEnded] = useState(false);
   const [skipPulse, setSkipPulse] = useState<{ side: "left" | "right"; nonce: number } | null>(null);
+  const [centerPulse, setCenterPulse] = useState<{ icon: "play" | "pause"; nonce: number } | null>(null);
 
   // Becomes true once we've either applied the saved resume position or
   // decided there's nothing to resume. useWatchProgress doesn't attach any
@@ -218,14 +223,37 @@ export default function VideoPlayer({
     function onTimeUpdate() {
       if (video) setCurrentTime(video.currentTime);
     }
+    // Drives the scrub bar's grey "load progress" fill. Finds whichever
+    // buffered range contains (or immediately precedes) the current time,
+    // since `buffered` can contain multiple disjoint ranges after seeking.
+    function onProgress() {
+      if (!video) return;
+      let end = 0;
+      for (let i = 0; i < video.buffered.length; i++) {
+        if (video.buffered.start(i) <= video.currentTime) {
+          end = Math.max(end, video.buffered.end(i));
+        }
+      }
+      setBufferedEnd(end);
+    }
     function onPlay() {
       log("play");
       setPlaying(true);
       setEnded(false);
+      // Restarts the idle countdown from the moment playback actually
+      // begins, so the bar fades out a few seconds after pressing play
+      // even without any further mouse movement — matching the "pause
+      // pins controls, play lets them fade" behavior YouTube uses.
+      scheduleHide();
     }
     function onPause() {
       log("pause", { currentTime: videoRef.current?.currentTime });
       setPlaying(false);
+      // Paused video always keeps its controls on screen — there's
+      // nothing to "enjoy watching" uninterrupted while stopped, and
+      // hiding them would strand the person with no way to resume.
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      setShowControls(true);
     }
     function onWaiting() {
       log("waiting (buffering=true)", { currentTime: videoRef.current?.currentTime });
@@ -277,6 +305,7 @@ export default function VideoPlayer({
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     video.addEventListener("durationchange", onDurationChange);
     video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("progress", onProgress);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
     video.addEventListener("waiting", onWaiting);
@@ -317,6 +346,7 @@ export default function VideoPlayer({
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
       video.removeEventListener("durationchange", onDurationChange);
       video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("progress", onProgress);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
       video.removeEventListener("waiting", onWaiting);
@@ -384,12 +414,25 @@ export default function VideoPlayer({
     return () => clearTimeout(t);
   }, [skipPulse]);
 
+  useEffect(() => {
+    if (!centerPulse) return;
+    const t = setTimeout(() => setCenterPulse(null), 700);
+    return () => clearTimeout(t);
+  }, [centerPulse]);
+
   // --- Controls ---
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) void video.play();
+    const wasPaused = video.paused;
+    if (wasPaused) void video.play();
     else video.pause();
+    // Shows whichever icon represents the state just switched TO (a play
+    // triangle when resuming, a pause bars when stopping) — a brief,
+    // fading confirmation of what just happened, the same way YouTube's
+    // center bubble works. Keyed by nonce so retriggering the same icon
+    // twice in a row (e.g. rapid taps) still restarts the animation.
+    setCenterPulse({ icon: wasPaused ? "play" : "pause", nonce: Date.now() });
   }
 
   function seekBy(delta: number) {
@@ -403,6 +446,47 @@ export default function VideoPlayer({
     if (!video) return;
     video.currentTime = Math.min(Math.max(seconds, 0), video.duration || Infinity);
   }
+
+  // Converts a pointer's clientX into a video-time seek target, based on
+  // the scrub track's current on-screen bounds.
+  function scrubPositionToTime(clientX: number): number {
+    const track = scrubTrackRef.current;
+    if (!track || !duration) return 0;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return ratio * duration;
+  }
+
+  // Dragging needs to keep tracking the pointer even once it leaves the
+  // (thin) scrub track, so — same as a native range input — these listeners
+  // live on the window for the duration of the drag rather than on the
+  // track element itself.
+  useEffect(() => {
+    if (!scrubDragging) return;
+    function move(clientX: number) {
+      seekTo(scrubPositionToTime(clientX));
+    }
+    function onMouseMove(e: MouseEvent) {
+      move(e.clientX);
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (e.touches[0]) move(e.touches[0].clientX);
+    }
+    function onUp() {
+      setScrubDragging(false);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("touchmove", onTouchMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchend", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrubDragging, duration]);
 
   function toggleMute() {
     const video = videoRef.current;
@@ -540,6 +624,13 @@ export default function VideoPlayer({
       className="relative aspect-video w-full overflow-hidden bg-black"
       onMouseMove={handleActivity}
       onTouchStart={handleActivity}
+      onMouseLeave={() => {
+        // Only while actually playing — paused controls stay pinned
+        // regardless of where the cursor is (handled by onPause above).
+        if (!playing) return;
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        setShowControls(false);
+      }}
     >
       <video ref={videoRef} src={videoUrl} className="h-full w-full" playsInline />
 
@@ -573,6 +664,15 @@ export default function VideoPlayer({
         >
           {skipPulse.side === "left" ? <BackIcon /> : <ForwardIcon />}
           <span className="text-xs">10s</span>
+        </div>
+      )}
+
+      {centerPulse && (
+        <div
+          key={centerPulse.nonce}
+          className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex h-20 w-20 items-center justify-center rounded-full bg-black/55 text-white animate-[centerPulse_0.7s_ease-out]"
+        >
+          {centerPulse.icon === "play" ? <BigPlayIcon /> : <BigPauseIcon />}
         </div>
       )}
 
@@ -640,65 +740,119 @@ export default function VideoPlayer({
 
       {/* Control bar */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 to-transparent px-4 pb-3 pt-10 transition-opacity duration-200 ${
+        className={`absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 to-transparent px-4 pb-2 pt-7 transition-opacity duration-200 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <div className="mb-2 flex items-center gap-2">
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step={0.1}
-            value={currentTime}
-            onChange={(e) => seekTo(Number(e.target.value))}
-            className="w-full accent-[#FF5FA2]"
-            aria-label="Seek"
-          />
+        <div
+          className="group/scrub relative mb-1.5 flex h-4 w-full cursor-pointer items-center"
+          role="slider"
+          tabIndex={0}
+          aria-label="Seek"
+          aria-valuemin={0}
+          aria-valuemax={duration || 0}
+          aria-valuenow={currentTime}
+          aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+          onMouseEnter={() => setScrubHover(true)}
+          onMouseLeave={() => setScrubHover(false)}
+          onMouseDown={(e) => {
+            setScrubDragging(true);
+            seekTo(scrubPositionToTime(e.clientX));
+          }}
+          onTouchStart={(e) => {
+            setScrubDragging(true);
+            if (e.touches[0]) seekTo(scrubPositionToTime(e.touches[0].clientX));
+          }}
+        >
+          <div
+            ref={scrubTrackRef}
+            className={`relative w-full rounded-full bg-white/25 transition-[height] duration-150 ${
+              scrubHover || scrubDragging ? "h-[5px]" : "h-[3px]"
+            }`}
+          >
+            <div
+              className="absolute left-0 top-0 h-full rounded-full bg-white/35"
+              style={{ width: `${duration ? (Math.min(bufferedEnd, duration) / duration) * 100 : 0}%` }}
+            />
+            <div
+              className="absolute left-0 top-0 h-full rounded-full bg-[#FF5FA2]"
+              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            >
+              <div
+                className={`absolute top-1/2 rounded-full bg-[#FF5FA2] shadow-[0_0_2px_rgba(0,0,0,0.6)] transition-[width,height] duration-150 ${
+                  scrubHover || scrubDragging ? "h-4 w-4" : "h-[13px] w-[13px]"
+                }`}
+                style={{ right: scrubHover || scrubDragging ? "-8px" : "-6.5px", transform: "translateY(-50%)" }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 text-white">
-          <button aria-label="Play/Pause" onClick={togglePlay}>
+        <div className="flex items-center gap-2 text-white">
+          <button
+            aria-label="Play/Pause"
+            onClick={togglePlay}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
+          >
             {playing ? <PauseIcon /> : <PlayIcon />}
           </button>
-          {prevEpisode && (
-            <a href={prevEpisode.href} aria-label="Previous episode" className="text-white/70 hover:text-white">
-              <PrevIcon />
-            </a>
-          )}
-          {nextEpisode && (
-            <a href={nextEpisode.href} aria-label="Next episode" className="text-white/70 hover:text-white">
-              <NextIcon />
-            </a>
+
+          {(prevEpisode || nextEpisode) && (
+            <div className="flex items-center gap-0.5 rounded-full bg-white/15 p-1">
+              {prevEpisode && (
+                <a
+                  href={prevEpisode.href}
+                  aria-label="Previous episode"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                >
+                  <PrevIcon />
+                </a>
+              )}
+              {nextEpisode && (
+                <a
+                  href={nextEpisode.href}
+                  aria-label="Next episode"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                >
+                  <NextIcon />
+                </a>
+              )}
+            </div>
           )}
 
-          <div className="flex items-center gap-1.5">
-            <button aria-label="Mute/unmute" onClick={toggleMute}>
+          <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 px-1">
+            <button
+              aria-label="Mute/unmute"
+              onClick={toggleMute}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/20"
+            >
               {muted || volume === 0 ? <MuteIcon /> : <VolumeIcon />}
             </button>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={muted ? 0 : volume}
-              onChange={(e) => changeVolume(Number(e.target.value))}
-              className="w-20 accent-[#FF5FA2]"
-              aria-label="Volume"
-            />
+            <div className="player-volume-wrap flex items-center overflow-hidden">
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={muted ? 0 : volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                className="w-20 accent-[#FF5FA2]"
+                aria-label="Volume"
+              />
+            </div>
           </div>
 
-          <span className="text-xs tabular-nums text-white/70">
+          <div className="flex h-10 items-center whitespace-nowrap rounded-full bg-white/15 px-3.5 text-sm font-medium tabular-nums text-white">
             {formatTime(currentTime)} / {formatTime(duration)}
-          </span>
+          </div>
 
-          <div className="ml-auto flex items-center gap-4" ref={settingsRef}>
+          <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 p-1" ref={settingsRef}>
             {source.subtitles.length > 0 && (
               <button
                 aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
                 aria-pressed={!!selectedLanguage}
                 onClick={toggleCaptions}
-                className="text-white/90 hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
               >
                 <CCIcon active={!!selectedLanguage} />
               </button>
@@ -708,7 +862,7 @@ export default function VideoPlayer({
               <button
                 aria-label="Settings"
                 onClick={() => setSettingsMenu((v) => (v ? null : "root"))}
-                className="text-white/90 hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
               >
                 <GearIcon />
               </button>
@@ -784,7 +938,11 @@ export default function VideoPlayer({
               )}
             </div>
 
-            <button aria-label="Fullscreen" onClick={toggleFullscreen} className="text-white/90 hover:text-white">
+            <button
+              aria-label="Fullscreen"
+              onClick={toggleFullscreen}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+            >
               {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
             </button>
           </div>
@@ -798,14 +956,29 @@ export default function VideoPlayer({
 
 function PlayIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
       <path d="M8 5v14l11-7z" />
     </svg>
   );
 }
 function PauseIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+    </svg>
+  );
+}
+// Bigger versions for the center-of-screen confirmation bubble.
+function BigPlayIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+function BigPauseIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
       <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
     </svg>
   );
@@ -828,26 +1001,26 @@ function ForwardIcon() {
 }
 function PrevIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
       <path d="M6 6h2v12H6zM20 6v12l-10-6z" />
     </svg>
   );
 }
 function NextIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
       <path d="M16 6h2v12h-2zM4 6v12l10-6z" />
     </svg>
   );
 }
 function VolumeIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
       <path d="M4 9v6h4l5 5V4L8 9H4z" />
       <path
         d="M16.5 8.5a5 5 0 0 1 0 7"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.8"
         fill="none"
         strokeLinecap="round"
       />
@@ -856,58 +1029,48 @@ function VolumeIcon() {
 }
 function MuteIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
       <path d="M4 9v6h4l5 5V4L8 9H4z" />
-      <path d="M17 9l4 6M21 9l-4 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M17 9l4 6M21 9l-4 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
 function FullscreenIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 function FullscreenExitIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
+// Standard "closed captions" glyph (a single filled outline, no embedded
+// text/font rendering — the old version drew literal "CC" letters with an
+// <svg><text>, which looks inconsistent across platforms since it depends
+// on whatever fallback font the browser picks for SVG text).
 function CCIcon({ active }: { active: boolean }) {
   return (
-    <svg width="26" height="18" viewBox="0 0 26 18" fill="none">
-      <rect
-        x="0.75"
-        y="0.75"
-        width="24.5"
-        height="16.5"
-        rx="2.5"
-        stroke="currentColor"
-        strokeWidth={active ? 0 : 1.6}
-        fill={active ? "currentColor" : "none"}
-      />
-      <text
-        x="13"
-        y="12.7"
-        textAnchor="middle"
-        fontSize="8"
-        fontWeight="700"
-        fontFamily="Arial, Helvetica, sans-serif"
-        fill={active ? "#0b0b12" : "currentColor"}
-      >
-        CC
-      </text>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill={active ? "#FF5FA2" : "currentColor"}
+    >
+      <path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1z" />
     </svg>
   );
 }
+// Standard filled cog/gear glyph, replacing the old dashed-circle
+// approximation of gear teeth.
 function GearIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="2.8" />
-      <circle cx="12" cy="12" r="7.5" strokeDasharray="2.1 2.4" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
     </svg>
   );
 }

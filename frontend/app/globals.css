@@ -54,3 +54,52 @@ select option {
     transform: translateY(-50%) scale(1);
   }
 }
+
+/* Video player volume slider (components/player/VideoPlayer.tsx): collapsed
+   to nothing by default and revealed by hovering/focusing the mute button's
+   pill, matching YouTube's desktop control bar. On a touch device — or any
+   device that reports no hover capability — there's no hover to trigger
+   that reveal, so the slider would otherwise be permanently unreachable.
+   The (hover: none) / (pointer: coarse) query keeps it always expanded
+   there instead. */
+.player-volume-wrap {
+  width: 0;
+  opacity: 0;
+  transition: width 0.15s ease, opacity 0.15s ease;
+}
+.player-volume-group:hover .player-volume-wrap,
+.player-volume-group:focus-within .player-volume-wrap {
+  width: 5rem;
+  opacity: 1;
+}
+@media (hover: none), (pointer: coarse) {
+  .player-volume-wrap {
+    width: 5rem;
+    opacity: 1;
+  }
+}
+
+/* Big center play/pause confirmation shown by VideoPlayer.tsx whenever
+   playback is toggled — pops in, holds briefly, then fades while easing
+   outward, the same shape as YouTube's own center bubble. Centering is
+   baked into every step (rather than a static class) because the CSS
+   `transform` property is fully replaced by whatever the keyframe sets
+   at each step. */
+@keyframes centerPulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
