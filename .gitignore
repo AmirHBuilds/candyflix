@@ -1,0 +1,45 @@
+# --- Environment / secrets ---
+# Real env files are never committed — only the checked-in .env.example /
+# .env.local.example templates are. If you're seeing this ignore rule for
+# the first time on a repo that already has a real .env committed, adding
+# this file alone does NOT remove it from git — see the note in the PR/issue
+# for the `git rm --cached` + secret-rotation steps.
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# --- Node / frontend ---
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+
+# --- Python / backend ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Redis ---
+# Local dump left behind by running redis-server with a CWD inside the repo.
+dump.rdb
+
+# --- Mock playback fixtures ---
+# Personal test media — see backend/mock-videos/README.md and
+# backend/mock-subtitles/README.md. Keep the READMEs themselves tracked.
+backend/mock-videos/*
+!backend/mock-videos/README.md
+backend/mock-subtitles/*
+!backend/mock-subtitles/README.md
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
