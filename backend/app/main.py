@@ -7,6 +7,9 @@ Phase 3: TMDB integration (trending, search, movie/TV/season details).
 Phase 5a: mock playback + watch progress (real custom player, resume
 watching, subtitle rendering — against local mock video/subtitle
 files, not any real/licensed source).
+Phase 5b: online subtitle discovery via the OpenSubtitles REST API —
+a real third-party integration (unlike playback sources, which stay
+mock/local only by design; see providers/README.md).
 Remaining feature routers (watchlist, etc.) are added in later phases
 per the approved implementation plan.
 """
@@ -16,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import auth, health, movies, playback, search, trending, tv
+from app.api.routes import auth, health, movies, playback, search, subtitles, trending, tv
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -25,6 +28,9 @@ settings = get_settings()
 # doesn't 500 before a test video/subtitle file has been dropped in.
 os.makedirs(settings.mock_videos_dir, exist_ok=True)
 os.makedirs(settings.mock_subtitles_dir, exist_ok=True)
+# Populated on demand by the OpenSubtitles download endpoint (Phase 5b) —
+# created up front for the same reason as the two mock dirs above.
+os.makedirs(settings.subtitle_cache_dir, exist_ok=True)
 
 
 class NoCacheStaticFiles(StaticFiles):
@@ -68,6 +74,12 @@ app.mount("/mock-videos", NoCacheStaticFiles(directory=settings.mock_videos_dir)
 app.mount(
     "/mock-subtitles", NoCacheStaticFiles(directory=settings.mock_subtitles_dir), name="mock-subtitles"
 )
+# Plain StaticFiles here (not NoCacheStaticFiles) — these are small,
+# whole-file text downloads, not the range-requested video streams the
+# Cache-Control workaround above exists for.
+app.mount(
+    "/subtitle-cache", StaticFiles(directory=settings.subtitle_cache_dir), name="subtitle-cache"
+)
 
 app.include_router(health.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
@@ -76,6 +88,7 @@ app.include_router(search.router, prefix="/api")
 app.include_router(movies.router, prefix="/api")
 app.include_router(tv.router, prefix="/api")
 app.include_router(playback.router, prefix="/api")
+app.include_router(subtitles.router, prefix="/api")
 
 
 @app.get("/api")

@@ -14,23 +14,11 @@ player never needs to know which provider produced a source.
 from pathlib import Path
 
 from app.core.config import get_settings
+from app.core.language_labels import label_for
 from app.schemas.playback import SubtitleTrackOut
 
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".mkv", ".mov"}
 SUBTITLE_EXTENSIONS = {".srt", ".vtt"}
-
-_LANGUAGE_LABELS = {
-    "en": "English",
-    "fa": "Persian",
-    "es": "Spanish",
-    "fr": "French",
-    "de": "German",
-    "ar": "Arabic",
-    "ja": "Japanese",
-    "ko": "Korean",
-    "zh": "Chinese",
-    "und": "Unknown",
-}
 
 
 class MockVideoNotConfigured(Exception):
@@ -60,7 +48,7 @@ def _find_mock_subtitles() -> list[SubtitleTrackOut]:
         # Naming convention: <name>.<language-code>.<ext>, e.g. movie.en.srt
         stem_parts = entry.stem.split(".")
         lang = stem_parts[-1].lower() if len(stem_parts) > 1 else "und"
-        label = _LANGUAGE_LABELS.get(lang, lang.upper())
+        label = label_for(lang)
         fmt = "srt" if entry.suffix.lower() == ".srt" else "vtt"
 
         tracks.append(

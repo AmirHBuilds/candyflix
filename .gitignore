@@ -38,6 +38,10 @@ backend/mock-videos/*
 backend/mock-subtitles/*
 !backend/mock-subtitles/README.md
 
+# --- Online subtitle cache (Phase 5b) ---
+# Downloaded from OpenSubtitles on demand — never something to commit.
+backend/subtitle-cache/
+
 # --- OS / editor cruft ---
 .DS_Store
 Thumbs.db

@@ -14,6 +14,39 @@ export type PlaybackSource = {
   resume_position_seconds: number | null;
 };
 
+// Phase 5b — online subtitle discovery. OnlineSubtitleResult is what
+// /subtitles/search returns (metadata + a file_id, not the subtitle
+// text itself); downloading one returns a SubtitleTrack — identical in
+// shape to a mock-provider track, so the player treats it the same way
+// once it exists.
+export type OnlineSubtitleResult = {
+  file_id: number;
+  language: string;
+  label: string;
+  release: string | null;
+  downloads: number;
+  rating: number | null;
+  hearing_impaired: boolean;
+};
+
+export type OnlineSubtitleSearchParams = {
+  mediaType: "movie" | "tv";
+  tmdbId: number;
+  seasonNumber?: number | null;
+  episodeNumber?: number | null;
+  language?: string;
+};
+
+export type OnlineSubtitleDownloadParams = {
+  mediaType: "movie" | "tv";
+  tmdbId: number;
+  seasonNumber?: number | null;
+  episodeNumber?: number | null;
+  fileId: number;
+  language: string;
+  label: string;
+};
+
 export type WatchProgressPayload = {
   tmdb_id: number;
   media_type: "movie" | "tv";
@@ -116,4 +149,39 @@ export async function getEpisodeWatchProgress(
     cache: "no-store",
   });
   return handle(res, "Couldn't load watch progress.");
+}
+
+// Phase 5b — online subtitle discovery (OpenSubtitles, proxied through
+// our backend so the API key never reaches the browser).
+export async function searchOnlineSubtitles(
+  params: OnlineSubtitleSearchParams
+): Promise<OnlineSubtitleResult[]> {
+  const query = new URLSearchParams({ media_type: params.mediaType, tmdb_id: String(params.tmdbId) });
+  if (params.seasonNumber != null) query.set("season_number", String(params.seasonNumber));
+  if (params.episodeNumber != null) query.set("episode_number", String(params.episodeNumber));
+  if (params.language) query.set("language", params.language);
+
+  const res = await fetch(`${getApiBaseUrl()}/subtitles/search?${query.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return handle(res, "Couldn't search for subtitles.");
+}
+
+export async function downloadOnlineSubtitle(params: OnlineSubtitleDownloadParams): Promise<SubtitleTrack> {
+  const res = await fetch(`${getApiBaseUrl()}/subtitles/download`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      media_type: params.mediaType,
+      tmdb_id: params.tmdbId,
+      season_number: params.seasonNumber ?? null,
+      episode_number: params.episodeNumber ?? null,
+      file_id: params.fileId,
+      language: params.language,
+      label: params.label,
+    }),
+  });
+  return handle(res, "Couldn't download that subtitle file.");
 }

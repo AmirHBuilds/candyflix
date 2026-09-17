@@ -377,3 +377,17 @@ async def get_season(tv_id: int, season_number: int) -> SeasonDetail:
         name=data.get("name") or f"Season {season_number}",
         episodes=episodes,
     )
+
+
+# Phase 5b — OpenSubtitles searches by IMDb ID, not TMDB ID, so these
+# resolve one from the other. Movies expose imdb_id directly on their
+# main details payload (already cached via get_movie's identical path);
+# TV shows only expose it on the separate external_ids endpoint.
+async def get_movie_imdb_id(tmdb_id: int) -> str | None:
+    data = await _get(f"/movie/{tmdb_id}", ttl=DETAILS_CACHE_TTL)
+    return data.get("imdb_id") or None
+
+
+async def get_tv_imdb_id(tmdb_id: int) -> str | None:
+    data = await _get(f"/tv/{tmdb_id}/external_ids", ttl=DETAILS_CACHE_TTL)
+    return data.get("imdb_id") or None

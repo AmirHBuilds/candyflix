@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { getStaticOrigin } from "@/lib/api-client";
-import type { PlaybackSource } from "@/lib/playback";
+import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
@@ -57,6 +57,12 @@ export default function VideoPlayer({
   const [scrubHover, setScrubHover] = useState(false);
   const [scrubDragging, setScrubDragging] = useState(false);
   const scrubTrackRef = useRef<HTMLDivElement>(null);
+  // Subtitles found via online search (Phase 5b) and downloaded. `source`
+  // is an immutable prop from the initial page load, so newly-added
+  // tracks live here instead and get merged into every place that reads
+  // the subtitle list.
+  const [onlineTracks, setOnlineTracks] = useState<SubtitleTrack[]>([]);
+  const allTracks = useMemo(() => [...source.subtitles, ...onlineTracks], [source.subtitles, onlineTracks]);
   const [buffering, setBuffering] = useState(true);
   const bufferingRef = useRef(buffering);
   useEffect(() => {
@@ -106,7 +112,7 @@ export default function VideoPlayer({
       setCues([]);
       return;
     }
-    const track = source.subtitles.find((t) => t.language === selectedLanguage);
+    const track = allTracks.find((t) => t.language === selectedLanguage);
     if (!track) {
       setCues([]);
       return;
@@ -123,7 +129,7 @@ export default function VideoPlayer({
     return () => {
       cancelled = true;
     };
-  }, [selectedLanguage, source.subtitles]);
+  }, [selectedLanguage, allTracks]);
 
   function updateSubtitleSettings(next: SubtitleSettings) {
     setSubtitleSettings(next);
@@ -524,7 +530,7 @@ export default function VideoPlayer({
     if (selectedLanguageRef.current) {
       setSelectedLanguage(null);
     } else {
-      setSelectedLanguage(lastSubtitleLanguageRef.current ?? source.subtitles[0]?.language ?? null);
+      setSelectedLanguage(lastSubtitleLanguageRef.current ?? allTracks[0]?.language ?? null);
     }
   }
 
@@ -581,7 +587,7 @@ export default function VideoPlayer({
           void toggleFullscreen();
           break;
         case "c":
-          if (source.subtitles.length > 0) toggleCaptions();
+          if (allTracks.length > 0) toggleCaptions();
           break;
         default:
           break;
@@ -847,7 +853,7 @@ export default function VideoPlayer({
           </div>
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
-            {source.subtitles.length > 0 && (
+            {allTracks.length > 0 && (
               <button
                 aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
                 aria-pressed={!!selectedLanguage}
@@ -876,7 +882,7 @@ export default function VideoPlayer({
                     <span>Playback speed</span>
                     <span className="text-white/50">{playbackRate === 1 ? "Normal" : `${playbackRate}x`}</span>
                   </button>
-                  {source.subtitles.length > 0 && (
+                  {allTracks.length > 0 && (
                     <button
                       onClick={() => setSettingsMenu("subtitles")}
                       className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
@@ -884,7 +890,7 @@ export default function VideoPlayer({
                       <span>Subtitles</span>
                       <span className="text-white/50">
                         {selectedLanguage
-                          ? (source.subtitles.find((t) => t.language === selectedLanguage)?.label ?? selectedLanguage)
+                          ? (allTracks.find((t) => t.language === selectedLanguage)?.label ?? selectedLanguage)
                           : "Off"}
                       </span>
                     </button>
@@ -928,11 +934,16 @@ export default function VideoPlayer({
                     Subtitles
                   </button>
                   <SubtitleSettingsPanel
-                    tracks={source.subtitles}
+                    tracks={allTracks}
                     selectedLanguage={selectedLanguage}
                     onSelectLanguage={setSelectedLanguage}
                     settings={subtitleSettings}
                     onChange={updateSubtitleSettings}
+                    identity={identity}
+                    onTrackAdded={(track) => {
+                      setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
+                      setSelectedLanguage(track.language);
+                    }}
                   />
                 </div>
               )}

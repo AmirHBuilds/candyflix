@@ -1,7 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
-import type { SubtitleTrack } from "@/lib/playback";
+import type { WatchIdentity } from "@/components/player/useWatchProgress";
+import {
+  downloadOnlineSubtitle,
+  searchOnlineSubtitles,
+  type OnlineSubtitleResult,
+  type SubtitleTrack,
+} from "@/lib/playback";
 
 const labelClass = "text-[11px] font-medium uppercase tracking-wider text-white/40";
 const selectClass =
@@ -125,18 +132,162 @@ function Toggle({
   );
 }
 
+function SearchIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M20 20l-4.35-4.35" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Online subtitle discovery (Phase 5b) — search OpenSubtitles for the
+// current title and drop a chosen result straight into the player as a
+// new selectable track. Kept as an expandable section right under the
+// language picker rather than a separate view, so it doesn't hide the
+// styling controls while it's open.
+function OnlineSubtitleSearch({
+  identity,
+  onTrackAdded,
+}: {
+  identity: WatchIdentity;
+  onTrackAdded: (track: SubtitleTrack) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [language, setLanguage] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<OnlineSubtitleResult[]>([]);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  async function runSearch() {
+    setSearching(true);
+    setError(null);
+    try {
+      const found = await searchOnlineSubtitles({
+        mediaType: identity.mediaType,
+        tmdbId: identity.tmdbId,
+        seasonNumber: identity.seasonNumber,
+        episodeNumber: identity.episodeNumber,
+        language: language.trim() || undefined,
+      });
+      setResults(found);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't search for subtitles.");
+      setResults([]);
+    } finally {
+      setSearching(false);
+      setSearched(true);
+    }
+  }
+
+  async function useResult(result: OnlineSubtitleResult) {
+    setDownloadingId(result.file_id);
+    setError(null);
+    try {
+      const track = await downloadOnlineSubtitle({
+        mediaType: identity.mediaType,
+        tmdbId: identity.tmdbId,
+        seasonNumber: identity.seasonNumber,
+        episodeNumber: identity.episodeNumber,
+        fileId: result.file_id,
+        language: result.language,
+        label: result.label,
+      });
+      onTrackAdded(track);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't download that subtitle file.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-xs font-medium text-[#FF5FA2] transition-colors hover:text-[#ff85b8]"
+      >
+        <SearchIcon />
+        {open ? "Hide subtitle search" : "Find more subtitles"}
+      </button>
+
+      {open && (
+        <div className="mt-2 flex flex-col gap-2 rounded-xl bg-white/[0.04] p-3">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && runSearch()}
+              placeholder="Language code — en, fa, es… (optional)"
+              className={`${selectClass} flex-1`}
+            />
+            <button
+              type="button"
+              onClick={runSearch}
+              disabled={searching}
+              className="shrink-0 rounded-lg bg-[#FF5FA2] px-3 text-sm font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
+            >
+              {searching ? "…" : "Search"}
+            </button>
+          </div>
+
+          {error && <span className="text-xs text-red-400">{error}</span>}
+          {!error && !searching && searched && results.length === 0 && (
+            <span className="text-xs text-white/50">No subtitles found for this title.</span>
+          )}
+
+          {results.length > 0 && (
+            <ul className="flex max-h-44 flex-col gap-1 overflow-y-auto">
+              {results.map((r) => (
+                <li
+                  key={r.file_id}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.05] px-2.5 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-xs font-medium text-white">
+                      {r.label}
+                      {r.hearing_impaired ? " · HI" : ""}
+                    </div>
+                    {r.release && <div className="truncate text-[11px] text-white/45">{r.release}</div>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => useResult(r)}
+                    disabled={downloadingId !== null}
+                    className="shrink-0 rounded-full bg-[#FF5FA2] px-2.5 py-1 text-[11px] font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
+                  >
+                    {downloadingId === r.file_id ? "Adding…" : "Use"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SubtitleSettingsPanel({
   tracks,
   selectedLanguage,
   onSelectLanguage,
   settings,
   onChange,
+  identity,
+  onTrackAdded,
 }: {
   tracks: SubtitleTrack[];
   selectedLanguage: string | null;
   onSelectLanguage: (language: string | null) => void;
   settings: SubtitleSettings;
   onChange: (settings: SubtitleSettings) => void;
+  identity: WatchIdentity;
+  onTrackAdded: (track: SubtitleTrack) => void;
 }) {
   function set<K extends keyof SubtitleSettings>(key: K, value: SubtitleSettings[K]) {
     onChange({ ...settings, [key]: value });
@@ -158,6 +309,7 @@ export default function SubtitleSettingsPanel({
             </option>
           ))}
         </select>
+        <OnlineSubtitleSearch identity={identity} onTrackAdded={onTrackAdded} />
       </div>
 
       {selectedLanguage && (
