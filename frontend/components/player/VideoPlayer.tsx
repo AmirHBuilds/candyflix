@@ -670,7 +670,7 @@ export default function VideoPlayer({
       {centerPulse && (
         <div
           key={centerPulse.nonce}
-          className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex h-20 w-20 items-center justify-center rounded-full bg-black/55 text-white animate-[centerPulse_0.7s_ease-out]"
+          className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex h-24 w-24 items-center justify-center rounded-full bg-black/55 text-white animate-[centerPulse_0.7s_ease-out]"
         >
           {centerPulse.icon === "play" ? <BigPlayIcon /> : <BigPauseIcon />}
         </div>
@@ -766,7 +766,7 @@ export default function VideoPlayer({
         >
           <div
             ref={scrubTrackRef}
-            className={`relative w-full rounded-full bg-white/25 transition-[height] duration-150 ${
+            className={`relative w-full rounded-full bg-white/25 transition-all duration-150 ease-out ${
               scrubHover || scrubDragging ? "h-[5px]" : "h-[3px]"
             }`}
           >
@@ -779,7 +779,7 @@ export default function VideoPlayer({
               style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
             >
               <div
-                className={`absolute top-1/2 rounded-full bg-[#FF5FA2] shadow-[0_0_2px_rgba(0,0,0,0.6)] transition-[width,height] duration-150 ${
+                className={`absolute top-1/2 rounded-full bg-[#FF5FA2] shadow-[0_0_2px_rgba(0,0,0,0.6)] transition-all duration-150 ease-out ${
                   scrubHover || scrubDragging ? "h-4 w-4" : "h-[13px] w-[13px]"
                 }`}
                 style={{ right: scrubHover || scrubDragging ? "-8px" : "-6.5px", transform: "translateY(-50%)" }}
@@ -820,7 +820,7 @@ export default function VideoPlayer({
             </div>
           )}
 
-          <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 px-1">
+          <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 pl-1 pr-2">
             <button
               aria-label="Mute/unmute"
               onClick={toggleMute}
@@ -846,7 +846,7 @@ export default function VideoPlayer({
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
 
-          <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 p-1" ref={settingsRef}>
+          <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
             {source.subtitles.length > 0 && (
               <button
                 aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
@@ -971,14 +971,14 @@ function PauseIcon() {
 // Bigger versions for the center-of-screen confirmation bubble.
 function BigPlayIcon() {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor">
       <path d="M8 5v14l11-7z" />
     </svg>
   );
 }
 function BigPauseIcon() {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor">
       <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
     </svg>
   );
