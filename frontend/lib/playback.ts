@@ -35,6 +35,10 @@ export type OnlineSubtitleSearchParams = {
   seasonNumber?: number | null;
   episodeNumber?: number | null;
   language?: string;
+  // Filters results to those whose release name contains this text
+  // (e.g. "bluray") — filtered by the backend over one already-fetched
+  // result set, not a separate OpenSubtitles-side search.
+  query?: string;
 };
 
 export type OnlineSubtitleDownloadParams = {
@@ -160,6 +164,7 @@ export async function searchOnlineSubtitles(
   if (params.seasonNumber != null) query.set("season_number", String(params.seasonNumber));
   if (params.episodeNumber != null) query.set("episode_number", String(params.episodeNumber));
   if (params.language) query.set("language", params.language);
+  if (params.query) query.set("query", params.query);
 
   const res = await fetch(`${getApiBaseUrl()}/subtitles/search?${query.toString()}`, {
     credentials: "include",

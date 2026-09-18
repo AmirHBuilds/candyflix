@@ -82,6 +82,39 @@ class TestSearch:
         assert results[1].hearing_impaired is True
 
     @respx.mock
+    async def test_search_query_filters_by_release_name(self):
+        """Regression test for the "browse by release" feature: filtering
+        happens client-side over one already-fetched result set, not as a
+        separate OpenSubtitles-side text search."""
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE)
+        )
+
+        results = await opensubtitles_service.search("tt0903747", query="webrip")
+
+        assert [r.file_id for r in results] == [111]  # only the WEBRip release matched
+
+    @respx.mock
+    async def test_search_query_is_case_insensitive(self):
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE)
+        )
+
+        results = await opensubtitles_service.search("tt0903747", query="HDTV")
+
+        assert [r.file_id for r in results] == [222]
+
+    @respx.mock
+    async def test_search_query_with_no_matches_returns_empty(self):
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE)
+        )
+
+        results = await opensubtitles_service.search("tt0903747", query="nonexistent-release-xyz")
+
+        assert results == []
+
+    @respx.mock
     async def test_follows_redirects(self):
         """Regression test for a real bug: OpenSubtitles was observed
         301-redirecting some /subtitles requests. httpx does NOT follow

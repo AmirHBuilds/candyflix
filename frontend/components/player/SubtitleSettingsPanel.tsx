@@ -200,13 +200,15 @@ export default function SubtitleSettingsPanel({
   const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
 
-  const [showLanguageSearch, setShowLanguageSearch] = useState(false);
-  const [languageCode, setLanguageCode] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
   const knownLanguages = new Set(tracks.map((t) => t.language));
   const moreLanguages = availableLanguages.filter((l) => !knownLanguages.has(l.language));
+
+  const [showBrowse, setShowBrowse] = useState(false);
+  const [browseQuery, setBrowseQuery] = useState("");
+  const [browsing, setBrowsing] = useState(false);
+  const [browseError, setBrowseError] = useState<string | null>(null);
+  const [browseResults, setBrowseResults] = useState<OnlineSubtitleResult[] | null>(null);
+  const [browseDownloadingId, setBrowseDownloadingId] = useState<number | null>(null);
 
   async function handleSelect(value: string) {
     if (value === SEARCH_OPTION_VALUE) {
@@ -214,8 +216,7 @@ export default function SubtitleSettingsPanel({
       // the next render it snaps back to showing the real current
       // selection rather than sticking on this sentinel — no manual
       // reset needed.
-      setShowLanguageSearch(true);
-      setSearchError(null);
+      setShowBrowse(true);
       return;
     }
     if (!value || knownLanguages.has(value)) {
@@ -247,43 +248,62 @@ export default function SubtitleSettingsPanel({
     }
   }
 
-  async function searchByCode() {
-    const code = languageCode.trim().toLowerCase();
-    if (!code) return;
-
-    setSearching(true);
-    setSearchError(null);
+  // Runs even with an empty query — that's "browse everything uploaded
+  // for this title" (first page, most-downloaded first). A non-empty
+  // query narrows to uploads whose release name contains it (e.g.
+  // "bluray"), which matters because two releases of the same title in
+  // the same language can still be a second or two out of sync with
+  // each other — this lets someone pick the specific one that matches
+  // what they're actually watching, not just a language.
+  async function runBrowse() {
+    setBrowsing(true);
+    setBrowseError(null);
     try {
       const results = await searchOnlineSubtitles({
         mediaType: identity.mediaType,
         tmdbId: identity.tmdbId,
         seasonNumber: identity.seasonNumber,
         episodeNumber: identity.episodeNumber,
-        language: code,
+        query: browseQuery.trim() || undefined,
       });
+      setBrowseResults(results);
       if (results.length === 0) {
-        setSearchError(`No subtitles found for "${code}".`);
-        return;
+        setBrowseError(
+          browseQuery.trim()
+            ? `No uploads found matching "${browseQuery.trim()}".`
+            : "No subtitles found for this title."
+        );
       }
-      // results[] is already sorted most-downloaded first by the backend.
-      const best = results[0];
+    } catch (e) {
+      setBrowseError(e instanceof Error ? e.message : "Couldn't search for subtitles.");
+      setBrowseResults(null);
+    } finally {
+      setBrowsing(false);
+    }
+  }
+
+  async function useBrowseResult(result: OnlineSubtitleResult) {
+    setBrowseDownloadingId(result.file_id);
+    setBrowseError(null);
+    try {
       const track = await downloadOnlineSubtitle({
         mediaType: identity.mediaType,
         tmdbId: identity.tmdbId,
         seasonNumber: identity.seasonNumber,
         episodeNumber: identity.episodeNumber,
-        fileId: best.file_id,
-        language: best.language,
-        label: best.label,
+        fileId: result.file_id,
+        language: result.language,
+        label: result.label,
       });
       onTrackAdded(track);
       onSelectLanguage(track.language);
-      setShowLanguageSearch(false);
-      setLanguageCode("");
+      setShowBrowse(false);
+      setBrowseResults(null);
+      setBrowseQuery("");
     } catch (e) {
-      setSearchError(e instanceof Error ? e.message : "Couldn't search for that language.");
+      setBrowseError(e instanceof Error ? e.message : "Couldn't download that subtitle file.");
     } finally {
-      setSearching(false);
+      setBrowseDownloadingId(null);
     }
   }
 
@@ -312,36 +332,37 @@ export default function SubtitleSettingsPanel({
               {l.label}
             </option>
           ))}
-          <option value={SEARCH_OPTION_VALUE}>Search for language…</option>
+          <option value={SEARCH_OPTION_VALUE}>Search all subtitles…</option>
         </select>
         {addingLanguage && <span className="text-xs text-white/50">Adding subtitle…</span>}
         {addError && <span className="text-xs text-red-400">{addError}</span>}
 
-        {showLanguageSearch && (
-          <div className="mt-1 flex flex-col gap-1.5">
+        {showBrowse && (
+          <div className="mt-1 flex flex-col gap-2 rounded-xl bg-white/[0.04] p-3">
             <div className="flex gap-2">
               <input
                 type="text"
                 autoFocus
-                value={languageCode}
-                onChange={(e) => setLanguageCode(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchByCode()}
-                placeholder="Language code — es, fa, de…"
+                value={browseQuery}
+                onChange={(e) => setBrowseQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && runBrowse()}
+                placeholder="Release, language, or blank for all…"
                 className={`${selectClass} flex-1`}
               />
               <button
                 type="button"
-                onClick={searchByCode}
-                disabled={searching || !languageCode.trim()}
+                onClick={runBrowse}
+                disabled={browsing}
                 className="shrink-0 rounded-lg bg-[#FF5FA2] px-3 text-sm font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
               >
-                {searching ? "…" : "Search"}
+                {browsing ? "…" : "Search"}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setShowLanguageSearch(false);
-                  setSearchError(null);
+                  setShowBrowse(false);
+                  setBrowseError(null);
+                  setBrowseResults(null);
                 }}
                 aria-label="Cancel"
                 className="shrink-0 rounded-lg bg-white/10 px-3 text-sm text-white/70 transition-colors hover:bg-white/20 hover:text-white"
@@ -349,7 +370,35 @@ export default function SubtitleSettingsPanel({
                 ✕
               </button>
             </div>
-            {searchError && <span className="text-xs text-red-400">{searchError}</span>}
+
+            {browseError && <span className="text-xs text-red-400">{browseError}</span>}
+
+            {browseResults && browseResults.length > 0 && (
+              <ul className="flex max-h-44 flex-col gap-1 overflow-y-auto">
+                {browseResults.map((r) => (
+                  <li
+                    key={r.file_id}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.05] px-2.5 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs font-medium text-white">
+                        {r.label}
+                        {r.hearing_impaired ? " · HI" : ""}
+                      </div>
+                      {r.release && <div className="truncate text-[11px] text-white/45">{r.release}</div>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => useBrowseResult(r)}
+                      disabled={browseDownloadingId !== null}
+                      className="shrink-0 rounded-full bg-[#FF5FA2] px-2.5 py-1 text-[11px] font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
+                    >
+                      {browseDownloadingId === r.file_id ? "Adding…" : "Use"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

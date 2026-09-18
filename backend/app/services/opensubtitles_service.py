@@ -189,7 +189,18 @@ async def search(
     season_number: int | None = None,
     episode_number: int | None = None,
     language: str | None = None,
+    query: str | None = None,
 ) -> list[OnlineSubtitleResult]:
+    """`query`, when given, filters down to results whose release name
+    contains it (case-insensitive) — e.g. "bluray" to find uploads
+    matching a specific release/cut, since different releases of the
+    same title can be a second or two out of sync with each other even
+    with an identical translation. This is filtered here, not sent to
+    OpenSubtitles: a search scoped to one imdb_id already returns every
+    upload across every language and release for that title in one
+    response, so there's no need for a separate text-search round trip —
+    filtering the list we already have is simpler and doesn't cost any
+    extra quota."""
     params: dict[str, str | int] = {"imdb_id": _imdb_id_to_numeric(imdb_id)}
     if season_number is not None:
         params["season_number"] = season_number
@@ -227,6 +238,10 @@ async def search(
                 hearing_impaired=bool(attrs.get("hearing_impaired")),
             )
         )
+
+    if query:
+        q = query.strip().lower()
+        results = [r for r in results if q in (r.release or "").lower()]
 
     # Most-downloaded first — a reasonable default "best" ordering rather
     # than asking the person to judge raw upload quality themselves.

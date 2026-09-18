@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
@@ -84,6 +84,12 @@ export default function VideoPlayer({
   // "subtitles" -> back arrow returns to root. Replaces the old separate
   // speed-menu/subtitle-settings toggles now that both live behind one gear.
   const [settingsMenu, setSettingsMenu] = useState<"root" | "speed" | "subtitles" | null>(null);
+  // Desktop has plenty of room above the control bar, so opening upward
+  // (anchored to the bottom of the trigger) is the right default there.
+  // On a short phone viewport, upward can push the (especially tall)
+  // subtitles panel off the top of the screen entirely — so this is
+  // recomputed against actual available space every time a menu opens.
+  const [settingsMenuDirection, setSettingsMenuDirection] = useState<"up" | "down">("up");
 
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const selectedLanguageRef = useRef<string | null>(null);
@@ -400,6 +406,20 @@ export default function VideoPlayer({
     }
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [settingsMenu]);
+
+  useLayoutEffect(() => {
+    if (settingsMenu === null || !settingsRef.current) return;
+    // The subtitles panel (live preview + full styling controls) is far
+    // taller than the plain root/speed lists, so each needs its own
+    // rough height estimate rather than one shared threshold — a exact
+    // pixel-perfect measurement isn't needed since every panel also has
+    // a max-height/overflow safety clamp regardless of which way it opens.
+    const estimatedHeight = settingsMenu === "subtitles" ? 480 : 220;
+    const rect = settingsRef.current.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setSettingsMenuDirection(spaceAbove >= estimatedHeight || spaceAbove >= spaceBelow ? "up" : "down");
   }, [settingsMenu]);
 
   useEffect(() => {
@@ -885,7 +905,11 @@ export default function VideoPlayer({
               </button>
 
               {settingsMenu === "root" && (
-                <div className="absolute bottom-full right-0 mb-2 w-56 overflow-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                <div
+                  className={`absolute right-0 max-h-[70vh] w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur ${
+                    settingsMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+                  }`}
+                >
                   <button
                     onClick={() => setSettingsMenu("speed")}
                     className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
@@ -908,7 +932,11 @@ export default function VideoPlayer({
               )}
 
               {settingsMenu === "speed" && (
-                <div className="absolute bottom-full right-0 mb-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                <div
+                  className={`absolute right-0 max-h-[70vh] w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur ${
+                    settingsMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+                  }`}
+                >
                   <button
                     onClick={() => setSettingsMenu("root")}
                     className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
@@ -934,10 +962,14 @@ export default function VideoPlayer({
               )}
 
               {settingsMenu === "subtitles" && (
-                <div className="absolute bottom-full right-0 mb-2 flex flex-col items-end gap-1">
+                <div
+                  className={`absolute right-0 flex max-h-[85vh] flex-col items-end gap-1 overflow-y-auto overflow-x-hidden ${
+                    settingsMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+                  }`}
+                >
                   <button
                     onClick={() => setSettingsMenu("root")}
-                    className="flex w-56 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
+                    className="flex w-56 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
                   >
                     <BackChevronIcon />
                     Subtitles

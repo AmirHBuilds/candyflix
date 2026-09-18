@@ -25,6 +25,7 @@ async def search_online_subtitles(
     season_number: int | None = None,
     episode_number: int | None = None,
     language: str | None = None,
+    query: str | None = None,
     current_user: User = Depends(get_current_user),
 ):
     if media_type not in ("movie", "tv"):
@@ -46,7 +47,7 @@ async def search_online_subtitles(
         )
 
     try:
-        return await opensubtitles_service.search(imdb_id, season_number, episode_number, language)
+        return await opensubtitles_service.search(imdb_id, season_number, episode_number, language, query)
     except OpenSubtitlesError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
