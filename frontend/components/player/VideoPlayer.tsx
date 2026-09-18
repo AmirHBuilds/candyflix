@@ -526,6 +526,19 @@ export default function VideoPlayer({
   // selected (falling back to the first available track) — this is what
   // the main-bar CC button does; per-language choice and styling both
   // live in the Settings > Subtitles submenu instead.
+  function handleCaptionsButtonClick() {
+    // Nothing to toggle yet (the automatic default English fetch can come
+    // up empty — no IMDb match, no English result, OpenSubtitles down) —
+    // so open the picker instead of a no-op toggle. The picker's own
+    // background language search can still find something even when the
+    // automatic default didn't.
+    if (allTracks.length === 0) {
+      setSettingsMenu("subtitles");
+      return;
+    }
+    toggleCaptions();
+  }
+
   function toggleCaptions() {
     if (selectedLanguageRef.current) {
       setSelectedLanguage(null);
@@ -587,7 +600,7 @@ export default function VideoPlayer({
           void toggleFullscreen();
           break;
         case "c":
-          if (allTracks.length > 0) toggleCaptions();
+          handleCaptionsButtonClick();
           break;
         default:
           break;
@@ -853,16 +866,14 @@ export default function VideoPlayer({
           </div>
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
-            {allTracks.length > 0 && (
-              <button
-                aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
-                aria-pressed={!!selectedLanguage}
-                onClick={toggleCaptions}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
-              >
-                <CCIcon active={!!selectedLanguage} />
-              </button>
-            )}
+            <button
+              aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
+              aria-pressed={!!selectedLanguage}
+              onClick={handleCaptionsButtonClick}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              <CCIcon active={!!selectedLanguage} />
+            </button>
 
             <div className="relative">
               <button
@@ -882,19 +893,17 @@ export default function VideoPlayer({
                     <span>Playback speed</span>
                     <span className="text-white/50">{playbackRate === 1 ? "Normal" : `${playbackRate}x`}</span>
                   </button>
-                  {allTracks.length > 0 && (
-                    <button
-                      onClick={() => setSettingsMenu("subtitles")}
-                      className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
-                    >
-                      <span>Subtitles</span>
-                      <span className="text-white/50">
-                        {selectedLanguage
-                          ? (allTracks.find((t) => t.language === selectedLanguage)?.label ?? selectedLanguage)
-                          : "Off"}
-                      </span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setSettingsMenu("subtitles")}
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                  >
+                    <span>Subtitles</span>
+                    <span className="text-white/50">
+                      {selectedLanguage
+                        ? (allTracks.find((t) => t.language === selectedLanguage)?.label ?? selectedLanguage)
+                        : "Off"}
+                    </span>
+                  </button>
                 </div>
               )}
 

@@ -81,6 +81,26 @@ class TestSearch:
         assert results[0].label == "English"
         assert results[1].hearing_impaired is True
 
+    @respx.mock
+    async def test_follows_redirects(self):
+        """Regression test for a real bug: OpenSubtitles was observed
+        301-redirecting some /subtitles requests. httpx does NOT follow
+        redirects by default, so without follow_redirects=True on the
+        client, the 301's own HTML body gets treated as the response and
+        fails — this must not regress."""
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(
+                301, headers={"Location": "https://api.opensubtitles.com/api/v1/subtitles/"}
+            )
+        )
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles/").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE)
+        )
+
+        results = await opensubtitles_service.search("tt0903747")
+
+        assert [r.file_id for r in results] == [111, 222]
+
     async def test_search_without_api_key_raises(self, monkeypatch):
         monkeypatch.setattr(settings, "opensubtitles_api_key", "")
         with pytest.raises(OpenSubtitlesError) as exc_info:

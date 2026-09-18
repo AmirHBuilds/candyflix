@@ -21,6 +21,13 @@ logged-in user behind them. Both `search` and `download` attach a
 login token whenever credentials are configured; if they aren't,
 requests still go out key-only, which may or may not be enough
 depending on how strict OpenSubtitles is being that day.
+
+Every httpx.AsyncClient here is created with follow_redirects=True.
+httpx defaults to NOT following redirects, and OpenSubtitles' /subtitles
+endpoint has been observed 301-redirecting some requests — without
+this, that redirect response (a small HTML page, not JSON) gets treated
+as the real API response and fails to parse, surfacing as a confusing
+"OpenSubtitles returned an unexpected error (301)".
 """
 import logging
 from pathlib import Path
@@ -121,7 +128,7 @@ async def _get_auth_token() -> str | None:
     if cached:
         return cached
 
-    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0) as client:
+    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0, follow_redirects=True) as client:
         try:
             response = await client.post(
                 "/login",
@@ -191,7 +198,7 @@ async def search(
     if language:
         params["languages"] = language
 
-    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0) as client:
+    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0, follow_redirects=True) as client:
         try:
             response = await client.get("/subtitles", headers=await _auth_headers(), params=params)
         except httpx.RequestError as e:
@@ -240,7 +247,7 @@ async def download(file_id: int, cache_key: str) -> Path:
         return cached_path
 
     headers = await _auth_headers()
-    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=15.0) as client:
+    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=15.0, follow_redirects=True) as client:
         try:
             response = await client.post("/download", headers=headers, json={"file_id": file_id})
         except httpx.RequestError as e:
@@ -256,7 +263,7 @@ async def download(file_id: int, cache_key: str) -> Path:
     if not link:
         raise OpenSubtitlesError(502, "OpenSubtitles didn't return a download link.")
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
         try:
             file_response = await client.get(link)
         except httpx.RequestError as e:
