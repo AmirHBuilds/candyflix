@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 import {
   downloadOnlineSubtitle,
   searchOnlineSubtitles,
+  type OnlineSubtitleResult,
   type SubtitleTrack,
 } from "@/lib/playback";
 
@@ -132,6 +133,46 @@ function Toggle({
 }
 
 // Discovers what languages OpenSubtitles has for this title (one
+// unfiltered search, grouped down to the best/most-downloaded file per
+// language) so the dropdown can list them directly — picking one
+// downloads that language's top match and selects it in a single step.
+// Anything this search doesn't surface (rare languages, or titles with
+// so many uploads that page one doesn't cover everything) is still
+// reachable via the "Search for language…" option below.
+function useAvailableLanguages(identity: WatchIdentity) {
+  const [languages, setLanguages] = useState<OnlineSubtitleResult[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    searchOnlineSubtitles({
+      mediaType: identity.mediaType,
+      tmdbId: identity.tmdbId,
+      seasonNumber: identity.seasonNumber,
+      episodeNumber: identity.episodeNumber,
+    })
+      .then((results) => {
+        if (cancelled) return;
+        const byLanguage = new Map<string, OnlineSubtitleResult>();
+        for (const r of results) {
+          // search() on the backend already sorts most-downloaded first,
+          // so the first entry seen per language is the best one.
+          if (!byLanguage.has(r.language)) byLanguage.set(r.language, r);
+        }
+        setLanguages([...byLanguage.values()]);
+      })
+      .catch(() => {
+        // Silent — worst case the dropdown just doesn't offer extra
+        // languages this time; the ones already active, and manual
+        // search, still work fine.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
+
+  return languages;
+}
+
 // Sentinel value for the dropdown's last option — picking it doesn't
 // select a language, it opens the small "search by code" box below.
 // Kept out of the real language-code space (a genuine ISO code is never
@@ -155,12 +196,19 @@ export default function SubtitleSettingsPanel({
   identity: WatchIdentity;
   onTrackAdded: (track: SubtitleTrack) => void;
 }) {
+  const availableLanguages = useAvailableLanguages(identity);
+  const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+
   const [showLanguageSearch, setShowLanguageSearch] = useState(false);
   const [languageCode, setLanguageCode] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  function handleSelect(value: string) {
+  const knownLanguages = new Set(tracks.map((t) => t.language));
+  const moreLanguages = availableLanguages.filter((l) => !knownLanguages.has(l.language));
+
+  async function handleSelect(value: string) {
     if (value === SEARCH_OPTION_VALUE) {
       // The <select>'s value stays bound to selectedLanguage below, so on
       // the next render it snaps back to showing the real current
@@ -170,7 +218,33 @@ export default function SubtitleSettingsPanel({
       setSearchError(null);
       return;
     }
-    onSelectLanguage(value || null);
+    if (!value || knownLanguages.has(value)) {
+      onSelectLanguage(value || null);
+      return;
+    }
+    // One of the discovered-but-not-downloaded-yet options.
+    const candidate = moreLanguages.find((l) => l.language === value);
+    if (!candidate) return;
+
+    setAddingLanguage(value);
+    setAddError(null);
+    try {
+      const track = await downloadOnlineSubtitle({
+        mediaType: identity.mediaType,
+        tmdbId: identity.tmdbId,
+        seasonNumber: identity.seasonNumber,
+        episodeNumber: identity.episodeNumber,
+        fileId: candidate.file_id,
+        language: candidate.language,
+        label: candidate.label,
+      });
+      onTrackAdded(track);
+      onSelectLanguage(track.language);
+    } catch (e) {
+      setAddError(e instanceof Error ? e.message : "Couldn't add that language.");
+    } finally {
+      setAddingLanguage(null);
+    }
   }
 
   async function searchByCode() {
@@ -223,7 +297,8 @@ export default function SubtitleSettingsPanel({
         <span className={labelClass}>Subtitles</span>
         <select
           className={selectClass}
-          value={selectedLanguage ?? ""}
+          value={addingLanguage ?? selectedLanguage ?? ""}
+          disabled={addingLanguage !== null}
           onChange={(e) => handleSelect(e.target.value)}
         >
           <option value="">Off</option>
@@ -232,8 +307,15 @@ export default function SubtitleSettingsPanel({
               {t.label}
             </option>
           ))}
+          {moreLanguages.map((l) => (
+            <option key={l.language} value={l.language}>
+              {l.label}
+            </option>
+          ))}
           <option value={SEARCH_OPTION_VALUE}>Search for language…</option>
         </select>
+        {addingLanguage && <span className="text-xs text-white/50">Adding subtitle…</span>}
+        {addError && <span className="text-xs text-red-400">{addError}</span>}
 
         {showLanguageSearch && (
           <div className="mt-1 flex flex-col gap-1.5">
