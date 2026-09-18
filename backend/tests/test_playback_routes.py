@@ -9,15 +9,18 @@ temp directory (see test_mock_provider.py for the provider's own
 dedicated tests).
 """
 import uuid
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 import app.core.redis as redis_module
+import app.services.subtitle_service as subtitle_service
 from app.core.db import AsyncSessionLocal, engine
 from app.core.security import SESSION_COOKIE_NAME
 from app.main import app
 from app.providers import mock_provider
+from app.schemas.playback import SubtitleTrackOut
 from app.services import auth_service, watch_progress_service
 
 pytestmark = pytest.mark.asyncio
@@ -46,6 +49,18 @@ async def dispose_db_pool():
     await engine.dispose()
 
 
+@pytest.fixture(autouse=True)
+def no_real_default_subtitle_lookup(monkeypatch):
+    """The playback routes now call out to TMDB + OpenSubtitles to find a
+    default English subtitle (Phase 5b) — real network access neither
+    available in CI/sandboxes nor desirable for tests that don't care
+    about subtitle content at all. Defaults to "found nothing" (which is
+    also the real graceful-degradation behavior when those services are
+    unreachable); the one test that actually cares about subtitle content
+    overrides this directly."""
+    monkeypatch.setattr(subtitle_service, "get_default_english_track", AsyncMock(return_value=None))
+
+
 @pytest.fixture
 async def db():
     async with AsyncSessionLocal() as session:
@@ -70,13 +85,10 @@ async def _make_authed_client(client: AsyncClient, db, username: str) -> AsyncCl
 @pytest.fixture
 def mock_video_dirs(tmp_path, monkeypatch):
     videos = tmp_path / "mock-videos"
-    subs = tmp_path / "mock-subtitles"
     videos.mkdir()
-    subs.mkdir()
     settings = mock_provider.get_settings()
     monkeypatch.setattr(settings, "mock_videos_dir", str(videos))
-    monkeypatch.setattr(settings, "mock_subtitles_dir", str(subs))
-    return videos, subs
+    return videos
 
 
 async def _cleanup_user(db, username: str):
@@ -110,12 +122,20 @@ class TestPlaybackSource:
         finally:
             await _cleanup_user(db, username)
 
-    async def test_playback_source_includes_video_and_subtitles(
-        self, client, db, mock_video_dirs
+    async def test_playback_source_includes_video_and_default_english_subtitle(
+        self, client, db, mock_video_dirs, monkeypatch
     ):
-        videos, subs = mock_video_dirs
+        videos = mock_video_dirs
         (videos / "test.mp4").write_bytes(b"fake")
-        (subs / "test.en.srt").write_text("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
+        monkeypatch.setattr(
+            subtitle_service,
+            "get_default_english_track",
+            AsyncMock(
+                return_value=SubtitleTrackOut(
+                    language="en", label="English", url="/subtitle-cache/movie-550-en-1.srt", format="srt"
+                )
+            ),
+        )
 
         username = f"pb_test_{uuid.uuid4().hex[:8]}"
         try:
@@ -125,15 +145,35 @@ class TestPlaybackSource:
             body = resp.json()
             assert body["source_type"] == "mock"
             assert body["url"] == "/mock-videos/test.mp4"
-            assert body["subtitles"][0]["language"] == "en"
+            assert body["subtitles"] == [
+                {"language": "en", "label": "English", "url": "/subtitle-cache/movie-550-en-1.srt", "format": "srt"}
+            ]
             assert body["resume_position_seconds"] is None
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_playback_source_has_no_subtitles_when_lookup_finds_none(
+        self, client, db, mock_video_dirs
+    ):
+        """The autouse no_real_default_subtitle_lookup fixture already
+        returns None here — this locks in that playback itself must never
+        fail just because the (optional, best-effort) subtitle lookup did."""
+        videos = mock_video_dirs
+        (videos / "test.mp4").write_bytes(b"fake")
+
+        username = f"pb_test_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            resp = await client.get("/api/playback/movie/550")
+            assert resp.status_code == 200
+            assert resp.json()["subtitles"] == []
         finally:
             await _cleanup_user(db, username)
 
     async def test_playback_source_includes_resume_position_when_progress_exists(
         self, client, db, mock_video_dirs
     ):
-        videos, _ = mock_video_dirs
+        videos = mock_video_dirs
         (videos / "test.mp4").write_bytes(b"fake")
 
         username = f"pb_test_{uuid.uuid4().hex[:8]}"

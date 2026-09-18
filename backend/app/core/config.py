@@ -31,17 +31,18 @@ class Settings(BaseSettings):
     # CORS
     frontend_origin: str = "http://localhost:3000"
 
-    # Phase 5 — mock playback (folders you drop test files into; gitignored)
+    # Phase 5 — mock playback (a folder you drop a test video into; gitignored)
     mock_videos_dir: str = "mock-videos"
-    mock_subtitles_dir: str = "mock-subtitles"
 
     # Phase 5b — online subtitle discovery (OpenSubtitles REST API).
     # Free API key from https://www.opensubtitles.com/en/consumers — required
-    # for search/download to work at all. Username/password are optional and
-    # only raise your daily download quota; leave them blank to use the key
-    # alone. Downloaded files are cached in subtitle_cache_dir so the same
-    # (title, season, episode, language) is never re-downloaded, since the
-    # free tier's daily download quota is small.
+    # for search/download to work at all. Username/password are technically
+    # optional, but OpenSubtitles has a history of throttling/rejecting
+    # key-only requests — set these too (same account as the API key) if
+    # search/download come back with 401/403/429. Downloaded files are
+    # cached in subtitle_cache_dir so the same (title, season, episode,
+    # language) is never re-downloaded, since the daily download quota
+    # is small either way.
     opensubtitles_api_key: str = ""
     opensubtitles_user_agent: str = "CandyFlix v1.0"
     opensubtitles_username: str = ""

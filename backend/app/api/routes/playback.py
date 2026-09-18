@@ -13,7 +13,7 @@ from app.models.user import User
 from app.providers import mock_provider
 from app.providers.mock_provider import MockVideoNotConfigured
 from app.schemas.playback import PlaybackSource, WatchProgressIn, WatchProgressOut
-from app.services import watch_progress_service
+from app.services import subtitle_service, watch_progress_service
 
 router = APIRouter(tags=["playback"])
 
@@ -25,9 +25,11 @@ async def playback_movie(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        url, subtitles = mock_provider.get_mock_playback()
+        url = mock_provider.get_mock_video_url()
     except MockVideoNotConfigured as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+    default_track = await subtitle_service.get_default_english_track("movie", tmdb_id, None, None)
 
     progress = await watch_progress_service.get_progress(
         db, current_user.id, tmdb_id, "movie", None, None
@@ -35,7 +37,7 @@ async def playback_movie(
     return PlaybackSource(
         source_type="mock",
         url=url,
-        subtitles=subtitles,
+        subtitles=[default_track] if default_track else [],
         resume_position_seconds=progress.position_seconds if progress else None,
     )
 
@@ -49,9 +51,13 @@ async def playback_episode(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        url, subtitles = mock_provider.get_mock_playback()
+        url = mock_provider.get_mock_video_url()
     except MockVideoNotConfigured as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+    default_track = await subtitle_service.get_default_english_track(
+        "tv", tmdb_id, season_number, episode_number
+    )
 
     progress = await watch_progress_service.get_progress(
         db, current_user.id, tmdb_id, "tv", season_number, episode_number
@@ -59,7 +65,7 @@ async def playback_episode(
     return PlaybackSource(
         source_type="mock",
         url=url,
-        subtitles=subtitles,
+        subtitles=[default_track] if default_track else [],
         resume_position_seconds=progress.position_seconds if progress else None,
     )
 

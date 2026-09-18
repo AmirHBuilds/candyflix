@@ -31,12 +31,11 @@ htmlcov/
 dump.rdb
 
 # --- Mock playback fixtures ---
-# Personal test media — see backend/mock-videos/README.md and
-# backend/mock-subtitles/README.md. Keep the READMEs themselves tracked.
+# Personal test video — see backend/mock-videos/README.md. Keep the
+# README itself tracked. (backend/mock-subtitles/ is no longer used as
+# of Phase 5b — subtitles now come from OpenSubtitles, not local files.)
 backend/mock-videos/*
 !backend/mock-videos/README.md
-backend/mock-subtitles/*
-!backend/mock-subtitles/README.md
 
 # --- Online subtitle cache (Phase 5b) ---
 # Downloaded from OpenSubtitles on demand — never something to commit.

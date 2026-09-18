@@ -14,10 +14,15 @@ Two API calls matter here:
   the same (title, season, episode, language) should only ever cost one
   unit of quota, no matter how many times it's watched.
 
-Logging in via username/password (both optional) raises that daily
-quota but isn't required — search and download both work on the API
-key alone, just with a lower ceiling.
+Logging in via username/password raises the daily quota, and in
+practice may be necessary at all — OpenSubtitles has a history of
+throttling or rejecting requests that only carry an API key with no
+logged-in user behind them. Both `search` and `download` attach a
+login token whenever credentials are configured; if they aren't,
+requests still go out key-only, which may or may not be enough
+depending on how strict OpenSubtitles is being that day.
 """
+import logging
 from pathlib import Path
 
 import httpx
@@ -26,6 +31,8 @@ from app.core.config import get_settings
 from app.core.language_labels import label_for
 from app.core.redis import get_redis
 from app.schemas.subtitles import OnlineSubtitleResult
+
+logger = logging.getLogger("app.opensubtitles")
 
 OPENSUBTITLES_BASE = "https://api.opensubtitles.com/api/v1"
 
@@ -65,6 +72,43 @@ def _headers() -> dict:
     }
 
 
+def _upstream_message(response: httpx.Response) -> str:
+    """OpenSubtitles usually returns {"message": "..."} (or sometimes
+    Cloudflare's own HTML challenge/error page for rate-limits and bot
+    protection). Pulls out whatever's actually useful, since "OpenSubtitles
+    returned an error (502)" with no further detail is close to useless
+    for actually diagnosing what went wrong."""
+    try:
+        body = response.json()
+        if isinstance(body, dict) and body.get("message"):
+            return str(body["message"])
+    except ValueError:
+        pass
+    text = response.text.strip().replace("\n", " ")
+    return text[:200] if text else "(empty response body)"
+
+
+def _error_for_status(response: httpx.Response, action: str) -> OpenSubtitlesError:
+    """Logs the full detail server-side (status + body), and returns an
+    error whose status code is the upstream one whenever it's something
+    the caller can actually act on (bad key, rate-limited, not found) —
+    502 is reserved for things that are genuinely "the upstream is
+    broken/unreachable", not just "it said no"."""
+    upstream_message = _upstream_message(response)
+    logger.warning(
+        "OpenSubtitles %s failed: %s %s — %s",
+        action,
+        response.status_code,
+        response.request.url,
+        upstream_message,
+    )
+    if response.status_code in (400, 401, 403, 404, 429):
+        return OpenSubtitlesError(response.status_code, f"OpenSubtitles: {upstream_message}")
+    return OpenSubtitlesError(
+        502, f"OpenSubtitles returned an unexpected error ({response.status_code}): {upstream_message}"
+    )
+
+
 async def _get_auth_token() -> str | None:
     """None means "proceed unauthenticated" — a missing/failed login should
     never block search or download, just leave them at the lower quota."""
@@ -87,10 +131,14 @@ async def _get_auth_token() -> str | None:
                     "password": settings.opensubtitles_password,
                 },
             )
-        except httpx.RequestError:
+        except httpx.RequestError as e:
+            logger.warning("OpenSubtitles login request failed: %s", e)
             return None
 
     if response.status_code != 200:
+        logger.warning(
+            "OpenSubtitles login rejected (%s): %s", response.status_code, _upstream_message(response)
+        )
         return None
 
     token = response.json().get("token")
@@ -105,6 +153,22 @@ async def _auth_headers() -> dict:
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
+
+
+def build_cache_key(
+    media_type: str,
+    tmdb_id: int,
+    season_number: int | None,
+    episode_number: int | None,
+    language: str,
+    file_id: int,
+) -> str:
+    parts = [media_type, str(tmdb_id)]
+    if season_number is not None and episode_number is not None:
+        parts.append(f"s{season_number}e{episode_number}")
+    parts.append(language)
+    parts.append(str(file_id))
+    return "-".join(parts)
 
 
 def _imdb_id_to_numeric(imdb_id: str) -> int:
@@ -129,14 +193,13 @@ async def search(
 
     async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0) as client:
         try:
-            response = await client.get("/subtitles", headers=_headers(), params=params)
+            response = await client.get("/subtitles", headers=await _auth_headers(), params=params)
         except httpx.RequestError as e:
+            logger.warning("OpenSubtitles search request failed to reach the server: %s", e)
             raise OpenSubtitlesError(502, f"Could not reach OpenSubtitles: {e}") from e
 
-    if response.status_code == 401:
-        raise OpenSubtitlesError(401, "OpenSubtitles rejected the configured API key.")
     if response.status_code != 200:
-        raise OpenSubtitlesError(502, f"OpenSubtitles returned an error ({response.status_code}).")
+        raise _error_for_status(response, "search")
 
     data = response.json()
     results: list[OnlineSubtitleResult] = []
@@ -181,12 +244,13 @@ async def download(file_id: int, cache_key: str) -> Path:
         try:
             response = await client.post("/download", headers=headers, json={"file_id": file_id})
         except httpx.RequestError as e:
+            logger.warning("OpenSubtitles download request failed to reach the server: %s", e)
             raise OpenSubtitlesError(502, f"Could not reach OpenSubtitles: {e}") from e
 
     if response.status_code == 406:
         raise OpenSubtitlesError(429, "OpenSubtitles daily download quota reached — try again tomorrow.")
     if response.status_code != 200:
-        raise OpenSubtitlesError(502, f"OpenSubtitles returned an error ({response.status_code}).")
+        raise _error_for_status(response, "download")
 
     link = response.json().get("link")
     if not link:
@@ -196,9 +260,11 @@ async def download(file_id: int, cache_key: str) -> Path:
         try:
             file_response = await client.get(link)
         except httpx.RequestError as e:
+            logger.warning("Fetching the downloaded subtitle file failed: %s", e)
             raise OpenSubtitlesError(502, f"Could not download the subtitle file: {e}") from e
 
     if file_response.status_code != 200:
+        logger.warning("Subtitle file link returned %s", file_response.status_code)
         raise OpenSubtitlesError(502, "Could not download the subtitle file contents.")
 
     cached_path.write_bytes(file_response.content)

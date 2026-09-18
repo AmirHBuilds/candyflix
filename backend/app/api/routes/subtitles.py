@@ -18,22 +18,6 @@ from app.services.tmdb_service import TMDBError
 router = APIRouter(tags=["subtitles"])
 
 
-def _cache_key(
-    media_type: str,
-    tmdb_id: int,
-    season_number: int | None,
-    episode_number: int | None,
-    language: str,
-    file_id: int,
-) -> str:
-    parts = [media_type, str(tmdb_id)]
-    if season_number is not None and episode_number is not None:
-        parts.append(f"s{season_number}e{episode_number}")
-    parts.append(language)
-    parts.append(str(file_id))
-    return "-".join(parts)
-
-
 @router.get("/subtitles/search", response_model=list[OnlineSubtitleResult])
 async def search_online_subtitles(
     media_type: str,
@@ -72,7 +56,7 @@ async def download_online_subtitle(
     payload: OnlineSubtitleDownloadRequest,
     current_user: User = Depends(get_current_user),
 ):
-    cache_key = _cache_key(
+    cache_key = opensubtitles_service.build_cache_key(
         payload.media_type,
         payload.tmdb_id,
         payload.season_number,

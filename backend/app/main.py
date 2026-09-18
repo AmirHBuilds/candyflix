@@ -24,12 +24,11 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# Created on startup (not committed — see .gitignore) so serving them
-# doesn't 500 before a test video/subtitle file has been dropped in.
+# Created on startup (not committed — see .gitignore) so serving it
+# doesn't 500 before a test video file has been dropped in.
 os.makedirs(settings.mock_videos_dir, exist_ok=True)
-os.makedirs(settings.mock_subtitles_dir, exist_ok=True)
 # Populated on demand by the OpenSubtitles download endpoint (Phase 5b) —
-# created up front for the same reason as the two mock dirs above.
+# created up front for the same reason as the mock video dir above.
 os.makedirs(settings.subtitle_cache_dir, exist_ok=True)
 
 
@@ -71,9 +70,6 @@ app.add_middleware(
 )
 
 app.mount("/mock-videos", NoCacheStaticFiles(directory=settings.mock_videos_dir), name="mock-videos")
-app.mount(
-    "/mock-subtitles", NoCacheStaticFiles(directory=settings.mock_subtitles_dir), name="mock-subtitles"
-)
 # Plain StaticFiles here (not NoCacheStaticFiles) — these are small,
 # whole-file text downloads, not the range-requested video streams the
 # Cache-Control workaround above exists for.
