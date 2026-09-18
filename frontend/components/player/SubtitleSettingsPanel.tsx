@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 import {
   downloadOnlineSubtitle,
   searchOnlineSubtitles,
-  type OnlineSubtitleResult,
   type SubtitleTrack,
 } from "@/lib/playback";
 
@@ -133,42 +132,11 @@ function Toggle({
 }
 
 // Discovers what languages OpenSubtitles has for this title (one
-// unfiltered search, grouped down to the best/most-downloaded file per
-// language) so the dropdown can just list them directly — picking one
-// downloads that language's top match and selects it in a single step,
-// no separate search-and-browse UI.
-function useAvailableLanguages(identity: WatchIdentity) {
-  const [languages, setLanguages] = useState<OnlineSubtitleResult[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    searchOnlineSubtitles({
-      mediaType: identity.mediaType,
-      tmdbId: identity.tmdbId,
-      seasonNumber: identity.seasonNumber,
-      episodeNumber: identity.episodeNumber,
-    })
-      .then((results) => {
-        if (cancelled) return;
-        const byLanguage = new Map<string, OnlineSubtitleResult>();
-        for (const r of results) {
-          // search() on the backend already sorts most-downloaded first,
-          // so the first entry seen per language is the best one.
-          if (!byLanguage.has(r.language)) byLanguage.set(r.language, r);
-        }
-        setLanguages([...byLanguage.values()]);
-      })
-      .catch(() => {
-        // Silent — worst case the dropdown just doesn't offer extra
-        // languages this time; the ones already active still work fine.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
-
-  return languages;
-}
+// Sentinel value for the dropdown's last option — picking it doesn't
+// select a language, it opens the small "search by code" box below.
+// Kept out of the real language-code space (a genuine ISO code is never
+// this long) so it can't collide with anything OpenSubtitles returns.
+const SEARCH_OPTION_VALUE = "__search_by_code__";
 
 export default function SubtitleSettingsPanel({
   tracks,
@@ -187,44 +155,61 @@ export default function SubtitleSettingsPanel({
   identity: WatchIdentity;
   onTrackAdded: (track: SubtitleTrack) => void;
 }) {
-  const availableLanguages = useAvailableLanguages(identity);
-  const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
-  const [addError, setAddError] = useState<string | null>(null);
+  const [showLanguageSearch, setShowLanguageSearch] = useState(false);
+  const [languageCode, setLanguageCode] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  const knownLanguages = new Set(tracks.map((t) => t.language));
-  const moreLanguages = availableLanguages.filter((l) => !knownLanguages.has(l.language));
-
-  async function handleSelect(language: string) {
-    if (!language) {
-      onSelectLanguage(null);
+  function handleSelect(value: string) {
+    if (value === SEARCH_OPTION_VALUE) {
+      // The <select>'s value stays bound to selectedLanguage below, so on
+      // the next render it snaps back to showing the real current
+      // selection rather than sticking on this sentinel — no manual
+      // reset needed.
+      setShowLanguageSearch(true);
+      setSearchError(null);
       return;
     }
-    if (knownLanguages.has(language)) {
-      onSelectLanguage(language);
-      return;
-    }
-    // Not downloaded yet — this is one of the "more languages" options,
-    // so fetch it now and select it the moment it's ready.
-    const candidate = moreLanguages.find((l) => l.language === language);
-    if (!candidate) return;
+    onSelectLanguage(value || null);
+  }
 
-    setAddingLanguage(language);
-    setAddError(null);
+  async function searchByCode() {
+    const code = languageCode.trim().toLowerCase();
+    if (!code) return;
+
+    setSearching(true);
+    setSearchError(null);
     try {
+      const results = await searchOnlineSubtitles({
+        mediaType: identity.mediaType,
+        tmdbId: identity.tmdbId,
+        seasonNumber: identity.seasonNumber,
+        episodeNumber: identity.episodeNumber,
+        language: code,
+      });
+      if (results.length === 0) {
+        setSearchError(`No subtitles found for "${code}".`);
+        return;
+      }
+      // results[] is already sorted most-downloaded first by the backend.
+      const best = results[0];
       const track = await downloadOnlineSubtitle({
         mediaType: identity.mediaType,
         tmdbId: identity.tmdbId,
         seasonNumber: identity.seasonNumber,
         episodeNumber: identity.episodeNumber,
-        fileId: candidate.file_id,
-        language: candidate.language,
-        label: candidate.label,
+        fileId: best.file_id,
+        language: best.language,
+        label: best.label,
       });
       onTrackAdded(track);
+      onSelectLanguage(track.language);
+      setShowLanguageSearch(false);
+      setLanguageCode("");
     } catch (e) {
-      setAddError(e instanceof Error ? e.message : "Couldn't add that language.");
+      setSearchError(e instanceof Error ? e.message : "Couldn't search for that language.");
     } finally {
-      setAddingLanguage(null);
+      setSearching(false);
     }
   }
 
@@ -238,8 +223,7 @@ export default function SubtitleSettingsPanel({
         <span className={labelClass}>Subtitles</span>
         <select
           className={selectClass}
-          value={addingLanguage ?? selectedLanguage ?? ""}
-          disabled={addingLanguage !== null}
+          value={selectedLanguage ?? ""}
           onChange={(e) => handleSelect(e.target.value)}
         >
           <option value="">Off</option>
@@ -248,14 +232,44 @@ export default function SubtitleSettingsPanel({
               {t.label}
             </option>
           ))}
-          {moreLanguages.map((l) => (
-            <option key={l.language} value={l.language}>
-              {l.label}
-            </option>
-          ))}
+          <option value={SEARCH_OPTION_VALUE}>Search for language…</option>
         </select>
-        {addingLanguage && <span className="text-xs text-white/50">Adding subtitle…</span>}
-        {addError && <span className="text-xs text-red-400">{addError}</span>}
+
+        {showLanguageSearch && (
+          <div className="mt-1 flex flex-col gap-1.5">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                autoFocus
+                value={languageCode}
+                onChange={(e) => setLanguageCode(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchByCode()}
+                placeholder="Language code — es, fa, de…"
+                className={`${selectClass} flex-1`}
+              />
+              <button
+                type="button"
+                onClick={searchByCode}
+                disabled={searching || !languageCode.trim()}
+                className="shrink-0 rounded-lg bg-[#FF5FA2] px-3 text-sm font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
+              >
+                {searching ? "…" : "Search"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLanguageSearch(false);
+                  setSearchError(null);
+                }}
+                aria-label="Cancel"
+                className="shrink-0 rounded-lg bg-white/10 px-3 text-sm text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            {searchError && <span className="text-xs text-red-400">{searchError}</span>}
+          </div>
+        )}
       </div>
 
       {selectedLanguage && (
