@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
@@ -400,7 +401,10 @@ export default function VideoPlayer({
   useEffect(() => {
     if (settingsMenu === null) return;
     function onDocMouseDown(e: MouseEvent) {
-      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideTrigger = settingsRef.current?.contains(target);
+      const insidePortal = settingsPortalRef.current?.contains(target);
+      if (!insideTrigger && !insidePortal) {
         setSettingsMenu(null);
       }
     }
@@ -408,19 +412,43 @@ export default function VideoPlayer({
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [settingsMenu]);
 
+  // The settings dropdown is rendered via a portal straight into
+  // document.body (see settingsPortalRef below), not as a DOM child of
+  // the player. Necessary because the player's own container is
+  // `overflow-hidden` (it clips the video to a rounded box) and sized by
+  // `aspect-video` — on a small phone player that's a genuinely short
+  // box, so anything positioned inside it that needs more room than
+  // that box has (like the subtitles panel) was being clipped away
+  // entirely, not just cut off. Fullscreen happened to mask this, since
+  // the container expands to fill the whole screen there. A portal
+  // escapes that ancestor's overflow/size constraints outright, so the
+  // fix holds in both fullscreen and the small inline player.
+  const [settingsAnchor, setSettingsAnchor] = useState<{ top: number; bottom: number; right: number } | null>(
+    null
+  );
+  const settingsPortalRef = useRef<HTMLDivElement>(null);
+
   useLayoutEffect(() => {
     if (settingsMenu === null || !settingsRef.current) return;
-    // The subtitles panel (live preview + full styling controls) is far
-    // taller than the plain root/speed lists, so each needs its own
-    // rough height estimate rather than one shared threshold — a exact
-    // pixel-perfect measurement isn't needed since every panel also has
-    // a max-height/overflow safety clamp regardless of which way it opens.
-    const estimatedHeight = settingsMenu === "subtitles" ? 480 : 220;
-    const rect = settingsRef.current.getBoundingClientRect();
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    setSettingsMenuDirection(spaceAbove >= estimatedHeight || spaceAbove >= spaceBelow ? "up" : "down");
-  }, [settingsMenu]);
+    function recompute() {
+      if (!settingsRef.current) return;
+      // The subtitles panel (live preview + full styling controls) is far
+      // taller than the plain root/speed lists, so each needs its own
+      // rough height estimate rather than one shared threshold — an
+      // exact pixel-perfect measurement isn't needed since every panel
+      // also has a max-height/overflow safety clamp regardless of which
+      // way it opens.
+      const estimatedHeight = settingsMenu === "subtitles" ? 480 : 220;
+      const rect = settingsRef.current.getBoundingClientRect();
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setSettingsMenuDirection(spaceAbove >= estimatedHeight || spaceAbove >= spaceBelow ? "up" : "down");
+      setSettingsAnchor({ top: rect.top, bottom: rect.bottom, right: window.innerWidth - rect.right });
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, [settingsMenu, fullscreen]);
 
   useEffect(() => {
     scheduleHide();
@@ -904,90 +932,102 @@ export default function VideoPlayer({
                 <GearIcon />
               </button>
 
-              {settingsMenu === "root" && (
-                <div
-                  className={`absolute right-0 max-h-[70vh] w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur ${
-                    settingsMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
-                  }`}
-                >
-                  <button
-                    onClick={() => setSettingsMenu("speed")}
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
-                  >
-                    <span>Playback speed</span>
-                    <span className="text-white/50">{playbackRate === 1 ? "Normal" : `${playbackRate}x`}</span>
-                  </button>
-                  <button
-                    onClick={() => setSettingsMenu("subtitles")}
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
-                  >
-                    <span>Subtitles</span>
-                    <span className="text-white/50">
-                      {selectedLanguage
-                        ? (allTracks.find((t) => t.language === selectedLanguage)?.label ?? selectedLanguage)
-                        : "Off"}
-                    </span>
-                  </button>
-                </div>
-              )}
-
-              {settingsMenu === "speed" && (
-                <div
-                  className={`absolute right-0 max-h-[70vh] w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur ${
-                    settingsMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
-                  }`}
-                >
-                  <button
-                    onClick={() => setSettingsMenu("root")}
-                    className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
-                  >
-                    <BackChevronIcon />
-                    Playback speed
-                  </button>
-                  {SPEED_OPTIONS.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => {
-                        changeRate(s);
-                        setSettingsMenu("root");
-                      }}
-                      className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
-                        s === playbackRate ? "text-[#FF5FA2]" : "text-white/90"
-                      }`}
-                    >
-                      {s === 1 ? "Normal" : `${s}x`}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {settingsMenu === "subtitles" && (
-                <div
-                  className={`absolute right-0 flex max-h-[85vh] flex-col items-end gap-1 overflow-y-auto overflow-x-hidden ${
-                    settingsMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
-                  }`}
-                >
-                  <button
-                    onClick={() => setSettingsMenu("root")}
-                    className="flex w-56 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
-                  >
-                    <BackChevronIcon />
-                    Subtitles
-                  </button>
-                  <SubtitleSettingsPanel
-                    tracks={allTracks}
-                    selectedLanguage={selectedLanguage}
-                    onSelectLanguage={setSelectedLanguage}
-                    settings={subtitleSettings}
-                    onChange={updateSubtitleSettings}
-                    identity={identity}
-                    onTrackAdded={(track) => {
-                      setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
-                      setSelectedLanguage(track.language);
+              {settingsMenu !== null &&
+                settingsAnchor !== null &&
+                createPortal(
+                  <div
+                    ref={settingsPortalRef}
+                    style={{
+                      position: "fixed",
+                      right: settingsAnchor.right,
+                      ...(settingsMenuDirection === "up"
+                        ? { bottom: window.innerHeight - settingsAnchor.top + 8 }
+                        : { top: settingsAnchor.bottom + 8 }),
                     }}
-                  />
-                </div>
-              )}
+                    className="z-50"
+                  >
+                    {settingsMenu === "root" && (
+                      <div className="max-h-[70vh] w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                        <button
+                          onClick={() => setSettingsMenu("speed")}
+                          className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                        >
+                          <span>Playback speed</span>
+                          <span className="text-white/50">
+                            {playbackRate === 1 ? "Normal" : `${playbackRate}x`}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setSettingsMenu("subtitles")}
+                          className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                        >
+                          <span>Subtitles</span>
+                          <span className="text-white/50">
+                            {selectedLanguage
+                              ? (allTracks.find((t) => t.language === selectedLanguage)?.label ??
+                                selectedLanguage)
+                              : "Off"}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+
+                    {settingsMenu === "speed" && (
+                      <div className="max-h-[70vh] w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                        <button
+                          onClick={() => setSettingsMenu("root")}
+                          className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                        >
+                          <BackChevronIcon />
+                          Playback speed
+                        </button>
+                        {SPEED_OPTIONS.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              changeRate(s);
+                              setSettingsMenu("root");
+                            }}
+                            className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
+                              s === playbackRate ? "text-[#FF5FA2]" : "text-white/90"
+                            }`}
+                          >
+                            {s === 1 ? "Normal" : `${s}x`}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {settingsMenu === "subtitles" && (
+                      <div className="flex max-h-[85vh] flex-col items-end gap-1 overflow-y-auto overflow-x-hidden">
+                        <button
+                          onClick={() => setSettingsMenu("root")}
+                          className="flex w-56 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
+                        >
+                          <BackChevronIcon />
+                          Subtitles
+                        </button>
+                        <SubtitleSettingsPanel
+                          tracks={allTracks}
+                          selectedLanguage={selectedLanguage}
+                          onSelectLanguage={setSelectedLanguage}
+                          settings={subtitleSettings}
+                          onChange={updateSubtitleSettings}
+                          identity={identity}
+                          onTrackAdded={(track) => {
+                            setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
+                            setSelectedLanguage(track.language);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>,
+                  // Fullscreen's "top layer" only contains the fullscreened
+                  // element's own subtree — document.body sits outside
+                  // that once containerRef goes fullscreen, so mount
+                  // there instead when that's the case.
+                  fullscreen && containerRef.current ? containerRef.current : document.body
+                )}
             </div>
 
             <button

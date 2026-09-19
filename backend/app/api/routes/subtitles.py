@@ -10,7 +10,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.schemas.playback import SubtitleTrackOut
-from app.schemas.subtitles import OnlineSubtitleDownloadRequest, OnlineSubtitleResult
+from app.schemas.subtitles import (
+    OnlineSubtitleDownloadRequest,
+    OnlineSubtitleSearchResponse,
+)
 from app.services import opensubtitles_service, tmdb_service
 from app.services.opensubtitles_service import OpenSubtitlesError
 from app.services.tmdb_service import TMDBError
@@ -18,7 +21,7 @@ from app.services.tmdb_service import TMDBError
 router = APIRouter(tags=["subtitles"])
 
 
-@router.get("/subtitles/search", response_model=list[OnlineSubtitleResult])
+@router.get("/subtitles/search", response_model=OnlineSubtitleSearchResponse)
 async def search_online_subtitles(
     media_type: str,
     tmdb_id: int,
@@ -26,6 +29,7 @@ async def search_online_subtitles(
     episode_number: int | None = None,
     language: str | None = None,
     query: str | None = None,
+    page: int = 1,
     current_user: User = Depends(get_current_user),
 ):
     if media_type not in ("movie", "tv"):
@@ -47,9 +51,13 @@ async def search_online_subtitles(
         )
 
     try:
-        return await opensubtitles_service.search(imdb_id, season_number, episode_number, language, query)
+        page_result = await opensubtitles_service.search(
+            imdb_id, season_number, episode_number, language, query, page
+        )
     except OpenSubtitlesError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
+
+    return OnlineSubtitleSearchResponse(results=page_result.results, has_more=page_result.has_more)
 
 
 @router.post("/subtitles/download", response_model=SubtitleTrackOut)

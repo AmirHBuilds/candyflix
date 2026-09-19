@@ -39,6 +39,13 @@ export type OnlineSubtitleSearchParams = {
   // (e.g. "bluray") — filtered by the backend over one already-fetched
   // result set, not a separate OpenSubtitles-side search.
   query?: string;
+  // 1-based; omit for the first page.
+  page?: number;
+};
+
+export type OnlineSubtitleSearchResult = {
+  results: OnlineSubtitleResult[];
+  hasMore: boolean;
 };
 
 export type OnlineSubtitleDownloadParams = {
@@ -159,18 +166,23 @@ export async function getEpisodeWatchProgress(
 // our backend so the API key never reaches the browser).
 export async function searchOnlineSubtitles(
   params: OnlineSubtitleSearchParams
-): Promise<OnlineSubtitleResult[]> {
+): Promise<OnlineSubtitleSearchResult> {
   const query = new URLSearchParams({ media_type: params.mediaType, tmdb_id: String(params.tmdbId) });
   if (params.seasonNumber != null) query.set("season_number", String(params.seasonNumber));
   if (params.episodeNumber != null) query.set("episode_number", String(params.episodeNumber));
   if (params.language) query.set("language", params.language);
   if (params.query) query.set("query", params.query);
+  if (params.page) query.set("page", String(params.page));
 
   const res = await fetch(`${getApiBaseUrl()}/subtitles/search?${query.toString()}`, {
     credentials: "include",
     cache: "no-store",
   });
-  return handle(res, "Couldn't search for subtitles.");
+  const data = await handle<{ results: OnlineSubtitleResult[]; has_more: boolean }>(
+    res,
+    "Couldn't search for subtitles."
+  );
+  return { results: data.results, hasMore: data.has_more };
 }
 
 export async function downloadOnlineSubtitle(params: OnlineSubtitleDownloadParams): Promise<SubtitleTrack> {

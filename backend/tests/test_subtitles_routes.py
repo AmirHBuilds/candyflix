@@ -127,8 +127,8 @@ class TestSearchRoute:
             )
             assert resp.status_code == 200
             body = resp.json()
-            assert body[0]["file_id"] == 42
-            assert body[0]["label"] == "English"
+            assert body["results"][0]["file_id"] == 42
+            assert body["results"][0]["label"] == "English"
             # imdb_id resolved from TMDB and passed through, "tt" stripped.
             assert search_route.calls[0].request.url.params["imdb_id"] == "133093"
         finally:
@@ -151,7 +151,7 @@ class TestSearchRoute:
                 params={"media_type": "tv", "tmdb_id": 1396, "season_number": 1, "episode_number": 1},
             )
             assert resp.status_code == 200
-            assert resp.json()[0]["file_id"] == 42
+            assert resp.json()["results"][0]["file_id"] == 42
         finally:
             await _cleanup_user(db, username)
 

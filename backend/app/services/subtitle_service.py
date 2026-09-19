@@ -38,14 +38,12 @@ async def get_default_english_track(
             logger.info("No IMDb id for %s %s — skipping default subtitle.", media_type, tmdb_id)
             return None
 
-        results = await opensubtitles_service.search(
-            imdb_id, season_number, episode_number, language="en"
-        )
-        if not results:
+        page = await opensubtitles_service.search(imdb_id, season_number, episode_number, language="en")
+        if not page.results:
             logger.info("No English subtitles found for %s %s.", media_type, tmdb_id)
             return None
 
-        best = results[0]  # search() already sorts most-downloaded first
+        best = page.results[0]  # search() already sorts most-downloaded first
         cache_key = opensubtitles_service.build_cache_key(
             media_type, tmdb_id, season_number, episode_number, "en", best.file_id
         )

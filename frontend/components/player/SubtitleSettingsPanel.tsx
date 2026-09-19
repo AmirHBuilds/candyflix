@@ -150,7 +150,7 @@ function useAvailableLanguages(identity: WatchIdentity) {
       seasonNumber: identity.seasonNumber,
       episodeNumber: identity.episodeNumber,
     })
-      .then((results) => {
+      .then(({ results }) => {
         if (cancelled) return;
         const byLanguage = new Map<string, OnlineSubtitleResult>();
         for (const r of results) {
@@ -209,6 +209,9 @@ export default function SubtitleSettingsPanel({
   const [browseError, setBrowseError] = useState<string | null>(null);
   const [browseResults, setBrowseResults] = useState<OnlineSubtitleResult[] | null>(null);
   const [browseDownloadingId, setBrowseDownloadingId] = useState<number | null>(null);
+  const [browsePage, setBrowsePage] = useState(1);
+  const [browseHasMore, setBrowseHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   async function handleSelect(value: string) {
     if (value === SEARCH_OPTION_VALUE) {
@@ -259,14 +262,17 @@ export default function SubtitleSettingsPanel({
     setBrowsing(true);
     setBrowseError(null);
     try {
-      const results = await searchOnlineSubtitles({
+      const { results, hasMore } = await searchOnlineSubtitles({
         mediaType: identity.mediaType,
         tmdbId: identity.tmdbId,
         seasonNumber: identity.seasonNumber,
         episodeNumber: identity.episodeNumber,
         query: browseQuery.trim() || undefined,
+        page: 1,
       });
       setBrowseResults(results);
+      setBrowsePage(1);
+      setBrowseHasMore(hasMore);
       if (results.length === 0) {
         setBrowseError(
           browseQuery.trim()
@@ -277,8 +283,38 @@ export default function SubtitleSettingsPanel({
     } catch (e) {
       setBrowseError(e instanceof Error ? e.message : "Couldn't search for subtitles.");
       setBrowseResults(null);
+      setBrowseHasMore(false);
     } finally {
       setBrowsing(false);
+    }
+  }
+
+  async function loadMoreBrowseResults() {
+    const nextPage = browsePage + 1;
+    setLoadingMore(true);
+    setBrowseError(null);
+    try {
+      const { results, hasMore } = await searchOnlineSubtitles({
+        mediaType: identity.mediaType,
+        tmdbId: identity.tmdbId,
+        seasonNumber: identity.seasonNumber,
+        episodeNumber: identity.episodeNumber,
+        query: browseQuery.trim() || undefined,
+        page: nextPage,
+      });
+      // Same file can legitimately show up again across pages if the
+      // query filter (applied after fetching) thins a page down —
+      // de-duped by file_id just in case.
+      setBrowseResults((prev) => {
+        const existingIds = new Set((prev ?? []).map((r) => r.file_id));
+        return [...(prev ?? []), ...results.filter((r) => !existingIds.has(r.file_id))];
+      });
+      setBrowsePage(nextPage);
+      setBrowseHasMore(hasMore);
+    } catch (e) {
+      setBrowseError(e instanceof Error ? e.message : "Couldn't load more results.");
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -300,6 +336,8 @@ export default function SubtitleSettingsPanel({
       setShowBrowse(false);
       setBrowseResults(null);
       setBrowseQuery("");
+      setBrowseHasMore(false);
+      setBrowsePage(1);
     } catch (e) {
       setBrowseError(e instanceof Error ? e.message : "Couldn't download that subtitle file.");
     } finally {
@@ -363,6 +401,8 @@ export default function SubtitleSettingsPanel({
                   setShowBrowse(false);
                   setBrowseError(null);
                   setBrowseResults(null);
+                  setBrowseHasMore(false);
+                  setBrowsePage(1);
                 }}
                 aria-label="Cancel"
                 className="shrink-0 rounded-lg bg-white/10 px-3 text-sm text-white/70 transition-colors hover:bg-white/20 hover:text-white"
@@ -374,18 +414,29 @@ export default function SubtitleSettingsPanel({
             {browseError && <span className="text-xs text-red-400">{browseError}</span>}
 
             {browseResults && browseResults.length > 0 && (
-              <ul className="flex max-h-44 flex-col gap-1 overflow-y-auto">
+              <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto">
                 {browseResults.map((r) => (
                   <li
                     key={r.file_id}
                     className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.05] px-2.5 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-medium text-white">
+                      <div className="text-xs font-medium text-white">
                         {r.label}
                         {r.hearing_impaired ? " · HI" : ""}
                       </div>
-                      {r.release && <div className="truncate text-[11px] text-white/45">{r.release}</div>}
+                      {/* Full release name, wrapped rather than truncated —
+                          it's often the only way to tell releases apart
+                          (resolution, source, encoder), so cutting it off
+                          with an ellipsis was hiding the exact info this
+                          list exists to show. break-all because release
+                          names are dot-separated with no spaces, so the
+                          browser has no natural word-break point otherwise. */}
+                      {r.release && (
+                        <div className="mt-0.5 break-all text-[11px] leading-snug text-white/45">
+                          {r.release}
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -397,6 +448,18 @@ export default function SubtitleSettingsPanel({
                     </button>
                   </li>
                 ))}
+                {browseHasMore && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={loadMoreBrowseResults}
+                      disabled={loadingMore}
+                      className="mt-1 w-full rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/20 hover:text-white disabled:opacity-50"
+                    >
+                      {loadingMore ? "Loading…" : "Load more"}
+                    </button>
+                  </li>
+                )}
               </ul>
             )}
           </div>

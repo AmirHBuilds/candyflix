@@ -54,6 +54,28 @@ SEARCH_RESPONSE = {
 }
 
 
+SEARCH_RESPONSE_MULTI_LANGUAGE = {
+    "data": [
+        {
+            "attributes": {
+                "language": "en",
+                "release": "Breaking.Bad.S01E01.WEBRip",
+                "download_count": 15000,
+                "files": [{"file_id": 111}],
+            }
+        },
+        {
+            "attributes": {
+                "language": "fa",
+                "release": "Breaking.Bad.S01E01.WEBRip",
+                "download_count": 300,
+                "files": [{"file_id": 333}],
+            }
+        },
+    ]
+}
+
+
 @pytest.fixture(autouse=True)
 def require_api_key(monkeypatch):
     monkeypatch.setattr(settings, "opensubtitles_api_key", "test-os-key")
@@ -68,7 +90,8 @@ class TestSearch:
             return_value=httpx.Response(200, json=SEARCH_RESPONSE)
         )
 
-        results = await opensubtitles_service.search("tt0903747", season_number=1, episode_number=1)
+        page = await opensubtitles_service.search("tt0903747", season_number=1, episode_number=1)
+        results = page.results
 
         assert route.called
         sent_params = route.calls[0].request.url.params
@@ -90,7 +113,8 @@ class TestSearch:
             return_value=httpx.Response(200, json=SEARCH_RESPONSE)
         )
 
-        results = await opensubtitles_service.search("tt0903747", query="webrip")
+        page = await opensubtitles_service.search("tt0903747", query="webrip")
+        results = page.results
 
         assert [r.file_id for r in results] == [111]  # only the WEBRip release matched
 
@@ -100,9 +124,34 @@ class TestSearch:
             return_value=httpx.Response(200, json=SEARCH_RESPONSE)
         )
 
-        results = await opensubtitles_service.search("tt0903747", query="HDTV")
+        page = await opensubtitles_service.search("tt0903747", query="HDTV")
+        results = page.results
 
         assert [r.file_id for r in results] == [222]
+
+    @respx.mock
+    async def test_search_query_matches_language_name(self):
+        """Regression test: searching "persian" or "fa" should find
+        Persian subtitles even though release names never mention a
+        language at all — matching had to extend beyond just the
+        release name field."""
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE_MULTI_LANGUAGE)
+        )
+
+        page = await opensubtitles_service.search("tt0903747", query="persian")
+
+        assert [r.file_id for r in page.results] == [333]
+
+    @respx.mock
+    async def test_search_query_matches_language_code(self):
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE_MULTI_LANGUAGE)
+        )
+
+        page = await opensubtitles_service.search("tt0903747", query="fa")
+
+        assert [r.file_id for r in page.results] == [333]
 
     @respx.mock
     async def test_search_query_with_no_matches_returns_empty(self):
@@ -110,7 +159,8 @@ class TestSearch:
             return_value=httpx.Response(200, json=SEARCH_RESPONSE)
         )
 
-        results = await opensubtitles_service.search("tt0903747", query="nonexistent-release-xyz")
+        page = await opensubtitles_service.search("tt0903747", query="nonexistent-release-xyz")
+        results = page.results
 
         assert results == []
 
@@ -130,9 +180,53 @@ class TestSearch:
             return_value=httpx.Response(200, json=SEARCH_RESPONSE)
         )
 
-        results = await opensubtitles_service.search("tt0903747")
+        page = await opensubtitles_service.search("tt0903747")
 
-        assert [r.file_id for r in results] == [111, 222]
+        assert [r.file_id for r in page.results] == [111, 222]
+
+    @respx.mock
+    async def test_has_more_true_when_more_pages_exist(self):
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json={**SEARCH_RESPONSE, "total_pages": 3, "page": 1})
+        )
+
+        page = await opensubtitles_service.search("tt0903747")
+
+        assert page.has_more is True
+
+    @respx.mock
+    async def test_has_more_false_on_last_page(self):
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json={**SEARCH_RESPONSE, "total_pages": 3, "page": 3})
+        )
+
+        page = await opensubtitles_service.search("tt0903747", page=3)
+
+        assert page.has_more is False
+
+    @respx.mock
+    async def test_has_more_false_when_total_pages_omitted(self):
+        """The mocked fixture used throughout this file doesn't include
+        total_pages at all — real OpenSubtitles responses always do, but
+        this locks in the safe default (assume one page, not "unknown")
+        if it's ever missing."""
+        respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE)
+        )
+
+        page = await opensubtitles_service.search("tt0903747")
+
+        assert page.has_more is False
+
+    @respx.mock
+    async def test_page_param_is_forwarded(self):
+        route = respx.get("https://api.opensubtitles.com/api/v1/subtitles").mock(
+            return_value=httpx.Response(200, json=SEARCH_RESPONSE)
+        )
+
+        await opensubtitles_service.search("tt0903747", page=2)
+
+        assert route.calls[0].request.url.params["page"] == "2"
 
     async def test_search_without_api_key_raises(self, monkeypatch):
         monkeypatch.setattr(settings, "opensubtitles_api_key", "")

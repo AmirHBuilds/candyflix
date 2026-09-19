@@ -31,6 +31,7 @@ as the real API response and fails to parse, surfacing as a confusing
 """
 import logging
 from pathlib import Path
+from typing import NamedTuple
 
 import httpx
 
@@ -184,24 +185,41 @@ def _imdb_id_to_numeric(imdb_id: str) -> int:
     return int(imdb_id.lower().removeprefix("tt"))
 
 
+class SearchPage(NamedTuple):
+    results: list[OnlineSubtitleResult]
+    has_more: bool
+
+
 async def search(
     imdb_id: str,
     season_number: int | None = None,
     episode_number: int | None = None,
     language: str | None = None,
     query: str | None = None,
-) -> list[OnlineSubtitleResult]:
-    """`query`, when given, filters down to results whose release name
-    contains it (case-insensitive) — e.g. "bluray" to find uploads
-    matching a specific release/cut, since different releases of the
-    same title can be a second or two out of sync with each other even
-    with an identical translation. This is filtered here, not sent to
-    OpenSubtitles: a search scoped to one imdb_id already returns every
-    upload across every language and release for that title in one
-    response, so there's no need for a separate text-search round trip —
-    filtering the list we already have is simpler and doesn't cost any
-    extra quota."""
-    params: dict[str, str | int] = {"imdb_id": _imdb_id_to_numeric(imdb_id)}
+    page: int = 1,
+) -> SearchPage:
+    """`query`, when given, filters down to results whose release name,
+    language name, or language code contains it (case-insensitive) — e.g.
+    "bluray" to find a specific release/cut (since different releases of
+    the same title can be a second or two out of sync with each other
+    even with an identical translation), or "persian"/"fa" to find a
+    specific language without needing it to already be a dropdown entry.
+    Matching the language too, not just the release name, matters because
+    a release name essentially never mentions the subtitle's language at
+    all. This is filtered here, not sent to OpenSubtitles: a search
+    scoped to one imdb_id already returns every upload across every
+    language and release for that title in one response, so there's no
+    need for a separate text-search round trip — filtering the list we
+    already have is simpler and doesn't cost any extra quota.
+
+    `has_more` reflects OpenSubtitles' own pagination (their
+    `total_pages` field) — it does NOT account for the query filter
+    thinning out this specific page, so "load more" can occasionally
+    fetch a page that (after filtering) adds nothing. That's an
+    acceptable, honestly-labeled trade-off: recomputing "is there a
+    later page with a match" would mean crawling every remaining page
+    up front, defeating the point of paging in the first place."""
+    params: dict[str, str | int] = {"imdb_id": _imdb_id_to_numeric(imdb_id), "page": page}
     if season_number is not None:
         params["season_number"] = season_number
     if episode_number is not None:
@@ -220,6 +238,9 @@ async def search(
         raise _error_for_status(response, "search")
 
     data = response.json()
+    total_pages = data.get("total_pages") or 1
+    has_more = page < total_pages
+
     results: list[OnlineSubtitleResult] = []
     for item in data.get("data", []):
         attrs = item.get("attributes", {})
@@ -241,12 +262,16 @@ async def search(
 
     if query:
         q = query.strip().lower()
-        results = [r for r in results if q in (r.release or "").lower()]
+        results = [
+            r
+            for r in results
+            if q in (r.release or "").lower() or q in r.label.lower() or q in r.language.lower()
+        ]
 
     # Most-downloaded first — a reasonable default "best" ordering rather
     # than asking the person to judge raw upload quality themselves.
     results.sort(key=lambda r: r.downloads, reverse=True)
-    return results
+    return SearchPage(results=results, has_more=has_more)
 
 
 async def download(file_id: int, cache_key: str) -> Path:

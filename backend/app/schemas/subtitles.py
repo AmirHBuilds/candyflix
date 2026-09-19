@@ -21,6 +21,11 @@ class OnlineSubtitleResult(BaseModel):
     hearing_impaired: bool = False
 
 
+class OnlineSubtitleSearchResponse(BaseModel):
+    results: list[OnlineSubtitleResult]
+    has_more: bool
+
+
 class OnlineSubtitleDownloadRequest(BaseModel):
     media_type: Literal["movie", "tv"]
     tmdb_id: int
