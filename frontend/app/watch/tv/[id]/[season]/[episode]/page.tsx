@@ -40,11 +40,41 @@ export default async function WatchEpisodePage({
   const episodes = seasonDetail.episodes;
   const currentIndex = episodes.findIndex((e) => e.episode_number === episodeNum);
   const currentEpisode = currentIndex >= 0 ? episodes[currentIndex] : null;
-  const prevEp = currentIndex > 0 ? episodes[currentIndex - 1] : null;
-  // NOTE: only looks within the current season — rolling over into the
-  // next season's episode 1 is a reasonable Phase 5b/later addition,
-  // not built now (keeps this phase's scope contained).
-  const nextEp = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
+
+  let prevEp = currentIndex > 0 ? episodes[currentIndex - 1] : null;
+  let prevSeasonNum = seasonNum;
+  let nextEp = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
+  let nextSeasonNum = seasonNum;
+
+  // At a season boundary (first/last episode), roll over into the
+  // adjacent season instead of just stopping — an extra fetch, but only
+  // for the two episodes where it's actually needed.
+  if (!prevEp) {
+    const priorSeason = show.seasons
+      .filter((s) => s.season_number > 0 && s.season_number < seasonNum && s.episode_count > 0)
+      .sort((a, b) => b.season_number - a.season_number)[0];
+    if (priorSeason) {
+      const priorSeasonDetail = await getSeason(id, priorSeason.season_number);
+      const lastEpisode = priorSeasonDetail.episodes[priorSeasonDetail.episodes.length - 1];
+      if (lastEpisode) {
+        prevEp = lastEpisode;
+        prevSeasonNum = priorSeason.season_number;
+      }
+    }
+  }
+  if (!nextEp) {
+    const followingSeason = show.seasons
+      .filter((s) => s.season_number > seasonNum && s.episode_count > 0)
+      .sort((a, b) => a.season_number - b.season_number)[0];
+    if (followingSeason) {
+      const followingSeasonDetail = await getSeason(id, followingSeason.season_number);
+      const firstEpisode = followingSeasonDetail.episodes[0];
+      if (firstEpisode) {
+        nextEp = firstEpisode;
+        nextSeasonNum = followingSeason.season_number;
+      }
+    }
+  }
 
   return (
     <div>
@@ -61,7 +91,7 @@ export default async function WatchEpisodePage({
         prevEpisode={
           prevEp
             ? {
-                href: `/watch/tv/${show.tmdb_id}/${seasonNum}/${prevEp.episode_number}`,
+                href: `/watch/tv/${show.tmdb_id}/${prevSeasonNum}/${prevEp.episode_number}`,
                 label: prevEp.name,
               }
             : null
@@ -69,7 +99,7 @@ export default async function WatchEpisodePage({
         nextEpisode={
           nextEp
             ? {
-                href: `/watch/tv/${show.tmdb_id}/${seasonNum}/${nextEp.episode_number}`,
+                href: `/watch/tv/${show.tmdb_id}/${nextSeasonNum}/${nextEp.episode_number}`,
                 label: nextEp.name,
               }
             : null

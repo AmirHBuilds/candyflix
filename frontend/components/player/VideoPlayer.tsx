@@ -11,6 +11,7 @@ import {
   saveSubtitleSettings,
   type SubtitleSettings,
 } from "@/components/player/subtitle-settings";
+import { loadPlayerPreferences, savePlayerPreferences } from "@/components/player/player-preferences";
 import SubtitleOverlay from "@/components/player/SubtitleOverlay";
 import SubtitleSettingsPanel from "@/components/player/SubtitleSettingsPanel";
 
@@ -20,6 +21,8 @@ const AUTO_HIDE_MS = 3000;
 const UP_NEXT_THRESHOLD_SECONDS = 20;
 const DOUBLE_TAP_MS = 300;
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+const SLEEP_TIMER_OPTIONS = [15, 30, 45, 60]; // minutes
+const SLEEP_TIMER_STORAGE_KEY = "candyflix:sleep-timer-ends-at";
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -76,15 +79,32 @@ export default function VideoPlayer({
   // manual retry affordance instead of leaving the person stuck behind an
   // unexplained spinner with no way out except a full page reload.
   const [videoStuck, setVideoStuck] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(() => loadPlayerPreferences().volume);
+  const [muted, setMuted] = useState(() => loadPlayerPreferences().muted);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
+  // Sleep timer: a real wall-clock countdown (not tied to playback time —
+  // it keeps counting down even while paused, matching how this feature
+  // works in basically every other player), stored as an absolute
+  // timestamp in sessionStorage rather than component state alone. That's
+  // what lets it survive clicking "next episode" mid-countdown, which is
+  // a full page navigation (a new VideoPlayer instance entirely) — the
+  // actual point of a sleep timer while binge-watching is "stop playback
+  // once I'm actually asleep," not "stop at the end of whichever episode
+  // happened to be on when I set it." sessionStorage specifically (not
+  // localStorage) so a timer never lingers into some unrelated future
+  // viewing session after the tab's been closed.
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const [sleepTimerEndsAt, setSleepTimerEndsAt] = useState<number | null>(null);
+  const [sleepTimerRemainingLabel, setSleepTimerRemainingLabel] = useState<string | null>(null);
+  const sleepTimerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showControls, setShowControls] = useState(true);
   // Single gear menu, YouTube-style: root list -> drill into "speed" or
   // "subtitles" -> back arrow returns to root. Replaces the old separate
   // speed-menu/subtitle-settings toggles now that both live behind one gear.
-  const [settingsMenu, setSettingsMenu] = useState<"root" | "speed" | "subtitles" | null>(null);
+  const [settingsMenu, setSettingsMenu] = useState<"root" | "speed" | "subtitles" | "sleepTimer" | null>(
+    null
+  );
   // Desktop has plenty of room above the control bar, so opening upward
   // (anchored to the bottom of the trigger) is the right default there.
   // On a short phone viewport, upward can push the (especially tall)
@@ -92,9 +112,16 @@ export default function VideoPlayer({
   // recomputed against actual available space every time a menu opens.
   const [settingsMenuDirection, setSettingsMenuDirection] = useState<"up" | "down">("up");
 
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
-  const selectedLanguageRef = useRef<string | null>(null);
-  const lastSubtitleLanguageRef = useRef<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(() => {
+    const persisted = loadPlayerPreferences().subtitleLanguage;
+    // Only apply it if this specific title actually has that language —
+    // forcing a language that doesn't exist here would just mean captions
+    // silently fail to render. If it's not available, this title simply
+    // starts with captions off, same as someone with no preference yet.
+    return persisted && source.subtitles.some((t) => t.language === persisted) ? persisted : null;
+  });
+  const selectedLanguageRef = useRef<string | null>(selectedLanguage);
+  const lastSubtitleLanguageRef = useRef<string | null>(selectedLanguage);
   const [cues, setCues] = useState<Cue[]>([]);
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(loadSubtitleSettings());
 
@@ -147,6 +174,14 @@ export default function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Applies the remembered volume/mute preference to the actual element
+    // — React state for these already starts from the same saved values
+    // (see the useState initializers above), but the video element itself
+    // defaults to volume=1/muted=false regardless of that until told
+    // otherwise, since nothing else sets these on a fresh <video>.
+    video.volume = volume;
+    video.muted = muted;
 
     // Applies the saved resume position exactly once. Gated on a real,
     // finite duration: some browsers briefly report duration as
@@ -460,7 +495,15 @@ export default function VideoPlayer({
   useEffect(() => {
     selectedLanguageRef.current = selectedLanguage;
     if (selectedLanguage) lastSubtitleLanguageRef.current = selectedLanguage;
+    // Persists "off" too (selectedLanguage === null), not just a real
+    // language — the last thing someone actually chose, including
+    // choosing to turn captions off, is what "remember my setting" means.
+    savePlayerPreferences({ ...loadPlayerPreferences(), subtitleLanguage: selectedLanguage });
   }, [selectedLanguage]);
+
+  useEffect(() => {
+    savePlayerPreferences({ ...loadPlayerPreferences(), volume, muted });
+  }, [volume, muted]);
 
   useEffect(() => {
     if (!skipPulse) return;
@@ -560,6 +603,82 @@ export default function VideoPlayer({
     if (!video) return;
     video.playbackRate = rate;
   }
+
+  function startSleepTimer(minutes: number | null) {
+    if (sleepTimerTimeoutRef.current) clearTimeout(sleepTimerTimeoutRef.current);
+
+    if (minutes === null) {
+      setSleepTimerMinutes(null);
+      setSleepTimerEndsAt(null);
+      sessionStorage.removeItem(SLEEP_TIMER_STORAGE_KEY);
+      return;
+    }
+
+    const endsAt = Date.now() + minutes * 60_000;
+    setSleepTimerMinutes(minutes);
+    setSleepTimerEndsAt(endsAt);
+    sessionStorage.setItem(SLEEP_TIMER_STORAGE_KEY, String(endsAt));
+    scheduleSleepTimerFire(endsAt);
+  }
+
+  function scheduleSleepTimerFire(endsAt: number) {
+    if (sleepTimerTimeoutRef.current) clearTimeout(sleepTimerTimeoutRef.current);
+    const msRemaining = endsAt - Date.now();
+    sleepTimerTimeoutRef.current = setTimeout(
+      () => {
+        videoRef.current?.pause();
+        setSleepTimerMinutes(null);
+        setSleepTimerEndsAt(null);
+        sessionStorage.removeItem(SLEEP_TIMER_STORAGE_KEY);
+      },
+      Math.max(0, msRemaining)
+    );
+  }
+
+  // Resumes a sleep timer started on a previous episode, if one's still
+  // running — this is what makes it survive clicking "next episode."
+  // An already-expired stored value is just cleared silently rather than
+  // retroactively pausing: if enough time has passed that sessionStorage
+  // still has a stale entry, pausing now would be surprising rather than
+  // useful.
+  useEffect(() => {
+    const stored = sessionStorage.getItem(SLEEP_TIMER_STORAGE_KEY);
+    if (!stored) return;
+    const endsAt = Number(stored);
+    if (!Number.isFinite(endsAt) || endsAt <= Date.now()) {
+      sessionStorage.removeItem(SLEEP_TIMER_STORAGE_KEY);
+      return;
+    }
+    setSleepTimerMinutes(Math.round((endsAt - Date.now()) / 60_000));
+    setSleepTimerEndsAt(endsAt);
+    scheduleSleepTimerFire(endsAt);
+    // Mount-only: this restores whatever was already running when this
+    // player instance was created, not something that should re-run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (sleepTimerTimeoutRef.current) clearTimeout(sleepTimerTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sleepTimerEndsAt === null) {
+      setSleepTimerRemainingLabel(null);
+      return;
+    }
+    function tick() {
+      const msLeft = (sleepTimerEndsAt as number) - Date.now();
+      const totalSeconds = Math.max(0, Math.ceil(msLeft / 1000));
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      setSleepTimerRemainingLabel(`${m}:${s.toString().padStart(2, "0")}`);
+    }
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimerEndsAt]);
 
   async function toggleFullscreen() {
     if (!containerRef.current) return;
@@ -969,6 +1088,15 @@ export default function VideoPlayer({
                               : "Off"}
                           </span>
                         </button>
+                        <button
+                          onClick={() => setSettingsMenu("sleepTimer")}
+                          className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                        >
+                          <span>Sleep timer</span>
+                          <span className="text-white/50">
+                            {sleepTimerMinutes ? (sleepTimerRemainingLabel ?? "…") : "Off"}
+                          </span>
+                        </button>
                       </div>
                     )}
 
@@ -993,6 +1121,43 @@ export default function VideoPlayer({
                             }`}
                           >
                             {s === 1 ? "Normal" : `${s}x`}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {settingsMenu === "sleepTimer" && (
+                      <div className="max-h-[70vh] w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                        <button
+                          onClick={() => setSettingsMenu("root")}
+                          className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
+                        >
+                          <BackChevronIcon />
+                          Sleep timer
+                        </button>
+                        <button
+                          onClick={() => {
+                            startSleepTimer(null);
+                            setSettingsMenu("root");
+                          }}
+                          className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
+                            sleepTimerMinutes === null ? "text-[#FF5FA2]" : "text-white/90"
+                          }`}
+                        >
+                          Off
+                        </button>
+                        {SLEEP_TIMER_OPTIONS.map((m) => (
+                          <button
+                            key={m}
+                            onClick={() => {
+                              startSleepTimer(m);
+                              setSettingsMenu("root");
+                            }}
+                            className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
+                              m === sleepTimerMinutes ? "text-[#FF5FA2]" : "text-white/90"
+                            }`}
+                          >
+                            {m} minutes
                           </button>
                         ))}
                       </div>
