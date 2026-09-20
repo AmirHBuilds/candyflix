@@ -7,11 +7,21 @@ import { getSeason, stillUrl, type SeasonSummary, type Episode } from "@/lib/med
 export default function SeasonBrowser({
   tvId,
   seasons,
+  initialSeason,
+  currentEpisode,
 }: {
   tvId: number;
   seasons: SeasonSummary[];
+  // Defaults to the first season when omitted (show detail page usage).
+  // The watch page passes the season currently playing instead, so
+  // opening the picker doesn't dump you back at Season 1.
+  initialSeason?: number;
+  // Highlights this episode number when its season is selected — only
+  // meaningful together with initialSeason, since "current episode"
+  // only makes sense in the watch-page context.
+  currentEpisode?: number;
 }) {
-  const [selected, setSelected] = useState<number | null>(seasons[0]?.season_number ?? null);
+  const [selected, setSelected] = useState<number | null>(initialSeason ?? seasons[0]?.season_number ?? null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,11 +63,12 @@ export default function SeasonBrowser({
         <ul className="flex flex-col divide-y divide-white/10">
           {episodes.map((episode) => {
             const still = stillUrl(episode.still_path);
+            const isCurrent = selected === initialSeason && episode.episode_number === currentEpisode;
             return (
               <li key={episode.episode_number}>
                 <a
                   href={`/watch/tv/${tvId}/${selected}/${episode.episode_number}`}
-                  className="group flex gap-4 py-4"
+                  className={`group flex gap-4 py-4 ${isCurrent ? "-mx-3 rounded-lg bg-white/5 px-3" : ""}`}
                 >
                   <div className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-lg bg-white/5">
                     {still && (
@@ -76,8 +87,9 @@ export default function SeasonBrowser({
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-white/90 group-hover:text-white">
+                    <p className={isCurrent ? "font-medium text-[#FF5FA2]" : "text-white/90 group-hover:text-white"}>
                       {episode.episode_number}. {episode.name}
+                      {isCurrent && <span className="ml-2 text-xs font-normal text-white/50">Now playing</span>}
                     </p>
                     <p className="mt-1 line-clamp-2 text-sm text-white/50">{episode.overview}</p>
                   </div>

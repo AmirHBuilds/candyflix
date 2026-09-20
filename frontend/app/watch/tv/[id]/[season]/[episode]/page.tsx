@@ -2,6 +2,7 @@ import { getTVShow, getSeason, type TVShowDetail, type SeasonDetail } from "@/li
 import { getEpisodePlaybackSourceServer } from "@/lib/playback-server";
 import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
+import SeasonBrowser from "@/components/SeasonBrowser";
 
 export default async function WatchEpisodePage({
   params,
@@ -115,6 +116,17 @@ export default async function WatchEpisodePage({
         <a href={`/tv/${show.tmdb_id}`} className="text-sm text-white/50 hover:text-white/80">
           ← Back to details
         </a>
+      </div>
+      <div className="px-6 pb-10">
+        <h2 className="mb-4 font-[family-name:var(--font-display)] text-lg font-semibold text-white">
+          Episodes
+        </h2>
+        <SeasonBrowser
+          tvId={show.tmdb_id}
+          seasons={show.seasons}
+          initialSeason={seasonNum}
+          currentEpisode={episodeNum}
+        />
       </div>
     </div>
   );

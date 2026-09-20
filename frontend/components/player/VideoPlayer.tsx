@@ -576,7 +576,18 @@ export default function VideoPlayer({
     }
     recompute();
     window.addEventListener("resize", recompute);
-    return () => window.removeEventListener("resize", recompute);
+    // Capture phase + passive: catches scrolling on the page itself or
+    // any scrollable ancestor, without blocking the scroll. Necessary
+    // once the page can scroll at all (e.g. with the site header now
+    // present above the player) — the trigger button moves with the
+    // page, but a position:fixed panel doesn't follow it on its own,
+    // which otherwise looks like the panel has detached from the button
+    // mid-scroll.
+    window.addEventListener("scroll", recompute, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("resize", recompute);
+      window.removeEventListener("scroll", recompute, { capture: true });
+    };
   }, [settingsMenu, fullscreen]);
 
   useEffect(() => {
@@ -1151,10 +1162,8 @@ export default function VideoPlayer({
             >
               {muted || volume === 0 ? (
                 <MuteIcon />
-              ) : volume < 0.34 ? (
+              ) : volume < 0.5 ? (
                 <VolumeLowIcon />
-              ) : volume < 0.67 ? (
-                <VolumeMediumIcon />
               ) : (
                 <VolumeHighIcon />
               )}
@@ -1427,30 +1436,16 @@ function NextIcon() {
     </svg>
   );
 }
-// Three tiers instead of one fixed icon, so the icon itself hints at
-// roughly how loud it's set — same speaker-cone base shape, with
-// progressively more/larger sound-wave arcs (the standard convention:
-// compare Chrome's or Material Design's volume icon family).
+// Three states total (with MuteIcon below): muted, under 50% (one
+// wave), 50%+ (two waves) — same speaker-cone base shape, with
+// progressively more sound-wave arcs (the standard convention: compare
+// Chrome's or Material Design's volume icon family).
 function VolumeLowIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
       <path d="M4 9v6h4l5 5V4L8 9H4z" />
       <path
         d="M15.5 10.5a2.3 2.3 0 0 1 0 3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-function VolumeMediumIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M4 9v6h4l5 5V4L8 9H4z" />
-      <path
-        d="M16 9a5 5 0 0 1 0 6"
         stroke="currentColor"
         strokeWidth="1.8"
         fill="none"
