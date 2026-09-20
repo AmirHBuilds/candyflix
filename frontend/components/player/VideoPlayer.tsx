@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } fr
 import { createPortal } from "react-dom";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
+import { searchOnlineSubtitles, downloadOnlineSubtitle } from "@/lib/playback";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
@@ -112,6 +113,7 @@ export default function VideoPlayer({
   // subtitles panel off the top of the screen entirely — so this is
   // recomputed against actual available space every time a menu opens.
   const [settingsMenuDirection, setSettingsMenuDirection] = useState<"up" | "down">("up");
+  const [settingsMenuMaxHeight, setSettingsMenuMaxHeight] = useState(400);
 
   // NOTE: this always starts at null/off, even though a persisted
   // language preference might exist — see the mount-only correction
@@ -435,14 +437,59 @@ export default function VideoPlayer({
     setVolume(persisted.volume);
     setMuted(persisted.muted);
 
-    // Only apply the remembered language if this specific title actually
-    // has it — forcing a language that doesn't exist here would just
-    // mean captions silently fail to render.
-    if (persisted.subtitleLanguage && source.subtitles.some((t) => t.language === persisted.subtitleLanguage)) {
+    if (!persisted.subtitleLanguage) return;
+
+    const alreadyAvailable = source.subtitles.find((t) => t.language === persisted.subtitleLanguage);
+    if (alreadyAvailable) {
       setSelectedLanguage(persisted.subtitleLanguage);
       selectedLanguageRef.current = persisted.subtitleLanguage;
       lastSubtitleLanguageRef.current = persisted.subtitleLanguage;
+      return;
     }
+
+    // The remembered language isn't one of this title's baked-in default
+    // tracks — source.subtitles only ever contains the auto-fetched
+    // English default (see subtitle_service.py), so anything else has to
+    // be fetched fresh for this specific title, exactly like manually
+    // picking it from the search box would. Failing silently here (no
+    // results, network hiccup, whatever) just means this title starts
+    // with captions off, same as someone with no preference at all —
+    // consistent with how every other subtitle fetch in this player
+    // degrades.
+    let cancelled = false;
+    searchOnlineSubtitles({
+      mediaType: identity.mediaType,
+      tmdbId: identity.tmdbId,
+      seasonNumber: identity.seasonNumber,
+      episodeNumber: identity.episodeNumber,
+      language: persisted.subtitleLanguage,
+    })
+      .then(({ results }) => {
+        if (cancelled || results.length === 0) return null;
+        const best = results[0]; // already sorted most-downloaded first
+        return downloadOnlineSubtitle({
+          mediaType: identity.mediaType,
+          tmdbId: identity.tmdbId,
+          seasonNumber: identity.seasonNumber,
+          episodeNumber: identity.episodeNumber,
+          fileId: best.file_id,
+          language: best.language,
+          label: best.label,
+        });
+      })
+      .then((track) => {
+        if (cancelled || !track) return;
+        setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
+        setSelectedLanguage(track.language);
+        selectedLanguageRef.current = track.language;
+        lastSubtitleLanguageRef.current = track.language;
+      })
+      .catch(() => {
+        // Silent — see comment above.
+      });
+    return () => {
+      cancelled = true;
+    };
     // Mount-only — this is a one-time restoration for this player
     // instance, not something that should re-run on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -507,15 +554,24 @@ export default function VideoPlayer({
       if (!settingsRef.current) return;
       // The subtitles panel (live preview + full styling controls) is far
       // taller than the plain root/speed lists, so each needs its own
-      // rough height estimate rather than one shared threshold — an
-      // exact pixel-perfect measurement isn't needed since every panel
-      // also has a max-height/overflow safety clamp regardless of which
-      // way it opens.
+      // rough height estimate rather than one shared threshold when
+      // deciding which DIRECTION to open in.
       const estimatedHeight = settingsMenu === "subtitles" ? 480 : 220;
       const rect = settingsRef.current.getBoundingClientRect();
       const spaceAbove = rect.top;
       const spaceBelow = window.innerHeight - rect.bottom;
-      setSettingsMenuDirection(spaceAbove >= estimatedHeight || spaceAbove >= spaceBelow ? "up" : "down");
+      const direction = spaceAbove >= estimatedHeight || spaceAbove >= spaceBelow ? "up" : "down";
+      setSettingsMenuDirection(direction);
+      // The actual cap on how tall the panel's allowed to render: real
+      // available space in whichever direction was picked, minus a small
+      // margin — NOT a flat vh guess. A flat "85% of the viewport"
+      // assumes the panel can use nearly the whole screen, which stops
+      // being true the moment something else (the site header, in this
+      // case) already occupies part of that viewport — the panel would
+      // still open in the "correct" direction but overflow past the
+      // actual visible remainder anyway.
+      const available = direction === "up" ? spaceAbove : spaceBelow;
+      setSettingsMenuMaxHeight(Math.max(120, available - 16));
       setSettingsAnchor({ top: rect.top, bottom: rect.bottom, right: window.innerWidth - rect.right });
     }
     recompute();
@@ -533,15 +589,7 @@ export default function VideoPlayer({
   useEffect(() => {
     selectedLanguageRef.current = selectedLanguage;
     if (selectedLanguage) lastSubtitleLanguageRef.current = selectedLanguage;
-    // Persists "off" too (selectedLanguage === null), not just a real
-    // language — the last thing someone actually chose, including
-    // choosing to turn captions off, is what "remember my setting" means.
-    savePlayerPreferences({ ...loadPlayerPreferences(), subtitleLanguage: selectedLanguage });
   }, [selectedLanguage]);
-
-  useEffect(() => {
-    savePlayerPreferences({ ...loadPlayerPreferences(), volume, muted });
-  }, [volume, muted]);
 
   useEffect(() => {
     if (!skipPulse) return;
@@ -627,6 +675,7 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
+    savePlayerPreferences({ ...loadPlayerPreferences(), muted: video.muted });
   }
 
   function changeVolume(v: number) {
@@ -634,6 +683,7 @@ export default function VideoPlayer({
     if (!video) return;
     video.volume = v;
     video.muted = v === 0;
+    savePlayerPreferences({ ...loadPlayerPreferences(), volume: v, muted: v === 0 });
   }
 
   function changeRate(rate: number) {
@@ -757,11 +807,25 @@ export default function VideoPlayer({
     toggleCaptions();
   }
 
+  // The single place that changes selectedLanguage in response to an
+  // actual user action (as opposed to the mount-time restoration effect,
+  // which intentionally uses the raw setter — see its own comment for
+  // why). Persisting here, at the point of explicit user intent, avoids
+  // the fragile alternative of a generic "watch selectedLanguage, save on
+  // any change" effect: that also fires once on every mount using
+  // whatever value existed BEFORE the restoration effect has run (null),
+  // which — depending on ordering — could silently overwrite a real
+  // saved preference with "off" the moment a new video loads.
+  function selectSubtitleLanguage(language: string | null) {
+    setSelectedLanguage(language);
+    savePlayerPreferences({ ...loadPlayerPreferences(), subtitleLanguage: language });
+  }
+
   function toggleCaptions() {
     if (selectedLanguageRef.current) {
-      setSelectedLanguage(null);
+      selectSubtitleLanguage(null);
     } else {
-      setSelectedLanguage(lastSubtitleLanguageRef.current ?? allTracks[0]?.language ?? null);
+      selectSubtitleLanguage(lastSubtitleLanguageRef.current ?? allTracks[0]?.language ?? null);
     }
   }
 
@@ -1147,7 +1211,10 @@ export default function VideoPlayer({
                     className="z-50"
                   >
                     {settingsMenu === "root" && (
-                      <div className="max-h-[70vh] w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                      <div
+                        style={{ maxHeight: settingsMenuMaxHeight }}
+                        className="w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur"
+                      >
                         <button
                           onClick={() => setSettingsMenu("speed")}
                           className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
@@ -1182,7 +1249,10 @@ export default function VideoPlayer({
                     )}
 
                     {settingsMenu === "speed" && (
-                      <div className="max-h-[70vh] w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                      <div
+                        style={{ maxHeight: settingsMenuMaxHeight }}
+                        className="w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur"
+                      >
                         <button
                           onClick={() => setSettingsMenu("root")}
                           className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
@@ -1208,7 +1278,10 @@ export default function VideoPlayer({
                     )}
 
                     {settingsMenu === "sleepTimer" && (
-                      <div className="max-h-[70vh] w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur">
+                      <div
+                        style={{ maxHeight: settingsMenuMaxHeight }}
+                        className="w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur"
+                      >
                         <button
                           onClick={() => setSettingsMenu("root")}
                           className="flex w-full items-center gap-2 border-b border-white/10 px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
@@ -1245,7 +1318,10 @@ export default function VideoPlayer({
                     )}
 
                     {settingsMenu === "subtitles" && (
-                      <div className="flex max-h-[85vh] flex-col items-end gap-1 overflow-y-auto overflow-x-hidden">
+                      <div
+                        style={{ maxHeight: settingsMenuMaxHeight }}
+                        className="flex flex-col items-end gap-1 overflow-y-auto overflow-x-hidden"
+                      >
                         <button
                           onClick={() => setSettingsMenu("root")}
                           className="flex w-56 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
@@ -1256,13 +1332,13 @@ export default function VideoPlayer({
                         <SubtitleSettingsPanel
                           tracks={allTracks}
                           selectedLanguage={selectedLanguage}
-                          onSelectLanguage={setSelectedLanguage}
+                          onSelectLanguage={selectSubtitleLanguage}
                           settings={subtitleSettings}
                           onChange={updateSubtitleSettings}
                           identity={identity}
                           onTrackAdded={(track) => {
                             setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
-                            setSelectedLanguage(track.language);
+                            selectSubtitleLanguage(track.language);
                           }}
                         />
                       </div>
