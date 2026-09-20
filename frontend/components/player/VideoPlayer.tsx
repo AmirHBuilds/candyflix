@@ -79,8 +79,8 @@ export default function VideoPlayer({
   // manual retry affordance instead of leaving the person stuck behind an
   // unexplained spinner with no way out except a full page reload.
   const [videoStuck, setVideoStuck] = useState(false);
-  const [volume, setVolume] = useState(() => loadPlayerPreferences().volume);
-  const [muted, setMuted] = useState(() => loadPlayerPreferences().muted);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
   // Sleep timer: a real wall-clock countdown (not tied to playback time —
@@ -97,6 +97,7 @@ export default function VideoPlayer({
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
   const [sleepTimerEndsAt, setSleepTimerEndsAt] = useState<number | null>(null);
   const [sleepTimerRemainingLabel, setSleepTimerRemainingLabel] = useState<string | null>(null);
+  const [sleepTimerFired, setSleepTimerFired] = useState(false);
   const sleepTimerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showControls, setShowControls] = useState(true);
   // Single gear menu, YouTube-style: root list -> drill into "speed" or
@@ -112,16 +113,17 @@ export default function VideoPlayer({
   // recomputed against actual available space every time a menu opens.
   const [settingsMenuDirection, setSettingsMenuDirection] = useState<"up" | "down">("up");
 
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(() => {
-    const persisted = loadPlayerPreferences().subtitleLanguage;
-    // Only apply it if this specific title actually has that language —
-    // forcing a language that doesn't exist here would just mean captions
-    // silently fail to render. If it's not available, this title simply
-    // starts with captions off, same as someone with no preference yet.
-    return persisted && source.subtitles.some((t) => t.language === persisted) ? persisted : null;
-  });
-  const selectedLanguageRef = useRef<string | null>(selectedLanguage);
-  const lastSubtitleLanguageRef = useRef<string | null>(selectedLanguage);
+  // NOTE: this always starts at null/off, even though a persisted
+  // language preference might exist — see the mount-only correction
+  // effect below (after the main video-setup effect) for why it can't
+  // just be computed from localStorage here. Reading localStorage inside
+  // this initializer diverges between the server-rendered HTML (which
+  // has no localStorage) and the client's first hydration pass (which
+  // does), which is exactly the "server/client attribute mismatch"
+  // hydration error this used to cause on the CC button.
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const selectedLanguageRef = useRef<string | null>(null);
+  const lastSubtitleLanguageRef = useRef<string | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(loadSubtitleSettings());
 
@@ -175,11 +177,14 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    // Applies the remembered volume/mute preference to the actual element
-    // — React state for these already starts from the same saved values
-    // (see the useState initializers above), but the video element itself
-    // defaults to volume=1/muted=false regardless of that until told
-    // otherwise, since nothing else sets these on a fresh <video>.
+    // Syncs the video element's volume/mute to whatever React state
+    // currently holds — on the very first mount that's just the plain
+    // defaults (1/false), since it's not safe to compute the real
+    // persisted values here (see the mount-only effect declared right
+    // after this one, which applies + corrects them post-hydration).
+    // On every subsequent run of this effect (i.e. loading a new video),
+    // this correctly carries forward whatever volume/mute was already in
+    // effect for the previous video.
     video.volume = volume;
     video.muted = muted;
 
@@ -410,6 +415,39 @@ export default function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source.url]);
 
+  // Applies remembered volume/mute/subtitle-language *after* hydration,
+  // rather than as each state's initial value — see the comments on
+  // those useState calls above for why. Declared textually after the
+  // main video-setup effect above (both plain useEffects, same
+  // dependency-less "mount" timing) specifically so this one runs
+  // second: that effect's own `video.volume = volume` / `video.muted =
+  // muted` (using the pre-correction default state from the very first
+  // render) would otherwise stomp the real values this sets on the
+  // video element right back to the defaults.
+  useEffect(() => {
+    const persisted = loadPlayerPreferences();
+
+    const video = videoRef.current;
+    if (video) {
+      video.volume = persisted.volume;
+      video.muted = persisted.muted;
+    }
+    setVolume(persisted.volume);
+    setMuted(persisted.muted);
+
+    // Only apply the remembered language if this specific title actually
+    // has it — forcing a language that doesn't exist here would just
+    // mean captions silently fail to render.
+    if (persisted.subtitleLanguage && source.subtitles.some((t) => t.language === persisted.subtitleLanguage)) {
+      setSelectedLanguage(persisted.subtitleLanguage);
+      selectedLanguageRef.current = persisted.subtitleLanguage;
+      lastSubtitleLanguageRef.current = persisted.subtitleLanguage;
+    }
+    // Mount-only — this is a one-time restoration for this player
+    // instance, not something that should re-run on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // --- Fullscreen tracking ---
   useEffect(() => {
     function onFsChange() {
@@ -630,9 +668,22 @@ export default function VideoPlayer({
         setSleepTimerMinutes(null);
         setSleepTimerEndsAt(null);
         sessionStorage.removeItem(SLEEP_TIMER_STORAGE_KEY);
+        setSleepTimerFired(true);
       },
       Math.max(0, msRemaining)
     );
+  }
+
+  function dismissSleepTimerDialog() {
+    // Video's already paused (from the moment the timer fired) — just
+    // closes the dialog, playback stays stopped until resumed by hand.
+    setSleepTimerFired(false);
+  }
+
+  function addSleepTime(minutes: number) {
+    setSleepTimerFired(false);
+    startSleepTimer(minutes);
+    if (videoRef.current?.paused) togglePlay();
   }
 
   // Resumes a sleep timer started on a previous episode, if one's still
@@ -924,6 +975,28 @@ export default function VideoPlayer({
         </div>
       )}
 
+      {sleepTimerFired && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70">
+          <div className="mx-4 flex max-w-xs flex-col items-center gap-4 rounded-2xl border border-white/10 bg-[#0b0b12]/95 p-6 text-center shadow-2xl">
+            <p className="text-base font-medium text-white">Sleep timer ended playback</p>
+            <div className="flex w-full gap-2">
+              <button
+                onClick={() => addSleepTime(15)}
+                className="flex-1 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/20"
+              >
+                +15 min
+              </button>
+              <button
+                onClick={dismissSleepTimerDialog}
+                className="flex-1 rounded-lg bg-[#FF5FA2] px-4 py-2.5 text-sm font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8]"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Control bar */}
       <div
         className={`absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 to-transparent px-4 pb-2 pt-7 transition-opacity duration-200 ${
@@ -1012,7 +1085,15 @@ export default function VideoPlayer({
               onClick={toggleMute}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/20"
             >
-              {muted || volume === 0 ? <MuteIcon /> : <VolumeIcon />}
+              {muted || volume === 0 ? (
+                <MuteIcon />
+              ) : volume < 0.34 ? (
+                <VolumeLowIcon />
+              ) : volume < 0.67 ? (
+                <VolumeMediumIcon />
+              ) : (
+                <VolumeHighIcon />
+              )}
             </button>
             <div className="player-volume-wrap flex items-center overflow-hidden">
               <input
@@ -1270,12 +1351,51 @@ function NextIcon() {
     </svg>
   );
 }
-function VolumeIcon() {
+// Three tiers instead of one fixed icon, so the icon itself hints at
+// roughly how loud it's set — same speaker-cone base shape, with
+// progressively more/larger sound-wave arcs (the standard convention:
+// compare Chrome's or Material Design's volume icon family).
+function VolumeLowIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
       <path d="M4 9v6h4l5 5V4L8 9H4z" />
       <path
-        d="M16.5 8.5a5 5 0 0 1 0 7"
+        d="M15.5 10.5a2.3 2.3 0 0 1 0 3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+function VolumeMediumIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 9v6h4l5 5V4L8 9H4z" />
+      <path
+        d="M16 9a5 5 0 0 1 0 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+function VolumeHighIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 9v6h4l5 5V4L8 9H4z" />
+      <path
+        d="M15 9.3a4.2 4.2 0 0 1 0 5.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17.3 7a8 8 0 0 1 0 10"
         stroke="currentColor"
         strokeWidth="1.8"
         fill="none"
