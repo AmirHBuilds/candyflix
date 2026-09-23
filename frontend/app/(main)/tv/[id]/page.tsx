@@ -70,7 +70,7 @@ export default async function TVDetailPage({
 
           <p className="max-w-2xl text-white/70">{shortenOverview(show.overview)}</p>
 
-          <DetailActions />
+          <DetailActions tmdbId={show.tmdb_id} mediaType="tv" />
         </div>
       </div>
 

@@ -90,7 +90,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
                   {item.title}
                 </p>
               </Link>
-              <DetailActions />
+              <DetailActions tmdbId={item.tmdb_id} mediaType={item.media_type} />
             </div>
           </div>
         );

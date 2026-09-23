@@ -10,8 +10,10 @@ files, not any real/licensed source).
 Phase 5b: online subtitle discovery via the OpenSubtitles REST API —
 a real third-party integration (unlike playback sources, which stay
 mock/local only by design; see providers/README.md).
-Remaining feature routers (watchlist, etc.) are added in later phases
-per the approved implementation plan.
+Phase 5c: player polish (remembered volume/subtitle preferences,
+cross-season episode rollover, sleep timer).
+Phase 6: watchlist ("Candy Box") — add/remove/list, enriched with
+live TMDB data at read time rather than storing a metadata copy.
 """
 import os
 
@@ -19,7 +21,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import auth, health, movies, playback, search, subtitles, trending, tv
+from app.api.routes import auth, health, movies, playback, search, subtitles, trending, tv, watchlist
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -85,6 +87,7 @@ app.include_router(movies.router, prefix="/api")
 app.include_router(tv.router, prefix="/api")
 app.include_router(playback.router, prefix="/api")
 app.include_router(subtitles.router, prefix="/api")
+app.include_router(watchlist.router, prefix="/api")
 
 
 @app.get("/api")
