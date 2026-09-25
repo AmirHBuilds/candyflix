@@ -100,7 +100,7 @@ class TestListing:
             await _make_authed_client(client, db, username)
             resp = await client.get("/api/continue-watching")
             assert resp.status_code == 200
-            assert resp.json() == []
+            assert resp.json() == {"items": [], "has_more": False}
         finally:
             await _cleanup_user(db, username)
 
@@ -129,7 +129,7 @@ class TestListing:
 
             resp = await client.get("/api/continue-watching")
             assert resp.status_code == 200
-            body = resp.json()
+            body = resp.json()["items"]
             assert len(body) == 2
             assert body[0]["media_type"] == "tv"
             assert body[0]["title"] == "Breaking Bad"
@@ -165,7 +165,7 @@ class TestListing:
 
             resp = await client.get("/api/continue-watching")
             assert resp.status_code == 200
-            body = resp.json()
+            body = resp.json()["items"]
             assert len(body) == 1
             assert body[0]["season_number"] == 2
             assert body[0]["episode_number"] == 8
@@ -186,7 +186,7 @@ class TestListing:
 
             resp = await client.get("/api/continue-watching")
             assert resp.status_code == 200
-            assert resp.json() == []
+            assert resp.json() == {"items": [], "has_more": False}
         finally:
             await _cleanup_user(db, username)
 
@@ -213,7 +213,7 @@ class TestListing:
 
             resp = await client.get("/api/continue-watching")
             assert resp.status_code == 200
-            body = resp.json()
+            body = resp.json()["items"]
             assert len(body) == 1
             assert body[0]["tmdb_id"] == 603
         finally:
@@ -231,7 +231,77 @@ class TestListing:
             await _make_authed_client(client, db, username_b)
             resp = await client.get("/api/continue-watching")
             assert resp.status_code == 200
-            assert resp.json() == []
+            assert resp.json() == {"items": [], "has_more": False}
         finally:
             await _cleanup_user(db, username_a)
             await _cleanup_user(db, username_b)
+
+
+class TestLimitAndHasMore:
+    """The home page's "Continue Watching" row (limit=24 default) and
+    the "View All" page (a larger explicit limit) share this one
+    endpoint — has_more is what tells the home page whether to show a
+    View All link at all."""
+
+    @respx.mock
+    async def test_has_more_false_when_everything_fits(self, client, db):
+        respx.get("https://api.themoviedb.org/3/movie/603").mock(
+            return_value=httpx.Response(200, json=MOVIE_603)
+        )
+        username = f"cw_test_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            user = client._test_user
+            await watch_progress_service.save_progress(
+                db, user.id, 603, "movie", None, None, position_seconds=10.0, duration_seconds=8000.0
+            )
+
+            resp = await client.get("/api/continue-watching", params={"limit": 24})
+            assert resp.status_code == 200
+            body = resp.json()
+            assert len(body["items"]) == 1
+            assert body["has_more"] is False
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_has_more_true_when_more_rows_exist_than_limit(self, client, db):
+        username = f"cw_test_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            user = client._test_user
+            # Three distinct movie ids won't resolve via TMDB (not
+            # mocked here), which is fine — has_more is computed from
+            # the raw DB row count fetched (limit+1), before enrichment
+            # drops anything, so this doesn't need working TMDB mocks.
+            for tmdb_id in (1, 2, 3):
+                await watch_progress_service.save_progress(
+                    db, user.id, tmdb_id, "movie", None, None,
+                    position_seconds=10.0, duration_seconds=8000.0,
+                )
+
+            resp = await client.get("/api/continue-watching", params={"limit": 2})
+            assert resp.status_code == 200
+            assert resp.json()["has_more"] is True
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_limit_is_respected(self, client, db):
+        username = f"cw_test_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            user = client._test_user
+            for tmdb_id in (1, 2, 3):
+                await watch_progress_service.save_progress(
+                    db, user.id, tmdb_id, "movie", None, None,
+                    position_seconds=10.0, duration_seconds=8000.0,
+                )
+
+            # None of these TMDB ids resolve (not mocked), so every raw
+            # row gets filtered by enrichment — this only checks that
+            # the raw fetch itself respects `limit` (via has_more),
+            # independent of enrichment.
+            resp = await client.get("/api/continue-watching", params={"limit": 1})
+            assert resp.status_code == 200
+            assert resp.json()["has_more"] is True
+        finally:
+            await _cleanup_user(db, username)

@@ -311,3 +311,199 @@ class TestWatchProgressAPI:
     async def test_watch_progress_requires_auth(self, client):
         resp = await client.get("/api/watch-progress/movie/550")
         assert resp.status_code == 401
+
+
+class TestLatestWatchProgress:
+    """GET /watch-progress/tv/{tmdb_id}/latest — backs the TV detail
+    page's Watch Now button."""
+
+    async def test_null_when_show_never_started(self, client, db):
+        username = f"wp_latest_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            resp = await client.get("/api/watch-progress/tv/1399/latest")
+            assert resp.status_code == 200
+            assert resp.json() is None
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_returns_most_recently_updated_episode(self, client, db):
+        username = f"wp_latest_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 1,
+                    "position_seconds": 300.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 2,
+                    "episode_number": 8,
+                    "position_seconds": 50.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+
+            resp = await client.get("/api/watch-progress/tv/1399/latest")
+            assert resp.status_code == 200
+            body = resp.json()
+            assert body["season_number"] == 2
+            assert body["episode_number"] == 8
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_includes_a_nearly_finished_episode(self, client, db):
+        """Unlike Continue Watching's near-complete exclusion, "did I
+        ever watch this" should say yes even for a nearly-finished
+        episode — the detail page is asking a different question."""
+        username = f"wp_latest_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 3,
+                    "position_seconds": 2999.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+
+            resp = await client.get("/api/watch-progress/tv/1399/latest")
+            assert resp.status_code == 200
+            assert resp.json()["episode_number"] == 3
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_requires_auth(self, client):
+        resp = await client.get("/api/watch-progress/tv/1399/latest")
+        assert resp.status_code == 401
+
+
+class TestSeasonWatchProgress:
+    """GET /watch-progress/tv/{tmdb_id}/season-progress?season_number=N —
+    backs the episode list's "you've seen this one" highlighting."""
+
+    async def test_only_episodes_with_progress_are_returned(self, client, db):
+        username = f"wp_season_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 1,
+                    "position_seconds": 300.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            # Different season — must not show up in season 1's results.
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 2,
+                    "episode_number": 1,
+                    "position_seconds": 100.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+
+            resp = await client.get(
+                "/api/watch-progress/tv/1399/season-progress", params={"season_number": 1}
+            )
+            assert resp.status_code == 200
+            body = resp.json()
+            assert len(body) == 1
+            assert body[0]["episode_number"] == 1
+            assert body[0]["season_number"] == 1
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_includes_finished_episodes(self, client, db):
+        """Unlike Continue Watching, a fully-finished episode should
+        still be marked as "watched" here."""
+        username = f"wp_season_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 1,
+                    "position_seconds": 3000.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            resp = await client.get(
+                "/api/watch-progress/tv/1399/season-progress", params={"season_number": 1}
+            )
+            assert len(resp.json()) == 1
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_empty_when_nothing_watched(self, client, db):
+        username = f"wp_season_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            resp = await client.get(
+                "/api/watch-progress/tv/1399/season-progress", params={"season_number": 1}
+            )
+            assert resp.status_code == 200
+            assert resp.json() == []
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_requires_auth(self, client):
+        resp = await client.get(
+            "/api/watch-progress/tv/1399/season-progress", params={"season_number": 1}
+        )
+        assert resp.status_code == 401
+
+    async def test_no_route_collision_with_episode_progress_endpoint(self, client, db):
+        """Regression check for the routing ambiguity considered while
+        building this: .../tv/{tmdb_id}/{season_number}/{episode_number}
+        must still resolve correctly and NOT be shadowed by, or shadow,
+        .../tv/{tmdb_id}/season-progress."""
+        username = f"wp_season_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 5,
+                    "position_seconds": 42.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            episode_resp = await client.get("/api/watch-progress/tv/1399/1/5")
+            assert episode_resp.status_code == 200
+            assert episode_resp.json()["position_seconds"] == 42.0
+
+            season_resp = await client.get(
+                "/api/watch-progress/tv/1399/season-progress", params={"season_number": 1}
+            )
+            assert season_resp.status_code == 200
+            assert len(season_resp.json()) == 1
+        finally:
+            await _cleanup_user(db, username)

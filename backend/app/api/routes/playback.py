@@ -114,3 +114,51 @@ async def get_watch_progress_episode(
         db, current_user.id, tmdb_id, "tv", season_number, episode_number
     )
     return watch_progress_service.to_watch_progress_out(row) if row else None
+
+
+@router.get("/watch-progress/tv/{tmdb_id}/latest", response_model=WatchProgressOut | None)
+async def get_latest_watch_progress_tv(
+    tmdb_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Backs the TV detail page's "Watch Now" button — the most recent
+    episode this user has any progress on, or null if they've never
+    started the show. No collision with the {season_number}/{episode_number}
+    route above despite both starting with /watch-progress/tv/{tmdb_id}/:
+    that route has two more path segments, this one has one, so they're
+    structurally distinct regardless of declaration order."""
+    row = await watch_progress_service.get_latest_progress_for_title(
+        db, current_user.id, tmdb_id, "tv"
+    )
+    return watch_progress_service.to_watch_progress_out(row) if row else None
+
+
+@router.get(
+    "/watch-progress/tv/{tmdb_id}/season-progress",
+    response_model=list[WatchProgressOut],
+)
+async def list_watch_progress_for_season(
+    tmdb_id: int,
+    season_number: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Backs the episode list's "you've seen this one" highlighting —
+    every episode of this season with any saved progress.
+
+    season_number is a query param, not a path segment, on purpose:
+    /watch-progress/tv/{tmdb_id}/{season_number}/{episode_number} above
+    already claims the "two more segments" shape, and FastAPI/Starlette
+    matches routes by path structure at the string level (the `int` type
+    hints only validate *after* a route structurally matches — they
+    aren't compiled into the matching pattern unless you write
+    `{name:int}` explicitly). A path route here, e.g. .../season/{n},
+    would have the same two-segment shape as the episode route and could
+    get matched by it first (then 422 on `int("season")`) depending on
+    registration order. A query param sidesteps the ambiguity entirely.
+    """
+    rows = await watch_progress_service.list_progress_for_season(
+        db, current_user.id, tmdb_id, season_number
+    )
+    return [watch_progress_service.to_watch_progress_out(row) for row in rows]

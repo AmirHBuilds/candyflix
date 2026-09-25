@@ -5,9 +5,9 @@ import type { MediaItem } from "@/lib/media";
 // Plain MediaItem[] (every existing caller) is still assignable here —
 // this only adds fields, it doesn't require them. Introduced for
 // Continue Watching (Phase 7), which needs each tile to link straight
-// to its resume point (and, for the series section, a badge + CTA)
+// to its resume point, with a small season/episode badge for series,
 // rather than forking a whole new grid component for it.
-type GridItem = MediaItem & { href?: string; badge?: string; cta?: string };
+type GridItem = MediaItem & { href?: string; badge?: string };
 
 export default function MediaGrid({
   items,
@@ -33,7 +33,6 @@ export default function MediaGrid({
           onNavigate={onNavigate}
           href={item.href}
           badge={item.badge}
-          cta={item.cta}
         />
       ))}
     </div>

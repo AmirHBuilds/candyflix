@@ -19,22 +19,30 @@ export type ContinueWatchingItem = MediaItem & {
 };
 
 /**
- * Server-only fetcher — the home page (a Server Component) is currently
- * the only consumer, so there's no client-side (lib/continue-watching.ts,
- * no "-server" suffix) counterpart yet. See lib/watchlist-server.ts /
- * PHASE_HANDOFF.md §3.3 for why a Server Component needs its own
- * cookie-forwarding fetcher rather than the browser `fetch` pattern:
- * a Node-side fetch has no access to the browser's cookie jar, so
- * `credentials: "include"` silently does nothing there.
+ * Server-only fetcher — the home page (a Server Component) and the
+ * "View All" page are currently the only consumers, so there's no
+ * client-side (lib/continue-watching.ts, no "-server" suffix)
+ * counterpart yet. See lib/watchlist-server.ts / PHASE_HANDOFF.md §3.3
+ * for why a Server Component needs its own cookie-forwarding fetcher
+ * rather than the browser `fetch` pattern: a Node-side fetch has no
+ * access to the browser's cookie jar, so `credentials: "include"`
+ * silently does nothing there.
+ *
+ * limit defaults to 24 — the home page's single-row display cap — so
+ * the common call site needs no argument at all; the "View All" page
+ * passes a larger explicit limit.
  */
-export async function getContinueWatchingServer(): Promise<ContinueWatchingItem[]> {
+export async function getContinueWatchingServer(
+  limit = 24
+): Promise<{ items: ContinueWatchingItem[]; hasMore: boolean }> {
   const store = await cookies();
-  const res = await fetch(`${getApiBaseUrl()}/continue-watching`, {
+  const res = await fetch(`${getApiBaseUrl()}/continue-watching?limit=${limit}`, {
     headers: { Cookie: store.toString() },
     cache: "no-store",
   });
   if (!res.ok) {
     throw new Error("Couldn't load Continue Watching.");
   }
-  return res.json();
+  const data = await res.json();
+  return { items: data.items, hasMore: data.has_more };
 }

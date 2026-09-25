@@ -25,3 +25,13 @@ class ContinueWatchingItemOut(BaseModel):
     episode_number: int | None = None  # None for movies
     position_seconds: float
     duration_seconds: float
+
+
+class ContinueWatchingListOut(BaseModel):
+    """Envelope mirroring PagedMediaResponse (schemas/media.py) — same
+    "items + has_more" shape, same reason: the caller (here, the home
+    page vs. the "View All" page) needs to know whether there's more to
+    show without a second round-trip just to find out."""
+
+    items: list[ContinueWatchingItemOut]
+    has_more: bool

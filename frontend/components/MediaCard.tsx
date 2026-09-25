@@ -7,7 +7,6 @@ export default function MediaCard({
   onNavigate,
   href,
   badge,
-  cta,
 }: {
   item: MediaItem;
   onNavigate?: () => void;
@@ -16,11 +15,8 @@ export default function MediaCard({
    * the detail page, same as every other row's default behavior. */
   href?: string;
   /** Small corner label over the poster, e.g. "S2:E8" — Continue
-   * Watching's series section only; omitted everywhere else. */
+   * Watching's series items only; omitted everywhere else. */
   badge?: string;
-  /** Replaces the year/type/rating meta row with a short call-to-action
-   * line, e.g. "Watch Now — S2:E8". Omitted everywhere else. */
-  cta?: string;
 }) {
   const poster = posterUrl(item.poster_path, "w500");
   const typeLabel = item.media_type === "movie" ? "Movie" : "TV";
@@ -48,18 +44,14 @@ export default function MediaCard({
         )}
       </div>
       <p className="mt-2 truncate text-sm text-white/80">{item.title}</p>
-      {cta ? (
-        <p className="truncate text-xs font-medium text-[#FF5FA2]">{cta}</p>
-      ) : (
-        <div className="flex items-center justify-between text-xs text-white/40">
-          <span className="truncate">
-            {item.year ?? "—"} · {typeLabel}
-          </span>
-          {item.rating != null && (
-            <span className="ml-2 shrink-0 text-[#8FE3C7]">★ {item.rating.toFixed(1)}</span>
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-between text-xs text-white/40">
+        <span className="truncate">
+          {item.year ?? "—"} · {typeLabel}
+        </span>
+        {item.rating != null && (
+          <span className="ml-2 shrink-0 text-[#8FE3C7]">★ {item.rating.toFixed(1)}</span>
+        )}
+      </div>
     </Link>
   );
 }

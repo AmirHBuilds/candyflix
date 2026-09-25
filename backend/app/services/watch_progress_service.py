@@ -170,3 +170,50 @@ async def list_continue_watching(
     row = aliased(WatchProgress, per_title)
     result = await db.execute(select(row).order_by(row.updated_at.desc()).limit(limit))
     return list(result.scalars().all())
+
+
+async def get_latest_progress_for_title(
+    db: AsyncSession, user_id: uuid.UUID, tmdb_id: int, media_type: str
+) -> WatchProgress | None:
+    """The most-recently-updated progress row for this title, across
+    every season/episode for TV (a movie has at most one row anyway, per
+    the model's unique constraint, so this is equivalent to get_progress()
+    there). Backs the detail page's "Watch Now" button: whether to resume
+    a specific episode or start from S1E1.
+
+    Deliberately does NOT apply NEAR_COMPLETE_FRACTION the way
+    list_continue_watching() does — "did I ever watch this, and where"
+    is a different question from "should this clutter my in-progress
+    rows," and the detail page is asking the former. A finished episode
+    still answers "yes, and here's where," same as a half-watched one.
+    """
+    result = await db.execute(
+        select(WatchProgress)
+        .where(
+            WatchProgress.user_id == user_id,
+            WatchProgress.tmdb_id == tmdb_id,
+            WatchProgress.media_type == media_type,
+        )
+        .order_by(WatchProgress.updated_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def list_progress_for_season(
+    db: AsyncSession, user_id: uuid.UUID, tmdb_id: int, season_number: int
+) -> list[WatchProgress]:
+    """Every episode of this season the user has any saved progress for
+    — including fully finished ones (again unlike
+    list_continue_watching()'s exclusion): the episode list wants to
+    mark "you've watched/started this" for anything with history,
+    finished or not, not just what's still worth resuming."""
+    result = await db.execute(
+        select(WatchProgress).where(
+            WatchProgress.user_id == user_id,
+            WatchProgress.tmdb_id == tmdb_id,
+            WatchProgress.media_type == "tv",
+            WatchProgress.season_number == season_number,
+        )
+    )
+    return list(result.scalars().all())

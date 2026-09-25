@@ -162,6 +162,31 @@ export async function getEpisodeWatchProgress(
   return handle(res, "Couldn't load watch progress.");
 }
 
+// Backs the TV detail page's "Watch Now" button (Phase 7 follow-up):
+// the most recent episode this user has any progress on, across every
+// season, or null if they've never started the show.
+export async function getLatestTVWatchProgress(tmdbId: number | string): Promise<WatchProgress | null> {
+  const res = await fetch(`${getApiBaseUrl()}/watch-progress/tv/${tmdbId}/latest`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return handle(res, "Couldn't load watch progress.");
+}
+
+// Backs the episode list's "you've seen this one" highlighting: every
+// episode of this season with any saved progress, finished or not.
+export async function getSeasonWatchProgress(
+  tmdbId: number | string,
+  season: number
+): Promise<WatchProgress[]> {
+  const query = new URLSearchParams({ season_number: String(season) });
+  const res = await fetch(`${getApiBaseUrl()}/watch-progress/tv/${tmdbId}/season-progress?${query}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  return handle(res, "Couldn't load watch progress.");
+}
+
 // Phase 5b — online subtitle discovery (OpenSubtitles, proxied through
 // our backend so the API key never reaches the browser).
 export async function searchOnlineSubtitles(

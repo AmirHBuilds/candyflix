@@ -2,12 +2,7 @@ import { describe, it, expect } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 
-import {
-  resumeHref,
-  seasonEpisodeLabel,
-  toGeneralContinueWatchingItems,
-  toSeriesContinueWatchingItems,
-} from "@/app/(main)/page";
+import { resumeHref, seasonEpisodeLabel, toContinueWatchingItems, Section } from "@/app/(main)/page";
 import MediaGrid from "@/components/MediaGrid";
 import type { ContinueWatchingItem } from "@/lib/continue-watching-server";
 
@@ -64,42 +59,66 @@ describe("seasonEpisodeLabel", () => {
   });
 });
 
-describe("toGeneralContinueWatchingItems", () => {
-  it("links every item straight to its resume point, with no badge or CTA", () => {
-    const [general] = toGeneralContinueWatchingItems([episode]);
-    expect(general.href).toBe("/watch/tv/1396/2/8");
-    expect(general.badge).toBeUndefined();
-    expect(general.cta).toBeUndefined();
+describe("toContinueWatchingItems", () => {
+  it("links every item straight to its resume point", () => {
+    const items = toContinueWatchingItems([movie, episode]);
+    expect(items[0].href).toBe("/watch/movie/603");
+    expect(items[1].href).toBe("/watch/tv/1396/2/8");
   });
 
-  it("includes both movies and series", () => {
-    const items = toGeneralContinueWatchingItems([movie, episode]);
-    expect(items.map((i) => i.tmdb_id)).toEqual([603, 1396]);
-  });
-});
-
-describe("toSeriesContinueWatchingItems", () => {
-  it("excludes movies — this section is series-only", () => {
-    const items = toSeriesContinueWatchingItems([movie, episode]);
-    expect(items).toHaveLength(1);
-    expect(items[0].tmdb_id).toBe(1396);
-  });
-
-  it("shows the exact resume point as both a badge and a hinted CTA", () => {
-    const [series] = toSeriesContinueWatchingItems([episode]);
+  it("gives a series item a season/episode poster badge", () => {
+    const [series] = toContinueWatchingItems([episode]);
     expect(series.badge).toBe("S2:E8");
-    expect(series.cta).toBe("Watch Now — S2:E8");
-    expect(series.href).toBe("/watch/tv/1396/2/8");
+  });
+
+  it("leaves a movie without a badge", () => {
+    const [film] = toContinueWatchingItems([movie]);
+    expect(film.badge).toBeUndefined();
+  });
+
+  it("keeps movies and series together in one list, in the order given", () => {
+    const items = toContinueWatchingItems([episode, movie]);
+    expect(items.map((i) => i.tmdb_id)).toEqual([1396, 603]);
   });
 });
 
-describe("Continue Watching series card rendering", () => {
-  it("renders the resume-hinting CTA text instead of the usual year/type/rating row", () => {
-    const items = toSeriesContinueWatchingItems([episode]);
+describe("Continue Watching card rendering", () => {
+  it("shows the season/episode badge but keeps the normal year/type/rating meta row", () => {
+    const items = toContinueWatchingItems([episode]);
     render(<MediaGrid items={items} />);
 
-    expect(screen.getByText("Watch Now — S2:E8")).toBeInTheDocument();
     expect(screen.getByText("S2:E8")).toBeInTheDocument(); // the poster badge
-    expect(screen.queryByText(/2008 · TV/)).not.toBeInTheDocument();
+    // No separate "Watch Now — S2:E8" CTA line — that was removed in
+    // favor of a single unified row with just the badge.
+    expect(screen.queryByText(/Watch Now/)).not.toBeInTheDocument();
+    expect(screen.getByText(/2008 · TV/)).toBeInTheDocument();
+  });
+
+  it("a movie in the same row shows no badge at all", () => {
+    const items = toContinueWatchingItems([movie]);
+    render(<MediaGrid items={items} />);
+
+    expect(screen.queryByText(/^S\d+:E\d+$/)).not.toBeInTheDocument();
+    expect(screen.getByText(/1999 · Movie/)).toBeInTheDocument();
+  });
+});
+
+describe("Section's View All link", () => {
+  it("renders a View All link when viewAllHref is given", () => {
+    render(
+      <Section
+        title="Continue Watching"
+        items={toContinueWatchingItems([movie])}
+        error={null}
+        viewAllHref="/continue-watching"
+      />
+    );
+    const link = screen.getByRole("link", { name: "View All" });
+    expect(link).toHaveAttribute("href", "/continue-watching");
+  });
+
+  it("renders no View All link when viewAllHref is omitted", () => {
+    render(<Section title="Continue Watching" items={toContinueWatchingItems([movie])} error={null} />);
+    expect(screen.queryByRole("link", { name: "View All" })).not.toBeInTheDocument();
   });
 });

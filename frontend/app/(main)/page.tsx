@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTrending, getPopularMovies, getPopularTV, type MediaItem } from "@/lib/media";
 import { getContinueWatchingServer, type ContinueWatchingItem } from "@/lib/continue-watching-server";
 import HeroCarousel from "@/components/HeroCarousel";
@@ -17,22 +18,28 @@ async function safeLoad<T extends MediaItem>(
   }
 }
 
-type GridItem = MediaItem & { href?: string; badge?: string; cta?: string };
+export type GridItem = MediaItem & { href?: string; badge?: string };
 
 export function Section({
   title,
   items,
   error,
   max = 24,
+  viewAllHref,
 }: {
   title: string;
   items: GridItem[];
   error: string | null;
   // Trending/Popular are curated top-N lists, so 24 (a clean multiple
   // of the 2/4/6-column breakpoints) makes sense there. Continue
-  // Watching is recency-based, not curated, and reads better as a
-  // shorter, more "row-like" cut — callers pass a smaller max for it.
+  // Watching also uses 24 (matching the backend's default fetch size —
+  // see getContinueWatchingServer), with viewAllHref covering the case
+  // where more than that exist.
   max?: number;
+  // Shown as a small link next to the title when there may be more
+  // items than this row displays — currently only Continue Watching
+  // uses this, but any future section can.
+  viewAllHref?: string;
 }) {
   if (error) return null; // fail quietly per-section rather than break the whole page
   if (items.length === 0) return null;
@@ -44,7 +51,14 @@ export function Section({
 
   return (
     <section>
-      <h2 className="mb-3 text-lg font-medium text-white/90">{title}</h2>
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-lg font-medium text-white/90">{title}</h2>
+        {viewAllHref && (
+          <Link href={viewAllHref} className="text-sm text-white/50 hover:text-white/80">
+            View All
+          </Link>
+        )}
+      </div>
       <MediaGrid items={visible} />
     </section>
   );
@@ -67,41 +81,40 @@ export function resumeHref(item: ContinueWatchingItem): string {
   return `/watch/tv/${item.tmdb_id}/${item.season_number}/${item.episode_number}`;
 }
 
-export function toGeneralContinueWatchingItems(items: ContinueWatchingItem[]): GridItem[] {
-  // The general row is deliberately plain — same look as every other
-  // home row (poster, title, year · type · rating), just linking
-  // straight to the resume point instead of the detail page. The
-  // in-progress-series section below is where the extra "exactly where
-  // you are" treatment (badge + CTA) lives, per the user's explicit ask.
-  return items.map((item) => ({ ...item, href: resumeHref(item) }));
-}
-
-export function toSeriesContinueWatchingItems(items: ContinueWatchingItem[]): GridItem[] {
-  return items
-    .filter((item) => item.media_type === "tv")
-    .map((item) => {
-      const label = seasonEpisodeLabel(item);
-      return {
-        ...item,
-        href: resumeHref(item),
-        badge: label ?? undefined,
-        cta: label ? `Watch Now — ${label}` : "Watch Now",
-      };
-    });
+// One unified list — movies and series together, sorted by recency
+// (already the order the backend returns them in). Every tile links
+// straight to its resume point instead of the detail page; a series
+// additionally gets a small "S{season}:E{episode}" poster badge so it's
+// clear exactly where you left off, without a separate section or the
+// heavier "Watch Now — S1:E3" call-to-action text this replaced.
+export function toContinueWatchingItems(items: ContinueWatchingItem[]): GridItem[] {
+  return items.map((item) => ({
+    ...item,
+    href: resumeHref(item),
+    badge: seasonEpisodeLabel(item) ?? undefined,
+  }));
 }
 
 export default async function Home() {
-  const [today, week, movies, tv, continueWatching] = await Promise.all([
+  const [today, week, movies, tv] = await Promise.all([
     safeLoad(() => getTrending("day")),
     safeLoad(() => getTrending("week")),
     safeLoad(() => getPopularMovies()),
     safeLoad(() => getPopularTV()),
-    // Continue Watching (Phase 7) — same safeLoad wrapper as the other
-    // rows. Not logged-in / nothing in progress both surface as an
-    // empty list here, and Section already renders nothing for that
-    // case, same as every other row.
-    safeLoad(() => getContinueWatchingServer()),
   ]);
+
+  // Not wrapped in safeLoad: the response shape here is
+  // {items, hasMore} rather than a bare array, so it needs its own
+  // small try/catch to carry hasMore through. Not logged-in / nothing
+  // in progress both surface as an empty list, and Section already
+  // renders nothing for that case, same as every other row.
+  const continueWatching = await (async () => {
+    try {
+      return await getContinueWatchingServer();
+    } catch {
+      return { items: [] as ContinueWatchingItem[], hasMore: false };
+    }
+  })();
 
   const heroUnavailable = today.error && week.error;
 
@@ -117,15 +130,9 @@ export default async function Home() {
 
       <Section
         title="Continue Watching"
-        items={toGeneralContinueWatchingItems(continueWatching.items)}
-        error={continueWatching.error}
-        max={12}
-      />
-      <Section
-        title="Continue Watching: Series"
-        items={toSeriesContinueWatchingItems(continueWatching.items)}
-        error={continueWatching.error}
-        max={8}
+        items={toContinueWatchingItems(continueWatching.items)}
+        error={null}
+        viewAllHref={continueWatching.hasMore ? "/continue-watching" : undefined}
       />
       <Section title="Trending Today" items={today.items} error={today.error} />
       <Section title="Trending This Week" items={week.items} error={week.error} />
