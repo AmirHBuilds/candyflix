@@ -14,6 +14,10 @@ Phase 5c: player polish (remembered volume/subtitle preferences,
 cross-season episode rollover, sleep timer).
 Phase 6: watchlist ("Candy Box") — add/remove/list, enriched with
 live TMDB data at read time rather than storing a metadata copy.
+Phase 7: Continue Watching — a home-page row (and a distinct
+in-progress-series section) built entirely from a query over the
+existing WatchProgress table; no new modeling work, same
+enrich-at-read-time pattern as the watchlist.
 """
 import os
 
@@ -21,7 +25,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import auth, health, movies, playback, search, subtitles, trending, tv, watchlist
+from app.api.routes import (
+    auth,
+    continue_watching,
+    health,
+    movies,
+    playback,
+    search,
+    subtitles,
+    trending,
+    tv,
+    watchlist,
+)
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -88,6 +103,7 @@ app.include_router(tv.router, prefix="/api")
 app.include_router(playback.router, prefix="/api")
 app.include_router(subtitles.router, prefix="/api")
 app.include_router(watchlist.router, prefix="/api")
+app.include_router(continue_watching.router, prefix="/api")
 
 
 @app.get("/api")

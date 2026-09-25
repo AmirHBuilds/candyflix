@@ -1,11 +1,19 @@
 import MediaCard from "@/components/MediaCard";
 import type { MediaItem } from "@/lib/media";
 
+// Optional per-item overrides, passed straight through to MediaCard.
+// Plain MediaItem[] (every existing caller) is still assignable here —
+// this only adds fields, it doesn't require them. Introduced for
+// Continue Watching (Phase 7), which needs each tile to link straight
+// to its resume point (and, for the series section, a badge + CTA)
+// rather than forking a whole new grid component for it.
+type GridItem = MediaItem & { href?: string; badge?: string; cta?: string };
+
 export default function MediaGrid({
   items,
   onNavigate,
 }: {
-  items: MediaItem[];
+  items: GridItem[];
   onNavigate?: () => void;
 }) {
   // Breakpoints use exact pixel values (not Tailwind's lg/xl scale) so
@@ -23,6 +31,9 @@ export default function MediaGrid({
           key={`${item.media_type}-${item.tmdb_id}`}
           item={item}
           onNavigate={onNavigate}
+          href={item.href}
+          badge={item.badge}
+          cta={item.cta}
         />
       ))}
     </div>

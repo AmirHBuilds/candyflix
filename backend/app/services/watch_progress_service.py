@@ -13,9 +13,17 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.models.watch_progress import NO_EPISODE, NO_SEASON, WatchProgress
 from app.schemas.playback import WatchProgressOut
+
+# A title at/past this fraction of its duration is treated as finished,
+# not "in progress" — Continue Watching (Phase 7) shouldn't resurface
+# something the person already watched to the end. Chosen to match the
+# common "credits are rolling" convention other players use; not
+# user-configurable, since nobody has asked for that yet.
+NEAR_COMPLETE_FRACTION = 0.95
 
 
 def _to_sentinel(value: int | None, sentinel: int) -> int:
@@ -24,6 +32,19 @@ def _to_sentinel(value: int | None, sentinel: int) -> int:
 
 def _from_sentinel(value: int, sentinel: int) -> int | None:
     return None if value == sentinel else value
+
+
+def display_season_episode(row: WatchProgress) -> tuple[int | None, int | None]:
+    """Public counterpart to the private sentinel helpers above, for any
+    other module (e.g. the continue-watching route) that needs the
+    honest None-for-movies season/episode representation without
+    reaching into this module's private helpers — per this module's own
+    docstring, nothing outside it should need to know the sentinel
+    exists."""
+    return (
+        _from_sentinel(row.season_number, NO_SEASON),
+        _from_sentinel(row.episode_number, NO_EPISODE),
+    )
 
 
 def to_watch_progress_out(row: WatchProgress) -> WatchProgressOut:
@@ -103,3 +124,49 @@ async def get_progress(
         )
     )
     return result.scalar_one_or_none()
+
+
+async def list_continue_watching(
+    db: AsyncSession, user_id: uuid.UUID, limit: int = 20
+) -> list[WatchProgress]:
+    """Returns the most-recently-updated WatchProgress row per
+    (tmdb_id, media_type) for this user — i.e. one entry per title, with
+    a series collapsed to its single most-recently-watched episode
+    rather than listing every episode it has ever partially watched
+    (a movie already has at most one row per the model's unique
+    constraint, so this only actually collapses anything for TV).
+
+    Uses Postgres's DISTINCT ON (via SQLAlchemy's `.distinct(*cols)`,
+    which the Postgres dialect renders as DISTINCT ON) rather than a
+    GROUP BY + subquery join — this project's Postgres dependency is
+    already fixed, so there's no portability cost to taking the
+    idiomatic path. DISTINCT ON requires its ORDER BY to start with the
+    same columns it distincts on, so the "most recent episode wins" per
+    title happens inside that first ordering; the outer query then
+    re-sorts the (already deduplicated, one-per-title) result by
+    recency across titles and applies the limit.
+
+    Excludes anything at/past NEAR_COMPLETE_FRACTION of its own
+    duration (see that constant) and any non-positive duration (which
+    would otherwise divide by zero here and shouldn't exist as a real
+    row regardless).
+    """
+    per_title = (
+        select(WatchProgress)
+        .where(
+            WatchProgress.user_id == user_id,
+            WatchProgress.duration_seconds > 0,
+            (WatchProgress.position_seconds / WatchProgress.duration_seconds)
+            < NEAR_COMPLETE_FRACTION,
+        )
+        .distinct(WatchProgress.tmdb_id, WatchProgress.media_type)
+        .order_by(
+            WatchProgress.tmdb_id,
+            WatchProgress.media_type,
+            WatchProgress.updated_at.desc(),
+        )
+        .subquery()
+    )
+    row = aliased(WatchProgress, per_title)
+    result = await db.execute(select(row).order_by(row.updated_at.desc()).limit(limit))
+    return list(result.scalars().all())

@@ -8,20 +8,29 @@ enterprise auth, no generic "streaming platform" chrome.
 
 ## Status
 
-**Phase 4.3 complete: visual polish/bugfix pass.** Building on 4.2:
+**Phase 6 complete (watchlist / "Candy Box"); Phase 7 (Continue Watching)
+is next.** Summary of everything built so far:
 
-- Grids use `auto-fit` (not `auto-fill`) so a partial last row stretches
-  to fill the full width instead of leaving dead space.
-- Backdrop images (Hero, movie/TV detail banners) request TMDB's
-  `original` size and crop from the top (`object-top`) instead of
-  dead-center, so character faces/heads aren't sliced off.
-- Poster cards request `w500` (up from `w342`) for a crisper image now
-  that `auto-fit` can stretch cards wider on a partial row.
-- Detail-page descriptions are shortened to roughly one sentence via
-  `shortenOverview()` in `lib/media.ts` (truncates real TMDB text —
-  no AI rewriting/summarization involved).
+- Phases 2–4: auth, TMDB integration, browsing/search UX, visual polish.
+- **Phase 5a** — real custom video player (custom-built controls, not
+  the browser's native ones) against local mock video files, with
+  resume-watching (`WatchProgress` model) and subtitle rendering.
+- **Phase 5b** — online subtitle discovery via the OpenSubtitles REST
+  API: auto-fetches a default English subtitle for every title,
+  plus in-player language search/browse. `mock-subtitles/` is
+  deprecated and unused as of this phase.
+- **Phase 5c** — player polish: remembered volume/mute/subtitle-language
+  preferences across sessions, cross-season next/previous-episode
+  rollover, a sleep timer, and various player UI fixes (icon-by-level
+  volume icon, settings-menu positioning that survives fullscreen and
+  small mobile viewports).
+- **Phase 6** — watchlist ("Candy Box"): add/remove/list a title,
+  wired up on both detail pages and the home page's hero carousel.
 
-Phases 2–4.2 (auth, TMDB, browsing/search UX) remain as before.
+See `PHASE_HANDOFF.md` (if present in the repo root) for the full
+architecture write-up, open issues, and conventions established along
+the way — it's kept up to date as the authoritative project handoff
+document across chat sessions.
 
 ## Stack
 
@@ -156,12 +165,13 @@ npm run test
 2. ✅ Auth (User model, Argon2 hashing, sessions, "Who's watching?" UI)
 3. ✅ TMDB integration (trending, search, details, seasons/episodes)
 4. ✅ Candy UI (Candy at Night visual system, layout, navigation)
-5. Playback providers (`PlaybackSource` abstraction, mock providers)
-6. Candy Box (per-user watchlist)
-7. Continue Watching (per-user progress)
+5. ✅ Playback (custom player against local mock video; OpenSubtitles
+   for real subtitle discovery; player polish — see PHASE_HANDOFF.md)
+6. ✅ Candy Box (per-user watchlist)
+7. Continue Watching (per-user progress) — next up
 8. Polish (loading/error states, mobile, animations)
 
-Future, out of scope for now: **Candy Server** — a server-side media
-pipeline for content we have legitimate rights to. See architecture
-docs for the extensibility hooks already in place for this
-(`source_type` field, `PlaybackSource` abstraction).
+Future, out of scope for now: **Candy Server** — a self-hosted media
+pipeline for content we have legitimate rights to. No real third-party
+*playback* providers will ever be built (product decision) — only
+mock/local playback, indefinitely. See `backend/app/providers/README.md`.
