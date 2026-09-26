@@ -112,6 +112,23 @@ export async function saveWatchProgress(payload: WatchProgressPayload): Promise<
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
+    // Without this, a save fired right before navigating to a
+    // different episode can be silently killed mid-flight: clicking an
+    // episode link navigates immediately, and a plain fetch from the
+    // page being left doesn't get to finish. That's exactly the bug
+    // this fixes — quickly clicking through several episodes could
+    // leave the "high-water mark" stuck on an old episode, because the
+    // save for whatever you clicked through stopped short of ever
+    // reaching the server, and only the separate pagehide/beacon path
+    // (a different, later moment) eventually delivered a save, well
+    // after the next page had already rendered with stale data.
+    // `keepalive` tells the browser to let this request complete in
+    // the background even after the initiating document is gone — the
+    // same guarantee sendBeacon exists for below, just usable from an
+    // ordinary fetch call with a JSON body. Total keepalive payload
+    // size across the browser is capped (~64KB), far more than this
+    // tiny JSON body needs.
+    keepalive: true,
   });
 }
 
