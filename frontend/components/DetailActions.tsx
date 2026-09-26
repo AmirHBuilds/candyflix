@@ -85,8 +85,15 @@ export default function DetailActions({
           className="flex items-center gap-2 rounded-xl bg-[#FF5FA2] px-6 py-2.5 font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
         >
           Watch Now
-          {/* Same box as the button, not a separate element next to it. */}
-          {resumeLabel && <span className="text-sm font-normal opacity-70">{resumeLabel}</span>}
+          {/* Same box as the button, not a separate element next to it.
+              A solid dark pill (rather than a translucent/opacity
+              treatment) so the label stays readable against the pink
+              button instead of blending into it. */}
+          {resumeLabel && (
+            <span className="rounded-md bg-[#0b0b12]/80 px-2 py-0.5 text-xs font-semibold text-white">
+              {resumeLabel}
+            </span>
+          )}
         </a>
       ) : (
         <button

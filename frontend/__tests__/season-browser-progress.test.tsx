@@ -139,4 +139,38 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     // no other episode had progress, so the slot is simply unused.
     expect(screen.queryByText("In progress")).not.toBeInTheDocument();
   });
+
+  it("also pink-highlights the show's real resume point when it differs from what's currently playing, without demoting it to 'In progress'", async () => {
+    // Regression test for the reported bug: watching episode 1 (jumped
+    // to it) while the show's actual overall resume point is episode 3
+    // — episode 3 must still get the pink-name treatment, not the
+    // generic "In progress" label, even though it isn't what's playing.
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
+      progressRow(1, 100, "2026-01-05T00:00:00Z"), // currently playing, just started
+      progressRow(3, 2000, "2026-01-01T00:00:00Z"), // the real resume point
+    ]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        initialSeason={1}
+        currentEpisode={1}
+        resumeEpisode={resumeEpisode(3)}
+      />
+    );
+
+    await screen.findByText("Now playing");
+    const ep1 = episodeRow(/Pilot/);
+    expect(ep1.textContent).toContain("Now playing");
+
+    const ep3 = episodeRow(/\.\.\.And the Bag's in the River/);
+    expect(ep3.querySelector("p")).toHaveClass("text-[#FF5FA2]");
+    expect(ep3.textContent).not.toMatch(/Now playing|In progress/);
+
+    // Neither the playing episode nor the resume point ever shows
+    // "In progress" — that label is reserved for the one *other*
+    // partial episode, of which there is none here.
+    expect(screen.queryByText("In progress")).not.toBeInTheDocument();
+  });
 });

@@ -1,5 +1,5 @@
 import { getTVShow, getSeason, type TVShowDetail, type SeasonDetail } from "@/lib/media";
-import { getEpisodePlaybackSourceServer } from "@/lib/playback-server";
+import { getEpisodePlaybackSourceServer, getLatestTVWatchProgressServer } from "@/lib/playback-server";
 import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
 import SeasonBrowser from "@/components/SeasonBrowser";
@@ -37,6 +37,14 @@ export default async function WatchEpisodePage({
       </div>
     );
   }
+
+  // The show's overall resume point — not necessarily this episode; the
+  // person may have jumped here from an older/different one. Passed to
+  // SeasonBrowser so that episode (if different from the one actually
+  // playing) still gets its own pink-name treatment below, instead of
+  // being demoted to the generic "In progress" label the way any other
+  // merely-partial episode is.
+  const resumeProgress = await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null);
 
   const episodes = seasonDetail.episodes;
   const currentIndex = episodes.findIndex((e) => e.episode_number === episodeNum);
@@ -126,6 +134,7 @@ export default async function WatchEpisodePage({
           seasons={show.seasons}
           initialSeason={seasonNum}
           currentEpisode={episodeNum}
+          resumeEpisode={resumeProgress}
         />
       </div>
     </div>
