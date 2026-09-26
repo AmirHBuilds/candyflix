@@ -176,17 +176,32 @@ async def list_continue_watching(
 async def get_latest_progress_for_title(
     db: AsyncSession, user_id: uuid.UUID, tmdb_id: int, media_type: str
 ) -> WatchProgress | None:
-    """The most-recently-updated progress row for this title, across
-    every season/episode for TV (a movie has at most one row anyway, per
-    the model's unique constraint, so this is equivalent to get_progress()
-    there). Backs the detail page's "Watch Now" button: whether to resume
-    a specific episode or start from S1E1.
+    """The furthest-reached progress row for this title — for TV, the
+    row with the greatest (season_number, episode_number), a high-water
+    mark, NOT simply whichever row happened to be touched most recently.
+    Backs the detail page's "Watch Now" button and the pink "resume
+    point" highlighting in the episode list.
 
-    Deliberately does NOT apply NEAR_COMPLETE_FRACTION the way
-    list_continue_watching() does — "did I ever watch this, and where"
-    is a different question from "should this clutter my in-progress
-    rows," and the detail page is asking the former. A finished episode
-    still answers "yes, and here's where," same as a half-watched one.
+    This is a deliberate choice, not an oversight: someone who reaches
+    S1E5 and later dips into an earlier episode (a rewatch, or just
+    checking something) should still have "Watch Now" resume S1E5, not
+    whatever they most recently clicked — the earlier episode instead
+    becomes a candidate for the separate "In progress" indicator (see
+    list_progress_for_season / SeasonBrowser's "secondary" concept),
+    which is exactly the distinction a "most recently updated" query
+    can't express: it would keep making the last-clicked episode "the"
+    resume point regardless of whether it's actually ahead or behind.
+
+    A movie only ever has one row (per the model's unique constraint),
+    so this ordering is moot there — it's mechanically the same query
+    get_progress() would run for a movie's single (NO_SEASON, NO_EPISODE)
+    row.
+
+    Also deliberately does NOT apply NEAR_COMPLETE_FRACTION the way
+    list_continue_watching() does — "how far have I gotten" is a
+    different question from "should this clutter my in-progress rows,"
+    and this is asking the former. A finished episode still answers
+    "yes, and here's where," same as a half-watched one.
     """
     result = await db.execute(
         select(WatchProgress)
@@ -195,7 +210,7 @@ async def get_latest_progress_for_title(
             WatchProgress.tmdb_id == tmdb_id,
             WatchProgress.media_type == media_type,
         )
-        .order_by(WatchProgress.updated_at.desc())
+        .order_by(WatchProgress.season_number.desc(), WatchProgress.episode_number.desc())
         .limit(1)
     )
     return result.scalar_one_or_none()

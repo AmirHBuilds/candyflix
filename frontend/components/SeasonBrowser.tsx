@@ -25,15 +25,17 @@ export default function SeasonBrowser({
   // opening the picker doesn't dump you back at Season 1.
   initialSeason?: number;
   // Highlights this episode number when its season is selected — only
-  // meaningful together with initialSeason, since "current episode"
-  // only makes sense in the watch-page context.
+  // ever passed together with resumeEpisode, from the watch page (see
+  // isPlayerContext below).
   currentEpisode?: number;
-  // The show's latest saved progress (see getLatestTVWatchProgressServer)
-  // — the detail page's equivalent of "now playing": the episode
-  // "Watch Now" will resume, styled the same pink-name way as
-  // currentEpisode above, minus the "Now playing" text (nothing is
-  // actually playing here). Omitted on the watch page, which already
-  // has currentEpisode for this.
+  // The show's high-water mark (see getLatestTVWatchProgressServer /
+  // get_latest_progress_for_title): the furthest episode ever reached,
+  // which is what "Watch Now" resumes — NOT simply whatever was most
+  // recently touched. Passed on both the detail page (its only special
+  // episode: pink name) and the watch page (a second, differently
+  // colored highlight alongside "Now playing", since the two can differ
+  // — e.g. playing S1:E1 again while S1:E5 remains the real resume
+  // point).
   resumeEpisode?: WatchProgress | null;
 }) {
   const [selected, setSelected] = useState<number | null>(initialSeason ?? seasons[0]?.season_number ?? null);
@@ -41,14 +43,22 @@ export default function SeasonBrowser({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Only the watch page ever passes currentEpisode (something is
+  // literally playing there); the detail page never does. This is the
+  // one flag that decides both what "resumeEpisode" is styled as (pink
+  // vs. a different color so it doesn't get confused with "Now
+  // playing") and whether the separate "In progress" indicator applies
+  // at all — see the request this was built for: on the player page,
+  // only "Now playing" should show, nothing else.
+  const isPlayerContext = currentEpisode !== undefined;
+
   // At most one *other* episode gets flagged, on purpose — every
   // episode with any saved progress lighting up made the list noisy and
   // duplicated what the resume-point highlighting above already says.
   // This is specifically "the one you dipped into more recently than
-  // your main resume point, but didn't finish" — e.g. you're resuming
+  // your high-water mark, but didn't finish" — e.g. you're resuming
   // S1:E5 but poked at S1:E1 without finishing it. null when there's no
-  // such episode (nothing else touched, or the resume episode itself is
-  // the only one with history).
+  // such episode. Detail-page only — see isPlayerContext.
   const [secondary, setSecondary] = useState<{ episodeNumber: number; fraction: number } | null>(null);
 
   useEffect(() => {
@@ -65,23 +75,26 @@ export default function SeasonBrowser({
   // episode list fetch above: losing the "In progress" highlighting
   // isn't worth erroring or blocking the whole season view over, so a
   // failure here just leaves it unset rather than showing an error.
+  // Skipped entirely in the player context — there is no "In progress"
+  // slot to compute there, so there's nothing this fetch would be used
+  // for (one fewer request on the watch page).
   useEffect(() => {
-    if (selected === null) return;
+    if (selected === null || isPlayerContext) {
+      setSecondary(null);
+      return;
+    }
     let cancelled = false;
     getSeasonWatchProgress(tvId, selected)
       .then((rows) => {
         if (cancelled) return;
         const candidates = rows.filter((row) => {
           if (row.episode_number == null || row.duration_seconds <= 0) return false;
-          // Exclude whichever episode already gets the pink-name
-          // treatment (the resume point, or — on the watch page — the
-          // one currently playing), so it can't also "use up" the one
+          // Exclude the resume point so it can't also "use up" the one
           // secondary "In progress" slot and hide a genuinely different
           // partially-watched episode.
           const isResumeEpisode =
             resumeEpisode?.season_number === selected && resumeEpisode?.episode_number === row.episode_number;
-          const isNowPlayingEpisode = selected === initialSeason && row.episode_number === currentEpisode;
-          if (isResumeEpisode || isNowPlayingEpisode) return false;
+          if (isResumeEpisode) return false;
           return row.position_seconds / row.duration_seconds < NEAR_COMPLETE_FRACTION;
         });
         candidates.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
@@ -101,7 +114,7 @@ export default function SeasonBrowser({
     return () => {
       cancelled = true;
     };
-  }, [tvId, selected, resumeEpisode, initialSeason, currentEpisode]);
+  }, [tvId, selected, resumeEpisode, isPlayerContext]);
 
   if (seasons.length === 0) return null;
 
@@ -135,11 +148,23 @@ export default function SeasonBrowser({
               !isNowPlaying &&
               resumeEpisode?.season_number === selected &&
               resumeEpisode?.episode_number === episode.episode_number;
-            // Same pink-name/highlighted-row treatment either way — the
-            // only difference is the "Now playing" text, which only
-            // makes sense when something's actually playing.
             const isHighlighted = isNowPlaying || isResumePoint;
-            const isSecondary = !isHighlighted && secondary?.episodeNumber === episode.episode_number;
+            const isSecondary = !isPlayerContext && !isHighlighted && secondary?.episodeNumber === episode.episode_number;
+
+            // "Now playing" is always pink — it's the one thing
+            // actually happening right now. The resume point gets the
+            // same pink treatment when it's the *only* special episode
+            // (the detail page, where this was already confirmed to
+            // read well) — but on the watch page, if it differs from
+            // what's actually playing, two identically pink episodes at
+            // once is exactly the confusion this fixes, so it gets a
+            // distinct mint color there instead, plus its own label.
+            let nameClass = "text-white/90 group-hover:text-white";
+            if (isNowPlaying) {
+              nameClass = "font-medium text-[#FF5FA2]";
+            } else if (isResumePoint) {
+              nameClass = isPlayerContext ? "font-medium text-[#8FE3C7]" : "font-medium text-[#FF5FA2]";
+            }
 
             return (
               <li key={episode.episode_number}>
@@ -176,9 +201,12 @@ export default function SeasonBrowser({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className={isHighlighted ? "font-medium text-[#FF5FA2]" : "text-white/90 group-hover:text-white"}>
+                    <p className={nameClass}>
                       {episode.episode_number}. {episode.name}
                       {isNowPlaying && <span className="ml-2 text-xs font-normal text-white/50">Now playing</span>}
+                      {isResumePoint && isPlayerContext && (
+                        <span className="ml-2 text-xs font-normal text-white/50">Last watched</span>
+                      )}
                       {isSecondary && (
                         <span className="ml-2 text-xs font-normal text-[#FF5FA2]/80">In progress</span>
                       )}

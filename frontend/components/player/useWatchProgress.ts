@@ -14,6 +14,8 @@ const AUTOSAVE_INTERVAL_MS = 10_000;
 
 /**
  * Saves playback position:
+ * - immediately when playback starts (so even a very brief watch before
+ *   navigating away leaves a real saved row — see handlePlay below)
  * - every 10s while playing (periodic autosave)
  * - on pause and on seek (normal fetch — page is still alive)
  * - on visibilitychange (tab backgrounded) and pagehide (navigating
@@ -75,6 +77,16 @@ export function useWatchProgress(
       if (!video.paused) saveNow();
     }, AUTOSAVE_INTERVAL_MS);
 
+    function handlePlay() {
+      // A near-immediate save the moment playback actually starts, on
+      // top of the 10s interval/pause/seek triggers above — without
+      // this, a very brief watch (a few seconds, then navigating away)
+      // could end up with no saved row at all if the unload beacon
+      // doesn't land in time, which would make the "resume point" and
+      // "In progress" indicators look stuck on stale data even though
+      // the person genuinely did start watching something new.
+      saveNow();
+    }
     function handlePause() {
       saveNow();
     }
@@ -88,6 +100,7 @@ export function useWatchProgress(
       saveBeacon();
     }
 
+    video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
     video.addEventListener("seeked", handleSeeked);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -95,6 +108,7 @@ export function useWatchProgress(
 
     return () => {
       clearInterval(interval);
+      video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("seeked", handleSeeked);
       document.removeEventListener("visibilitychange", handleVisibilityChange);

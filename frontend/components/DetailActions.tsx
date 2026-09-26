@@ -82,15 +82,18 @@ export default function DetailActions({
       {effectiveHref ? (
         <a
           href={effectiveHref}
-          className="flex items-center gap-2 rounded-xl bg-[#FF5FA2] px-6 py-2.5 font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+          className="flex items-center gap-3 rounded-xl bg-[#FF5FA2] py-3 pl-5 pr-6 text-base font-semibold text-[#0b0b12] hover:bg-[#FF5FA2]/90"
         >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
           Watch Now
-          {/* Same box as the button, not a separate element next to it.
-              A solid dark pill (rather than a translucent/opacity
-              treatment) so the label stays readable against the pink
-              button instead of blending into it. */}
+          {/* A solid dark pill, sized to match the button around it,
+              rather than a small afterthought — this is what "Watch
+              Now" will actually resume, so it earns equal visual
+              weight, not a tiny label crammed in beside it. */}
           {resumeLabel && (
-            <span className="rounded-md bg-[#0b0b12]/80 px-2 py-0.5 text-xs font-semibold text-white">
+            <span className="rounded-full bg-[#0b0b12] px-3 py-1 text-sm font-semibold text-white">
               {resumeLabel}
             </span>
           )}
@@ -98,8 +101,11 @@ export default function DetailActions({
       ) : (
         <button
           disabled
-          className="cursor-not-allowed rounded-xl bg-[#FF5FA2]/30 px-6 py-2.5 font-medium text-white/50"
+          className="flex items-center gap-3 rounded-xl bg-[#FF5FA2]/30 py-3 pl-5 pr-6 text-base font-semibold text-white/50"
         >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
           Watch Now
         </button>
       )}
@@ -109,8 +115,8 @@ export default function DetailActions({
         aria-pressed={inCandyBox === true}
         className={
           inCandyBox
-            ? "rounded-xl border border-[#FF5FA2] bg-[#FF5FA2]/10 px-6 py-2.5 font-medium text-[#FF5FA2] transition-colors hover:bg-[#FF5FA2]/20 disabled:cursor-not-allowed disabled:opacity-70"
-            : "rounded-xl border border-white/15 px-6 py-2.5 font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            ? "rounded-xl border border-[#FF5FA2] bg-[#FF5FA2]/10 px-6 py-3 text-base font-semibold text-[#FF5FA2] transition-colors hover:bg-[#FF5FA2]/20 disabled:cursor-not-allowed disabled:opacity-70"
+            : "rounded-xl border border-white/15 px-6 py-3 text-base font-semibold text-white/80 transition-colors hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         }
       >
         {inCandyBox ? "✓ In Candy Box" : "Add to Candy Box"}

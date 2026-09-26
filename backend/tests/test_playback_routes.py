@@ -327,7 +327,7 @@ class TestLatestWatchProgress:
         finally:
             await _cleanup_user(db, username)
 
-    async def test_returns_most_recently_updated_episode(self, client, db):
+    async def test_returns_furthest_episode_reached_not_most_recently_touched(self, client, db):
         username = f"wp_latest_{uuid.uuid4().hex[:8]}"
         try:
             await _make_authed_client(client, db, username)
@@ -350,6 +350,47 @@ class TestLatestWatchProgress:
                     "season_number": 2,
                     "episode_number": 8,
                     "position_seconds": 50.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+
+            resp = await client.get("/api/watch-progress/tv/1399/latest")
+            assert resp.status_code == 200
+            body = resp.json()
+            assert body["season_number"] == 2
+            assert body["episode_number"] == 8
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_high_water_mark_does_not_move_backward_on_a_more_recent_but_earlier_episode(self, client, db):
+        """Regression test for the reported bug: reach S2:E8, then dip
+        into S1:E1 afterward (so S1:E1's row is now the more recently
+        *updated* one) — "Watch Now" must still resume S2:E8, not
+        S1:E1. This is exactly what distinguishes a high-water mark from
+        a plain "most recently touched" query."""
+        username = f"wp_latest_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 2,
+                    "episode_number": 8,
+                    "position_seconds": 50.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            # Touched more recently, but behind the high-water mark.
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 1,
+                    "position_seconds": 10.0,
                     "duration_seconds": 3000.0,
                 },
             )

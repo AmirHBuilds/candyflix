@@ -109,6 +109,18 @@ describe("useWatchProgress — event-triggered saves", () => {
       expect.objectContaining({ position_seconds: 77 })
     );
   });
+
+  it("saves immediately when playback starts, without waiting for the 10s interval", () => {
+    const { getByTestId } = render(<Harness />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 3, duration: 100 });
+
+    video.dispatchEvent(new Event("play"));
+
+    expect(playback.saveWatchProgress).toHaveBeenCalledWith(
+      expect.objectContaining({ position_seconds: 3 })
+    );
+  });
 });
 
 describe("useWatchProgress — teardown-safe saves via sendBeacon", () => {
@@ -174,6 +186,16 @@ describe("useWatchProgress — restoration gate (resume-overwritten-with-0 regre
     window.dispatchEvent(new Event("pagehide"));
 
     expect(playback.saveWatchProgressBeacon).not.toHaveBeenCalled();
+  });
+
+  it("does not save on play while restored=false", () => {
+    const { getByTestId } = render(<Harness restored={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 0, duration: 100 });
+
+    video.dispatchEvent(new Event("play"));
+
+    expect(playback.saveWatchProgress).not.toHaveBeenCalled();
   });
 
   it("starts saving normally once restored flips to true", () => {

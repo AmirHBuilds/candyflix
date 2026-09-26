@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 
@@ -26,6 +26,10 @@ vi.mock("@/lib/media", async () => {
 vi.mock("@/lib/playback", async () => {
   const actual = await vi.importActual<typeof playback>("@/lib/playback");
   return { ...actual, getSeasonWatchProgress: vi.fn() };
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
 });
 
 const seasons = [{ season_number: 1, name: "Season 1", episode_count: 3, poster_path: null }];
@@ -129,27 +133,22 @@ describe("SeasonBrowser — the one secondary 'In progress' episode", () => {
 });
 
 describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
-  it("marks the currently-playing episode, and does not also let it consume the secondary slot", async () => {
-    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([progressRow(2, 500, "2026-01-05T00:00:00Z")]);
-
+  it("marks the currently-playing episode, and never shows 'In progress' on the player page", async () => {
     render(<SeasonBrowser tvId={1396} seasons={seasons} initialSeason={1} currentEpisode={2} />);
 
     await screen.findByText("Now playing");
-    // Episode 2 is "Now playing", not additionally "In progress" — and
-    // no other episode had progress, so the slot is simply unused.
+    // The whole secondary "In progress" system is switched off in the
+    // player context — getSeasonWatchProgress shouldn't even be called.
+    expect(playback.getSeasonWatchProgress).not.toHaveBeenCalled();
     expect(screen.queryByText("In progress")).not.toBeInTheDocument();
   });
 
-  it("also pink-highlights the show's real resume point when it differs from what's currently playing, without demoting it to 'In progress'", async () => {
-    // Regression test for the reported bug: watching episode 1 (jumped
-    // to it) while the show's actual overall resume point is episode 3
-    // — episode 3 must still get the pink-name treatment, not the
-    // generic "In progress" label, even though it isn't what's playing.
-    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
-      progressRow(1, 100, "2026-01-05T00:00:00Z"), // currently playing, just started
-      progressRow(3, 2000, "2026-01-01T00:00:00Z"), // the real resume point
-    ]);
-
+  it("gives the resume point a distinct mint color (not pink) and its own 'Last watched' label when it differs from what's playing", async () => {
+    // Regression test for the reported bug: watching episode 1 while
+    // the show's actual resume point is episode 3 — episode 3 must
+    // still be visibly marked, but distinguishably from "Now playing"
+    // (previously both were identically pink, which was the complaint),
+    // and never demoted to the generic "In progress" label.
     render(
       <SeasonBrowser
         tvId={1396}
@@ -163,14 +162,34 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     await screen.findByText("Now playing");
     const ep1 = episodeRow(/Pilot/);
     expect(ep1.textContent).toContain("Now playing");
+    expect(ep1.querySelector("p")).toHaveClass("text-[#FF5FA2]");
 
     const ep3 = episodeRow(/\.\.\.And the Bag's in the River/);
-    expect(ep3.querySelector("p")).toHaveClass("text-[#FF5FA2]");
+    expect(ep3.textContent).toContain("Last watched");
     expect(ep3.textContent).not.toMatch(/Now playing|In progress/);
+    // Distinct from "Now playing"'s pink — this is the fix for "both of
+    // them have pink title".
+    expect(ep3.querySelector("p")).toHaveClass("text-[#8FE3C7]");
+    expect(ep3.querySelector("p")).not.toHaveClass("text-[#FF5FA2]");
 
-    // Neither the playing episode nor the resume point ever shows
-    // "In progress" — that label is reserved for the one *other*
-    // partial episode, of which there is none here.
     expect(screen.queryByText("In progress")).not.toBeInTheDocument();
+  });
+
+  it("shows only pink 'Now playing', with no separate label, when the resume point IS what's currently playing", async () => {
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        initialSeason={1}
+        currentEpisode={3}
+        resumeEpisode={resumeEpisode(3)}
+      />
+    );
+
+    const ep3 = await screen.findByText(/\.\.\.And the Bag's in the River/);
+    const row = ep3.closest("a")!;
+    expect(row.textContent).toContain("Now playing");
+    expect(row.textContent).not.toContain("Last watched");
+    expect(row.querySelector("p")).toHaveClass("text-[#FF5FA2]");
   });
 });
