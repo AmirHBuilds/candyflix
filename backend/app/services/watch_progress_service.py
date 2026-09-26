@@ -55,6 +55,7 @@ def to_watch_progress_out(row: WatchProgress) -> WatchProgressOut:
         episode_number=_from_sentinel(row.episode_number, NO_EPISODE),
         position_seconds=row.position_seconds,
         duration_seconds=row.duration_seconds,
+        updated_at=row.updated_at,
     )
 
 

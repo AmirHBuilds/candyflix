@@ -6,6 +6,7 @@ PlaybackSource is intentionally provider-agnostic: source_type is
 external links, or a self-hosted Candy Server). The player component
 should only ever branch on source_type, never assume "mock".
 """
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel
@@ -41,5 +42,10 @@ class WatchProgressOut(BaseModel):
     episode_number: int | None
     position_seconds: float
     duration_seconds: float
+    # Exposed so a client can rank several episodes of saved progress by
+    # recency itself (e.g. the TV detail page picking which non-resume
+    # episode is worth flagging as "In progress") without a second,
+    # more specific endpoint for every such ranking need.
+    updated_at: datetime
 
     model_config = {"from_attributes": True}

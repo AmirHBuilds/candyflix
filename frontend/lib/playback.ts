@@ -74,6 +74,7 @@ export type WatchProgress = {
   episode_number: number | null;
   position_seconds: number;
   duration_seconds: number;
+  updated_at: string;
 };
 
 async function handle<T>(res: Response, fallbackMessage: string): Promise<T> {

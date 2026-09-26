@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { getApiBaseUrl } from "@/lib/api-client";
-import type { PlaybackSource } from "@/lib/playback";
+import type { PlaybackSource, WatchProgress } from "@/lib/playback";
 
 /**
  * Server-side counterpart to lib/playback.ts's fetchers. A Server
@@ -51,4 +51,23 @@ export async function getEpisodePlaybackSourceServer(
     cache: "no-store",
   });
   return handle(res, "Playback isn't available right now.");
+}
+
+/**
+ * Backs the TV detail page: fetched once, server-side, and passed down
+ * to both DetailActions (the "Watch Now" button + its resume label) and
+ * SeasonBrowser (which episode's name to show in pink) so the two don't
+ * each make their own client-side round-trip for the same answer, and
+ * neither has to render a disabled/unhighlighted flash while loading —
+ * unlike the Candy Box status, which is genuinely per-widget and stays
+ * a client-side fetch in DetailActions.
+ */
+export async function getLatestTVWatchProgressServer(
+  tmdbId: number | string
+): Promise<WatchProgress | null> {
+  const res = await fetch(`${getApiBaseUrl()}/watch-progress/tv/${tmdbId}/latest`, {
+    headers: { Cookie: await forwardedCookieHeader() },
+    cache: "no-store",
+  });
+  return handle(res, "Couldn't load watch progress.");
 }

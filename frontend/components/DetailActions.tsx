@@ -2,34 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { addToWatchlist, getWatchlistStatus, removeFromWatchlist } from "@/lib/watchlist";
-import { getLatestTVWatchProgress } from "@/lib/playback";
+import type { WatchProgress } from "@/lib/playback";
 import type { MediaType } from "@/lib/media";
 
 export default function DetailActions({
   watchHref,
   tmdbId,
   mediaType,
+  tvProgress,
 }: {
   // Movies always arrive with this already set (see app/(main)/movie/[id]/page.tsx).
-  // TV never passes one in — there's no single "the" episode for a show
-  // — so it's resolved below instead: resume the last-watched episode
-  // if there's any history, otherwise start at S1E1.
   watchHref?: string;
   tmdbId: number;
   mediaType: MediaType;
+  // TV only: the show's latest saved progress, fetched once server-side
+  // by the TV detail page (see getLatestTVWatchProgressServer) and
+  // passed down here — undefined/omitted for a movie, null for "never
+  // started this show". Resolving it server-side means no loading flash
+  // and no separate client fetch duplicating what SeasonBrowser also
+  // needs from the same page.
+  tvProgress?: WatchProgress | null;
 }) {
   // null = not resolved yet — the button stays disabled rather than
   // guessing "not in the list" while the real status is still loading,
   // which would otherwise let a click race the actual answer.
   const [inCandyBox, setInCandyBox] = useState<boolean | null>(null);
   const [pending, setPending] = useState(false);
-
-  // Resolved on mount for TV only; stays null the whole time for a
-  // movie, since movies always arrive with an explicit watchHref
-  // already and never need this. null here means "still loading",
-  // not "no progress" — see effectiveHref below.
-  const [tvWatchHref, setTvWatchHref] = useState<string | null>(null);
-  const [resumeLabel, setResumeLabel] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,32 +37,6 @@ export default function DetailActions({
       })
       .catch(() => {
         if (!cancelled) setInCandyBox(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [mediaType, tmdbId]);
-
-  useEffect(() => {
-    if (mediaType !== "tv") return;
-    let cancelled = false;
-    getLatestTVWatchProgress(tmdbId)
-      .then((progress) => {
-        if (cancelled) return;
-        if (progress?.season_number != null && progress.episode_number != null) {
-          setTvWatchHref(`/watch/tv/${tmdbId}/${progress.season_number}/${progress.episode_number}`);
-          setResumeLabel(`S${progress.season_number}:E${progress.episode_number}`);
-        } else {
-          // Never started — Watch Now begins the show from the top.
-          setTvWatchHref(`/watch/tv/${tmdbId}/1/1`);
-        }
-      })
-      .catch(() => {
-        // Couldn't check history — fail toward "start from S1E1" rather
-        // than leaving the button disabled indefinitely; worst case a
-        // returning viewer restarts instead of resuming, which is a far
-        // smaller cost than a permanently dead button.
-        if (!cancelled) setTvWatchHref(`/watch/tv/${tmdbId}/1/1`);
       });
     return () => {
       cancelled = true;
@@ -90,10 +62,19 @@ export default function DetailActions({
     }
   }
 
-  // Movies already have watchHref from the start (instant, no flash).
-  // TV resolves it moments after mount — a brief disabled state is the
-  // cost of knowing whether to resume or start over, same tolerance the
-  // Candy Box button already has for inCandyBox === null above.
+  // A movie always has watchHref already. For TV, resume at the exact
+  // remembered episode if there's any history, otherwise start at S1E1
+  // — "Watch Now" is never a dead end for TV anymore.
+  const resumeLabel =
+    mediaType === "tv" && tvProgress?.season_number != null && tvProgress?.episode_number != null
+      ? `S${tvProgress.season_number}:E${tvProgress.episode_number}`
+      : null;
+  const tvWatchHref =
+    mediaType === "tv"
+      ? resumeLabel
+        ? `/watch/tv/${tmdbId}/${tvProgress!.season_number}/${tvProgress!.episode_number}`
+        : `/watch/tv/${tmdbId}/1/1`
+      : null;
   const effectiveHref = watchHref ?? tvWatchHref;
 
   return (
@@ -101,9 +82,11 @@ export default function DetailActions({
       {effectiveHref ? (
         <a
           href={effectiveHref}
-          className="rounded-xl bg-[#FF5FA2] px-6 py-2.5 font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+          className="flex items-center gap-2 rounded-xl bg-[#FF5FA2] px-6 py-2.5 font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
         >
           Watch Now
+          {/* Same box as the button, not a separate element next to it. */}
+          {resumeLabel && <span className="text-sm font-normal opacity-70">{resumeLabel}</span>}
         </a>
       ) : (
         <button
@@ -113,7 +96,6 @@ export default function DetailActions({
           Watch Now
         </button>
       )}
-      {resumeLabel && <span className="text-sm text-white/50">{resumeLabel}</span>}
       <button
         onClick={toggleCandyBox}
         disabled={inCandyBox === null || pending}

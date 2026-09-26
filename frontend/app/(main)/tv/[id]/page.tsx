@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTVShow, getSimilarTV, backdropUrl, posterUrl, shortenOverview } from "@/lib/media";
+import { getLatestTVWatchProgressServer } from "@/lib/playback-server";
 import DetailActions from "@/components/DetailActions";
 import SeasonBrowser from "@/components/SeasonBrowser";
 import MediaGrid from "@/components/MediaGrid";
@@ -20,6 +21,12 @@ export default async function TVDetailPage({
   }
 
   const similar = await getSimilarTV(id).catch(() => []);
+  // Not logged in, or nothing watched yet, both land here as null —
+  // same "fail toward nothing rather than break the page" treatment as
+  // `similar` above. Fetched once here and passed to both DetailActions
+  // (Watch Now + its resume label) and SeasonBrowser (which episode's
+  // name to show in pink), rather than each fetching it independently.
+  const watchProgress = await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null);
 
   const backdrop = backdropUrl(show.backdrop_path, "original");
   const poster = posterUrl(show.poster_path, "w500");
@@ -70,11 +77,11 @@ export default async function TVDetailPage({
 
           <p className="max-w-2xl text-white/70">{shortenOverview(show.overview)}</p>
 
-          <DetailActions tmdbId={show.tmdb_id} mediaType="tv" />
+          <DetailActions tmdbId={show.tmdb_id} mediaType="tv" tvProgress={watchProgress} />
         </div>
       </div>
 
-      <SeasonBrowser tvId={show.tmdb_id} seasons={show.seasons} />
+      <SeasonBrowser tvId={show.tmdb_id} seasons={show.seasons} resumeEpisode={watchProgress} />
 
       {similar.length > 0 && (
         <section>
