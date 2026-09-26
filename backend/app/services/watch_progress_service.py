@@ -9,6 +9,7 @@ the uniqueness constraint). Nothing outside this module should need to
 know the sentinel exists.
 """
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -71,9 +72,24 @@ async def save_progress(
 ) -> WatchProgress:
     """Upserts by (user_id, tmdb_id, media_type, season_number,
     episode_number) — one row per user per title/episode, always
-    reflecting the latest position."""
+    reflecting the latest position.
+
+    Explicitly bumps updated_at in the upsert's SET clause. This is NOT
+    redundant with the column's onupdate=... default on the model: that
+    default is an ORM-level hook that only fires when SQLAlchemy's unit
+    of work issues the UPDATE itself, and this is a raw Core
+    on_conflict_do_update statement, which bypasses the ORM entirely — a
+    real bug found here, where re-watching an already-saved episode
+    silently left updated_at frozen at its very first save, forever.
+    That in turn broke everything built on "most recently touched":
+    list_continue_watching's ordering and, more visibly, SeasonBrowser's
+    "In progress" episode on the frontend, which appeared permanently
+    stuck on whichever episode happened to be touched first, no matter
+    how many times a different one was rewatched afterward.
+    """
     season = _to_sentinel(season_number, NO_SEASON)
     episode = _to_sentinel(episode_number, NO_EPISODE)
+    now = datetime.now(timezone.utc)
 
     stmt = (
         insert(WatchProgress)
@@ -85,12 +101,14 @@ async def save_progress(
             episode_number=episode,
             position_seconds=position_seconds,
             duration_seconds=duration_seconds,
+            updated_at=now,
         )
         .on_conflict_do_update(
             constraint="uq_watch_progress_identity",
             set_={
                 "position_seconds": position_seconds,
                 "duration_seconds": duration_seconds,
+                "updated_at": now,
             },
         )
         .returning(WatchProgress)

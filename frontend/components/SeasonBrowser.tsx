@@ -52,6 +52,27 @@ export default function SeasonBrowser({
   // only "Now playing" should show, nothing else.
   const isPlayerContext = currentEpisode !== undefined;
 
+  // On the player page, resumeEpisode can be stale relative to what's
+  // actually playing right now: it's whatever the server last knew
+  // before this page loaded, and saving a new high-water mark for the
+  // episode you just clicked into takes a moment (or, before that save
+  // lands, simply hasn't happened yet). If resumeEpisode is BEHIND what
+  // you just navigated to, showing it as "Last watched" is stale,
+  // confusing information — you're already past it. Only show it when
+  // it's genuinely still AHEAD of what's playing (e.g. resuming S1:E1
+  // while your real progress is at S1:E5) — that's the one case where
+  // it tells you something you don't already know. On the detail page
+  // there's no "currently playing" to be stale relative to, so this is
+  // always true there.
+  const resumeIsAheadOfPlaying =
+    !isPlayerContext ||
+    (resumeEpisode?.season_number != null &&
+      resumeEpisode.episode_number != null &&
+      initialSeason != null &&
+      currentEpisode != null &&
+      (resumeEpisode.season_number > initialSeason ||
+        (resumeEpisode.season_number === initialSeason && resumeEpisode.episode_number > currentEpisode)));
+
   // At most one *other* episode gets flagged, on purpose — every
   // episode with any saved progress lighting up made the list noisy and
   // duplicated what the resume-point highlighting above already says.
@@ -146,6 +167,7 @@ export default function SeasonBrowser({
             const isNowPlaying = selected === initialSeason && episode.episode_number === currentEpisode;
             const isResumePoint =
               !isNowPlaying &&
+              resumeIsAheadOfPlaying &&
               resumeEpisode?.season_number === selected &&
               resumeEpisode?.episode_number === episode.episode_number;
             const isHighlighted = isNowPlaying || isResumePoint;

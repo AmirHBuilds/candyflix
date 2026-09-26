@@ -192,4 +192,46 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     expect(row.textContent).not.toContain("Last watched");
     expect(row.querySelector("p")).toHaveClass("text-[#FF5FA2]");
   });
+
+  it("does not show a stale 'Last watched' on an episode behind the one just navigated to", async () => {
+    // Regression test: navigating from episode 1 to episode 3 reloads
+    // the page, but resumeEpisode reflects whatever the server knew
+    // *before* that click (still episode 1, since saving the new
+    // high-water mark takes a moment). Episode 1 is now BEHIND what's
+    // playing, so it must not be shown as "Last watched" — only "Now
+    // playing" on episode 3, nothing else.
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        initialSeason={1}
+        currentEpisode={3}
+        resumeEpisode={resumeEpisode(1)}
+      />
+    );
+
+    await screen.findByText("Now playing");
+    const ep1 = episodeRow(/Pilot/);
+    expect(ep1.textContent).not.toMatch(/Last watched|In progress/);
+    expect(ep1.querySelector("p")).not.toHaveClass("text-[#FF5FA2]");
+    expect(ep1.querySelector("p")).not.toHaveClass("text-[#8FE3C7]");
+
+    expect(screen.queryByText("Last watched")).not.toBeInTheDocument();
+  });
+
+  it("still shows 'Last watched' when the resume point is genuinely ahead of what's playing", async () => {
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        initialSeason={1}
+        currentEpisode={1}
+        resumeEpisode={resumeEpisode(3)}
+      />
+    );
+
+    await screen.findByText("Last watched");
+    const ep3 = episodeRow(/\.\.\.And the Bag's in the River/);
+    expect(ep3.textContent).toContain("Last watched");
+  });
 });

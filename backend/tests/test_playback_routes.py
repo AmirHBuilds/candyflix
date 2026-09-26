@@ -247,6 +247,47 @@ class TestWatchProgressAPI:
         finally:
             await _cleanup_user(db, username)
 
+    async def test_second_save_bumps_updated_at(self, client, db):
+        """Regression test for a real bug: the upsert's SET clause
+        didn't include updated_at, so the model's onupdate=... default
+        (an ORM-only hook that never fires for this raw Core upsert)
+        silently never bumped it — a re-watched episode's updated_at
+        stayed frozen at its very first save forever. This broke every
+        "most recently touched" feature: Continue Watching's ordering,
+        and — most visibly — the "In progress" episode on the TV detail
+        page, which looked permanently stuck on whichever episode was
+        touched first, no matter how many times a different one was
+        rewatched afterward."""
+        username = f"wp_test_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+
+            first = await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 550,
+                    "media_type": "movie",
+                    "position_seconds": 50.0,
+                    "duration_seconds": 8000.0,
+                },
+            )
+            first_updated_at = first.json()["updated_at"]
+
+            second = await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 550,
+                    "media_type": "movie",
+                    "position_seconds": 4000.0,
+                    "duration_seconds": 8000.0,
+                },
+            )
+            second_updated_at = second.json()["updated_at"]
+
+            assert second_updated_at > first_updated_at
+        finally:
+            await _cleanup_user(db, username)
+
     async def test_episode_progress_is_independent_of_movie_progress(self, client, db):
         username = f"wp_test_{uuid.uuid4().hex[:8]}"
         try:
