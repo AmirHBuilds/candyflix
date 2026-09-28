@@ -2,14 +2,18 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTVShow, getSimilarTV, backdropUrl, posterUrl, shortenOverview } from "@/lib/media";
 import { getLatestTVWatchProgressServer } from "@/lib/playback-server";
+import { mergeResumeWithHint, parseResumeHintFromSearchParams } from "@/lib/playback";
 import DetailActions from "@/components/DetailActions";
 import SeasonBrowser from "@/components/SeasonBrowser";
 import MediaGrid from "@/components/MediaGrid";
+import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
 
 export default async function TVDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
 
@@ -26,13 +30,24 @@ export default async function TVDetailPage({
   // `similar` above. Fetched once here and passed to both DetailActions
   // (Watch Now + its resume label) and SeasonBrowser (which episode's
   // name to show in pink), rather than each fetching it independently.
-  const watchProgress = await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null);
+  // Merged with a URL hint (see lib/playback.ts's navigateWithResumeHint
+  // / mergeResumeWithHint) in case the person just navigated here
+  // straight from the player and the corresponding save hasn't landed
+  // yet — without this, "Back to details" could briefly show a resume
+  // point one step behind what was actually just watched.
+  const sp = await searchParams;
+  const watchProgress = mergeResumeWithHint(
+    await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null),
+    parseResumeHintFromSearchParams(sp),
+    show.tmdb_id
+  );
 
   const backdrop = backdropUrl(show.backdrop_path, "original");
   const poster = posterUrl(show.poster_path, "w500");
 
   return (
     <div className="flex flex-col gap-8">
+      <StripResumeHintFromUrl />
       <div className="relative -mx-6 h-[40vh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
         {backdrop && (
           <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover object-top" />

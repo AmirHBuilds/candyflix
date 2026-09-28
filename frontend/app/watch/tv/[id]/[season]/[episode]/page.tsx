@@ -1,14 +1,17 @@
 import { getTVShow, getSeason, type TVShowDetail, type SeasonDetail } from "@/lib/media";
 import { getEpisodePlaybackSourceServer, getLatestTVWatchProgressServer } from "@/lib/playback-server";
-import type { PlaybackSource } from "@/lib/playback";
+import { mergeResumeWithHint, parseResumeHintFromSearchParams, type PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
 import SeasonBrowser from "@/components/SeasonBrowser";
 import BackToDetailsLink from "@/components/player/BackToDetailsLink";
+import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
 
 export default async function WatchEpisodePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; season: string; episode: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id, season, episode } = await params;
   const seasonNum = Number(season);
@@ -44,8 +47,17 @@ export default async function WatchEpisodePage({
   // SeasonBrowser so that episode (if different from the one actually
   // playing) still gets its own pink-name treatment below, instead of
   // being demoted to the generic "In progress" label the way any other
-  // merely-partial episode is.
-  const resumeProgress = await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null);
+  // merely-partial episode is. Merged with a URL hint (see
+  // lib/playback.ts's navigateWithResumeHint / mergeResumeWithHint) for
+  // the same reason as the detail page: the save for the episode just
+  // left might not have landed by the time this page's own data fetch
+  // runs, and this hint is how that stays correct without waiting on it.
+  const sp = await searchParams;
+  const resumeProgress = mergeResumeWithHint(
+    await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null),
+    parseResumeHintFromSearchParams(sp),
+    show.tmdb_id
+  );
 
   const episodes = seasonDetail.episodes;
   const currentIndex = episodes.findIndex((e) => e.episode_number === episodeNum);
@@ -88,6 +100,7 @@ export default async function WatchEpisodePage({
 
   return (
     <div>
+      <StripResumeHintFromUrl />
       <VideoPlayer
         source={source}
         title={`${show.title} — ${currentEpisode?.name ?? `Episode ${episodeNum}`}`}

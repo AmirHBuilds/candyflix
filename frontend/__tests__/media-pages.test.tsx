@@ -87,7 +87,7 @@ describe("Movie detail page — real Inception data", () => {
 describe("TV detail page — real Breaking Bad data", () => {
   it("renders title, seasons, and lets you browse episodes", async () => {
     const user = userEvent.setup();
-    render(await TVDetailPage({ params: Promise.resolve({ id: "1396" }) }));
+    render(await TVDetailPage({ params: Promise.resolve({ id: "1396" }), searchParams: Promise.resolve({}) }));
 
     expect(screen.getByRole("heading", { name: "Breaking Bad" })).toBeInTheDocument();
 

@@ -444,6 +444,49 @@ class TestLatestWatchProgress:
         finally:
             await _cleanup_user(db, username)
 
+    async def test_a_barely_opened_later_episode_does_not_become_the_resume_point(self, client, db):
+        """Regression test: the player saves at ~0:00 the moment playback
+        starts, so clicking S1:E10 to look around leaves a row there.
+        That must not outrank the episode you actually watched."""
+        username = f"wp_latest_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            for episode, position in ((8, 300.0), (10, 0.0)):
+                await client.post(
+                    "/api/watch-progress",
+                    json={
+                        "tmdb_id": 1399,
+                        "media_type": "tv",
+                        "season_number": 1,
+                        "episode_number": episode,
+                        "position_seconds": position,
+                        "duration_seconds": 3000.0,
+                    },
+                )
+            body = (await client.get("/api/watch-progress/tv/1399/latest")).json()
+            assert body["episode_number"] == 8
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_null_when_only_barely_opened(self, client, db):
+        username = f"wp_latest_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 4,
+                    "position_seconds": 1.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            assert (await client.get("/api/watch-progress/tv/1399/latest")).json() is None
+        finally:
+            await _cleanup_user(db, username)
+
     async def test_includes_a_nearly_finished_episode(self, client, db):
         """Unlike Continue Watching's near-complete exclusion, "did I
         ever watch this" should say yes even for a nearly-finished

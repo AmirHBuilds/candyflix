@@ -1,14 +1,15 @@
 "use client";
 
-import { flushWatchProgressAndNavigate } from "@/lib/playback";
+import { navigateWithResumeHint } from "@/lib/playback";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 
 /**
- * Same fix as SeasonBrowser's episode links and VideoPlayer's
- * next/prev/"Up next" controls: leaving the watch page via a plain
- * navigating `<a>` doesn't wait for the last save to land, so the
- * detail page you land on could read a stale resume point. Flushing
- * first, then navigating, closes that race here too.
+ * Same non-blocking approach as SeasonBrowser's episode links and
+ * VideoPlayer's next/prev/"Up next" controls — see
+ * navigateWithResumeHint's docstring in lib/playback.ts. Saves in the
+ * background and passes what was playing forward as a URL hint, so
+ * leaving the player doesn't make the detail page wait on a save
+ * that's still in flight.
  */
 export default function BackToDetailsLink({
   identity,
@@ -26,7 +27,7 @@ export default function BackToDetailsLink({
       href={href}
       onClick={(e) => {
         e.preventDefault();
-        void flushWatchProgressAndNavigate(identity, href);
+        navigateWithResumeHint(identity, href);
       }}
       className={className}
     >

@@ -169,16 +169,21 @@ export function saveWatchProgressBeacon(payload: WatchProgressPayload): void {
  * episode to another could still show stale data on the very next page,
  * even though the save eventually, correctly lands moments later (which
  * is exactly the confusing "it looked wrong until I reloaded" behavior
- * this was built to fix). Awaiting the save here and only THEN
- * navigating removes the race entirely, rather than narrowing its
- * window.
+ * this was built to fix).
+ *
+ * SUPERSEDED by navigateWithResumeHint below: awaiting the save here
+ * closed the race correctly, but at the cost of blocking every episode
+ * switch on a network round-trip — fine on a fast connection, badly
+ * unresponsive on a slow or flaky one (a multi-second freeze just to
+ * click to the next episode). navigateWithResumeHint gets the same
+ * correctness without that cost. Kept as a named export in case a
+ * future caller genuinely needs "guaranteed landed before navigating"
+ * over responsiveness, but nothing in this app should reach for it by
+ * default anymore.
  *
  * Reads live position directly from the <video> element rather than
  * threading a ref through props: there is exactly one <video> per page
- * in this app (see VideoPlayer.tsx), so this is safe, and it lets any
- * navigation trigger (the episode list, a "back to details" link) share
- * one flush implementation instead of each wiring into the player's
- * internal state separately.
+ * in this app (see VideoPlayer.tsx), so this is safe.
  */
 export async function flushWatchProgressAndNavigate(
   identity: {
@@ -206,6 +211,145 @@ export async function flushWatchProgressAndNavigate(
     }
   }
   window.location.href = href;
+}
+
+/**
+ * Mirrors MIN_MEANINGFUL_PROGRESS_SECONDS in the backend's
+ * watch_progress_service.py: an episode only counts as "reached" once
+ * this much has actually been watched. The player saves at ~0:00 the
+ * instant playback starts, so just clicking an episode leaves a saved
+ * row — which must not, by itself, move anyone's resume point. The
+ * navigation hint below follows the same rule, so it never claims a
+ * "furthest episode" that the server (correctly) would not.
+ */
+export const MIN_MEANINGFUL_PROGRESS_SECONDS = 10;
+
+/**
+ * Appends "you were just watching S{season}:E{episode}" as query params
+ * onto href — TV only; a movie has no season/episode ordering to hint
+ * at, so href is returned unchanged for a movie identity.
+ */
+function withResumeHint(
+  href: string,
+  identity: { mediaType: "movie" | "tv"; seasonNumber?: number | null; episodeNumber?: number | null }
+): string {
+  if (identity.mediaType !== "tv" || identity.seasonNumber == null || identity.episodeNumber == null) {
+    return href;
+  }
+  const [path, existingQuery] = href.split("?");
+  const params = new URLSearchParams(existingQuery);
+  params.set("fromSeason", String(identity.seasonNumber));
+  params.set("fromEpisode", String(identity.episodeNumber));
+  return `${path}?${params.toString()}`;
+}
+
+/**
+ * The practical replacement for flushWatchProgressAndNavigate: instead
+ * of making the person wait for a network round-trip before switching
+ * episodes, this saves in the background (fire-and-forget, protected by
+ * saveWatchProgress's `keepalive`) and navigates immediately — but
+ * tells the destination page what was just playing via a query-string
+ * hint, so it doesn't have to guess or wait for that save to land
+ * before it can show the right thing.
+ *
+ * Why this is correct, not just faster: the reason the earlier
+ * await-then-navigate fix existed was to stop the destination page from
+ * reading stale server data. But the destination page doesn't actually
+ * need to ask the server at all for "what was I just watching" — the
+ * PERSON clicking already knows the answer, because they're the one
+ * doing the clicking. Passing that fact forward directly sidesteps the
+ * race instead of racing to win it: there is no round-trip to be slow
+ * or to lose a race against, so a slow connection no longer costs
+ * anything in the UI. mergeResumeWithHint (below) is how the receiving
+ * page combines this hint with whatever the server does eventually
+ * confirm, so a slow/failed save still can't leave anything worse off
+ * than before this existed — see its docstring for the actual merge
+ * rule (a real save landing late will always at least match, never
+ * undercut, what the hint already showed).
+ */
+export function navigateWithResumeHint(
+  identity: {
+    tmdbId: number;
+    mediaType: "movie" | "tv";
+    seasonNumber?: number | null;
+    episodeNumber?: number | null;
+  },
+  href: string
+): void {
+  const video = typeof document !== "undefined" ? document.querySelector("video") : null;
+  if (video && Number.isFinite(video.duration) && video.duration > 0) {
+    void saveWatchProgress({
+      tmdb_id: identity.tmdbId,
+      media_type: identity.mediaType,
+      season_number: identity.seasonNumber ?? null,
+      episode_number: identity.episodeNumber ?? null,
+      position_seconds: video.currentTime,
+      duration_seconds: video.duration,
+    }).catch(() => {
+      // Best effort — the hint in the URL is what keeps the UI correct
+      // for this navigation regardless; a failed background save just
+      // means the *next* fresh page load (with no hint) falls back to
+      // whatever the server last had, same as before any of this
+      // existed.
+    });
+  }
+  // Only hint when enough was actually watched to count as having
+  // reached this episode — otherwise the next page would show a resume
+  // point the server (correctly) doesn't have, and the two would
+  // disagree on the very next load. No <video> means we can't tell, so
+  // no hint either.
+  const watchedEnough =
+    !!video && Number.isFinite(video.currentTime) && video.currentTime >= MIN_MEANINGFUL_PROGRESS_SECONDS;
+  window.location.href = watchedEnough ? withResumeHint(href, identity) : href;
+}
+
+/**
+ * Combines a server-fetched resume point with an optional "you were
+ * just watching S{season}:E{episode}" hint from the URL (see
+ * navigateWithResumeHint) — used by the TV detail and watch pages right
+ * after they fetch resumeEpisode from the server, so a hint from a
+ * still-in-flight or not-yet-landed save doesn't get overridden by
+ * stale server data.
+ *
+ * The rule is simply "whichever is ordinally further along wins" — the
+ * same high-water-mark comparison the backend itself uses (see
+ * get_latest_progress_for_title's docstring). The hint can only ever
+ * move the shown resume point FORWARD relative to what the server
+ * says, never backward: if the server already reflects something at or
+ * past the hint (e.g. the save landed before this page's fetch after
+ * all, or the person has since watched even further), the server's
+ * answer is used untouched.
+ */
+export function mergeResumeWithHint(
+  server: WatchProgress | null,
+  hint: { seasonNumber: number; episodeNumber: number } | null,
+  tmdbId: number
+): WatchProgress | null {
+  if (!hint) return server;
+
+  const serverIsAtLeastAsFar =
+    server != null &&
+    server.season_number != null &&
+    server.episode_number != null &&
+    (server.season_number > hint.seasonNumber ||
+      (server.season_number === hint.seasonNumber && server.episode_number >= hint.episodeNumber));
+  if (serverIsAtLeastAsFar) return server;
+
+  // The hint is further along than whatever the server currently knows
+  // (or the server has no row for this show at all yet) — position and
+  // duration are never read from the value this function returns (only
+  // season_number/episode_number are, by DetailActions and
+  // SeasonBrowser), so 0 is a safe placeholder rather than a real
+  // position.
+  return {
+    tmdb_id: tmdbId,
+    media_type: "tv",
+    season_number: hint.seasonNumber,
+    episode_number: hint.episodeNumber,
+    position_seconds: 0,
+    duration_seconds: 0,
+    updated_at: new Date().toISOString(),
+  };
 }
 
 // CLIENT-ONLY: like the save functions above, these rely on the
@@ -297,4 +441,24 @@ export async function downloadOnlineSubtitle(params: OnlineSubtitleDownloadParam
     }),
   });
   return handle(res, "Couldn't download that subtitle file.");
+}
+
+/**
+ * Parses the "you were just watching S{season}:E{episode}" hint (see
+ * navigateWithResumeHint) out of a Next.js searchParams object. Kept
+ * separate from mergeResumeWithHint so a page can parse once and merge
+ * against more than one source if it ever needs to.
+ */
+export function parseResumeHintFromSearchParams(
+  searchParams: Record<string, string | string[] | undefined>
+): { seasonNumber: number; episodeNumber: number } | null {
+  const seasonRaw = searchParams.fromSeason;
+  const episodeRaw = searchParams.fromEpisode;
+  const season = Array.isArray(seasonRaw) ? seasonRaw[0] : seasonRaw;
+  const episode = Array.isArray(episodeRaw) ? episodeRaw[0] : episodeRaw;
+  if (season == null || episode == null) return null;
+  const seasonNumber = Number(season);
+  const episodeNumber = Number(episode);
+  if (!Number.isFinite(seasonNumber) || !Number.isFinite(episodeNumber)) return null;
+  return { seasonNumber, episodeNumber };
 }

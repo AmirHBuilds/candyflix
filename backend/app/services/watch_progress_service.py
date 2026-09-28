@@ -11,7 +11,7 @@ know the sentinel exists.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import and_, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -25,6 +25,19 @@ from app.schemas.playback import WatchProgressOut
 # common "credits are rolling" convention other players use; not
 # user-configurable, since nobody has asked for that yet.
 NEAR_COMPLETE_FRACTION = 0.95
+
+# An episode (or movie) only counts as "reached" — for the purposes of
+# the furthest-episode high-water mark and Continue Watching — once at
+# least this much has actually been watched. The player saves once the
+# instant playback starts (see useWatchProgress's handlePlay), so simply
+# CLICKING an episode leaves a row at ~0:00; without this floor, poking
+# at S1:E10 for a second while your real progress is S1:E8 would make
+# E10 the "furthest" episode, hijacking Watch Now, the pink resume
+# highlight, and the Continue Watching card — while E8, where you
+# actually are, got demoted to a plain "In progress". Mirrored on the
+# frontend as MIN_MEANINGFUL_PROGRESS_SECONDS in lib/playback.ts (used to
+# decide whether a navigation hint is worth sending).
+MIN_MEANINGFUL_PROGRESS_SECONDS = 10.0
 
 
 def _to_sentinel(value: int | None, sentinel: int) -> int:
@@ -148,46 +161,74 @@ async def get_progress(
 async def list_continue_watching(
     db: AsyncSession, user_id: uuid.UUID, limit: int = 20
 ) -> list[WatchProgress]:
-    """Returns the most-recently-updated WatchProgress row per
-    (tmdb_id, media_type) for this user — i.e. one entry per title, with
-    a series collapsed to its single most-recently-watched episode
-    rather than listing every episode it has ever partially watched
-    (a movie already has at most one row per the model's unique
-    constraint, so this only actually collapses anything for TV).
+    """One entry per title (tmdb_id, media_type) for this user. Each
+    entry is that title's FURTHEST meaningfully-watched row — for TV the
+    greatest (season_number, episode_number), the same high-water mark
+    "Watch Now" resumes (see get_latest_progress_for_title) — NOT the
+    most recently touched episode. Otherwise dipping into an early
+    episode of a show you're deep into made the home page offer that
+    early episode as where to continue, contradicting the detail page.
 
-    Uses Postgres's DISTINCT ON (via SQLAlchemy's `.distinct(*cols)`,
-    which the Postgres dialect renders as DISTINCT ON) rather than a
-    GROUP BY + subquery join — this project's Postgres dependency is
-    already fixed, so there's no portability cost to taking the
-    idiomatic path. DISTINCT ON requires its ORDER BY to start with the
-    same columns it distincts on, so the "most recent episode wins" per
-    title happens inside that first ordering; the outer query then
-    re-sorts the (already deduplicated, one-per-title) result by
-    recency across titles and applies the limit.
+    Titles are ordered by their most recent meaningful activity (any
+    episode), so watching a bit of an earlier episode still floats the
+    show to the front — it just keeps pointing at where you really are.
 
-    Excludes anything at/past NEAR_COMPLETE_FRACTION of its own
-    duration (see that constant) and any non-positive duration (which
-    would otherwise divide by zero here and shouldn't exist as a real
-    row regardless).
+    Only rows past MIN_MEANINGFUL_PROGRESS_SECONDS take part at all
+    (both for choosing the furthest row and for recency), so merely
+    opening something doesn't create a Continue Watching entry or move
+    the resume point. The chosen row is then dropped if it's at/past
+    NEAR_COMPLETE_FRACTION of its own duration (finished, not "in
+    progress") or has a non-positive duration (would divide by zero and
+    shouldn't exist as a real row regardless).
+
+    Uses Postgres's DISTINCT ON (SQLAlchemy's `.distinct(*cols)` on the
+    Postgres dialect), which requires the ORDER BY to start with the
+    same columns; "furthest wins" happens inside that ordering.
     """
-    per_title = (
+    meaningful = and_(
+        WatchProgress.user_id == user_id,
+        WatchProgress.position_seconds >= MIN_MEANINGFUL_PROGRESS_SECONDS,
+    )
+
+    furthest = (
         select(WatchProgress)
-        .where(
-            WatchProgress.user_id == user_id,
-            WatchProgress.duration_seconds > 0,
-            (WatchProgress.position_seconds / WatchProgress.duration_seconds)
-            < NEAR_COMPLETE_FRACTION,
-        )
+        .where(meaningful)
         .distinct(WatchProgress.tmdb_id, WatchProgress.media_type)
         .order_by(
             WatchProgress.tmdb_id,
             WatchProgress.media_type,
-            WatchProgress.updated_at.desc(),
+            WatchProgress.season_number.desc(),
+            WatchProgress.episode_number.desc(),
         )
         .subquery()
     )
-    row = aliased(WatchProgress, per_title)
-    result = await db.execute(select(row).order_by(row.updated_at.desc()).limit(limit))
+    row = aliased(WatchProgress, furthest)
+
+    activity = (
+        select(
+            WatchProgress.tmdb_id.label("tmdb_id"),
+            WatchProgress.media_type.label("media_type"),
+            func.max(WatchProgress.updated_at).label("last_activity"),
+        )
+        .where(meaningful)
+        .group_by(WatchProgress.tmdb_id, WatchProgress.media_type)
+        .subquery()
+    )
+
+    stmt = (
+        select(row)
+        .join(
+            activity,
+            and_(row.tmdb_id == activity.c.tmdb_id, row.media_type == activity.c.media_type),
+        )
+        .where(
+            row.duration_seconds > 0,
+            (row.position_seconds / row.duration_seconds) < NEAR_COMPLETE_FRACTION,
+        )
+        .order_by(activity.c.last_activity.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
@@ -215,6 +256,12 @@ async def get_latest_progress_for_title(
     get_progress() would run for a movie's single (NO_SEASON, NO_EPISODE)
     row.
 
+    Rows below MIN_MEANINGFUL_PROGRESS_SECONDS are ignored: an episode
+    you merely opened (the player saves at ~0:00 the moment playback
+    starts) hasn't been "reached" yet, so clicking through later
+    episodes to look around can't move your resume point. Returns None
+    if nothing qualifies.
+
     Also deliberately does NOT apply NEAR_COMPLETE_FRACTION the way
     list_continue_watching() does — "how far have I gotten" is a
     different question from "should this clutter my in-progress rows,"
@@ -227,6 +274,7 @@ async def get_latest_progress_for_title(
             WatchProgress.user_id == user_id,
             WatchProgress.tmdb_id == tmdb_id,
             WatchProgress.media_type == media_type,
+            WatchProgress.position_seconds >= MIN_MEANINGFUL_PROGRESS_SECONDS,
         )
         .order_by(WatchProgress.season_number.desc(), WatchProgress.episode_number.desc())
         .limit(1)
