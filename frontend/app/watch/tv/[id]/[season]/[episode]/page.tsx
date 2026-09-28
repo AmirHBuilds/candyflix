@@ -3,6 +3,7 @@ import { getEpisodePlaybackSourceServer, getLatestTVWatchProgressServer } from "
 import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
 import SeasonBrowser from "@/components/SeasonBrowser";
+import BackToDetailsLink from "@/components/player/BackToDetailsLink";
 
 export default async function WatchEpisodePage({
   params,
@@ -121,9 +122,13 @@ export default async function WatchEpisodePage({
         <p className="text-white/60">
           S{seasonNum}E{episodeNum} · {currentEpisode?.name}
         </p>
-        <a href={`/tv/${show.tmdb_id}`} className="text-sm text-white/50 hover:text-white/80">
+        <BackToDetailsLink
+          identity={{ tmdbId: show.tmdb_id, mediaType: "tv", seasonNumber: seasonNum, episodeNumber: episodeNum }}
+          href={`/tv/${show.tmdb_id}`}
+          className="text-sm text-white/50 hover:text-white/80"
+        >
           ← Back to details
-        </a>
+        </BackToDetailsLink>
       </div>
       <div className="px-6 pb-10">
         <h2 className="mb-4 font-[family-name:var(--font-display)] text-lg font-semibold text-white">

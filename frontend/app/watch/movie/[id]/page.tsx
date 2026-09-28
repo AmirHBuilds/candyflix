@@ -2,6 +2,7 @@ import { getMovie, type MovieDetail } from "@/lib/media";
 import { getMoviePlaybackSourceServer } from "@/lib/playback-server";
 import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
+import BackToDetailsLink from "@/components/player/BackToDetailsLink";
 
 export default async function WatchMoviePage({
   params,
@@ -42,9 +43,13 @@ export default async function WatchMoviePage({
         <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">
           {movie.title}
         </h1>
-        <a href={`/movie/${movie.tmdb_id}`} className="text-sm text-white/50 hover:text-white/80">
+        <BackToDetailsLink
+          identity={{ tmdbId: movie.tmdb_id, mediaType: "movie" }}
+          href={`/movie/${movie.tmdb_id}`}
+          className="text-sm text-white/50 hover:text-white/80"
+        >
           ← Back to details
-        </a>
+        </BackToDetailsLink>
       </div>
     </div>
   );

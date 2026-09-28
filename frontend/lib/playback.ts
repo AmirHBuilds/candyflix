@@ -155,6 +155,59 @@ export function saveWatchProgressBeacon(payload: WatchProgressPayload): void {
   navigator.sendBeacon(`${getApiBaseUrl()}/watch-progress`, blob);
 }
 
+/**
+ * Flushes the CURRENTLY PLAYING episode's live position to the server —
+ * awaited, not fire-and-forget — before navigating to href.
+ *
+ * Why this exists, given saveWatchProgress above already has
+ * `keepalive: true`: keepalive only guarantees the request isn't killed
+ * mid-flight by the navigation. It does NOT guarantee the request lands
+ * — and commits in the database — before the page you're navigating TO
+ * makes its own server-side "what's the latest episode?" request. Those
+ * two HTTP requests (the outgoing save, the incoming page's read) race
+ * each other with no ordering guarantee, so a fast click from one
+ * episode to another could still show stale data on the very next page,
+ * even though the save eventually, correctly lands moments later (which
+ * is exactly the confusing "it looked wrong until I reloaded" behavior
+ * this was built to fix). Awaiting the save here and only THEN
+ * navigating removes the race entirely, rather than narrowing its
+ * window.
+ *
+ * Reads live position directly from the <video> element rather than
+ * threading a ref through props: there is exactly one <video> per page
+ * in this app (see VideoPlayer.tsx), so this is safe, and it lets any
+ * navigation trigger (the episode list, a "back to details" link) share
+ * one flush implementation instead of each wiring into the player's
+ * internal state separately.
+ */
+export async function flushWatchProgressAndNavigate(
+  identity: {
+    tmdbId: number;
+    mediaType: "movie" | "tv";
+    seasonNumber?: number | null;
+    episodeNumber?: number | null;
+  },
+  href: string
+): Promise<void> {
+  const video = typeof document !== "undefined" ? document.querySelector("video") : null;
+  if (video && Number.isFinite(video.duration) && video.duration > 0) {
+    try {
+      await saveWatchProgress({
+        tmdb_id: identity.tmdbId,
+        media_type: identity.mediaType,
+        season_number: identity.seasonNumber ?? null,
+        episode_number: identity.episodeNumber ?? null,
+        position_seconds: video.currentTime,
+        duration_seconds: video.duration,
+      });
+    } catch {
+      // Best effort — a failed flush shouldn't trap someone on this
+      // page; proceed to navigate regardless.
+    }
+  }
+  window.location.href = href;
+}
+
 // CLIENT-ONLY: like the save functions above, these rely on the
 // browser attaching cookies automatically. If a future Server
 // Component needs watch progress (e.g. a "Continue Watching" badge on

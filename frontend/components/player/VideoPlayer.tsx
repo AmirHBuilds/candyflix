@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } fr
 import { createPortal } from "react-dom";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
-import { searchOnlineSubtitles, downloadOnlineSubtitle } from "@/lib/playback";
+import { searchOnlineSubtitles, downloadOnlineSubtitle, flushWatchProgressAndNavigate } from "@/lib/playback";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
@@ -58,6 +58,9 @@ export default function VideoPlayer({
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  // True for the moment between clicking "Up next" / prev / next-episode
+  // and the navigation actually happening — see handleEpisodeNavClick.
+  const [navigatingAway, setNavigatingAway] = useState(false);
   const [bufferedEnd, setBufferedEnd] = useState(0);
   const [scrubHover, setScrubHover] = useState(false);
   const [scrubDragging, setScrubDragging] = useState(false);
@@ -845,6 +848,25 @@ export default function VideoPlayer({
     void videoRef.current?.play();
   }
 
+  // Used by the "Up next" Play button and the prev/next-episode controls
+  // below — awaits a flush of the CURRENT episode's live position before
+  // navigating, rather than letting a plain <a> fire the navigation
+  // immediately. Without this, the next episode's page could ask "what's
+  // the latest episode?" before this episode's final save has actually
+  // landed, showing stale "Last watched" info until an unrelated later
+  // reload happened to land after the delayed save. See
+  // flushWatchProgressAndNavigate's docstring in lib/playback.ts for the
+  // full explanation — this is the same fix applied to SeasonBrowser's
+  // episode list, just for the player's own next/prev controls, which
+  // are the more commonly used path for moving between episodes while
+  // actually watching.
+  async function handleEpisodeNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    e.preventDefault();
+    if (navigatingAway) return;
+    setNavigatingAway(true);
+    await flushWatchProgressAndNavigate(identity, href);
+  }
+
   // Forces a completely fresh fetch of the video resource, staying on the
   // same page — recovers from the "browser never resolved a duration"
   // stuck state without needing a full page reload. `.load()` resets the
@@ -1025,7 +1047,10 @@ export default function VideoPlayer({
           </div>
           <a
             href={nextEpisode.href}
-            className="rounded-lg bg-[#FF5FA2] px-3 py-1.5 text-sm font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+            onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
+            className={`rounded-lg bg-[#FF5FA2] px-3 py-1.5 text-sm font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90 ${
+              navigatingAway ? "pointer-events-none opacity-60" : ""
+            }`}
           >
             Play
           </a>
@@ -1136,8 +1161,11 @@ export default function VideoPlayer({
               {prevEpisode && (
                 <a
                   href={prevEpisode.href}
+                  onClick={(e) => handleEpisodeNavClick(e, prevEpisode.href)}
                   aria-label="Previous episode"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white ${
+                    navigatingAway ? "pointer-events-none opacity-60" : ""
+                  }`}
                 >
                   <PrevIcon />
                 </a>
@@ -1145,8 +1173,11 @@ export default function VideoPlayer({
               {nextEpisode && (
                 <a
                   href={nextEpisode.href}
+                  onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
                   aria-label="Next episode"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white ${
+                    navigatingAway ? "pointer-events-none opacity-60" : ""
+                  }`}
                 >
                   <NextIcon />
                 </a>

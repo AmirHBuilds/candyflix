@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { getSeason, stillUrl, type SeasonSummary, type Episode } from "@/lib/media";
-import { getSeasonWatchProgress, type WatchProgress } from "@/lib/playback";
+import { getSeasonWatchProgress, flushWatchProgressAndNavigate, type WatchProgress } from "@/lib/playback";
 
 // Mirrors NEAR_COMPLETE_FRACTION in the backend's watch_progress_service.py:
 // an episode at/past this fraction of its duration counts as finished,
@@ -82,6 +82,13 @@ export default function SeasonBrowser({
   // such episode. Detail-page only — see isPlayerContext.
   const [secondary, setSecondary] = useState<{ episodeNumber: number; fraction: number } | null>(null);
 
+  // True for the moment between clicking a different episode and the
+  // navigation actually happening — see handleEpisodeClick below. Just
+  // for a small visual "this is happening" cue and to ignore a rapid
+  // double-click; the flush itself is normally fast enough that this is
+  // barely perceptible.
+  const [navigating, setNavigating] = useState(false);
+
   useEffect(() => {
     if (selected === null) return;
     setLoading(true);
@@ -136,6 +143,28 @@ export default function SeasonBrowser({
       cancelled = true;
     };
   }, [tvId, selected, resumeEpisode, isPlayerContext]);
+
+  // Flushes the CURRENTLY PLAYING episode's live position — read
+  // straight from the <video> element — before navigating to the
+  // clicked episode. See flushWatchProgressAndNavigate's docstring for
+  // why this needs to be awaited rather than fire-and-forget: a plain
+  // navigating `<a>` doesn't wait for anything, so the next page's own
+  // "what's the latest episode?" read could easily beat an in-flight
+  // save there, which is exactly the bug this closes (previously
+  // showing a stale "Last watched" until an unrelated later reload
+  // happened to land after the delayed save finally completed).
+  // Detail-page clicks (isPlayerContext false) fall through to the
+  // anchor's normal, unintercepted navigation — there's no "currently
+  // playing" position to flush there.
+  async function handleEpisodeClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (!isPlayerContext || initialSeason == null || currentEpisode == null || navigating) return;
+    e.preventDefault();
+    setNavigating(true);
+    await flushWatchProgressAndNavigate(
+      { tmdbId: tvId, mediaType: "tv", seasonNumber: initialSeason, episodeNumber: currentEpisode },
+      href
+    );
+  }
 
   if (seasons.length === 0) return null;
 
@@ -192,7 +221,12 @@ export default function SeasonBrowser({
               <li key={episode.episode_number}>
                 <a
                   href={`/watch/tv/${tvId}/${selected}/${episode.episode_number}`}
-                  className={`group flex gap-4 py-4 ${isHighlighted ? "-mx-3 rounded-lg bg-white/5 px-3" : ""}`}
+                  onClick={(e) =>
+                    handleEpisodeClick(e, `/watch/tv/${tvId}/${selected}/${episode.episode_number}`)
+                  }
+                  className={`group flex gap-4 py-4 ${isHighlighted ? "-mx-3 rounded-lg bg-white/5 px-3" : ""} ${
+                    navigating ? "pointer-events-none opacity-60" : ""
+                  }`}
                 >
                   <div
                     className={`relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-lg bg-white/5 ${
