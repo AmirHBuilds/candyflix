@@ -144,6 +144,32 @@ export async function saveWatchProgress(payload: WatchProgressPayload): Promise<
  * by nature (see useWatchProgress's periodic autosave as the primary
  * mechanism; this is a last-chance top-up, not the only save).
  */
+/**
+ * Records "this episode was opened" — TV only — independent of any real
+ * playback. Called the instant the watch page mounts, before the video
+ * element (or useWatchProgress's own save logic) has done anything.
+ *
+ * Why this exists: even the "save immediately on play" behavior in
+ * useWatchProgress needs the `play` event to actually fire, which needs
+ * the video to have started — if someone clicks an episode and closes
+ * it within a second, that might never happen, leaving no row at all.
+ * The NEXT visit would then show the PREVIOUS episode as last watched,
+ * as if the click had never happened — exactly the confusion this is
+ * for. Fire-and-forget: a failed call just means this one open doesn't
+ * register, same as if this function didn't exist.
+ */
+export function recordEpisodeVisit(tmdbId: number, seasonNumber: number, episodeNumber: number): void {
+  void fetch(`${getApiBaseUrl()}/watch-progress/tv/visit`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tmdb_id: tmdbId, season_number: seasonNumber, episode_number: episodeNumber }),
+    keepalive: true,
+  }).catch(() => {
+    // Best effort — see docstring above.
+  });
+}
+
 export function saveWatchProgressBeacon(payload: WatchProgressPayload): void {
   if (typeof navigator === "undefined" || !navigator.sendBeacon) {
     // Fallback for browsers without sendBeacon support (very rare
@@ -214,17 +240,6 @@ export async function flushWatchProgressAndNavigate(
 }
 
 /**
- * Mirrors MIN_MEANINGFUL_PROGRESS_SECONDS in the backend's
- * watch_progress_service.py: an episode only counts as "reached" once
- * this much has actually been watched. The player saves at ~0:00 the
- * instant playback starts, so just clicking an episode leaves a saved
- * row — which must not, by itself, move anyone's resume point. The
- * navigation hint below follows the same rule, so it never claims a
- * "furthest episode" that the server (correctly) would not.
- */
-export const MIN_MEANINGFUL_PROGRESS_SECONDS = 10;
-
-/**
  * Appends "you were just watching S{season}:E{episode}" as query params
  * onto href — TV only; a movie has no season/episode ordering to hint
  * at, so href is returned unchanged for a movie identity.
@@ -293,14 +308,7 @@ export function navigateWithResumeHint(
       // existed.
     });
   }
-  // Only hint when enough was actually watched to count as having
-  // reached this episode — otherwise the next page would show a resume
-  // point the server (correctly) doesn't have, and the two would
-  // disagree on the very next load. No <video> means we can't tell, so
-  // no hint either.
-  const watchedEnough =
-    !!video && Number.isFinite(video.currentTime) && video.currentTime >= MIN_MEANINGFUL_PROGRESS_SECONDS;
-  window.location.href = watchedEnough ? withResumeHint(href, identity) : href;
+  window.location.href = withResumeHint(href, identity);
 }
 
 /**

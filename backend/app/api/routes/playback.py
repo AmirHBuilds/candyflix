@@ -12,7 +12,7 @@ from app.core.db import get_db
 from app.models.user import User
 from app.providers import mock_provider
 from app.providers.mock_provider import MockVideoNotConfigured
-from app.schemas.playback import PlaybackSource, WatchProgressIn, WatchProgressOut
+from app.schemas.playback import EpisodeVisitIn, PlaybackSource, WatchProgressIn, WatchProgressOut
 from app.services import subtitle_service, watch_progress_service
 
 router = APIRouter(tags=["playback"])
@@ -87,6 +87,23 @@ async def save_watch_progress(
         payload.duration_seconds,
     )
     return watch_progress_service.to_watch_progress_out(row)
+
+
+@router.post("/watch-progress/tv/visit", status_code=204)
+async def record_episode_visit(
+    payload: EpisodeVisitIn,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Called by the watch page the moment it renders, before the video
+    element (or the player's own save logic) has done anything — see
+    watch_progress_service.mark_episode_visited for why: without this, a
+    click that's closed within a second could leave no real save at all,
+    and the NEXT visit would show the previous episode as last watched.
+    """
+    await watch_progress_service.mark_episode_visited(
+        db, current_user.id, payload.tmdb_id, payload.season_number, payload.episode_number
+    )
 
 
 @router.get("/watch-progress/movie/{tmdb_id}", response_model=WatchProgressOut | None)

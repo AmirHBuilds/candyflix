@@ -35,6 +35,12 @@ class WatchProgressIn(BaseModel):
     duration_seconds: float
 
 
+class EpisodeVisitIn(BaseModel):
+    tmdb_id: int
+    season_number: int
+    episode_number: int
+
+
 class WatchProgressOut(BaseModel):
     tmdb_id: int
     media_type: Literal["movie", "tv"]

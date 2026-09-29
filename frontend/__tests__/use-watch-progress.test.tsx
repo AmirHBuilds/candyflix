@@ -11,6 +11,7 @@ vi.mock("@/lib/playback", async () => {
     ...actual,
     saveWatchProgress: vi.fn().mockResolvedValue(undefined),
     saveWatchProgressBeacon: vi.fn(),
+    recordEpisodeVisit: vi.fn(),
   };
 });
 
@@ -238,5 +239,29 @@ describe("useWatchProgress — identity payload shape", () => {
     expect(playback.saveWatchProgress).toHaveBeenCalledWith(
       expect.objectContaining({ media_type: "tv", season_number: 2, episode_number: 5 })
     );
+  });
+  it("records a visit the moment a TV episode mounts, even before restoration or any playback", () => {
+    // Regression test: clicking an episode and closing it within a second
+    // could leave no saved row at all (the `play` event never fires), so
+    // the next visit showed the PREVIOUS episode as last watched. The
+    // visit is recorded on mount, independent of `restored`.
+    render(<Harness mediaType="tv" tmdbId={1396} seasonNumber={1} episodeNumber={9} restored={false} />);
+
+    expect(playback.recordEpisodeVisit).toHaveBeenCalledWith(1396, 1, 9);
+    expect(playback.saveWatchProgress).not.toHaveBeenCalled();
+  });
+
+  it("records the visit once per episode, not on every re-render", () => {
+    const { rerender } = render(
+      <Harness mediaType="tv" tmdbId={1396} seasonNumber={1} episodeNumber={9} />
+    );
+    rerender(<Harness mediaType="tv" tmdbId={1396} seasonNumber={1} episodeNumber={9} />);
+
+    expect(playback.recordEpisodeVisit).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not record a visit for a movie", () => {
+    render(<Harness mediaType="movie" tmdbId={550} />);
+    expect(playback.recordEpisodeVisit).not.toHaveBeenCalled();
   });
 });

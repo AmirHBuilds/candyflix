@@ -367,10 +367,12 @@ class TestFurthestEpisodeNotMostRecent:
             await _cleanup_user(db, username)
 
     @respx.mock
-    async def test_a_barely_opened_later_episode_does_not_hijack_the_card(self, client, db):
-        """The player saves at ~0:00 the instant playback starts, so
-        merely clicking S1:E10 leaves a row there. That must not make E10
-        the furthest episode while you're actually on E8."""
+    async def test_any_amount_of_progress_on_a_further_episode_moves_the_card(self, client, db):
+        """By design (explicitly requested, no minimum): clicking a
+        further episode makes it the furthest immediately, however
+        little was watched — a click that's closed within a second must
+        still register as "last watched" next time, not the one before
+        it."""
         respx.get("https://api.themoviedb.org/3/tv/1396").mock(
             return_value=httpx.Response(200, json=TV_1396)
         )
@@ -387,20 +389,27 @@ class TestFurthestEpisodeNotMostRecent:
 
             body = (await client.get("/api/continue-watching")).json()["items"]
             assert len(body) == 1
-            assert body[0]["episode_number"] == 8
+            assert body[0]["episode_number"] == 10
         finally:
             await _cleanup_user(db, username)
 
-    async def test_something_only_barely_opened_is_not_an_entry_at_all(self, client, db):
+    @respx.mock
+    async def test_a_mere_visit_with_no_real_progress_still_creates_an_entry(self, client, db):
+        """mark_episode_visited (POST /watch-progress/tv/visit) writes a
+        position 0 / duration 0 row — it must still surface here, same
+        as any other row, per the "no minimum" design."""
+        respx.get("https://api.themoviedb.org/3/tv/1396").mock(
+            return_value=httpx.Response(200, json=TV_1396)
+        )
         username = f"cw_test_{uuid.uuid4().hex[:8]}"
         try:
             await _make_authed_client(client, db, username)
             user = client._test_user
-            await watch_progress_service.save_progress(
-                db, user.id, 603, "movie", None, None, position_seconds=2.0, duration_seconds=8000.0
-            )
-            resp = await client.get("/api/continue-watching")
-            assert resp.json() == {"items": [], "has_more": False}
+            await watch_progress_service.mark_episode_visited(db, user.id, 1396, 1, 4)
+
+            body = (await client.get("/api/continue-watching")).json()["items"]
+            assert len(body) == 1
+            assert body[0]["episode_number"] == 4
         finally:
             await _cleanup_user(db, username)
 

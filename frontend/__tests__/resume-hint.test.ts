@@ -98,19 +98,22 @@ describe("navigateWithResumeHint — never blocks on the network", () => {
     expect(location.href).toBe("/tv/1396?fromSeason=1&fromEpisode=6");
   });
 
-  it("still navigates, without a hint, when there's no <video> element to read a position from", () => {
+  it("still hints (no minimum) even when there's no <video> element to save a position from", () => {
+    // The hint reflects the episode identity passed in by the caller,
+    // not whether a video happened to load — e.g. BackToDetailsLink
+    // firing before any playback occurred should still count.
     global.fetch = vi.fn() as unknown as typeof fetch;
     const location = mockLocation();
 
     navigateWithResumeHint({ tmdbId: 1396, mediaType: "tv", seasonNumber: 2, episodeNumber: 3 }, "/tv/1396");
 
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(location.href).toBe("/tv/1396");
+    expect(location.href).toBe("/tv/1396?fromSeason=2&fromEpisode=3");
   });
 
-  it("sends no hint for an episode that was barely opened, but still saves and navigates", () => {
-    // Regression test: clicking an episode leaves a ~0:00 save, which
-    // must not make it the "furthest" episode on the next page.
+  it("still hints even when the episode was only opened for a moment — any click counts", () => {
+    // Not gated on watch duration: clicking a new episode should make
+    // it "last watched" immediately, even if closed a second later.
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => null }) as unknown as typeof fetch;
     addVideo(2, 1000);
     const location = mockLocation();
@@ -121,7 +124,7 @@ describe("navigateWithResumeHint — never blocks on the network", () => {
     );
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(location.href).toBe("/watch/tv/1396/1/2");
+    expect(location.href).toBe("/watch/tv/1396/1/2?fromSeason=1&fromEpisode=10");
   });
 
   it("leaves a movie's href untouched — no season/episode ordering to hint at", () => {

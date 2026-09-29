@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { saveWatchProgress, saveWatchProgressBeacon, type WatchProgressPayload } from "@/lib/playback";
+import { saveWatchProgress, saveWatchProgressBeacon, recordEpisodeVisit, type WatchProgressPayload } from "@/lib/playback";
 
 export type WatchIdentity = {
   tmdbId: number;
@@ -43,6 +43,18 @@ export function useWatchProgress(
 ) {
   const identityRef = useRef(identity);
   identityRef.current = identity;
+
+  // Fires on mount, independent of `restored` — see recordEpisodeVisit's
+  // docstring in lib/playback.ts for why this can't wait for the video
+  // to actually start playing.
+  useEffect(() => {
+    if (identity.mediaType !== "tv" || identity.seasonNumber == null || identity.episodeNumber == null) return;
+    recordEpisodeVisit(identity.tmdbId, identity.seasonNumber, identity.episodeNumber);
+    // Deliberately keyed on the episode identity, not identity as a
+    // whole reference — a new episode should record a new visit; a
+    // parent re-render with the same episode should not re-fire this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
 
   useEffect(() => {
     if (!restored) return;

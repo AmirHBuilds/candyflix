@@ -46,8 +46,10 @@ function progressRow(episode_number: number, position_seconds: number, updated_a
   };
 }
 
-function resumeEpisode(episode_number: number) {
-  return progressRow(episode_number, 500, "2026-01-01T00:00:00Z");
+// Older than every row the tests below use unless they say otherwise —
+// "In progress" only applies to episodes touched AFTER the resume point.
+function resumeEpisode(episode_number: number, updated_at = "2025-12-31T00:00:00Z") {
+  return progressRow(episode_number, 500, updated_at);
 }
 
 function episodeRow(name: RegExp) {
@@ -235,3 +237,131 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     expect(ep3.textContent).toContain("Last watched");
   });
 });
+
+describe("SeasonBrowser — 'In progress' means you went BACK after reaching the latest", () => {
+  it("does NOT flag the episode you simply moved on from (8 -> 9 must not make 8 'In progress')", async () => {
+    // Reported bug: with the latest at 9 and episode 2 last touched
+    // BEFORE it, episode 2 was still being flagged just because it was
+    // unfinished and behind.
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
+      progressRow(2, 300, "2026-01-01T00:00:00Z"), // watched earlier, then moved on
+    ]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3, "2026-01-05T00:00:00Z")}
+      />
+    );
+
+    await screen.findByText(/Pilot/);
+    expect(screen.queryByText("In progress")).not.toBeInTheDocument();
+  });
+
+  it("flags an earlier episode touched AFTER the latest — going back", async () => {
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
+      progressRow(1, 200, "2026-01-06T00:00:00Z"),
+    ]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3, "2026-01-05T00:00:00Z")}
+      />
+    );
+
+    await screen.findByText("In progress");
+    expect(episodeRow(/Pilot/).textContent).toContain("In progress");
+  });
+
+  it("moves to whichever earlier episode was touched most recently", async () => {
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
+      progressRow(1, 200, "2026-01-06T00:00:00Z"),
+      progressRow(2, 200, "2026-01-07T00:00:00Z"),
+    ]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3, "2026-01-05T00:00:00Z")}
+      />
+    );
+
+    await screen.findByText("In progress");
+    expect(screen.getAllByText("In progress")).toHaveLength(1);
+    expect(episodeRow(/Cat's in the Bag/).textContent).toContain("In progress");
+  });
+
+  it("clears once the latest episode itself is touched again", async () => {
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
+      progressRow(1, 200, "2026-01-06T00:00:00Z"),
+    ]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3, "2026-01-08T00:00:00Z")}
+      />
+    );
+
+    await screen.findByText(/Pilot/);
+    expect(screen.queryByText("In progress")).not.toBeInTheDocument();
+  });
+});
+
+describe("SeasonBrowser — recentVisit (the episode just left, before its save has landed)", () => {
+  it("flags the episode just left if it's behind the resume point, without waiting for its own row", async () => {
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([]); // save hasn't landed yet
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3, "2026-01-05T00:00:00Z")}
+        recentVisit={{ seasonNumber: 1, episodeNumber: 1 }}
+      />
+    );
+
+    await screen.findByText("In progress");
+    expect(episodeRow(/Pilot/).textContent).toContain("In progress");
+  });
+
+  it("does not flag it if what's known says it was finished", async () => {
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([
+      progressRow(1, 999, "2026-01-06T00:00:00Z", 1000),
+    ]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3, "2026-01-05T00:00:00Z")}
+        recentVisit={{ seasonNumber: 1, episodeNumber: 1 }}
+      />
+    );
+
+    await screen.findByText(/Pilot/);
+    expect(screen.queryByText("In progress")).not.toBeInTheDocument();
+  });
+
+  it("never flags the resume point itself", async () => {
+    vi.mocked(playback.getSeasonWatchProgress).mockResolvedValue([]);
+
+    render(
+      <SeasonBrowser
+        tvId={1396}
+        seasons={seasons}
+        resumeEpisode={resumeEpisode(3)}
+        recentVisit={{ seasonNumber: 1, episodeNumber: 3 }}
+      />
+    );
+
+    await screen.findByText(/Pilot/);
+    expect(screen.queryByText("In progress")).not.toBeInTheDocument();
+  });
+});
+

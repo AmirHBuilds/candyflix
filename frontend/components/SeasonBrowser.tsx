@@ -17,6 +17,7 @@ export default function SeasonBrowser({
   initialSeason,
   currentEpisode,
   resumeEpisode,
+  recentVisit,
 }: {
   tvId: number;
   seasons: SeasonSummary[];
@@ -37,6 +38,13 @@ export default function SeasonBrowser({
   // — e.g. playing S1:E1 again while S1:E5 remains the real resume
   // point).
   resumeEpisode?: WatchProgress | null;
+  // The episode the person was just on before landing here (from the
+  // ?fromSeason=&fromEpisode= hint — see navigateWithResumeHint), detail
+  // page only. Treated as the most recent activity by definition, so
+  // "In progress" doesn't have to wait for that episode's own save to
+  // land (and for this page's fetch to see it) before showing up — the
+  // same race the hint already closes for the resume point itself.
+  recentVisit?: { seasonNumber: number; episodeNumber: number } | null;
 }) {
   const [selected, setSelected] = useState<number | null>(initialSeason ?? seasons[0]?.season_number ?? null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -108,26 +116,51 @@ export default function SeasonBrowser({
     getSeasonWatchProgress(tvId, selected)
       .then((rows) => {
         if (cancelled) return;
+        const isResume = (season: number, episode: number | null) =>
+          resumeEpisode?.season_number === season && resumeEpisode?.episode_number === episode;
+        const resumeTime = resumeEpisode?.updated_at ? Date.parse(resumeEpisode.updated_at) : null;
+
+        // "In progress" means: you went BACK to an earlier episode after
+        // reaching your furthest one. So an episode only qualifies if it
+        // was touched AFTER the resume point was — that's what separates
+        // "I dipped back into episode 2" from "episode 8 is where I used
+        // to be, before I moved on to 9". Without this, simply advancing
+        // from 8 to 9 turned 8 into "In progress", which is not what the
+        // label is for.
         const candidates = rows.filter((row) => {
           if (row.episode_number == null || row.duration_seconds <= 0) return false;
-          // Exclude the resume point so it can't also "use up" the one
-          // secondary "In progress" slot and hide a genuinely different
-          // partially-watched episode.
-          const isResumeEpisode =
-            resumeEpisode?.season_number === selected && resumeEpisode?.episode_number === row.episode_number;
-          if (isResumeEpisode) return false;
+          // The resume point itself never takes this slot.
+          if (isResume(selected, row.episode_number)) return false;
+          if (resumeTime != null && !(Date.parse(row.updated_at) > resumeTime)) return false;
           return row.position_seconds / row.duration_seconds < NEAR_COMPLETE_FRACTION;
         });
         candidates.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
         const mostRecent = candidates[0];
-        setSecondary(
-          mostRecent
-            ? {
-                episodeNumber: mostRecent.episode_number as number,
-                fraction: Math.min(1, mostRecent.position_seconds / mostRecent.duration_seconds),
-              }
-            : null
-        );
+        let chosen: { episodeNumber: number; fraction: number } | null = mostRecent
+          ? {
+              episodeNumber: mostRecent.episode_number as number,
+              fraction: Math.min(1, mostRecent.position_seconds / mostRecent.duration_seconds),
+            }
+          : null;
+
+        // The episode just left, if it's behind the resume point, is the
+        // newest activity by definition — it wins without waiting for its
+        // own save to show up in `rows`. Skipped if what we do know says
+        // it's finished (nothing to be "in progress" about).
+        if (
+          recentVisit &&
+          recentVisit.seasonNumber === selected &&
+          !isResume(recentVisit.seasonNumber, recentVisit.episodeNumber)
+        ) {
+          const known = rows.find((r) => r.episode_number === recentVisit.episodeNumber);
+          const knownFraction =
+            known && known.duration_seconds > 0 ? known.position_seconds / known.duration_seconds : null;
+          if (knownFraction == null || knownFraction < NEAR_COMPLETE_FRACTION) {
+            chosen = { episodeNumber: recentVisit.episodeNumber, fraction: Math.min(1, knownFraction ?? 0) };
+          }
+        }
+
+        setSecondary(chosen);
       })
       .catch(() => {
         if (!cancelled) setSecondary(null);
@@ -135,7 +168,7 @@ export default function SeasonBrowser({
     return () => {
       cancelled = true;
     };
-  }, [tvId, selected, resumeEpisode, isPlayerContext]);
+  }, [tvId, selected, resumeEpisode, isPlayerContext, recentVisit?.seasonNumber, recentVisit?.episodeNumber]);
 
   // Saves in the background and navigates immediately — see
   // navigateWithResumeHint's docstring in lib/playback.ts. Detail-page

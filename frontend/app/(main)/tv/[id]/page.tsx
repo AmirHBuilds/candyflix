@@ -36,9 +36,10 @@ export default async function TVDetailPage({
   // yet — without this, "Back to details" could briefly show a resume
   // point one step behind what was actually just watched.
   const sp = await searchParams;
+  const hint = parseResumeHintFromSearchParams(sp);
   const watchProgress = mergeResumeWithHint(
     await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null),
-    parseResumeHintFromSearchParams(sp),
+    hint,
     show.tmdb_id
   );
 
@@ -96,7 +97,12 @@ export default async function TVDetailPage({
         </div>
       </div>
 
-      <SeasonBrowser tvId={show.tmdb_id} seasons={show.seasons} resumeEpisode={watchProgress} />
+      <SeasonBrowser
+        tvId={show.tmdb_id}
+        seasons={show.seasons}
+        resumeEpisode={watchProgress}
+        recentVisit={hint}
+      />
 
       {similar.length > 0 && (
         <section>

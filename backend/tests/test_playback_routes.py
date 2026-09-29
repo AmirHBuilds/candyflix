@@ -354,7 +354,64 @@ class TestWatchProgressAPI:
         assert resp.status_code == 401
 
 
-class TestLatestWatchProgress:
+class TestEpisodeVisit:
+    """POST /watch-progress/tv/visit — records "this episode was opened"
+    independent of any real playback, so a click closed within a second
+    still registers (see mark_episode_visited's docstring)."""
+
+    async def test_creates_a_zero_progress_row(self, client, db):
+        username = f"wp_visit_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            resp = await client.post(
+                "/api/watch-progress/tv/visit",
+                json={"tmdb_id": 1399, "season_number": 1, "episode_number": 4},
+            )
+            assert resp.status_code == 204
+
+            latest = (await client.get("/api/watch-progress/tv/1399/latest")).json()
+            assert latest["episode_number"] == 4
+            assert latest["position_seconds"] == 0.0
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_repeated_visits_do_not_clobber_real_progress(self, client, db):
+        """Visiting an episode you've already made real progress on
+        (e.g. navigating back to it) must not reset that progress to 0
+        — only updated_at should move."""
+        username = f"wp_visit_{uuid.uuid4().hex[:8]}"
+        try:
+            await _make_authed_client(client, db, username)
+            await client.post(
+                "/api/watch-progress",
+                json={
+                    "tmdb_id": 1399,
+                    "media_type": "tv",
+                    "season_number": 1,
+                    "episode_number": 4,
+                    "position_seconds": 500.0,
+                    "duration_seconds": 3000.0,
+                },
+            )
+            await client.post(
+                "/api/watch-progress/tv/visit",
+                json={"tmdb_id": 1399, "season_number": 1, "episode_number": 4},
+            )
+
+            latest = (await client.get("/api/watch-progress/tv/1399/latest")).json()
+            assert latest["position_seconds"] == 500.0
+        finally:
+            await _cleanup_user(db, username)
+
+    async def test_requires_auth(self, client):
+        resp = await client.post(
+            "/api/watch-progress/tv/visit",
+            json={"tmdb_id": 1399, "season_number": 1, "episode_number": 4},
+        )
+        assert resp.status_code == 401
+
+
+
     """GET /watch-progress/tv/{tmdb_id}/latest — backs the TV detail
     page's Watch Now button."""
 
@@ -444,10 +501,11 @@ class TestLatestWatchProgress:
         finally:
             await _cleanup_user(db, username)
 
-    async def test_a_barely_opened_later_episode_does_not_become_the_resume_point(self, client, db):
-        """Regression test: the player saves at ~0:00 the moment playback
-        starts, so clicking S1:E10 to look around leaves a row there.
-        That must not outrank the episode you actually watched."""
+    async def test_any_progress_on_a_further_episode_becomes_the_resume_point(self, client, db):
+        """By explicit design (no minimum): clicking a further episode
+        makes it the resume point immediately, however little was
+        watched — closing it within a second must not fall back to the
+        episode before it, or the click looks like it never happened."""
         username = f"wp_latest_{uuid.uuid4().hex[:8]}"
         try:
             await _make_authed_client(client, db, username)
@@ -464,26 +522,18 @@ class TestLatestWatchProgress:
                     },
                 )
             body = (await client.get("/api/watch-progress/tv/1399/latest")).json()
-            assert body["episode_number"] == 8
+            assert body["episode_number"] == 10
         finally:
             await _cleanup_user(db, username)
 
-    async def test_null_when_only_barely_opened(self, client, db):
+    async def test_a_mere_visit_with_no_video_load_still_becomes_the_resume_point(self, client, db):
         username = f"wp_latest_{uuid.uuid4().hex[:8]}"
         try:
             await _make_authed_client(client, db, username)
-            await client.post(
-                "/api/watch-progress",
-                json={
-                    "tmdb_id": 1399,
-                    "media_type": "tv",
-                    "season_number": 1,
-                    "episode_number": 4,
-                    "position_seconds": 1.0,
-                    "duration_seconds": 3000.0,
-                },
-            )
-            assert (await client.get("/api/watch-progress/tv/1399/latest")).json() is None
+            user = client._test_user
+            await watch_progress_service.mark_episode_visited(db, user.id, 1399, 1, 4)
+            body = (await client.get("/api/watch-progress/tv/1399/latest")).json()
+            assert body["episode_number"] == 4
         finally:
             await _cleanup_user(db, username)
 
