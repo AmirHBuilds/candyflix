@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
+import OffsetStepper from "@/components/player/OffsetStepper";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 import {
   downloadOnlineSubtitle,
@@ -590,17 +591,9 @@ export default function SubtitleSettingsPanel({
 
           <div className="h-px bg-white/10" />
 
-          <div className="flex flex-col gap-1">
-            <span className={labelClass}>Timing offset — {settings.offsetSeconds.toFixed(1)}s</span>
-            <input
-              type="range"
-              min={-10}
-              max={10}
-              step={0.1}
-              value={settings.offsetSeconds}
-              onChange={(e) => set("offsetSeconds", Number(e.target.value))}
-              className={rangeClass}
-            />
+          <div className="flex flex-col gap-2">
+            <span className={labelClass}>Timing offset</span>
+            <OffsetStepper value={settings.offsetSeconds} onChange={(v) => set("offsetSeconds", v)} />
           </div>
         </div>
       )}

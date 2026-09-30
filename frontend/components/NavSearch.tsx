@@ -7,7 +7,10 @@ import MediaGrid from "@/components/MediaGrid";
 
 const MAX_LIVE_RESULTS = 12;
 
-export default function NavSearch() {
+// autoFocus: the player reveals this box on demand, so the person
+// should be able to type straight away. Elsewhere it's always on
+// screen and must not steal focus on page load.
+export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,11 +63,15 @@ export default function NavSearch() {
         onKeyDown={handleKeyDown}
         placeholder="What do you want to watch?"
         aria-label="Search"
-        className="w-full rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-white placeholder-white/30 outline-none focus:border-[#FF5FA2]/60"
+        autoFocus={autoFocus}
+        // Below `sm` the box is edge to edge (see Nav), so square
+        // corners and no side borders — a rounded, bordered pill would
+        // look clipped against the screen edges.
+        className="w-full rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-white placeholder-white/30 outline-none focus:border-[#FF5FA2]/60 max-sm:rounded-none max-sm:border-x-0"
       />
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-3 max-h-[80vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0E0E17]/98 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
+        <div className="absolute left-0 right-0 top-full z-30 mt-3 max-h-[80vh] overflow-y-auto rounded-2xl border border-white/10 max-sm:rounded-none max-sm:border-x-0 bg-[#0E0E17]/98 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
           {loading && <p className="py-6 text-center text-white/40">Searching…</p>}
 
           {!loading && error && (

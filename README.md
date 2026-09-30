@@ -8,8 +8,8 @@ enterprise auth, no generic "streaming platform" chrome.
 
 ## Status
 
-**Phase 6 complete (watchlist / "Candy Box"); Phase 7 (Continue Watching)
-is next.** Summary of everything built so far:
+**Phases 1–7 complete** (through Continue Watching and TV resume/progress,
+plus the seven follow-up UI updates). Summary of everything built so far:
 
 - Phases 2–4: auth, TMDB integration, browsing/search UX, visual polish.
 - **Phase 5a** — real custom video player (custom-built controls, not
@@ -26,6 +26,9 @@ is next.** Summary of everything built so far:
   small mobile viewports).
 - **Phase 6** — watchlist ("Candy Box"): add/remove/list a title,
   wired up on both detail pages and the home page's hero carousel.
+- **Phase 7** — Continue Watching row on the home page (movies + series,
+  furthest-episode resume), TV resume/"In progress" episode highlighting,
+  instant episode navigation with a one-shot resume hint in the URL.
 
 See `PHASE_HANDOFF.md` (if present in the repo root) for the full
 architecture write-up, open issues, and conventions established along

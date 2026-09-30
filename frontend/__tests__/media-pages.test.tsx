@@ -69,16 +69,19 @@ describe("Search page — real debounced search against real backend", () => {
 });
 
 describe("Movie detail page — real Inception data", () => {
-  it("renders title, genres, overview, disabled action buttons, and similar titles", async () => {
+  it("renders title, genres, overview, an enabled Watch Now link, Candy Box (disabled until its status loads), and similar titles", async () => {
     render(await MovieDetailPage({ params: Promise.resolve({ id: "27205" }) }));
 
     expect(screen.getByRole("heading", { name: "Inception" })).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
 
-    const watchButton = screen.getByRole("button", { name: "Watch Now" });
-    const candyBoxButton = screen.getByRole("button", { name: "Add to Candy Box" });
-    expect(watchButton).toBeDisabled();
-    expect(candyBoxButton).toBeDisabled();
+    // Watch Now is a plain link to the player (this used to assert a
+    // disabled *button*, which the movie page hasn't rendered for a
+    // long time — it always passed an href).
+    const watchLink = screen.getByRole("link", { name: "Watch Now" });
+    expect(watchLink).toHaveAttribute("href", "/watch/movie/27205");
+    // Candy Box stays disabled until its status request resolves.
+    expect(screen.getByRole("button", { name: "Add to Candy Box" })).toBeDisabled();
 
     expect(await screen.findByText("You May Also Like")).toBeInTheDocument();
   });

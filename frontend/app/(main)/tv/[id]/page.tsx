@@ -63,7 +63,7 @@ export default async function TVDetailPage({
             alt={show.title}
             width={220}
             height={330}
-            className="hidden shrink-0 rounded-xl sm:block"
+            className="hidden h-auto w-[clamp(150px,20vw,220px)] shrink-0 self-start rounded-xl sm:block"
           />
         )}
 

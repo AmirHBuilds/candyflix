@@ -17,54 +17,98 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
+const PLACEHOLDER = "What do you want to watch?";
+
 describe("Nav — everywhere except the player", () => {
   it("shows the full-width search row and no search icon", () => {
     mockPathname.value = "/";
     render(<Nav />);
-    expect(screen.getByPlaceholderText("What do you want to watch?")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(PLACEHOLDER)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
+  });
+
+  it("does not steal focus on page load", () => {
+    mockPathname.value = "/";
+    render(<Nav />);
+    expect(screen.getByPlaceholderText(PLACEHOLDER)).not.toHaveFocus();
+  });
+});
+
+describe("Nav — search row on small screens (edge to edge below sm)", () => {
+  it("has no side padding below sm, and keeps sm:px-10 from 640px up", () => {
+    mockPathname.value = "/";
+    render(<Nav />);
+    const row = screen.getByPlaceholderText(PLACEHOLDER).closest("div.border-t")!;
+    expect(row).toHaveClass("px-0", "sm:px-10");
+    expect(row).not.toHaveClass("px-6");
+  });
+
+  it("squares the input's side edges below sm so it sits flush against the screen", () => {
+    mockPathname.value = "/";
+    render(<Nav />);
+    expect(screen.getByPlaceholderText(PLACEHOLDER)).toHaveClass("max-sm:rounded-none", "max-sm:border-x-0");
   });
 });
 
 describe("Nav — on a player page", () => {
-  it("shows a search icon instead of the full-width row", () => {
+  it("shows only a search icon; the search box is hidden", () => {
     mockPathname.value = "/watch/movie/603";
     render(<Nav />);
-    expect(screen.queryByPlaceholderText("What do you want to watch?")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(PLACEHOLDER)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   });
 
-  it("expands into the search input when the icon is clicked", async () => {
+  it("reveals the standard full-width search row (same placeholder, same row styling) and focuses it", async () => {
     mockPathname.value = "/watch/tv/1396/1/1";
     render(<Nav />);
 
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
-    expect(await screen.findByPlaceholderText("What do you want to watch?")).toBeInTheDocument();
+
+    const input = await screen.findByPlaceholderText(PLACEHOLDER);
+    // Same row as every other page — not a small inline box.
+    const row = input.closest("div.border-t")!;
+    expect(row).toHaveClass("px-0", "sm:px-10", "py-3");
+    expect(input.closest("div.w-48")).toBeNull();
+    expect(input).toHaveFocus();
   });
 
-  it("collapses back to the icon on an outside click", async () => {
+  it("turns the icon into a cancel button while open, and cancel hides the box again", async () => {
+    mockPathname.value = "/watch/movie/603";
+    render(<Nav />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    await screen.findByPlaceholderText(PLACEHOLDER);
+    // Icon became the cancel button: same slot, no second button.
+    expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close search" }));
+    expect(screen.queryByPlaceholderText(PLACEHOLDER)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
+  });
+
+  it("does NOT collapse on an outside click (it would fight the results dropdown)", async () => {
     mockPathname.value = "/watch/tv/1396/1/1";
     render(<Nav />);
 
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
-    await screen.findByPlaceholderText("What do you want to watch?");
+    await screen.findByPlaceholderText(PLACEHOLDER);
 
     fireEvent.mouseDown(document.body);
 
-    await waitFor(() =>
-      expect(screen.queryByPlaceholderText("What do you want to watch?")).not.toBeInTheDocument()
-    );
-    expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(PLACEHOLDER)).toBeInTheDocument();
   });
 
-  it("collapses back to the icon via its own close button", async () => {
+  it("closes the box when the route changes (e.g. after picking a result)", async () => {
     mockPathname.value = "/watch/movie/603";
-    render(<Nav />);
-
+    const { rerender } = render(<Nav />);
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
-    await screen.findByPlaceholderText("What do you want to watch?");
+    await screen.findByPlaceholderText(PLACEHOLDER);
 
-    fireEvent.click(screen.getByRole("button", { name: "Close search" }));
-    expect(screen.queryByPlaceholderText("What do you want to watch?")).not.toBeInTheDocument();
+    mockPathname.value = "/watch/movie/604";
+    rerender(<Nav />);
+
+    // Still a player page, so the box is hidden again behind the icon.
+    await waitFor(() => expect(screen.queryByPlaceholderText(PLACEHOLDER)).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   });
 });

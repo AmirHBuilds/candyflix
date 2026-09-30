@@ -152,6 +152,29 @@ describe("useWatchProgress — teardown-safe saves via sendBeacon", () => {
   });
 });
 
+describe("useWatchProgress — unmount save (client-side navigation away from the player)", () => {
+  it("sends a final beacon with the current position when the player unmounts", () => {
+    const { getByTestId, unmount } = render(<Harness />);
+    setMediaProps(getByTestId("video") as HTMLVideoElement, { currentTime: 42, duration: 100 });
+    vi.clearAllMocks();
+
+    unmount();
+
+    expect(playback.saveWatchProgressBeacon).toHaveBeenCalledWith(
+      expect.objectContaining({ tmdb_id: 550, position_seconds: 42, duration_seconds: 100 })
+    );
+  });
+
+  it("does not save on unmount while restored=false (would overwrite a real position with 0)", () => {
+    const { getByTestId, unmount } = render(<Harness restored={false} />);
+    setMediaProps(getByTestId("video") as HTMLVideoElement, { currentTime: 0, duration: 100 });
+
+    unmount();
+
+    expect(playback.saveWatchProgressBeacon).not.toHaveBeenCalled();
+  });
+});
+
 describe("useWatchProgress — restoration gate (resume-overwritten-with-0 regression)", () => {
   // Real bug: VideoPlayer applies the saved resume position asynchronously
   // (it has to wait for video metadata). Before this gate existed, a

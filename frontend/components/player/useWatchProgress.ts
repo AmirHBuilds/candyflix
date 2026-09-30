@@ -18,6 +18,8 @@ const AUTOSAVE_INTERVAL_MS = 10_000;
  *   navigating away leaves a real saved row — see handlePlay below)
  * - every 10s while playing (periodic autosave)
  * - on pause and on seek (normal fetch — page is still alive)
+ * - when the player unmounts (client-side navigation away, e.g. via a
+ *   header link or a search result, where pagehide never fires)
  * - on visibilitychange (tab backgrounded) and pagehide (navigating
  *   away/closing) via sendBeacon, which is built specifically to
  *   survive a page teardown that would kill a normal fetch mid-flight
@@ -62,7 +64,11 @@ export function useWatchProgress(
     if (!video) return;
 
     function buildPayload(): WatchProgressPayload | null {
-      const v = videoRef.current;
+      // Uses the element captured when this effect ran, NOT
+      // videoRef.current: React detaches refs before running passive
+      // cleanups on unmount, so the ref is already null by the time the
+      // final save below needs it.
+      const v = video;
       if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return null;
       const id = identityRef.current;
       return {
@@ -119,6 +125,12 @@ export function useWatchProgress(
     window.addEventListener("pagehide", handlePageHide);
 
     return () => {
+      // Leaving the player through a client-side route (header links,
+      // a search result) never fires pagehide — the page isn't
+      // unloading — so without this the last stretch since the previous
+      // save was lost. Beacon rather than fetch: it's fire-and-forget
+      // and survives whatever navigation is happening right now.
+      saveBeacon();
       clearInterval(interval);
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);

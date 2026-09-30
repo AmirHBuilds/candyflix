@@ -39,7 +39,7 @@ export default async function MovieDetailPage({
             alt={movie.title}
             width={220}
             height={330}
-            className="hidden shrink-0 rounded-xl sm:block"
+            className="hidden h-auto w-[clamp(150px,20vw,220px)] shrink-0 self-start rounded-xl sm:block"
           />
         )}
 
@@ -70,7 +70,7 @@ export default async function MovieDetailPage({
 
           <p className="max-w-2xl text-white/70">{shortenOverview(movie.overview)}</p>
 
-          <DetailActions watchHref={`/watch/movie/${movie.tmdb_id}`} tmdbId={movie.tmdb_id} mediaType="movie" />
+          <DetailActions tmdbId={movie.tmdb_id} mediaType="movie" />
         </div>
       </div>
 
