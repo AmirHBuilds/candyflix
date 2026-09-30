@@ -13,8 +13,8 @@ import {
 // number itself is click-to-edit for big jumps. No limits anywhere.
 const stepButtonClass =
   "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/80 transition hover:bg-[#FF5FA2]/20 hover:text-[#FF5FA2] active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5FA2]/70";
-const valueClass =
-  "font-[family-name:var(--font-display)] text-3xl font-semibold italic tabular-nums";
+// Inherits the panel's normal body font (Inter) — no display serif, no italic.
+const valueClass = "text-2xl font-semibold tabular-nums";
 
 function Chevron({ direction }: { direction: "left" | "right" }) {
   return (
