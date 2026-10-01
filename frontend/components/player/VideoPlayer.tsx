@@ -15,6 +15,9 @@ import {
 import { loadPlayerPreferences, savePlayerPreferences } from "@/components/player/player-preferences";
 import SubtitleOverlay from "@/components/player/SubtitleOverlay";
 import SubtitleSettingsPanel from "@/components/player/SubtitleSettingsPanel";
+import PlayerTooltip from "@/components/player/PlayerTooltip";
+import HoldSpeedIndicator from "@/components/player/HoldSpeedIndicator";
+import { useHoldSpeed } from "@/components/player/useHoldSpeed";
 
 const SKIP_SECONDS = 10;
 const SEEK_STEP_SECONDS = 5;
@@ -141,6 +144,10 @@ export default function VideoPlayer({
   const resumeAttemptedRef = useRef(false);
 
   useWatchProgress(videoRef, identity, progressRestored);
+
+  // Press-and-hold speed control (touch / mouse on the video surface, or
+  // the Space bar). See hold-speed.ts for the behaviour.
+  const hold = useHoldSpeed(videoRef);
 
   const videoUrl = `${getStaticOrigin()}${source.url}`;
 
@@ -873,48 +880,107 @@ export default function VideoPlayer({
   }
 
   // --- Keyboard shortcuts ---
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+  // The handlers are plain functions redefined every render (so they
+  // always see fresh state: current tracks, next/prev episode, ...) and
+  // reached through a ref, so the window listeners below register once
+  // instead of capturing whatever the first render saw.
+  function isTypingTarget(e: KeyboardEvent): boolean {
+    const tag = (e.target as HTMLElement)?.tagName;
+    return tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA";
+  }
 
-      switch (e.key) {
-        case " ":
-        case "k":
-          e.preventDefault();
-          togglePlay();
-          break;
-        case "ArrowLeft":
-          seekBy(-SEEK_STEP_SECONDS);
-          break;
-        case "ArrowRight":
-          seekBy(SEEK_STEP_SECONDS);
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          changeVolume(Math.min((videoRef.current?.volume ?? 1) + 0.1, 1));
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          changeVolume(Math.max((videoRef.current?.volume ?? 1) - 0.1, 0));
-          break;
-        case "m":
-          toggleMute();
-          break;
-        case "f":
-          void toggleFullscreen();
-          break;
-        case "c":
-          handleCaptionsButtonClick();
-          break;
-        default:
-          break;
-      }
+  function handleShortcutKeyDown(e: KeyboardEvent) {
+    if (isTypingTarget(e)) return;
+    // Leave browser/OS shortcuts alone (Ctrl+F, Cmd+C, Alt+Left, ...).
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    // Holding a key down auto-repeats; only seeking should repeat.
+    const repeatable = key.startsWith("Arrow") || key === "j" || key === "l";
+    if (e.repeat && !repeatable) {
+      if (key === " ") e.preventDefault();
+      return;
+    }
+
+    switch (key) {
+      case " ":
+        // Tap toggles play/pause (on release, see the keyup handler);
+        // holding it is the 2x speed-up.
+        e.preventDefault();
+        hold.onSpaceDown();
+        break;
+      case "k":
+        e.preventDefault();
+        togglePlay();
+        break;
+      case "j":
+        seekBy(-SKIP_SECONDS);
+        setSkipPulse({ side: "left", nonce: Date.now() });
+        break;
+      case "l":
+        seekBy(SKIP_SECONDS);
+        setSkipPulse({ side: "right", nonce: Date.now() });
+        break;
+      case "ArrowLeft":
+        seekBy(-SEEK_STEP_SECONDS);
+        break;
+      case "ArrowRight":
+        seekBy(SEEK_STEP_SECONDS);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        changeVolume(Math.min((videoRef.current?.volume ?? 1) + 0.1, 1));
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        changeVolume(Math.max((videoRef.current?.volume ?? 1) - 0.1, 0));
+        break;
+      case "m":
+        toggleMute();
+        break;
+      case "f":
+        void toggleFullscreen();
+        break;
+      case "c":
+        handleCaptionsButtonClick();
+        break;
+      case "s":
+        setSettingsMenu((v) => (v ? null : "root"));
+        break;
+      case "n":
+        if (e.shiftKey && nextEpisode) navigateWithResumeHint(identity, nextEpisode.href);
+        break;
+      case "p":
+        if (e.shiftKey && prevEpisode) navigateWithResumeHint(identity, prevEpisode.href);
+        break;
+      default:
+        break;
+    }
+    handleActivity();
+  }
+
+  function handleShortcutKeyUp(e: KeyboardEvent) {
+    if (e.key !== " " || isTypingTarget(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+    // Also stops a focused button from "clicking" on Space release (Firefox).
+    e.preventDefault();
+    if (hold.onSpaceUp() === "tap") {
+      togglePlay();
       handleActivity();
     }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }
+
+  const shortcutHandlersRef = useRef({ down: handleShortcutKeyDown, up: handleShortcutKeyUp });
+  shortcutHandlersRef.current = { down: handleShortcutKeyDown, up: handleShortcutKeyUp };
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => shortcutHandlersRef.current.down(e);
+    const up = (e: KeyboardEvent) => shortcutHandlersRef.current.up(e);
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
   }, []);
 
   // --- Double-click (desktop) / double-tap (mobile) to skip ---
@@ -923,6 +989,12 @@ export default function VideoPlayer({
   // DOUBLE_TAP_MS skips ±10s instead — this works identically for mouse
   // clicks and touch taps since both fire ordinary "click" events.
   function handleTapZone(zone: "left" | "right") {
+    // The release of a press-and-hold also arrives as a click — it must
+    // not toggle play/pause or count towards a double-tap.
+    if (hold.consumeSuppressedClick()) {
+      lastTapRef.current = null;
+      return;
+    }
     const now = Date.now();
     const last = lastTapRef.current;
     if (last && last.zone === zone && now - last.time < DOUBLE_TAP_MS) {
@@ -964,7 +1036,14 @@ export default function VideoPlayer({
           clicks and mobile taps both go through handleTapZone). Sits
           above the video and below the control bar, which is later in
           the DOM and paints on top so its own buttons stay clickable. */}
-      <div className="absolute inset-0 flex">
+      {/* touch-none / select-none / no callout: a long press must reach
+          the hold-to-speed handlers instead of scrolling, selecting text
+          or opening the browser's press-and-hold menu. */}
+      <div
+        className="absolute inset-0 flex touch-none select-none [-webkit-touch-callout:none]"
+        onContextMenu={(e) => e.preventDefault()}
+        {...hold.surfaceHandlers}
+      >
         <button
           aria-label="Play/pause, or double-click to rewind 10 seconds"
           className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#FF5FA2]/70"
@@ -999,6 +1078,8 @@ export default function VideoPlayer({
           {centerPulse.icon === "play" ? <BigPlayIcon /> : <BigPauseIcon />}
         </div>
       )}
+
+      {hold.holdRate !== null && <HoldSpeedIndicator rate={hold.holdRate} />}
 
       <SubtitleOverlay cues={cues} currentTime={currentTime} settings={subtitleSettings} />
 
@@ -1136,53 +1217,61 @@ export default function VideoPlayer({
         </div>
 
         <div className="flex items-center gap-2 text-white">
-          <button
-            aria-label="Play/Pause"
-            onClick={togglePlay}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
-          >
-            {playing ? <PauseIcon /> : <PlayIcon />}
-          </button>
+          <PlayerTooltip label={playing ? "Pause" : "Play"} shortcuts={["Space", "K"]} align="start">
+            <button
+              aria-label="Play/Pause"
+              onClick={togglePlay}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
+            >
+              {playing ? <PauseIcon /> : <PlayIcon />}
+            </button>
+          </PlayerTooltip>
 
           {(prevEpisode || nextEpisode) && (
             <div className="flex items-center gap-0.5 rounded-full bg-white/15 p-1">
               {prevEpisode && (
-                <a
-                  href={prevEpisode.href}
-                  onClick={(e) => handleEpisodeNavClick(e, prevEpisode.href)}
-                  aria-label="Previous episode"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
-                >
-                  <PrevIcon />
-                </a>
+                <PlayerTooltip label="Previous episode" shortcuts={["Shift+P"]}>
+                  <a
+                    href={prevEpisode.href}
+                    onClick={(e) => handleEpisodeNavClick(e, prevEpisode.href)}
+                    aria-label="Previous episode"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                  >
+                    <PrevIcon />
+                  </a>
+                </PlayerTooltip>
               )}
               {nextEpisode && (
-                <a
-                  href={nextEpisode.href}
-                  onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
-                  aria-label="Next episode"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
-                >
-                  <NextIcon />
-                </a>
+                <PlayerTooltip label="Next episode" shortcuts={["Shift+N"]}>
+                  <a
+                    href={nextEpisode.href}
+                    onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
+                    aria-label="Next episode"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                  >
+                    <NextIcon />
+                  </a>
+                </PlayerTooltip>
               )}
             </div>
           )}
 
           <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 pl-1 pr-2">
-            <button
-              aria-label="Mute/unmute"
-              onClick={toggleMute}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/20"
-            >
-              {muted || volume === 0 ? (
-                <MuteIcon />
-              ) : volume < 0.5 ? (
-                <VolumeLowIcon />
-              ) : (
-                <VolumeHighIcon />
-              )}
-            </button>
+            <PlayerTooltip label={muted || volume === 0 ? "Unmute" : "Mute"} shortcuts={["M"]}>
+              <button
+                aria-label="Mute/unmute"
+                onClick={toggleMute}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/20"
+              >
+                {muted || volume === 0 ? (
+                  <MuteIcon />
+                ) : volume < 0.5 ? (
+                  <VolumeLowIcon />
+                ) : (
+                  <VolumeHighIcon />
+                )}
+              </button>
+            </PlayerTooltip>
             <div className="player-volume-wrap flex items-center overflow-hidden">
               <input
                 type="range"
@@ -1202,23 +1291,32 @@ export default function VideoPlayer({
           </div>
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
-            <button
-              aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
-              aria-pressed={!!selectedLanguage}
-              onClick={handleCaptionsButtonClick}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+            <PlayerTooltip
+              label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
+              shortcuts={["C"]}
+              align="end"
             >
-              <CCIcon active={!!selectedLanguage} />
-            </button>
-
-            <div className="relative">
               <button
-                aria-label="Settings"
-                onClick={() => setSettingsMenu((v) => (v ? null : "root"))}
+                aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
+                aria-pressed={!!selectedLanguage}
+                onClick={handleCaptionsButtonClick}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
               >
-                <GearIcon />
+                <CCIcon active={!!selectedLanguage} />
               </button>
+            </PlayerTooltip>
+
+            <div className="relative">
+              {/* No tooltip while the menu is open — it would sit on top of it. */}
+              <PlayerTooltip label="Settings" shortcuts={["S"]} align="end" disabled={settingsMenu !== null}>
+                <button
+                  aria-label="Settings"
+                  onClick={() => setSettingsMenu((v) => (v ? null : "root"))}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                >
+                  <GearIcon />
+                </button>
+              </PlayerTooltip>
 
               {settingsMenu !== null &&
                 settingsAnchor !== null &&
@@ -1376,13 +1474,15 @@ export default function VideoPlayer({
                 )}
             </div>
 
-            <button
-              aria-label="Fullscreen"
-              onClick={toggleFullscreen}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
-            >
-              {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-            </button>
+            <PlayerTooltip label={fullscreen ? "Exit fullscreen" : "Fullscreen"} shortcuts={["F"]} align="end">
+              <button
+                aria-label="Fullscreen"
+                onClick={toggleFullscreen}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+              >
+                {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+              </button>
+            </PlayerTooltip>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-# CandyFlix — Project Handoff (through Phase 7 + the 7 follow-up updates)
+# CandyFlix — Project Handoff (through Phase 7 + 7 follow-up updates; Phase 8 started)
 
 > **Reader:** a fresh instance of Claude with **no memory** of the prior conversations, plus a zip of the current codebase.
 > **Purpose:** give you everything needed to continue without re-deriving decisions.
@@ -117,7 +117,7 @@ Clicking an episode navigates immediately, so the next page's server-side "what'
 | 5c | Player polish: remembered volume/mute/subtitle language, subtitle settings, etc. | Done |
 | 6 | Watchlist ("Candy Box"): add/remove/list, enriched from TMDB | Done |
 | **7** | **Continue Watching + TV resume/progress UX** | **Done** (user confirmed it works: *"no that's work thanks!"*) |
-| 7+ | The user's **7 follow-up updates** (§10): subtitle offset stepper, player-page search, small-screen search, detail-page button layout/sizing, hero Watch Now | **Implemented, tested (unit); awaiting the user's visual check** (see §12) |
+| 7+ | The user's **7 follow-up updates** (§10): subtitle offset stepper, player-page search, small-screen search, detail-page button layout/sizing, hero Watch Now | **Done — user confirmed working** (see §12) |
 
 ### What Phase 7 delivered (all shipped and tested)
 
@@ -413,3 +413,31 @@ Requirements:
 ### Still open / ideas
 - Items in §7.2 that were not part of this round (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949) are unchanged.
 - If the layout tiers feel off, the single place to adjust is `GRID_BY_LABEL` at the top of `components/DetailActions.tsx`.
+
+---
+
+## 13. Phase 8 — Polish (STARTED)
+
+Phase 8 scope per the user: *general loading/error states, mobile refinement, animations, empty states.* **Only the player work below is done so far**; the four general items are untouched. (The user chose to begin Phase 8 with player updates.)
+
+**Baselines now:** backend 118 passed; `tsc` clean; Vitest 203 passed / 21 failed (same four live-backend files, §7.1). No ESLint config exists in the repo (`next lint`/`eslint` not runnable).
+
+### Player: press-and-hold speed
+- **Triggers:** finger / mouse (left button) / pen held on the video surface for 500 ms (`HOLD_DELAY_MS`), or the **Space bar** held ≥500 ms. Only engages while the video is *playing*; previous playback rate is restored on release (also on pointercancel and window blur).
+- **Speed while holding a pointer:** starts at 2x wherever the hold began; sliding right → up to 4x at the player's right edge, left → down to 0.5x at the left edge (piecewise-linear, rounded to 0.1). This is **anchored at the hold start**, not absolute across the screen, so a hold near an edge doesn't jump to 0.5x/4x (trade-off: starting exactly on an edge leaves no room to slide that way). Space-hold is a fixed 2x.
+- **Files:** `hold-speed.ts` (pure mapping + constants), `useHoldSpeed.ts` (hook: pointer + Space state machine), `HoldSpeedIndicator.tsx` (top-centre "▶▶ 2.3×" badge with a 0.5× · 2× · 4× gauge). Wired into `VideoPlayer`: pointer handlers on the tap-zone wrapper (now `touch-none select-none`, context menu suppressed), `handleTapZone` first calls `consumeSuppressedClick()` so the release of a hold doesn't toggle play/pause. Pointer capture is taken only once a hold engages (capturing on pointerdown would retarget ordinary tap clicks).
+- **Behaviour change:** Space now toggles play/pause on **keyup** (tap) instead of keydown, so a hold can be told apart from a tap; it also `preventDefault`s keyup (Firefox would click a focused button).
+
+### Player: shortcuts + tooltips
+- **Shortcuts:** Space/K play-pause · J/L ∓10 s (with the skip pulse) · ←/→ ∓5 s · ↑/↓ volume · M mute · C subtitles · S settings menu · F fullscreen · Shift+N / Shift+P next / previous episode. Ctrl/Cmd/Alt combos are ignored (Ctrl+F / Cmd+C used to toggle fullscreen/captions before); auto-repeat only applies to seeking keys.
+- **Stale-closure fix:** the keydown/keyup handlers are redefined each render and reached through `shortcutHandlersRef`, so they see current state (before, the `[]`-deps effect froze `allTracks`, so `C` could misbehave).
+- **Tooltips:** `PlayerTooltip.tsx` wraps play, prev/next episode, mute, subtitles, settings (hidden while its menu is open) and fullscreen. Pure-CSS show: `group-hover` (hover-capable devices only) + `group-has-[:focus-visible]` (not plain focus, so clicking doesn't leave it stuck). Shortcut `<kbd>` chips render only when `useDesktopKeyboard()` is true — `(hover: hover) and (pointer: fine) and (min-width: 768px)`, false on first render for hydration safety. Buttons keep their original `aria-label`s; tooltips are `aria-hidden`.
+- **Not done / ideas:** no tooltip on the seek bar or volume slider; no `0-9` jump, `<`/`>` speed, or Home/End keys; no on-screen shortcut cheat-sheet; Space-hold has no left/right speed control.
+
+### Please verify in a browser (none of this could be seen here)
+1. Phone: press-and-hold ~0.5 s mid-screen → 2x badge; slide right/left → 4x/0.5x at the edges; release → normal speed, and the release does **not** pause; a normal tap still pauses, double-tap still skips ±10 s; no text-selection/context menu/scroll fighting the hold.
+2. Desktop: hold left mouse, and hold Space; tap Space still pauses/plays; all shortcuts above; tooltips appear on hover with shortcut chips, and on a phone/tablet show no shortcuts.
+3. Tooltip positions at the far left (play) and far right (subtitles/settings/fullscreen), and in fullscreen.
+
+### Remaining Phase 8 work (not started)
+General loading/error states, mobile refinement, animations, empty states; plus the small leftovers in §7.2 / §11 (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949).
