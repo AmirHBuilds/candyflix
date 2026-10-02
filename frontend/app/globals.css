@@ -103,3 +103,49 @@ select option {
     transform: translate(-50%, -50%) scale(1.2);
   }
 }
+
+/* ---- Motion (Phase 8) ----
+   Gentle entrance animations, defined only for people who haven't asked
+   for reduced motion; the catch-all block below then also calms every
+   other transition/animation in the app for those who have (skeleton
+   pulses become static, the player's pulses become instant). */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out both;
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.35s ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

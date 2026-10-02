@@ -47,7 +47,7 @@ export default async function TVDetailPage({
   const poster = posterUrl(show.poster_path, "w500");
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="animate-fade-in flex flex-col gap-8">
       <StripResumeHintFromUrl />
       <div className="relative -mx-6 h-[40vh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
         {backdrop && (

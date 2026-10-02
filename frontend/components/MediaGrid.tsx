@@ -9,6 +9,12 @@ import type { MediaItem } from "@/lib/media";
 // rather than forking a whole new grid component for it.
 type GridItem = MediaItem & { href?: string; badge?: string };
 
+// Shared with the loading skeletons (components/Skeleton.tsx) so a
+// skeleton grid always has exactly the same columns as the real one.
+// The long comment on the breakpoints lives at the use site below.
+export const MEDIA_GRID_CLASSES =
+  "grid grid-cols-2 gap-x-3 gap-y-6 min-[1000px]:grid-cols-4 min-[1000px]:gap-x-4 min-[1280px]:grid-cols-6";
+
 export default function MediaGrid({
   items,
   onNavigate,
@@ -25,15 +31,18 @@ export default function MediaGrid({
   // safety margin so it reliably switches by the time the window reads
   // ~1024px, scrollbar or not.
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-6 min-[1000px]:grid-cols-4 min-[1000px]:gap-x-4 min-[1280px]:grid-cols-6">
-      {items.map((item) => (
-        <MediaCard
+    <div className={MEDIA_GRID_CLASSES}>
+      {items.map((item, index) => (
+        // Cards ease in with a short stagger (capped, so a long list or
+        // a "Load More" batch never feels slow). The animation is
+        // disabled for people who prefer reduced motion — see globals.css.
+        <div
           key={`${item.media_type}-${item.tmdb_id}`}
-          item={item}
-          onNavigate={onNavigate}
-          href={item.href}
-          badge={item.badge}
-        />
+          className="animate-fade-up min-w-0"
+          style={{ animationDelay: `${Math.min(index, 11) * 30}ms` }}
+        >
+          <MediaCard item={item} onNavigate={onNavigate} href={item.href} badge={item.badge} />
+        </div>
       ))}
     </div>
   );

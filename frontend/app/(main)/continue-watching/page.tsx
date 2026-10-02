@@ -1,6 +1,8 @@
 import { getContinueWatchingServer } from "@/lib/continue-watching-server";
 import { toContinueWatchingItems } from "@/app/(main)/page";
 import MediaGrid from "@/components/MediaGrid";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
 
 // The home page's row is capped at 24 with a "View All" link appearing
 // only when there's more than that (see Section's viewAllHref in
@@ -26,13 +28,14 @@ export default async function ContinueWatchingPage() {
       </h1>
 
       {error ? (
-        <p className="py-24 text-center text-white/50">{error}</p>
+        <ErrorState message={error} />
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-24 text-center">
-          <p className="max-w-sm text-white/50">
-            Nothing in progress right now. Start watching something and it&apos;ll show up here.
-          </p>
-        </div>
+        <EmptyState
+          icon="play"
+          title="Nothing in progress"
+          message="Start watching something and it'll show up here, ready to pick up where you left off."
+          action={{ label: "Find something to watch", href: "/" }}
+        />
       ) : (
         <MediaGrid items={toContinueWatchingItems(items)} />
       )}

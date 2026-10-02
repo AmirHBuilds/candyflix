@@ -1,4 +1,4 @@
-# CandyFlix — Project Handoff (through Phase 7 + 7 follow-up updates; Phase 8 started)
+# CandyFlix — Project Handoff (through Phase 7 + 7 follow-up updates; Phase 8 in progress)
 
 > **Reader:** a fresh instance of Claude with **no memory** of the prior conversations, plus a zip of the current codebase.
 > **Purpose:** give you everything needed to continue without re-deriving decisions.
@@ -441,3 +441,30 @@ Phase 8 scope per the user: *general loading/error states, mobile refinement, an
 
 ### Remaining Phase 8 work (not started)
 General loading/error states, mobile refinement, animations, empty states; plus the small leftovers in §7.2 / §11 (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949).
+
+---
+
+## 14. Phase 8 — batch 2: loading / error / empty states + motion (DONE, awaiting the user's visual check)
+
+**Baselines now:** backend 118 passed; `tsc` clean; Vitest 237 passed / 21 failed (same four live-backend files, §7.1). +34 tests. `next build` could not be run in the sandbox (needs network for Google Fonts) — only `tsc` + Vitest + a Tailwind compile were.
+
+### What exists now
+- **Loading skeletons** (`components/Skeleton.tsx`): `Skeleton`, `LoadingRegion` (one polite `role=status` "Loading…", blocks `aria-hidden`), `MediaGridSkeleton` (uses the exported `MEDIA_GRID_CLASSES` from `MediaGrid.tsx`, so columns can't drift), `GridPageSkeleton`, `HomeSkeleton`, `DetailSkeleton`, `EpisodeListSkeleton`, `PlayerSkeleton`. `loading.tsx` files: `app/(main)/loading.tsx` (home skeleton; also the fallback for any (main) route without its own), `movies`, `series`, `candy-box`, `continue-watching` (grid), `movie/[id]`, `tv/[id]` (detail), `app/watch/loading.tsx` (black stage + spinner). Search page's Suspense fallback is a small skeleton.
+- **Inline loading:** `MediaBrowser` — new `replacing` state: applying/clearing filters swaps the stale grid for 12 placeholders; "Load More" keeps the grid and appends 6 placeholders. `SearchPageClient` shows a skeleton grid on first search, a small "Searching…" while refining. `SeasonBrowser` shows `EpisodeListSkeleton`.
+- **Errors:** `components/ErrorState.tsx` (client; `role=alert`; "Try again" uses the caller's `onRetry`, or — if none — `router.refresh()` via a small `RefreshButton` so the router hook is only used in that mode; `retry={false}`, `secondary` link, small-print `detail`). Boundaries: `app/(main)/error.tsx` (inside the layout so the header stays), `app/error.tsx` (watch/login/layout failures), `app/global-error.tsx` (own `<html>`, self-contained). Raw error text is never shown; Next's `digest` is shown as "Reference: …". Used for: Candy Box / Continue Watching / Movies / Series / Home errors, watch-page playback errors (title "Couldn't start playback" + "Back to details"), MediaBrowser (retries the failed first page or next page), SeasonBrowser (retry re-fetches the season via a nonce), search (no retry).
+- **Not-found:** `components/NotFoundState.tsx` (big 404 + "Back to home"), used by `app/not-found.tsx` and `app/(main)/not-found.tsx` (the latter keeps the header for `notFound()` on unknown movie/show ids).
+- **Empty states:** `components/EmptyState.tsx` (icon box/play/search/film, title, message, optional link or button action). Candy Box ("Your Candy Box is empty" → Browse movies), Continue Watching ("Nothing in progress" → Find something to watch), MediaBrowser ("Nothing to show" + the page's `emptyLabel`, with **Clear filters** when filters caused it), search ("No matches for “q”").
+- **Motion:** `globals.css` — `fadeIn`/`fadeUp` keyframes and `.animate-fade-in`/`.animate-fade-up`, defined only inside `prefers-reduced-motion: no-preference`; a `reduce` block forces ~0 animation/transition durations app-wide (skeleton pulses become static; the player's pulses become instant too). `MediaGrid` wraps each card in an `animate-fade-up` div with a capped stagger (`min(index, 11) × 30ms`, so a "Load More" batch never drags). Home and both detail pages fade in on arrival. Empty/error/not-found blocks fade up.
+- **Behaviour notes:** `MediaGrid` cards now sit inside a wrapper div (`min-w-0`). The old copy of the empty/error messages was kept where tests might match it; none did.
+
+### Please verify in a browser
+1. Slow-network feel: navigate Home → Movies → a title → Watch; each should show its skeleton (not a frozen page) and the layout shouldn't jump when real content lands.
+2. Movies page: apply a filter (grid swaps to placeholders), filter to nothing (empty state + Clear filters), Load More (placeholders append); with the backend stopped, errors show Try again.
+3. Visit `/movie/99999999` (not-found inside the layout) and `/nonexistent` (root 404).
+4. Candy Box / Continue Watching with nothing in them.
+5. OS "reduce motion" on: nothing fades or pulses.
+
+### Remaining Phase 8 work
+- **Mobile refinement** — not started; needs the user's specifics (things that look/feel off on a phone), since layout can't be seen in the sandbox.
+- Possible extras (not requested): image fade-in for posters, hero crossfade review, a toast for transient errors (e.g. Candy Box add/remove failing), page-transition polish, a skeleton for NavSearch results.
+- Small leftovers from §7.2 / §11 (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949).

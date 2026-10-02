@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { getSeason, stillUrl, type SeasonSummary, type Episode } from "@/lib/media";
 import { getSeasonWatchProgress, navigateWithResumeHint, type WatchProgress } from "@/lib/playback";
+import ErrorState from "@/components/ErrorState";
+import { EpisodeListSkeleton } from "@/components/Skeleton";
 
 // Mirrors NEAR_COMPLETE_FRACTION in the backend's watch_progress_service.py:
 // an episode at/past this fraction of its duration counts as finished,
@@ -90,6 +92,10 @@ export default function SeasonBrowser({
   // such episode. Detail-page only — see isPlayerContext.
   const [secondary, setSecondary] = useState<{ episodeNumber: number; fraction: number } | null>(null);
 
+  // Bumped by the error state's "Try again" to re-run the fetch below
+  // for the same season (nothing else about the effect's inputs changes).
+  const [retryNonce, setRetryNonce] = useState(0);
+
   useEffect(() => {
     if (selected === null) return;
     setLoading(true);
@@ -98,7 +104,7 @@ export default function SeasonBrowser({
       .then((season) => setEpisodes(season.episodes))
       .catch(() => setError("Couldn't load episodes for this season."))
       .finally(() => setLoading(false));
-  }, [tvId, selected]);
+  }, [tvId, selected, retryNonce]);
 
   // Deliberately a separate effect (and separate failure mode) from the
   // episode list fetch above: losing the "In progress" highlighting
@@ -204,8 +210,10 @@ export default function SeasonBrowser({
         ))}
       </div>
 
-      {loading && <p className="text-white/40">Loading episodes…</p>}
-      {error && <p className="text-[#FF5FA2]">{error}</p>}
+      {loading && <EpisodeListSkeleton />}
+      {error && !loading && (
+        <ErrorState compact title="Episodes unavailable" message={error} onRetry={() => setRetryNonce((n) => n + 1)} />
+      )}
 
       {!loading && !error && (
         <ul className="flex flex-col divide-y divide-white/10">

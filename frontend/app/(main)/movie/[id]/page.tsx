@@ -24,7 +24,7 @@ export default async function MovieDetailPage({
   const poster = posterUrl(movie.poster_path, "w500");
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="animate-fade-in flex flex-col gap-8">
       <div className="relative -mx-6 h-[40vh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
         {backdrop && (
           <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover object-top" />

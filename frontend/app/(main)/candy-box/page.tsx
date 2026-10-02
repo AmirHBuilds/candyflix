@@ -1,5 +1,7 @@
 import { getWatchlistServer } from "@/lib/watchlist-server";
 import MediaGrid from "@/components/MediaGrid";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
 
 export default async function CandyBoxPage() {
   let items: Awaited<ReturnType<typeof getWatchlistServer>> = [];
@@ -17,14 +19,14 @@ export default async function CandyBoxPage() {
       </h1>
 
       {error ? (
-        <p className="py-24 text-center text-white/50">{error}</p>
+        <ErrorState message={error} />
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-24 text-center">
-          <p className="max-w-sm text-white/50">
-            Nothing saved yet. Tap &ldquo;Add to Candy Box&rdquo; on any movie or show to save it
-            here for later.
-          </p>
-        </div>
+        <EmptyState
+          icon="box"
+          title="Your Candy Box is empty"
+          message="Nothing saved yet. Tap “Add to Candy Box” on any movie or show to save it here for later."
+          action={{ label: "Browse movies", href: "/movies" }}
+        />
       ) : (
         <MediaGrid items={items} />
       )}

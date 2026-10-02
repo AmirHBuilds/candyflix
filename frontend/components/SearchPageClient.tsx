@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDebouncedSearch } from "@/lib/useDebouncedSearch";
 import MediaGrid from "@/components/MediaGrid";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
+import { LoadingRegion, MediaGridSkeleton } from "@/components/Skeleton";
 
 export default function SearchPageClient() {
   const router = useRouter();
@@ -47,11 +50,21 @@ export default function SearchPageClient() {
         className="w-full max-w-xl rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white placeholder-white/30 outline-none focus:border-[#FF5FA2]/60"
       />
 
-      {loading && <p className="text-white/40">Searching…</p>}
-      {error && <p className="text-[#FF5FA2]">{error}</p>}
+      {loading && results.length === 0 && (
+        <LoadingRegion>
+          <MediaGridSkeleton count={6} />
+        </LoadingRegion>
+      )}
+      {loading && results.length > 0 && <p className="text-sm text-white/40">Searching…</p>}
+      {error && <ErrorState compact retry={false} message={error} />}
 
       {!loading && !error && query.trim().length > 0 && results.length === 0 && (
-        <p className="text-white/50">No matches for &quot;{query.trim()}&quot;.</p>
+        <EmptyState
+          compact
+          icon="search"
+          title={`No matches for “${query.trim()}”`}
+          message="Check the spelling, or try a different title."
+        />
       )}
 
       <MediaGrid items={results} />

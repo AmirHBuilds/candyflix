@@ -5,6 +5,7 @@ import VideoPlayer from "@/components/player/VideoPlayer";
 import SeasonBrowser from "@/components/SeasonBrowser";
 import BackToDetailsLink from "@/components/player/BackToDetailsLink";
 import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
+import ErrorState from "@/components/ErrorState";
 
 export default async function WatchEpisodePage({
   params,
@@ -33,11 +34,12 @@ export default async function WatchEpisodePage({
 
   if (error || !show || !seasonDetail || !source) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-white">
-        <p className="text-white/70">{error}</p>
-        <a href={`/tv/${id}`} className="text-[#C9A6FF] underline">
-          Back to details
-        </a>
+      <div className="flex min-h-[70vh] items-center justify-center px-6">
+        <ErrorState
+          title="Couldn't start playback"
+          message={error ?? "Couldn't load this video."}
+          secondary={{ label: "Back to details", href: `/tv/${id}` }}
+        />
       </div>
     );
   }

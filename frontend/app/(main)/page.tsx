@@ -3,6 +3,7 @@ import { getTrending, getPopularMovies, getPopularTV, type MediaItem } from "@/l
 import { getContinueWatchingServer, type ContinueWatchingItem } from "@/lib/continue-watching-server";
 import HeroCarousel from "@/components/HeroCarousel";
 import MediaGrid from "@/components/MediaGrid";
+import ErrorState from "@/components/ErrorState";
 
 // Generic over T (not hardcoded to MediaItem) so a caller passing a
 // loader for a richer shape — e.g. ContinueWatchingItem, which extends
@@ -119,11 +120,9 @@ export default async function Home() {
   const heroUnavailable = today.error && week.error;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="animate-fade-in flex flex-col gap-10">
       {heroUnavailable && (
-        <p className="text-[#FF5FA2]">
-          Couldn&apos;t load trending right now. Try refreshing in a moment.
-        </p>
+        <ErrorState compact message="Couldn't load trending right now. Try refreshing in a moment." />
       )}
 
       <HeroCarousel items={today.items.length > 0 ? today.items : week.items} />

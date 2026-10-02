@@ -1,5 +1,6 @@
 import { getTVGenres, getPopularTVPage, type Genre, type MediaItem } from "@/lib/media";
 import MediaBrowser from "@/components/MediaBrowser";
+import ErrorState from "@/components/ErrorState";
 
 export default async function SeriesPage() {
   let items: MediaItem[] = [];
@@ -20,7 +21,7 @@ export default async function SeriesPage() {
     <div className="flex flex-col gap-6">
       <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold">Series</h1>
       {error ? (
-        <p className="text-[#FF5FA2]">{error}</p>
+        <ErrorState message={error} />
       ) : (
         <MediaBrowser
           mediaType="tv"

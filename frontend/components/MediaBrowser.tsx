@@ -3,6 +3,9 @@
 import { useState } from "react";
 import MediaGrid from "@/components/MediaGrid";
 import AdvancedSearchPanel from "@/components/AdvancedSearchPanel";
+import EmptyState from "@/components/EmptyState";
+import ErrorState from "@/components/ErrorState";
+import { LoadingRegion, MediaGridSkeleton } from "@/components/Skeleton";
 import {
   discoverMovies,
   discoverTV,
@@ -43,6 +46,9 @@ export default function MediaBrowser({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
+  // True only while a whole new result set (filters applied/cleared) is
+  // loading, as opposed to "Load More" appending to the current one.
+  const [replacing, setReplacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<DiscoverFilters>({});
   const filtersActive = isFiltersActive(filters);
@@ -76,6 +82,7 @@ export default function MediaBrowser({
 
   async function applyFilters(newFilters: DiscoverFilters) {
     setLoading(true);
+    setReplacing(true);
     setError(null);
     setFilters(newFilters);
     try {
@@ -87,11 +94,13 @@ export default function MediaBrowser({
       setError(errorLabel);
     } finally {
       setLoading(false);
+      setReplacing(false);
     }
   }
 
   async function clearFilters() {
     setLoading(true);
+    setReplacing(true);
     setError(null);
     setFilters({});
     try {
@@ -103,6 +112,7 @@ export default function MediaBrowser({
       setError(errorLabel);
     } finally {
       setLoading(false);
+      setReplacing(false);
     }
   }
 
@@ -115,11 +125,41 @@ export default function MediaBrowser({
         hasActiveFilters={filtersActive}
       />
 
-      {error && <p className="text-[#FF5FA2]">{error}</p>}
+      {error && (
+        <ErrorState
+          compact
+          message={error}
+          // Redo whichever request failed: the first page of the current
+          // filters if nothing is showing, otherwise the next page.
+          onRetry={() => (items.length === 0 ? applyFilters(filters) : loadMore())}
+        />
+      )}
 
-      {!error && items.length === 0 && !loading && <p className="text-white/50">{emptyLabel}</p>}
+      {!error && items.length === 0 && !loading && (
+        <EmptyState
+          compact
+          icon="search"
+          title="Nothing to show"
+          message={emptyLabel}
+          action={filtersActive ? { label: "Clear filters", onClick: clearFilters } : undefined}
+        />
+      )}
 
-      <MediaGrid items={items} />
+      {/* While a new filter set is loading the old results are stale, so
+          swap in placeholders; while paging, keep what's there and
+          append placeholders after it. */}
+      {replacing ? (
+        <LoadingRegion>
+          <MediaGridSkeleton count={12} />
+        </LoadingRegion>
+      ) : (
+        <MediaGrid items={items} />
+      )}
+      {loading && !replacing && (
+        <LoadingRegion>
+          <MediaGridSkeleton count={6} />
+        </LoadingRegion>
+      )}
 
       {hasMore && (
         <button
