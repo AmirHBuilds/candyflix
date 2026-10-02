@@ -54,7 +54,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-10 px-6 text-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 text-center">
       <div className="flex flex-col items-center gap-2">
         <div className="text-4xl">🍬</div>
         <h1 className="text-2xl font-semibold tracking-tight">CandyFlix</h1>

@@ -13,7 +13,7 @@ export default async function WatchLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-dvh bg-black">
       <Nav />
       {children}
     </div>

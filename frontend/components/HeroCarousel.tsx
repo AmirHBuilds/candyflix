@@ -54,7 +54,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
 
   return (
     <section
-      className="relative -mx-6 h-[75vh] min-h-[460px] overflow-hidden sm:mx-0 sm:rounded-3xl sm:min-h-[560px]"
+      className="relative -mx-6 h-[75dvh] min-h-[460px] overflow-hidden sm:mx-0 sm:rounded-3xl sm:min-h-[560px]"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 import type { WatchlistItem } from "@/lib/watchlist";
 
 /**
@@ -14,7 +14,7 @@ async function forwardedCookieHeader(): Promise<string> {
 }
 
 export async function getWatchlistServer(): Promise<WatchlistItem[]> {
-  const res = await fetch(`${getApiBaseUrl()}/watchlist`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/watchlist`, {
     headers: { Cookie: await forwardedCookieHeader() },
     cache: "no-store",
   });

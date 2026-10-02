@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 import type { PlaybackSource, WatchProgress } from "@/lib/playback";
 
 /**
@@ -34,7 +34,7 @@ async function handle<T>(res: Response, fallbackMessage: string): Promise<T> {
 export async function getMoviePlaybackSourceServer(
   tmdbId: number | string
 ): Promise<PlaybackSource> {
-  const res = await fetch(`${getApiBaseUrl()}/playback/movie/${tmdbId}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/playback/movie/${tmdbId}`, {
     headers: { Cookie: await forwardedCookieHeader() },
     cache: "no-store",
   });
@@ -46,7 +46,7 @@ export async function getEpisodePlaybackSourceServer(
   season: number,
   episode: number
 ): Promise<PlaybackSource> {
-  const res = await fetch(`${getApiBaseUrl()}/playback/tv/${tmdbId}/${season}/${episode}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/playback/tv/${tmdbId}/${season}/${episode}`, {
     headers: { Cookie: await forwardedCookieHeader() },
     cache: "no-store",
   });
@@ -65,7 +65,7 @@ export async function getEpisodePlaybackSourceServer(
 export async function getLatestTVWatchProgressServer(
   tmdbId: number | string
 ): Promise<WatchProgress | null> {
-  const res = await fetch(`${getApiBaseUrl()}/watch-progress/tv/${tmdbId}/latest`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/watch-progress/tv/${tmdbId}/latest`, {
     headers: { Cookie: await forwardedCookieHeader() },
     cache: "no-store",
   });

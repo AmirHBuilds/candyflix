@@ -1173,7 +1173,7 @@ export default function VideoPlayer({
         }`}
       >
         <div
-          className="group/scrub relative mb-1.5 flex h-4 w-full cursor-pointer items-center"
+          className="group/scrub relative mb-1.5 flex h-4 w-full cursor-pointer items-center pointer-coarse:h-8"
           role="slider"
           tabIndex={0}
           aria-label="Seek"
@@ -1235,7 +1235,7 @@ export default function VideoPlayer({
                     href={prevEpisode.href}
                     onClick={(e) => handleEpisodeNavClick(e, prevEpisode.href)}
                     aria-label="Previous episode"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                    className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
                   >
                     <PrevIcon />
                   </a>
@@ -1247,7 +1247,7 @@ export default function VideoPlayer({
                     href={nextEpisode.href}
                     onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
                     aria-label="Next episode"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                    className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
                   >
                     <NextIcon />
                   </a>
@@ -1261,7 +1261,7 @@ export default function VideoPlayer({
               <button
                 aria-label="Mute/unmute"
                 onClick={toggleMute}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/20"
               >
                 {muted || volume === 0 ? (
                   <MuteIcon />
@@ -1300,7 +1300,7 @@ export default function VideoPlayer({
                 aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
                 aria-pressed={!!selectedLanguage}
                 onClick={handleCaptionsButtonClick}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
               >
                 <CCIcon active={!!selectedLanguage} />
               </button>
@@ -1312,7 +1312,7 @@ export default function VideoPlayer({
                 <button
                   aria-label="Settings"
                   onClick={() => setSettingsMenu((v) => (v ? null : "root"))}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                  className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
                 >
                   <GearIcon />
                 </button>
@@ -1478,7 +1478,7 @@ export default function VideoPlayer({
               <button
                 aria-label="Fullscreen"
                 onClick={toggleFullscreen}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
               >
                 {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
               </button>

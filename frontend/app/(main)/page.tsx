@@ -97,25 +97,23 @@ export function toContinueWatchingItems(items: ContinueWatchingItem[]): GridItem
 }
 
 export default async function Home() {
-  const [today, week, movies, tv] = await Promise.all([
+  // All five requests start together. Continue Watching used to be
+  // awaited *after* the other four, so its (sometimes multi-second,
+  // uncached-TMDB) lookup was added on top of theirs instead of
+  // overlapping — the main reason the home skeleton hung around.
+  //
+  // Continue Watching isn't wrapped in safeLoad: its response shape is
+  // {items, hasMore} rather than a bare array, so it carries hasMore
+  // through with its own small catch. Not logged-in / nothing in
+  // progress both surface as an empty list, and Section already renders
+  // nothing for that case, same as every other row.
+  const [today, week, movies, tv, continueWatching] = await Promise.all([
     safeLoad(() => getTrending("day")),
     safeLoad(() => getTrending("week")),
     safeLoad(() => getPopularMovies()),
     safeLoad(() => getPopularTV()),
+    getContinueWatchingServer().catch(() => ({ items: [] as ContinueWatchingItem[], hasMore: false })),
   ]);
-
-  // Not wrapped in safeLoad: the response shape here is
-  // {items, hasMore} rather than a bare array, so it needs its own
-  // small try/catch to carry hasMore through. Not logged-in / nothing
-  // in progress both surface as an empty list, and Section already
-  // renders nothing for that case, same as every other row.
-  const continueWatching = await (async () => {
-    try {
-      return await getContinueWatchingServer();
-    } catch {
-      return { items: [] as ContinueWatchingItem[], hasMore: false };
-    }
-  })();
 
   const heroUnavailable = today.error && week.error;
 

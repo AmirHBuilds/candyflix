@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 import type { UserPublic } from "@/lib/auth";
 
 /**
@@ -14,7 +14,7 @@ export async function getServerCurrentUser(): Promise<UserPublic | null> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
-  const res = await fetch(`${getApiBaseUrl()}/auth/me`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/me`, {
     headers: { Cookie: cookieHeader },
     cache: "no-store",
   });

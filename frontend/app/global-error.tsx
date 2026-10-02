@@ -8,7 +8,7 @@ import "./globals.css";
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen items-center justify-center bg-[#0B0B12] px-6 text-center text-white antialiased">
+      <body className="flex min-h-dvh items-center justify-center bg-[#0B0B12] px-6 text-center text-white antialiased">
         <div role="alert" className="flex flex-col items-center gap-4">
           <h1 className="text-2xl font-semibold">CandyFlix hit a snag</h1>
           <p className="max-w-sm text-sm text-white/50">Something went wrong loading the app. Please try again.</p>

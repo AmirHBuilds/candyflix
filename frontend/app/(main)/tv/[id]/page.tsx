@@ -17,6 +17,13 @@ export default async function TVDetailPage({
 }) {
   const { id } = await params;
 
+  // The show, its similar titles and the viewer's latest progress don't
+  // depend on each other's responses, so all three start together instead
+  // of waiting in a line. Both side requests are caught on the spot, so
+  // neither can become an unhandled rejection if the show doesn't exist.
+  const similarPromise = getSimilarTV(id).catch(() => []);
+  const progressPromise = getLatestTVWatchProgressServer(Number(id)).catch(() => null);
+
   let show;
   try {
     show = await getTVShow(id);
@@ -24,7 +31,7 @@ export default async function TVDetailPage({
     notFound();
   }
 
-  const similar = await getSimilarTV(id).catch(() => []);
+  const similar = await similarPromise;
   // Not logged in, or nothing watched yet, both land here as null —
   // same "fail toward nothing rather than break the page" treatment as
   // `similar` above. Fetched once here and passed to both DetailActions
@@ -37,11 +44,7 @@ export default async function TVDetailPage({
   // point one step behind what was actually just watched.
   const sp = await searchParams;
   const hint = parseResumeHintFromSearchParams(sp);
-  const watchProgress = mergeResumeWithHint(
-    await getLatestTVWatchProgressServer(show.tmdb_id).catch(() => null),
-    hint,
-    show.tmdb_id
-  );
+  const watchProgress = mergeResumeWithHint(await progressPromise, hint, show.tmdb_id);
 
   const backdrop = backdropUrl(show.backdrop_path, "original");
   const poster = posterUrl(show.poster_path, "w500");
@@ -49,7 +52,7 @@ export default async function TVDetailPage({
   return (
     <div className="animate-fade-in flex flex-col gap-8">
       <StripResumeHintFromUrl />
-      <div className="relative -mx-6 h-[40vh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
+      <div className="relative -mx-6 h-[40dvh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
         {backdrop && (
           <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover object-top" />
         )}

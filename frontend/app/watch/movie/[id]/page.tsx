@@ -23,7 +23,7 @@ export default async function WatchMoviePage({
 
   if (error || !movie || !source) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center px-6">
+      <div className="flex min-h-[70dvh] items-center justify-center px-6">
         <ErrorState
           title="Couldn't start playback"
           message={error ?? "Couldn't load this video."}

@@ -59,7 +59,8 @@ export function GridPageSkeleton({ count = 12 }: { count?: number }) {
 export function HomeSkeleton() {
   return (
     <LoadingRegion className="flex flex-col gap-10">
-      <Skeleton className="-mx-6 h-[50vh] min-h-[300px] rounded-none sm:mx-0 sm:rounded-3xl" />
+      {/* Same height rules as the real hero, so the page doesn't jump when it arrives. */}
+      <Skeleton className="-mx-6 h-[75dvh] min-h-[460px] rounded-none sm:mx-0 sm:min-h-[560px] sm:rounded-3xl" />
       {[0, 1].map((row) => (
         <section key={row} className="flex flex-col gap-3">
           <Skeleton className="h-6 w-40" />
@@ -74,7 +75,7 @@ export function HomeSkeleton() {
 export function DetailSkeleton() {
   return (
     <LoadingRegion className="flex flex-col gap-8">
-      <Skeleton className="-mx-6 h-[40vh] min-h-[260px] rounded-none sm:mx-0 sm:rounded-3xl" />
+      <Skeleton className="-mx-6 h-[40dvh] min-h-[260px] rounded-none sm:mx-0 sm:rounded-3xl" />
       <div className="flex flex-col gap-6 sm:flex-row">
         <Skeleton className="hidden aspect-[2/3] w-[clamp(150px,20vw,220px)] shrink-0 self-start rounded-xl sm:block" />
         <div className="flex min-w-0 flex-1 flex-col gap-4">
@@ -117,7 +118,7 @@ export function EpisodeListSkeleton({ count = 5 }: { count?: number }) {
 export function PlayerSkeleton() {
   return (
     <LoadingRegion>
-      <div className="flex aspect-video max-h-[calc(100vh-8rem)] w-full items-center justify-center bg-black">
+      <div className="flex aspect-video max-h-[calc(100dvh-8rem)] w-full items-center justify-center bg-black">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#FF5FA2]" />
       </div>
     </LoadingRegion>

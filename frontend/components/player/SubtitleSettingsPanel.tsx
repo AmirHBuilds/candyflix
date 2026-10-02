@@ -468,7 +468,7 @@ export default function SubtitleSettingsPanel({
       </div>
 
       {selectedLanguage && (
-        <div className="flex max-h-[60vh] flex-col gap-5 overflow-y-auto p-4">
+        <div className="flex max-h-[60dvh] flex-col gap-5 overflow-y-auto p-4">
           {/* Live preview, so a change is visible immediately without
               hunting for it under this panel on the actual video. */}
           <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/50 px-3 py-6">

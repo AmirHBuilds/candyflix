@@ -149,3 +149,13 @@ select option {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Touch (Phase 8) ----
+   No grey flash on tap, and no double-tap-to-zoom delay on controls. */
+a,
+button,
+[role="button"],
+summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}

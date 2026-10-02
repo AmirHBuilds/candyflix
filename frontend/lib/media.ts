@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 
 export type MediaType = "movie" | "tv";
 
@@ -72,27 +72,27 @@ export function detailHref(item: Pick<MediaItem, "media_type" | "tmdb_id">): str
 }
 
 export async function getTrending(window: "day" | "week" = "day"): Promise<MediaItem[]> {
-  const res = await fetch(`${getApiBaseUrl()}/trending?window=${window}`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/trending?window=${window}`, { cache: "no-store" });
   return handle(res, "Trending is unavailable right now.");
 }
 
 export async function getPopularMovies(): Promise<MediaItem[]> {
-  const res = await fetch(`${getApiBaseUrl()}/movies/popular`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/movies/popular`, { cache: "no-store" });
   return handle(res, "Popular movies are unavailable right now.");
 }
 
 export async function getPopularTV(): Promise<MediaItem[]> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/popular`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/popular`, { cache: "no-store" });
   return handle(res, "Popular TV shows are unavailable right now.");
 }
 
 export async function getSimilarMovies(tmdbId: number | string): Promise<MediaItem[]> {
-  const res = await fetch(`${getApiBaseUrl()}/movies/${tmdbId}/similar`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/movies/${tmdbId}/similar`, { cache: "no-store" });
   return handle(res, "Recommendations are unavailable right now.");
 }
 
 export async function getSimilarTV(tmdbId: number | string): Promise<MediaItem[]> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/${tmdbId}/similar`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/${tmdbId}/similar`, { cache: "no-store" });
   return handle(res, "Recommendations are unavailable right now.");
 }
 
@@ -129,45 +129,45 @@ function discoverQuery(page: number, filters: DiscoverFilters): string {
 }
 
 export async function getMovieGenres(): Promise<Genre[]> {
-  const res = await fetch(`${getApiBaseUrl()}/movies/genres`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/movies/genres`, { cache: "no-store" });
   return handle(res, "Genres are unavailable right now.");
 }
 
 export async function getTVGenres(): Promise<Genre[]> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/genres`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/genres`, { cache: "no-store" });
   return handle(res, "Genres are unavailable right now.");
 }
 
 export async function getPopularMoviesPage(page: number): Promise<PagedResult> {
-  const res = await fetch(`${getApiBaseUrl()}/movies/popular/page?page=${page}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/movies/popular/page?page=${page}`, {
     cache: "no-store",
   });
   return toPagedResult(await handle(res, "Popular movies are unavailable right now."));
 }
 
 export async function getPopularTVPage(page: number): Promise<PagedResult> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/popular/page?page=${page}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/popular/page?page=${page}`, {
     cache: "no-store",
   });
   return toPagedResult(await handle(res, "Popular TV shows are unavailable right now."));
 }
 
 export async function discoverMovies(page: number, filters: DiscoverFilters): Promise<PagedResult> {
-  const res = await fetch(`${getApiBaseUrl()}/movies/discover?${discoverQuery(page, filters)}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/movies/discover?${discoverQuery(page, filters)}`, {
     cache: "no-store",
   });
   return toPagedResult(await handle(res, "Search is unavailable right now."));
 }
 
 export async function discoverTV(page: number, filters: DiscoverFilters): Promise<PagedResult> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/discover?${discoverQuery(page, filters)}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/discover?${discoverQuery(page, filters)}`, {
     cache: "no-store",
   });
   return toPagedResult(await handle(res, "Search is unavailable right now."));
 }
 
 export async function searchMedia(query: string, signal?: AbortSignal): Promise<MediaItem[]> {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${getApiBaseUrl()}/search?q=${encodeURIComponent(query)}`,
     { cache: "no-store", signal }
   );
@@ -175,12 +175,12 @@ export async function searchMedia(query: string, signal?: AbortSignal): Promise<
 }
 
 export async function getMovie(tmdbId: number | string): Promise<MovieDetail> {
-  const res = await fetch(`${getApiBaseUrl()}/movies/${tmdbId}`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/movies/${tmdbId}`, { cache: "no-store" });
   return handle(res, "This movie couldn't be found.");
 }
 
 export async function getTVShow(tmdbId: number | string): Promise<TVShowDetail> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/${tmdbId}`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/${tmdbId}`, { cache: "no-store" });
   return handle(res, "This show couldn't be found.");
 }
 
@@ -188,7 +188,7 @@ export async function getSeason(
   tmdbId: number | string,
   seasonNumber: number
 ): Promise<SeasonDetail> {
-  const res = await fetch(`${getApiBaseUrl()}/tv/${tmdbId}/season/${seasonNumber}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/tv/${tmdbId}/season/${seasonNumber}`, {
     cache: "no-store",
   });
   return handle(res, "This season couldn't be found.");

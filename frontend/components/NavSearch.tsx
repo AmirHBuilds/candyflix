@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDebouncedSearch } from "@/lib/useDebouncedSearch";
 import MediaGrid from "@/components/MediaGrid";
+import { LoadingRegion, MediaGridSkeleton } from "@/components/Skeleton";
 
 const MAX_LIVE_RESULTS = 12;
 
@@ -64,6 +65,13 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
         placeholder="What do you want to watch?"
         aria-label="Search"
         autoFocus={autoFocus}
+        // Phone keyboards: label the return key "Search", and stop
+        // auto-capitalising / auto-correcting what is a movie title.
+        enterKeyHint="search"
+        autoComplete="off"
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
         // Below `sm` the box is edge to edge (see Nav), so square
         // corners and no side borders — a rounded, bordered pill would
         // look clipped against the screen edges.
@@ -71,8 +79,18 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
       />
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-3 max-h-[80vh] overflow-y-auto rounded-2xl border border-white/10 max-sm:rounded-none max-sm:border-x-0 bg-[#0E0E17]/98 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
-          {loading && <p className="py-6 text-center text-white/40">Searching…</p>}
+        <div className="absolute left-0 right-0 top-full z-30 mt-3 max-h-[80dvh] overflow-y-auto rounded-2xl border border-white/10 max-sm:rounded-none max-sm:border-x-0 bg-[#0E0E17]/98 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
+          {/* Placeholder cards while the first results load; on later
+              keystrokes the previous results stay put (see
+              useDebouncedSearch) and a quiet line says it's refreshing. */}
+          {loading && visible.length === 0 && (
+            <LoadingRegion>
+              <MediaGridSkeleton count={6} />
+            </LoadingRegion>
+          )}
+          {loading && visible.length > 0 && (
+            <p className="pb-3 text-center text-sm text-white/40">Searching…</p>
+          )}
 
           {!loading && error && (
             <p className="py-6 text-center text-[#FF5FA2]">{error}</p>
@@ -84,7 +102,7 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
             </p>
           )}
 
-          {!loading && !error && visible.length > 0 && (
+          {!error && visible.length > 0 && (
             <>
               <MediaGrid items={visible} onNavigate={() => setOpen(false)} />
               {hasMore && (

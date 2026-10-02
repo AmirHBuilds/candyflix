@@ -6,7 +6,7 @@
  * Session state is never stored in localStorage — the cookie is the
  * only place it lives, and JS never reads or writes it directly.
  */
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 
 export type UserPublic = {
   id: string;
@@ -16,7 +16,7 @@ export type UserPublic = {
 };
 
 export async function listUsers(): Promise<UserPublic[]> {
-  const res = await fetch(`${getApiBaseUrl()}/auth/users`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/users`, {
     credentials: "include",
     cache: "no-store",
   });
@@ -25,7 +25,7 @@ export async function listUsers(): Promise<UserPublic[]> {
 }
 
 export async function login(username: string, password: string): Promise<UserPublic> {
-  const res = await fetch(`${getApiBaseUrl()}/auth/login`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/login`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -39,14 +39,14 @@ export async function login(username: string, password: string): Promise<UserPub
 }
 
 export async function logout(): Promise<void> {
-  await fetch(`${getApiBaseUrl()}/auth/logout`, {
+  await fetchWithTimeout(`${getApiBaseUrl()}/auth/logout`, {
     method: "POST",
     credentials: "include",
   });
 }
 
 export async function getCurrentUser(): Promise<UserPublic | null> {
-  const res = await fetch(`${getApiBaseUrl()}/auth/me`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/me`, {
     credentials: "include",
     cache: "no-store",
   });

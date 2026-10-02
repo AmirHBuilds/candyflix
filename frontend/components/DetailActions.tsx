@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { addToWatchlist, getWatchlistStatus, removeFromWatchlist } from "@/lib/watchlist";
 import { getLatestTVWatchProgress, type WatchProgress } from "@/lib/playback";
+import { showToast } from "@/lib/toast";
 import type { MediaType } from "@/lib/media";
 
 // Sizing tiers, driven by the width of the space the buttons actually
@@ -94,8 +95,13 @@ export default function DetailActions({
         setInCandyBox(true);
       }
     } catch {
-      // Leave the button at its last known-good state — a failed
-      // toggle just means nothing changed, so no correction is needed.
+      // The button stays at its last known-good state (nothing changed),
+      // but say so — otherwise a tap that did nothing looks broken.
+      showToast(
+        inCandyBox
+          ? "Couldn't remove it from your Candy Box. Please try again."
+          : "Couldn't add it to your Candy Box. Please try again."
+      );
     } finally {
       setPending(false);
     }

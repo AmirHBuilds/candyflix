@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 import type { MediaItem } from "@/lib/media";
 
 /**
@@ -36,7 +36,7 @@ export async function getContinueWatchingServer(
   limit = 24
 ): Promise<{ items: ContinueWatchingItem[]; hasMore: boolean }> {
   const store = await cookies();
-  const res = await fetch(`${getApiBaseUrl()}/continue-watching?limit=${limit}`, {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/continue-watching?limit=${limit}`, {
     headers: { Cookie: store.toString() },
     cache: "no-store",
   });

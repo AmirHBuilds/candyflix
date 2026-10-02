@@ -11,6 +11,12 @@ export default async function MovieDetailPage({
 }) {
   const { id } = await params;
 
+  // Started together: the similar-titles lookup doesn't depend on the
+  // movie's own response, so awaiting them one after the other just added
+  // their latencies together. (Caught here, so it can't surface as an
+  // unhandled rejection if the movie turns out not to exist.)
+  const similarPromise = getSimilarMovies(id).catch(() => []);
+
   let movie;
   try {
     movie = await getMovie(id);
@@ -18,14 +24,14 @@ export default async function MovieDetailPage({
     notFound();
   }
 
-  const similar = await getSimilarMovies(id).catch(() => []);
+  const similar = await similarPromise;
 
   const backdrop = backdropUrl(movie.backdrop_path, "original");
   const poster = posterUrl(movie.poster_path, "w500");
 
   return (
     <div className="animate-fade-in flex flex-col gap-8">
-      <div className="relative -mx-6 h-[40vh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
+      <div className="relative -mx-6 h-[40dvh] min-h-[260px] overflow-hidden sm:mx-0 sm:rounded-3xl">
         {backdrop && (
           <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover object-top" />
         )}

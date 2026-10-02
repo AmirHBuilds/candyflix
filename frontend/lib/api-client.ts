@@ -49,6 +49,58 @@ export function getStaticOrigin(): string {
   return base.replace(/\/api\/?$/, "");
 }
 
+/** How long a data request may take before we give up on it. */
+export const FETCH_TIMEOUT_MS = 20_000;
+
+export class RequestTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`The request took longer than ${Math.round(timeoutMs / 1000)}s and was cancelled.`);
+    this.name = "RequestTimeoutError";
+  }
+}
+
+/**
+ * `fetch` that gives up after `timeoutMs` instead of waiting forever.
+ *
+ * Plain fetch has no timeout, so a stalled connection (a dropped
+ * keep-alive socket between containers, a hung upstream) leaves a Server
+ * Component awaiting indefinitely — the visitor then sits on the page's
+ * loading skeleton for good. With this, a stall becomes an ordinary
+ * error that the page/boundary already knows how to show ("Try again").
+ *
+ * Covers waiting for the response *headers* (where such stalls happen);
+ * the timer stops once they arrive. A caller's own `signal` (e.g. the
+ * debounced search cancelling a stale query) still works and is merged.
+ * Passes `init` through untouched apart from adding the signal.
+ */
+export async function fetchWithTimeout(
+  input: string,
+  init: RequestInit = {},
+  timeoutMs: number = FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const callerSignal = init.signal ?? undefined;
+  const onCallerAbort = () => controller.abort(callerSignal?.reason);
+  if (callerSignal?.aborted) controller.abort(callerSignal.reason);
+  else callerSignal?.addEventListener("abort", onCallerAbort);
+
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (timedOut) throw new RequestTimeoutError(timeoutMs);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", onCallerAbort);
+  }
+}
+
 export async function getBackendHealth() {
   const res = await fetch(`${getApiBaseUrl()}/health/full`, { cache: "no-store" });
   if (!res.ok) {

@@ -468,3 +468,39 @@ General loading/error states, mobile refinement, animations, empty states; plus 
 - **Mobile refinement** — not started; needs the user's specifics (things that look/feel off on a phone), since layout can't be seen in the sandbox.
 - Possible extras (not requested): image fade-in for posters, hero crossfade review, a toast for transient errors (e.g. Candy Box add/remove failing), page-transition polish, a skeleton for NavSearch results.
 - Small leftovers from §7.2 / §11 (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949).
+
+---
+
+## 15. Phase 8 — batch 3: stuck-skeleton fixes, toasts, image fade, search skeleton, mobile pass (DONE, awaiting the user's visual check)
+
+**Baselines now:** backend 118 passed; `tsc` clean; Vitest 279 passed / 21 failed (same four live-backend files, §7.1). +42 tests this round. `next build` still can't run in the sandbox (Google Fonts).
+
+### The "sometimes stuck on the skeleton" report — what was found and changed
+Cause was **not reproducible here**; the user's Docker log showed (a) `GET /` taking 12–14 s (dev cold compile plus an uncached-TMDB Continue Watching call that took ~4.6 s, 0.1 s once cached) and (b) **no timeout on any frontend `fetch`**, so a stalled request makes a Server Component await forever behind its `loading.tsx` skeleton. Changes:
+- `lib/api-client.ts`: `fetchWithTimeout(input, init, timeoutMs = FETCH_TIMEOUT_MS /*20 s*/)` + `RequestTimeoutError`. Merges a caller's own `AbortSignal` (the debounced search still cancels stale queries; reported as an AbortError, not a timeout). Covers waiting for response *headers* only. Applied to every data fetcher in `lib/media.ts`, `continue-watching-server.ts`, `watchlist-server.ts`, `playback-server.ts`, `session.ts`, `auth.ts` — a stall now throws and lands in the existing error states ("Try again") instead of hanging. **Not** applied to the fire-and-forget progress saves / beacons in `lib/playback.ts` / `lib/watchlist.ts` (client mutations).
+- **Home** now starts all five requests (4 rows + Continue Watching) together; Continue Watching used to be awaited *after* the other four, stacking latencies.
+- **Movie / TV detail** start the similar-titles request (and, for TV, the latest-progress request) together with the title request; side requests are `.catch`ed immediately so they can't become unhandled rejections when the title 404s.
+- Log notes (not changed): `DEBUG=true` makes SQLAlchemy echo every statement — set `DEBUG=false` in the backend env for quieter logs; `/movie/99999999` returns HTTP **200** with the not-found UI because `loading.tsx` has already started streaming (Next behaviour, fine for a private app).
+- If it still happens: check the browser Network tab for a pending `_rsc`/page request, and the frontend container log for that route's `GET ... in Ns`; a 20 s wait followed by the error state means a backend/TMDB stall rather than a rendering bug.
+
+### The three extras
+- **Toasts:** `lib/toast.ts` (module store: `showToast(message, kind="error"|"info"|"success", durationMs=4500)`, `dismissToast`, dedupes identical messages by restarting the timer, max 3 visible) + `components/Toaster.tsx` (mounted once in `app/layout.tsx`; bottom-centre, clears the iPhone home indicator, errors `role=alert`, others `role=status`, ✕ to dismiss). Wired to the one silent failure that mattered: `DetailActions` Candy Box add/remove. Toasts don't show inside fullscreen video (the Toaster is outside the fullscreen element).
+- **Poster fade-in:** `components/FadeImage.tsx` wraps `next/image` for `MediaCard` posters. SSR HTML is fully visible; only an image still loading *at mount* is held transparent until `onLoad`/`onError` (so nothing depends on JS to appear). Opacity fades 0.5 s, hover-zoom transform stays 0.2 s. Not used on the hero / detail backdrops (priority/LCP images).
+- **Search dropdown skeleton:** first results show placeholder cards; later keystrokes keep the previous results and show a quiet "Searching…" line.
+
+### Mobile pass (code-level; no device to test on)
+- `100vh`/`min-h-screen` → `dvh`/`min-h-dvh` everywhere (hero, detail backdrops, skeletons, layouts, login, not-found, dropdown, settings panel) — phone address bars no longer cause jumps. A guard test fails if a plain `vh`/`h-screen` creeps back.
+- **Fixed a bug from batch 2:** the home skeleton's hero was 50vh vs the real hero's 75vh (page jumped when content arrived); now identical (`h-[75dvh] min-h-[460px] sm:min-h-[560px]`), guarded by a test.
+- Player: the six 32px buttons become 40px and the seek bar's hit area doubles on touch devices (`pointer-coarse:` variants, Tailwind 4.3). The extra 24px in the control row is unverified on very narrow phones.
+- `globals.css`: no grey tap flash, `touch-action: manipulation` on links/buttons (removes double-tap-zoom delay).
+- `app/layout.tsx`: `viewport` export with `themeColor #0B0B12` and `colorScheme: "dark"`.
+- Search input: `enterKeyHint="search"`, no autocapitalise/autocorrect/spellcheck/autocomplete.
+
+### Please verify in a browser / on a phone
+1. Reload the home page and navigate around a dozen times; if a skeleton ever sticks, wait 20 s — you should now get "Try again" rather than an endless skeleton. Report if it still sticks beyond that (and what the Network tab shows).
+2. Make Candy Box fail (stop the backend, tap Add): a toast appears, button unchanged.
+3. Scroll the grids: posters fade in; search: skeleton cards on first results.
+4. Phone: address-bar collapse no longer resizes the hero/backdrops; player buttons feel bigger; check the control row still fits on a ~360px-wide phone; search keyboard shows a "Search" key and doesn't capitalise.
+
+### Remaining Phase 8 work
+Further mobile refinement only if the user finds specific issues. Small leftovers from §7.2 / §11 (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949) are still untouched. Candidate extras not built: hero image fade, toast on player-side failures, retry buttons inside the search dropdown.
