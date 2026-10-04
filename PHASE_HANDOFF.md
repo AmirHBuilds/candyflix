@@ -603,3 +603,32 @@ Theme swatches · Home layout **Grid / Swipe rows** · Titles per section (12/18
 6. Mono theme: white accent — confirm buttons/text on it are readable.
 
 ### Next: 9d Playback basics (autoplay next + Up-next overlay, cross-season next episode, auto subtitles, save-progress toggle + movie visit record + Clear history, per-video remember)
+
+
+---
+
+## 20. Phase 9d — Playback basics + feedback round (DONE, awaiting the user's check)
+
+**Baselines now:** backend **303 passed**; `tsc` clean; Vitest **489 passed** excluding the four live-backend files (login, logout, media-pages, nav-search). **Migration chain:** bc7270a45725 → ba7454288764 → fe72be68484a (video_settings) → a1c3e5f70912 (site_settings). Auto-migrate applies them on start. Run `rm -f backend/avatars/*.webp` only to clear test avatars.
+
+### 9d Playback basics
+- Autoplay next episode with a 5 s Up-next overlay (crosses seasons via `findAdjacentEpisodes`), auto subtitles, "Save watch progress" (resume position only), movie visit record (keeps movies in Continue Watching with saving off), Clear watch history, per-video settings (`video_settings` table: volume, muted, subtitle_language) used when "Remember per video" is on.
+- **Behaviour change to flag:** "Start playing when a video opens" defaults ON; before 9d the player never autoplayed.
+
+### Feedback round
+1. **Banner description toggle:** `appearance.hero_description` (default true), Settings → Appearance, HeroCarousel.
+2. **New pages open at the top:** `components/ScrollToTop.tsx` in the (main) layout (scrolls on pathname change, leaves back/forward to the browser).
+3. **TV detail season default:** SeasonBrowser opens on the just-visited episode's season, else the resume point's season, else the first.
+4. **Equal-height compact blocks:** fixed `h-14`; Now playing / Last watched / In progress are now a small pill on the same row.
+5. **Subtitle leak fixed:** a language picked in the player is saved per video only (no global "last used"); the timing offset is no longer stored in the shared localStorage blob. Style (colour/size/…) is still the shared default until 9e's Settings → Subtitles + per-video style.
+6. **Continue Watching "View All"** shows when there are more than the section cap, not only when the backend says so.
+7. **Footer:** public `GET /api/site/footer`, admin `GET/PUT /api/admin/footer`, table `site_settings`; `components/Footer.tsx` in the (main) layout; Admin → Footer tab (tagline, email, up to 8 links, copyright, on/off). Not shown on the login screen or the player.
+8. **"In Candy Boxes" removed** from the admin Overview and the per-user list line (it was low-value and exposed what people save). API fields remain.
+9. **Per-user list name:** "<first name> Box" in the nav, Add/In buttons, toasts and the list page (`lib/box-name.ts`, `BoxNameProvider`). Falls back to "Candy Box". Route stays `/candy-box`.
+11. **Endless settings page:** `/settings` is one scrolling page with sticky full-width section bar (`SettingsBar`) and separated sections (`SettingsSection`); old `/settings/<section>` routes redirect to `/settings#<section>`.
+
+### Please verify in a browser
+Open a movie from halfway down a list (starts at top); TV page opens on the last-watched season; compact blocks equal height; set Persian subtitles in one episode, open another (off) and another show (off); Titles per section = 12 shows View All; Admin → Footer edit shows on all pages; Settings scroll/bar highlight on phone and desktop; a user named Amir sees "Amir Box".
+
+### Later
+Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I understand" + acceptance stats, full visibility) becomes its own phase after 9g. Then 9e Subtitles, 9f Intro skipping, 9g Controls customiser.

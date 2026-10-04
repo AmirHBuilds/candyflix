@@ -1,13 +1,6 @@
-import { ComingSoon } from "@/components/settings/controls";
+import { redirect } from "next/navigation";
 
-export default function SubtitleSettings() {
-  return (
-    <ComingSoon
-      title="Subtitles"
-      items={[
-        "Default font, size, colours, background and position for all subtitles",
-        "Saved per-video subtitle settings, with a way to review them",
-      ]}
-    />
-  );
+// Settings is one long page now; old links land on the right section.
+export default function Legacy() {
+  redirect("/settings#subtitles");
 }

@@ -12,6 +12,7 @@ vi.mock("@/lib/playback", async () => {
     saveWatchProgress: vi.fn().mockResolvedValue(undefined),
     saveWatchProgressBeacon: vi.fn(),
     recordEpisodeVisit: vi.fn(),
+    recordMovieVisit: vi.fn(),
   };
 });
 
@@ -25,15 +26,17 @@ function Harness({
   seasonNumber,
   episodeNumber,
   restored = true,
+  saveProgress = true,
 }: {
   tmdbId?: number;
   mediaType?: "movie" | "tv";
   seasonNumber?: number | null;
   episodeNumber?: number | null;
   restored?: boolean;
+  saveProgress?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  useWatchProgress(videoRef, { tmdbId, mediaType, seasonNumber, episodeNumber }, restored);
+  useWatchProgress(videoRef, { tmdbId, mediaType, seasonNumber, episodeNumber }, restored, saveProgress);
   return <video ref={videoRef} data-testid="video" />;
 }
 
@@ -286,5 +289,44 @@ describe("useWatchProgress — identity payload shape", () => {
   it("does not record a visit for a movie", () => {
     render(<Harness mediaType="movie" tmdbId={550} />);
     expect(playback.recordEpisodeVisit).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("useWatchProgress — Save watch progress setting", () => {
+  it("off: no position is ever saved (not on play, pause, seek, interval or unmount)", async () => {
+    const { getByTestId, unmount } = render(<Harness saveProgress={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 5, duration: 100, paused: false });
+    video.dispatchEvent(new Event("play"));
+    video.dispatchEvent(new Event("pause"));
+    video.dispatchEvent(new Event("seeked"));
+    await vi.advanceTimersByTimeAsync(30_000);
+    unmount();
+    expect(playback.saveWatchProgress).not.toHaveBeenCalled();
+    expect(playback.saveWatchProgressBeacon).not.toHaveBeenCalled();
+  });
+
+  it("off: the 'opened' visit is still recorded, for movies and episodes, so Continue Watching keeps working", () => {
+    render(<Harness saveProgress={false} />);
+    expect(playback.recordMovieVisit).toHaveBeenCalledWith(550);
+    render(<Harness saveProgress={false} mediaType="tv" tmdbId={1396} seasonNumber={2} episodeNumber={3} />);
+    expect(playback.recordEpisodeVisit).toHaveBeenCalledWith(1396, 2, 3);
+  });
+
+  it("on: opening a movie records a visit once, and not an episode visit", () => {
+    const { rerender } = render(<Harness />);
+    rerender(<Harness />);
+    expect(playback.recordMovieVisit).toHaveBeenCalledTimes(1);
+    expect(playback.recordEpisodeVisit).not.toHaveBeenCalled();
+  });
+
+  it("switching it on part-way starts saving", async () => {
+    const { getByTestId, rerender } = render(<Harness saveProgress={false} />);
+    const video = getByTestId("video") as HTMLVideoElement;
+    setMediaProps(video, { currentTime: 5, duration: 100, paused: false });
+    rerender(<Harness saveProgress={true} />);
+    video.dispatchEvent(new Event("pause"));
+    expect(playback.saveWatchProgress).toHaveBeenCalledTimes(1);
   });
 });

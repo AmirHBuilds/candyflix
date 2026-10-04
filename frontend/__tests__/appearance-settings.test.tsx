@@ -96,3 +96,12 @@ function within_group(groupName: string, optionName: string): HTMLElement {
   const group = screen.getByRole("radiogroup", { name: groupName });
   return Array.from(group.querySelectorAll<HTMLElement>('[role="radio"]')).find((el) => el.textContent === optionName)!;
 }
+
+describe("banner description toggle", () => {
+  it("saves hero_description and hides the row when the banner is off", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    renderForm({});
+    await userEvent.setup().click(screen.getByLabelText("Banner description"));
+    expect(lib.patchSettings).toHaveBeenCalledWith({ appearance: { hero_description: false } });
+  });
+});

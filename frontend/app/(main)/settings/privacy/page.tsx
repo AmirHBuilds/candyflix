@@ -1,10 +1,6 @@
-import { ComingSoon } from "@/components/settings/controls";
+import { redirect } from "next/navigation";
 
-export default function PrivacySettings() {
-  return (
-    <ComingSoon
-      title="Privacy & data"
-      items={["Clear watch history", "Clear your Candy Box", "Export your data"]}
-    />
-  );
+// Settings is one long page now; old links land on the right section.
+export default function Legacy() {
+  redirect("/settings#privacy");
 }

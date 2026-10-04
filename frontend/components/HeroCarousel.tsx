@@ -12,7 +12,7 @@ const SWIPE_THRESHOLD_PX = 40;
 
 export default function HeroCarousel({ items }: { items: MediaItem[] }) {
   const { settings } = useSettings();
-  const { hero_enabled, hero_interval_seconds, description_length } = settings.appearance;
+  const { hero_enabled, hero_description, hero_interval_seconds, description_length } = settings.appearance;
   const rotateMs = hero_interval_seconds * 1000;
   const slides = hero_enabled ? items.slice(0, MAX_SLIDES) : [];
   const [index, setIndex] = useState(0);
@@ -96,7 +96,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
               {/* A short synopsis under the title. Clamped to two lines on
                   phones (the banner is tall but not endless) and three
                   from sm up; the text is already trimmed to a sentence. */}
-              {item.overview && (
+              {hero_description && item.overview && (
                 <p
                   className={`mb-5 max-w-xl text-sm text-white/75 [text-shadow:0_1px_8px_rgb(0_0_0/0.6)] sm:text-base ${
                     description_length === "full" ? "line-clamp-6" : "line-clamp-2 sm:line-clamp-3"

@@ -18,6 +18,7 @@ export type Settings = {
     text_size: "small" | "default" | "large";
     reduce_motion: "auto" | "on" | "off";
     hero_enabled: boolean;
+    hero_description: boolean;
     hero_interval_seconds: number;
     show_ratings: boolean;
     show_years: boolean;

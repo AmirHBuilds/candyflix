@@ -12,8 +12,9 @@ from app.core.db import get_db
 from app.models.user import User
 from app.providers import mock_provider
 from app.providers.mock_provider import MockVideoNotConfigured
-from app.schemas.playback import EpisodeVisitIn, PlaybackSource, WatchProgressIn, WatchProgressOut
-from app.services import subtitle_service, watch_progress_service
+from app.schemas.playback import EpisodeVisitIn, MovieVisitIn, PlaybackSource, WatchProgressIn, WatchProgressOut
+from app.schemas.video_settings import ClearedResult
+from app.services import subtitle_service, video_settings_service, watch_progress_service
 
 router = APIRouter(tags=["playback"])
 
@@ -39,6 +40,7 @@ async def playback_movie(
         url=url,
         subtitles=[default_track] if default_track else [],
         resume_position_seconds=progress.position_seconds if progress else None,
+        video_settings=await video_settings_service.get(db, current_user.id, tmdb_id, "movie", None, None),
     )
 
 
@@ -67,6 +69,9 @@ async def playback_episode(
         url=url,
         subtitles=[default_track] if default_track else [],
         resume_position_seconds=progress.position_seconds if progress else None,
+        video_settings=await video_settings_service.get(
+            db, current_user.id, tmdb_id, "tv", season_number, episode_number
+        ),
     )
 
 
@@ -104,6 +109,27 @@ async def record_episode_visit(
     await watch_progress_service.mark_episode_visited(
         db, current_user.id, payload.tmdb_id, payload.season_number, payload.episode_number
     )
+
+
+@router.post("/watch-progress/movie/visit", status_code=204)
+async def record_movie_visit(
+    payload: MovieVisitIn,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """The movie twin of /watch-progress/tv/visit — keeps a movie in
+    Continue Watching even when position saving is switched off."""
+    await watch_progress_service.mark_movie_visited(db, current_user.id, payload.tmdb_id)
+
+
+@router.delete("/watch-progress", response_model=ClearedResult)
+async def clear_watch_history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Settings -> Privacy & data -> Clear watch history: forgets every
+    resume position, last-watched episode and Continue Watching entry."""
+    return ClearedResult(cleared=await watch_progress_service.clear_all_progress(db, current_user.id))
 
 
 @router.get("/watch-progress/movie/{tmdb_id}", response_model=WatchProgressOut | None)

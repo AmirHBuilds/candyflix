@@ -11,7 +11,7 @@ know the sentinel exists.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -129,6 +129,33 @@ async def mark_episode_visited(
     season_number: int,
     episode_number: int,
 ) -> None:
+    await _mark_visited(db, user_id, tmdb_id, "tv", season_number, episode_number)
+
+
+async def mark_movie_visited(db: AsyncSession, user_id: uuid.UUID, tmdb_id: int) -> None:
+    """The movie counterpart: "this movie was opened". Without it a movie
+    only reached Continue Watching through its first position save — so
+    with "Save watch progress" off (no position saves at all) movies would
+    never appear there. A new row has position 0 / unknown duration; an
+    existing one keeps its numbers and just gets updated_at bumped."""
+    await _mark_visited(db, user_id, tmdb_id, "movie", None, None)
+
+
+async def clear_all_progress(db: AsyncSession, user_id: uuid.UUID) -> int:
+    """Settings -> Privacy & data -> Clear watch history."""
+    result = await db.execute(delete(WatchProgress).where(WatchProgress.user_id == user_id))
+    await db.commit()
+    return result.rowcount or 0
+
+
+async def _mark_visited(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    tmdb_id: int,
+    media_type: str,
+    season_number: int | None,
+    episode_number: int | None,
+) -> None:
     """Records "this episode was opened" without touching any real
     progress. Called when a watch page renders, before the video (or the
     player's own save logic) has had a chance to do anything.
@@ -150,9 +177,9 @@ async def mark_episode_visited(
         .values(
             user_id=user_id,
             tmdb_id=tmdb_id,
-            media_type="tv",
-            season_number=season_number,
-            episode_number=episode_number,
+            media_type=media_type,
+            season_number=_to_sentinel(season_number, NO_SEASON),
+            episode_number=_to_sentinel(episode_number, NO_EPISODE),
             position_seconds=0.0,
             duration_seconds=0.0,
             updated_at=now,

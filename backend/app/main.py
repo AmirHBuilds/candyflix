@@ -36,9 +36,11 @@ from app.api.routes import (
     playback,
     search,
     settings as settings_routes,
+    site,
     subtitles,
     trending,
     tv,
+    video_settings,
     watchlist,
 )
 from app.core.config import get_settings
@@ -125,6 +127,8 @@ app.include_router(continue_watching.router, prefix="/api")
 app.include_router(settings_routes.router, prefix="/api")
 app.include_router(account.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(video_settings.router, prefix="/api")
+app.include_router(site.router, prefix="/api")
 
 
 @app.get("/api")

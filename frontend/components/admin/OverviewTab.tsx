@@ -36,12 +36,11 @@ export default function OverviewTab() {
 
   return (
     <section aria-label="Overview" className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="People" value={stats.users_total} />
         <Stat label="Admins" value={stats.admins} />
         <Stat label="Disabled" value={stats.disabled} />
         <Stat label="Active, last 7 days" value={stats.active_last_7_days} />
-        <Stat label="In Candy Boxes" value={stats.watchlist_items} />
         <Stat label="Marked watched" value={stats.watched_items} />
       </div>
 

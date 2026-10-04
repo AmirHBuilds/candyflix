@@ -71,7 +71,8 @@ describe("the player uses the seek-time setting", () => {
   });
 
   it("reads playback.seek_seconds and uses it for arrows, J/L and the double-tap zones", () => {
-    expect(source).toContain("settings.playback.seek_seconds");
+    expect(source).toContain("const seekSeconds = playbackSettings.seek_seconds;");
+    expect(source).toContain("useSettings().settings.playback");
     expect(source).toMatch(/seekBy\(-seekSeconds\)/);
     expect(source).toMatch(/seekBy\(seekSeconds\)/);
     expect(source).toContain('zone === "left" ? -seekSeconds : seekSeconds');

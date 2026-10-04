@@ -39,6 +39,8 @@ class AppearanceSettings(_Group):
     text_size: Literal["small", "default", "large"] = "default"
     reduce_motion: Literal["auto", "on", "off"] = "auto"
     hero_enabled: bool = True
+    # Show the title's description under the banner heading.
+    hero_description: bool = True
     hero_interval_seconds: int = Field(default=7, ge=3, le=30)  # today: 7 s
     show_ratings: bool = True
     show_years: bool = True
@@ -58,7 +60,8 @@ class AutoSubtitles(_Group):
 
 class PlaybackSettings(_Group):
     autoplay_next: bool = True
-    # A video starts playing by itself when opened (today's behaviour).
+    # A video starts playing by itself when opened. (Before 9d the player always
+    # waited for a click; autoplay-next starts the next episode regardless.)
     autoplay_on_open: bool = True
     auto_skip_intro: bool = False
     skip_buttons: SkipButtons = SkipButtons()

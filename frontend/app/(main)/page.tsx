@@ -137,7 +137,7 @@ export default async function Home() {
         title="Continue Watching"
         items={toContinueWatchingItems(continueWatching.items)}
         error={null}
-        viewAllHref={continueWatching.hasMore ? "/continue-watching" : undefined}
+        viewAllHref={continueWatching.hasMore || continueWatching.items.length > max ? "/continue-watching" : undefined}
         max={max}
         layout={layout}
       />

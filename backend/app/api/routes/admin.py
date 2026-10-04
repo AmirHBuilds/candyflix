@@ -12,7 +12,8 @@ from app.api.deps import require_admin
 from app.core.db import get_db
 from app.models.user import User
 from app.schemas import admin as schemas
-from app.services import admin_service
+from app.schemas.site import Footer
+from app.services import admin_service, site_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -97,3 +98,13 @@ async def clear_tmdb_cache():
 @router.post("/system/clear-subtitle-cache", response_model=schemas.ClearedResult)
 async def clear_subtitle_cache():
     return schemas.ClearedResult(cleared=admin_service.clear_subtitle_cache())
+
+
+@router.get("/footer", response_model=Footer)
+async def read_footer(db: AsyncSession = Depends(get_db)):
+    return await site_service.get_footer(db)
+
+
+@router.put("/footer", response_model=Footer)
+async def update_footer(payload: Footer, db: AsyncSession = Depends(get_db)):
+    return await site_service.set_footer(db, payload)

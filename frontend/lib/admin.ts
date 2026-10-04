@@ -73,3 +73,7 @@ export const clearTmdbCache = () =>
   request<{ cleared: number }>("/system/clear-tmdb-cache", { method: "POST" }, "Couldn't clear the TMDB cache.");
 export const clearSubtitleCache = () =>
   request<{ cleared: number }>("/system/clear-subtitle-cache", { method: "POST" }, "Couldn't clear the subtitle cache.");
+
+export const getAdminFooter = () => request<import("@/lib/site").FooterContent>("/footer", {}, "Couldn't load the footer.");
+export const saveAdminFooter = (body: import("@/lib/site").FooterContent) =>
+  request<import("@/lib/site").FooterContent>("/footer", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the footer.");

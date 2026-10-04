@@ -8,12 +8,13 @@ import { getCurrentUser, onUserChanged, type UserPublic } from "@/lib/auth";
 import LogoutButton from "@/components/LogoutButton";
 import UserMenu from "@/components/UserMenu";
 import NavSearch from "@/components/NavSearch";
+import { boxNameFor, DEFAULT_BOX_NAME } from "@/lib/box-name";
 
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/movies", label: "Movies" },
   { href: "/series", label: "Series" },
-  { href: "/candy-box", label: "Candy Box" },
+  { href: "/candy-box", label: DEFAULT_BOX_NAME },
 ];
 
 // The search box is the same full-width row on every page. On the
@@ -65,6 +66,8 @@ export default function Nav() {
     return onUserChanged(load);
   }, []);
 
+  const links = LINKS.map((l) => (l.href === "/candy-box" ? { ...l, label: boxNameFor(user?.display_name) } : l));
+
   // Close the mobile menu and the player's search box whenever the
   // route changes (e.g. after picking a search result).
   useEffect(() => {
@@ -80,7 +83,7 @@ export default function Nav() {
         </Link>
 
         <nav className="hidden items-center gap-5 text-sm sm:flex">
-          {LINKS.map((link) => {
+          {links.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
@@ -120,7 +123,7 @@ export default function Nav() {
       {/* Mobile menu — one clear list, big tap targets, no nesting. */}
       {menuOpen && (
         <nav className="flex flex-col border-t border-white/10 sm:hidden">
-          {LINKS.map((link) => {
+          {links.map((link) => {
             const active = pathname === link.href;
             return (
               <Link

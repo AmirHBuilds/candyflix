@@ -96,7 +96,7 @@ export default function UsersTab({ currentUserId }: { currentUserId: string }) {
                     {user.is_disabled && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-xs text-red-300">Disabled</span>}
                   </p>
                   <p className="truncate text-xs text-white/40">
-                    @{user.username} · last sign-in {formatDate(user.last_login_at)} · {user.watchlist_count} in Candy Box · {user.watched_count} watched
+                    @{user.username} · last sign-in {formatDate(user.last_login_at)} · {user.watched_count} watched
                   </p>
                 </div>
               </div>

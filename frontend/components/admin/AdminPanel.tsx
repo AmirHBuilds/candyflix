@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import FooterTab from "@/components/admin/FooterTab";
 import OverviewTab from "@/components/admin/OverviewTab";
 import SystemTab from "@/components/admin/SystemTab";
 import UsersTab from "@/components/admin/UsersTab";
@@ -8,6 +9,7 @@ import UsersTab from "@/components/admin/UsersTab";
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "users", label: "Users" },
+  { id: "footer", label: "Footer" },
   { id: "system", label: "System" },
 ] as const;
 
@@ -39,6 +41,7 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
       <div role="tabpanel" id={`admin-panel-${tab}`} aria-labelledby={`admin-tab-${tab}`}>
         {tab === "overview" && <OverviewTab />}
         {tab === "users" && <UsersTab currentUserId={currentUserId} />}
+        {tab === "footer" && <FooterTab />}
         {tab === "system" && <SystemTab />}
       </div>
     </div>

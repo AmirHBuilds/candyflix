@@ -12,6 +12,16 @@ export type PlaybackSource = {
   url: string;
   subtitles: SubtitleTrack[];
   resume_position_seconds: number | null;
+  // This person's saved per-video tweaks (see /video-settings); the player
+  // applies them only when "Remember settings per video" is on.
+  video_settings?: VideoSettingsData;
+};
+
+export type VideoSettingsData = {
+  volume?: number;
+  muted?: boolean;
+  // A language code, or "off" for "captions off for this video".
+  subtitle_language?: string;
 };
 
 // Phase 5b — online subtitle discovery. OnlineSubtitleResult is what
@@ -170,6 +180,58 @@ export function recordEpisodeVisit(tmdbId: number, seasonNumber: number, episode
   });
 }
 
+/** The movie twin of recordEpisodeVisit: "this movie was opened". */
+export function recordMovieVisit(tmdbId: number): void {
+  void fetch(`${getApiBaseUrl()}/watch-progress/movie/visit`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tmdb_id: tmdbId }),
+    keepalive: true,
+  }).catch(() => {
+    // Best effort, like recordEpisodeVisit.
+  });
+}
+
+/** Settings -> Privacy & data -> Clear watch history. Returns how many entries were removed. */
+export async function clearWatchHistory(): Promise<number> {
+  const res = await fetch(`${getApiBaseUrl()}/watch-progress`, { method: "DELETE", credentials: "include" });
+  if (!res.ok) throw new Error("Couldn't clear your watch history.");
+  return (await res.json()).cleared as number;
+}
+
+/** Forgets every per-video setting (volume, subtitle choice, ...). */
+export async function clearVideoSettings(): Promise<number> {
+  const res = await fetch(`${getApiBaseUrl()}/video-settings/all`, { method: "DELETE", credentials: "include" });
+  if (!res.ok) throw new Error("Couldn't reset the per-video settings.");
+  return (await res.json()).cleared as number;
+}
+
+/**
+ * Saves a change to this video's own settings (null forgets a key).
+ * Fire-and-forget with keepalive: it's a nicety, and a failure just means
+ * this tweak isn't remembered.
+ */
+export function patchVideoSettings(
+  identity: { mediaType: "movie" | "tv"; tmdbId: number; seasonNumber?: number | null; episodeNumber?: number | null },
+  patch: { [K in keyof VideoSettingsData]?: VideoSettingsData[K] | null }
+): void {
+  const query = new URLSearchParams({ media_type: identity.mediaType, tmdb_id: String(identity.tmdbId) });
+  if (identity.mediaType === "tv" && identity.seasonNumber != null && identity.episodeNumber != null) {
+    query.set("season_number", String(identity.seasonNumber));
+    query.set("episode_number", String(identity.episodeNumber));
+  }
+  void fetch(`${getApiBaseUrl()}/video-settings?${query}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+    keepalive: true,
+  }).catch(() => {
+    /* not remembered this time */
+  });
+}
+
 export function saveWatchProgressBeacon(payload: WatchProgressPayload): void {
   if (typeof navigator === "undefined" || !navigator.sendBeacon) {
     // Fallback for browsers without sendBeacon support (very rare
@@ -289,10 +351,13 @@ export function navigateWithResumeHint(
     seasonNumber?: number | null;
     episodeNumber?: number | null;
   },
-  href: string
+  href: string,
+  // False when "Save watch progress" is off: the hint still tells the next
+  // page which episode you were just on, but no position is saved.
+  saveProgress = true
 ): void {
   const video = typeof document !== "undefined" ? document.querySelector("video") : null;
-  if (video && Number.isFinite(video.duration) && video.duration > 0) {
+  if (saveProgress && video && Number.isFinite(video.duration) && video.duration > 0) {
     void saveWatchProgress({
       tmdb_id: identity.tmdbId,
       media_type: identity.mediaType,

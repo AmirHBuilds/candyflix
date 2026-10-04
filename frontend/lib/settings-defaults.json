@@ -8,6 +8,7 @@
     "text_size": "default",
     "reduce_motion": "auto",
     "hero_enabled": true,
+    "hero_description": true,
     "hero_interval_seconds": 7,
     "show_ratings": true,
     "show_years": true

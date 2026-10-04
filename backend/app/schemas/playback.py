@@ -24,6 +24,10 @@ class PlaybackSource(BaseModel):
     url: str
     subtitles: list[SubtitleTrackOut]
     resume_position_seconds: float | None = None
+    # This person's saved per-video tweaks (volume, subtitle language, ...);
+    # {} when none. The player only applies them if "Remember settings per
+    # video" is on.
+    video_settings: dict = {}
 
 
 class WatchProgressIn(BaseModel):
@@ -39,6 +43,10 @@ class EpisodeVisitIn(BaseModel):
     tmdb_id: int
     season_number: int
     episode_number: int
+
+
+class MovieVisitIn(BaseModel):
+    tmdb_id: int
 
 
 class WatchProgressOut(BaseModel):

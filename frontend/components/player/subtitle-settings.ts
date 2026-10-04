@@ -93,7 +93,8 @@ export function loadSubtitleSettings(): SubtitleSettings {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SUBTITLE_SETTINGS;
     const parsed = JSON.parse(raw);
-    const merged = { ...DEFAULT_SUBTITLE_SETTINGS, ...parsed };
+    // Timing offset belongs to one video; never restored from the shared blob.
+    const merged = { ...DEFAULT_SUBTITLE_SETTINGS, ...parsed, offsetSeconds: 0 };
     // Not a range check (any finite number is valid) — just refuses
     // junk from hand-edited/corrupt storage so the overlay can't get NaN.
     if (typeof merged.offsetSeconds !== "number" || !Number.isFinite(merged.offsetSeconds)) {
@@ -108,7 +109,7 @@ export function loadSubtitleSettings(): SubtitleSettings {
 export function saveSubtitleSettings(settings: SubtitleSettings): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...settings, offsetSeconds: 0 }));
   } catch {
     // Storage full/unavailable — settings just won't persist this time.
   }

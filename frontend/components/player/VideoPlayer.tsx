@@ -4,7 +4,10 @@ import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } fr
 import { createPortal } from "react-dom";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
-import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint } from "@/lib/playback";
+import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings } from "@/lib/playback";
+import { consumeAutoplayFlag, flagAutoplayNext } from "@/lib/autoplay";
+import { resolveInitialSubtitle } from "@/components/player/subtitle-preference";
+import { useAutoNext } from "@/components/player/useAutoNext";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
@@ -141,8 +144,28 @@ export default function VideoPlayer({
   // save-triggering listeners until this flips — see its file header for why.
   const [progressRestored, setProgressRestored] = useState(false);
   const resumeAttemptedRef = useRef(false);
+  const autoplayHandledRef = useRef(false);
+  const volumeSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useWatchProgress(videoRef, identity, progressRestored);
+  // Settings -> Playback. The ref lets the long-lived video listeners below
+  // read the current values without being torn down and re-attached.
+  const playbackSettings = useSettings().settings.playback;
+  const playbackSettingsRef = useRef(playbackSettings);
+  playbackSettingsRef.current = playbackSettings;
+
+  useWatchProgress(videoRef, identity, progressRestored, playbackSettings.save_progress);
+
+  // Autoplay next episode: once a video has ENDED and there is a next
+  // episode, count down 5 s and go (Cancel / Play now on the card below).
+  // `ended` resets on play, so seeking back or replaying cancels it, and a
+  // fired sleep timer stops the chain.
+  const autoNextWanted =
+    !!nextEpisode && playbackSettings.autoplay_next && ended && !upNextDismissed && !sleepTimerFired;
+  const autoNextRemaining = useAutoNext(autoNextWanted, () => {
+    if (!nextEpisode) return;
+    flagAutoplayNext();
+    navigateWithResumeHint(identity, nextEpisode.href, playbackSettingsRef.current.save_progress);
+  });
 
   // Press-and-hold speed control (touch / mouse on the video surface, or
   // the Space bar). See hold-speed.ts for the behaviour.
@@ -151,7 +174,7 @@ export default function VideoPlayer({
   // One setting (Settings → Playback → Seek time) drives the arrow keys,
   // J / L and the double-tap zones. Read fresh each render, so a change
   // made in another tab/page applies without reloading the player.
-  const seekSeconds = useSettings().settings.playback.seek_seconds;
+  const seekSeconds = playbackSettings.seek_seconds;
 
   const videoUrl = `${getStaticOrigin()}${source.url}`;
 
@@ -251,7 +274,8 @@ export default function VideoPlayer({
         return;
       }
       const resume = source.resume_position_seconds;
-      if (resume && resume > 3 && resume < video.duration - 5) {
+      // "Save watch progress" off: nothing was saved, and nothing is resumed.
+      if (playbackSettingsRef.current.save_progress && resume && resume > 3 && resume < video.duration - 5) {
         log("attemptResume: seeking to saved position", resume);
         video.currentTime = resume;
       } else {
@@ -259,6 +283,17 @@ export default function VideoPlayer({
       }
       resumeAttemptedRef.current = true;
       setProgressRestored(true);
+      maybeAutoplay();
+    }
+
+    // "Start playing when a video opens", or the previous episode's
+    // autoplay handing over. A browser that refuses (autoplay policy) just
+    // leaves the video paused, as it was before.
+    function maybeAutoplay() {
+      if (autoplayHandledRef.current || !video) return;
+      autoplayHandledRef.current = true;
+      const handedOver = consumeAutoplayFlag();
+      if (handedOver || playbackSettingsRef.current.autoplay_on_open) void video.play().catch(() => {});
     }
 
     const resumeFallbackTimer = setTimeout(() => {
@@ -439,65 +474,80 @@ export default function VideoPlayer({
   // video element right back to the defaults.
   useEffect(() => {
     const persisted = loadPlayerPreferences();
+    const { remember_per_video, auto_subtitles } = playbackSettingsRef.current;
+    // This video's own saved tweaks win over the "last used" ones, but only
+    // while "Remember settings per video" is on.
+    const perVideo = remember_per_video ? source.video_settings ?? {} : {};
 
+    const volume = perVideo.volume ?? persisted.volume;
+    const muted = perVideo.muted ?? persisted.muted;
     const video = videoRef.current;
     if (video) {
-      video.volume = persisted.volume;
-      video.muted = persisted.muted;
+      video.volume = volume;
+      video.muted = muted;
     }
-    setVolume(persisted.volume);
-    setMuted(persisted.muted);
+    setVolume(volume);
+    setMuted(muted);
 
-    if (!persisted.subtitleLanguage) return;
+    const initial = resolveInitialSubtitle({
+      perVideo: perVideo.subtitle_language,
+      rememberPerVideo: remember_per_video,
+      auto: auto_subtitles,
+    });
+    if (initial.kind === "off") return;
 
-    const alreadyAvailable = source.subtitles.find((t) => t.language === persisted.subtitleLanguage);
+    function select(language: string) {
+      setSelectedLanguage(language);
+      selectedLanguageRef.current = language;
+      lastSubtitleLanguageRef.current = language;
+    }
+
+    const alreadyAvailable = initial.languages.find((l) => source.subtitles.some((t) => t.language === l));
     if (alreadyAvailable) {
-      setSelectedLanguage(persisted.subtitleLanguage);
-      selectedLanguageRef.current = persisted.subtitleLanguage;
-      lastSubtitleLanguageRef.current = persisted.subtitleLanguage;
+      select(alreadyAvailable);
       return;
     }
 
-    // The remembered language isn't one of this title's baked-in default
+    // None of the wanted languages is one of this title's baked-in default
     // tracks — source.subtitles only ever contains the auto-fetched
-    // English default (see subtitle_service.py), so anything else has to
-    // be fetched fresh for this specific title, exactly like manually
-    // picking it from the search box would. Failing silently here (no
-    // results, network hiccup, whatever) just means this title starts
-    // with captions off, same as someone with no preference at all —
-    // consistent with how every other subtitle fetch in this player
-    // degrades.
+    // English default (see subtitle_service.py) — so fetch it fresh for
+    // this specific title, exactly like picking it from the search box
+    // would, trying the preferred language first and then the fallback.
+    // Failing silently (no results, network hiccup) just means this title
+    // starts with captions off, consistent with how every other subtitle
+    // fetch in this player degrades.
     let cancelled = false;
-    searchOnlineSubtitles({
-      mediaType: identity.mediaType,
-      tmdbId: identity.tmdbId,
-      seasonNumber: identity.seasonNumber,
-      episodeNumber: identity.episodeNumber,
-      language: persisted.subtitleLanguage,
-    })
-      .then(({ results }) => {
-        if (cancelled || results.length === 0) return null;
-        const best = results[0]; // already sorted most-downloaded first
-        return downloadOnlineSubtitle({
-          mediaType: identity.mediaType,
-          tmdbId: identity.tmdbId,
-          seasonNumber: identity.seasonNumber,
-          episodeNumber: identity.episodeNumber,
-          fileId: best.file_id,
-          language: best.language,
-          label: best.label,
-        });
-      })
-      .then((track) => {
-        if (cancelled || !track) return;
-        setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
-        setSelectedLanguage(track.language);
-        selectedLanguageRef.current = track.language;
-        lastSubtitleLanguageRef.current = track.language;
-      })
-      .catch(() => {
-        // Silent — see comment above.
-      });
+    (async () => {
+      for (const language of initial.languages) {
+        try {
+          const { results } = await searchOnlineSubtitles({
+            mediaType: identity.mediaType,
+            tmdbId: identity.tmdbId,
+            seasonNumber: identity.seasonNumber,
+            episodeNumber: identity.episodeNumber,
+            language,
+          });
+          if (cancelled) return;
+          if (results.length === 0) continue;
+          const best = results[0]; // already sorted most-downloaded first
+          const track = await downloadOnlineSubtitle({
+            mediaType: identity.mediaType,
+            tmdbId: identity.tmdbId,
+            seasonNumber: identity.seasonNumber,
+            episodeNumber: identity.episodeNumber,
+            fileId: best.file_id,
+            language: best.language,
+            label: best.label,
+          });
+          if (cancelled) return;
+          setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
+          select(track.language);
+          return;
+        } catch {
+          // Try the next language.
+        }
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -698,6 +748,15 @@ export default function VideoPlayer({
     if (!video) return;
     video.muted = !video.muted;
     savePlayerPreferences({ ...loadPlayerPreferences(), muted: video.muted });
+    rememberForThisVideo({ muted: video.muted });
+  }
+
+  // "Remember settings per video": a change made here is kept for this
+  // movie/episode only (the global "last used" copy above is what NEW
+  // videos start from).
+  function rememberForThisVideo(patch: Parameters<typeof patchVideoSettings>[1]) {
+    if (!playbackSettingsRef.current.remember_per_video) return;
+    patchVideoSettings(identity, patch);
   }
 
   function changeVolume(v: number) {
@@ -706,6 +765,9 @@ export default function VideoPlayer({
     video.volume = v;
     video.muted = v === 0;
     savePlayerPreferences({ ...loadPlayerPreferences(), volume: v, muted: v === 0 });
+    // Dragging the slider fires this many times a second; save once it settles.
+    if (volumeSaveTimerRef.current) clearTimeout(volumeSaveTimerRef.current);
+    volumeSaveTimerRef.current = setTimeout(() => rememberForThisVideo({ volume: v, muted: v === 0 }), 600);
   }
 
   function changeRate(rate: number) {
@@ -840,7 +902,7 @@ export default function VideoPlayer({
   // saved preference with "off" the moment a new video loads.
   function selectSubtitleLanguage(language: string | null) {
     setSelectedLanguage(language);
-    savePlayerPreferences({ ...loadPlayerPreferences(), subtitleLanguage: language });
+    rememberForThisVideo({ subtitle_language: language ?? "off" });
   }
 
   function toggleCaptions() {
@@ -865,7 +927,7 @@ export default function VideoPlayer({
   // same correctness without that cost.
   function handleEpisodeNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
     e.preventDefault();
-    navigateWithResumeHint(identity, href);
+    navigateWithResumeHint(identity, href, playbackSettingsRef.current.save_progress);
   }
 
   // Forces a completely fresh fetch of the video resource, staying on the
@@ -952,10 +1014,10 @@ export default function VideoPlayer({
         setSettingsMenu((v) => (v ? null : "root"));
         break;
       case "n":
-        if (e.shiftKey && nextEpisode) navigateWithResumeHint(identity, nextEpisode.href);
+        if (e.shiftKey && nextEpisode) navigateWithResumeHint(identity, nextEpisode.href, playbackSettingsRef.current.save_progress);
         break;
       case "p":
-        if (e.shiftKey && prevEpisode) navigateWithResumeHint(identity, prevEpisode.href);
+        if (e.shiftKey && prevEpisode) navigateWithResumeHint(identity, prevEpisode.href, playbackSettingsRef.current.save_progress);
         break;
       default:
         break;
@@ -1117,22 +1179,25 @@ export default function VideoPlayer({
       {showUpNext && nextEpisode && (
         <div className="absolute bottom-24 right-6 z-20 flex items-center gap-3 rounded-xl border border-white/10 bg-canvas/95 p-3 shadow-2xl">
           <div className="text-sm">
-            <p className="text-white/50">Up next</p>
+            <p className="text-white/50">{autoNextWanted ? `Up next · playing in ${autoNextRemaining}s` : "Up next"}</p>
             <p className="text-white/90">{nextEpisode.label}</p>
           </div>
           <a
             href={nextEpisode.href}
-            onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
-            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent/90"
+            onClick={(e) => {
+              if (autoNextWanted) flagAutoplayNext();
+              handleEpisodeNavClick(e, nextEpisode.href);
+            }}
+            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent-hover"
           >
-            Play
+            {autoNextWanted ? "Play now" : "Play"}
           </a>
           <button
-            aria-label="Dismiss"
+            aria-label={autoNextWanted ? "Cancel autoplay" : "Dismiss"}
             onClick={() => setUpNextDismissed(true)}
-            className="text-white/40 hover:text-white/70"
+            className={autoNextWanted ? "text-sm text-white/60 hover:text-white" : "text-white/40 hover:text-white/70"}
           >
-            ✕
+            {autoNextWanted ? "Cancel" : "✕"}
           </button>
         </div>
       )}

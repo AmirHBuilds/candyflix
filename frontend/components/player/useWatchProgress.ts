@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { saveWatchProgress, saveWatchProgressBeacon, recordEpisodeVisit, type WatchProgressPayload } from "@/lib/playback";
+import { saveWatchProgress, saveWatchProgressBeacon, recordEpisodeVisit, recordMovieVisit, type WatchProgressPayload } from "@/lib/playback";
 
 export type WatchIdentity = {
   tmdbId: number;
@@ -41,7 +41,11 @@ const AUTOSAVE_INTERVAL_MS = 10_000;
 export function useWatchProgress(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   identity: WatchIdentity,
-  restored: boolean
+  restored: boolean,
+  // Settings -> Playback -> Save watch progress. Off stops every position
+  // save below; the "this was opened" visit records still happen, so
+  // Continue Watching and the last-watched episode keep working.
+  saveProgress = true
 ) {
   const identityRef = useRef(identity);
   identityRef.current = identity;
@@ -50,7 +54,11 @@ export function useWatchProgress(
   // docstring in lib/playback.ts for why this can't wait for the video
   // to actually start playing.
   useEffect(() => {
-    if (identity.mediaType !== "tv" || identity.seasonNumber == null || identity.episodeNumber == null) return;
+    if (identity.mediaType === "movie") {
+      recordMovieVisit(identity.tmdbId);
+      return;
+    }
+    if (identity.seasonNumber == null || identity.episodeNumber == null) return;
     recordEpisodeVisit(identity.tmdbId, identity.seasonNumber, identity.episodeNumber);
     // Deliberately keyed on the episode identity, not identity as a
     // whole reference — a new episode should record a new visit; a
@@ -59,7 +67,7 @@ export function useWatchProgress(
   }, [identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
 
   useEffect(() => {
-    if (!restored) return;
+    if (!restored || !saveProgress) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -138,5 +146,5 @@ export function useWatchProgress(
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handlePageHide);
     };
-  }, [videoRef, restored, identity.tmdbId, identity.mediaType, identity.seasonNumber, identity.episodeNumber]);
+  }, [videoRef, restored, saveProgress, identity.tmdbId, identity.mediaType, identity.seasonNumber, identity.episodeNumber]);
 }

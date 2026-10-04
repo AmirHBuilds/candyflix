@@ -4,20 +4,22 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 const mockPathname = { value: "/settings/appearance" };
 const redirect = vi.fn();
+vi.mock("@/lib/session", () => ({ getServerCurrentUser: vi.fn() }));
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname.value,
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   redirect: (to: string) => redirect(to),
 }));
 
-import SettingsNav, { SETTINGS_SECTIONS } from "@/components/settings/SettingsNav";
+import SettingsBar from "@/components/settings/SettingsBar";
+import { SETTINGS_SECTIONS } from "@/lib/settings-sections";
+import { getServerCurrentUser } from "@/lib/session";
 import PlaybackSettingsForm from "@/components/settings/PlaybackSettingsForm";
 import AboutSection from "@/components/settings/AboutSection";
 import { SettingsProvider } from "@/components/SettingsProvider";
-import SettingsIndex from "@/app/(main)/settings/page";
-import PrivacySettings from "@/app/(main)/settings/privacy/page";
-import SubtitleSettings from "@/app/(main)/settings/subtitles/page";
-import PlaybackSettings from "@/app/(main)/settings/playback/page";
+import SettingsPage from "@/app/(main)/settings/page";
+import LegacyAppearance from "@/app/(main)/settings/appearance/page";
+import LegacyPrivacy from "@/app/(main)/settings/privacy/page";
 import * as lib from "@/lib/settings";
 
 vi.mock("@/lib/settings", async () => {
@@ -32,44 +34,53 @@ beforeEach(() => {
   mockPathname.value = "/settings/appearance";
 });
 
-describe("SettingsNav", () => {
-  it("lists every section as a link", () => {
-    render(<SettingsNav />);
-    expect(screen.getAllByRole("link").map((a) => a.textContent)).toEqual(SETTINGS_SECTIONS.map((s) => s.label));
-    expect(SETTINGS_SECTIONS.map((s) => s.label)).toEqual([
-      "Appearance",
-      "Playback",
-      "Subtitles",
-      "Account",
-      "Privacy & data",
-      "About",
-    ]);
+describe("SettingsBar", () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn();
   });
 
-  it("marks only the current section as the current page", () => {
-    mockPathname.value = "/settings/playback";
-    render(<SettingsNav />);
-    expect(screen.getByRole("link", { name: "Playback" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Appearance" })).not.toHaveAttribute("aria-current");
+  it("lists every section as a button, in order", () => {
+    render(<SettingsBar />);
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(SETTINGS_SECTIONS.map((s) => s.label));
+    expect(SETTINGS_SECTIONS.map((s) => s.label)).toEqual(["Appearance", "Playback", "Subtitles", "Account", "Privacy & data", "About"]);
   });
-});
 
-describe("settings index", () => {
-  it("opens on Appearance", () => {
-    SettingsIndex();
-    expect(redirect).toHaveBeenCalledWith("/settings/appearance");
+  it("scrolls to the section and marks only it as current", () => {
+    document.body.insertAdjacentHTML("beforeend", SETTINGS_SECTIONS.map((x) => `<section id="${x.id}"></section>`).join(""));
+    render(<SettingsBar />);
+    fireEvent.click(screen.getByRole("button", { name: "Playback" }));
+    expect(document.getElementById("playback")!.scrollIntoView).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Playback" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("button", { name: "Appearance" })).not.toHaveAttribute("aria-current");
+    SETTINGS_SECTIONS.forEach((x) => document.getElementById(x.id)?.remove());
   });
 });
 
-describe("placeholder sections say what's coming, and nothing pretends to work", () => {
-  it.each([
-    ["Subtitles", SubtitleSettings],
-    ["Privacy & data", PrivacySettings],
-  ])("%s", (title, Page) => {
-    render(<Page />);
-    expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
-    expect(screen.getByText(/coming in an upcoming update/i)).toBeInTheDocument();
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+describe("the one long settings page", () => {
+  const user = { id: "1", username: "candy", display_name: "Candy", created_at: "x" };
+
+  it("renders every section as its own block, in order", async () => {
+    vi.mocked(getServerCurrentUser).mockResolvedValue(user);
+    render(
+      <SettingsProvider initial={DEFAULT_SETTINGS}>{await SettingsPage()}</SettingsProvider>
+    );
+    const headings = SETTINGS_SECTIONS.map((x) => document.getElementById(`${x.id}-heading`)?.textContent);
+    expect(headings).toEqual(SETTINGS_SECTIONS.map((x) => x.label));
+    expect(screen.getByRole("radiogroup", { name: "Seek time" })).toBeInTheDocument();
+    expect(screen.getAllByText(/coming in an upcoming update/i)).toHaveLength(2);
+  });
+
+  it("sends a signed-out visitor to login", async () => {
+    vi.mocked(getServerCurrentUser).mockResolvedValue(null);
+    await SettingsPage();
+    expect(redirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("old per-section addresses jump to the section", () => {
+    LegacyAppearance();
+    expect(redirect).toHaveBeenCalledWith("/settings#appearance");
+    LegacyPrivacy();
+    expect(redirect).toHaveBeenCalledWith("/settings#privacy");
   });
 });
 
@@ -103,16 +114,6 @@ describe("Playback → Seek time (the first live setting)", () => {
 
     expect(screen.getByRole("radio", { name: "20s" })).toHaveAttribute("aria-checked", "true");
     await waitFor(() => expect(lib.patchSettings).toHaveBeenCalledWith({ playback: { seek_seconds: 20 } }));
-  });
-
-  it("the Playback page also lists what's still to come", () => {
-    render(
-      <SettingsProvider initial={DEFAULT_SETTINGS}>
-        <PlaybackSettings />
-      </SettingsProvider>
-    );
-    expect(screen.getByRole("radiogroup", { name: "Seek time" })).toBeInTheDocument();
-    expect(screen.getByText(/Autoplay the next episode/)).toBeInTheDocument();
   });
 });
 

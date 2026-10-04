@@ -130,6 +130,14 @@ describe("HeroCarousel settings", () => {
     expect(container.querySelector("section")).toBeNull();
   });
 
+  it("hides the description when turned off, shows it otherwise", () => {
+    const off = render(wrap({ hero_description: false }, <HeroCarousel items={[item(1)]} />));
+    expect(off.container.textContent).not.toContain("First sentence is here");
+    off.unmount();
+    const on = render(wrap({ hero_description: true }, <HeroCarousel items={[item(1)]} />));
+    expect(on.container.textContent).toContain("First sentence is here");
+  });
+
   it("rotates at the chosen interval", () => {
     vi.useFakeTimers();
     try {

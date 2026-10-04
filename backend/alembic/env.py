@@ -18,6 +18,8 @@ from app.models import user  # noqa
 from app.models import watch_progress  # noqa
 from app.models import watchlist_item  # noqa
 from app.models import user_settings  # noqa
+from app.models import video_settings  # noqa
+from app.models import site_setting  # noqa
 
 config = context.config
 

@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { getServerCurrentUser } from "@/lib/session";
 import Nav from "@/components/Nav";
+import { BoxNameProvider } from "@/components/BoxNameProvider";
+import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import { getServerSettings } from "@/lib/settings-server";
 
@@ -17,8 +20,14 @@ export default async function MainLayout({
 
   return (
     <SettingsProvider initial={settings}>
-      <Nav />
-      <main className="px-6 py-8 sm:px-10">{children}</main>
+      <BoxNameProvider displayName={user.display_name}>
+      <ScrollToTop />
+      <div className="flex min-h-dvh flex-col">
+        <Nav />
+        <main className="flex-1 px-6 py-8 sm:px-10">{children}</main>
+        <Footer />
+      </div>
+      </BoxNameProvider>
     </SettingsProvider>
   );
 }

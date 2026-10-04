@@ -42,7 +42,7 @@ describe("DetailActions — failed Candy Box toggles tell the person", () => {
     await waitFor(() => expect(button).toBeEnabled());
     fireEvent.click(button);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't add it to your Candy Box. Please try again.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't add it to Candy Box. Please try again.");
     expect(screen.getByRole("button", { name: "Add to Candy Box" })).toBeEnabled();
   });
 
@@ -55,7 +55,7 @@ describe("DetailActions — failed Candy Box toggles tell the person", () => {
     await waitFor(() => expect(button).toBeEnabled());
     fireEvent.click(button);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't remove it from your Candy Box. Please try again.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't remove it from Candy Box. Please try again.");
     expect(screen.getByRole("button", { name: /In Candy Box/ })).toBeInTheDocument();
   });
 

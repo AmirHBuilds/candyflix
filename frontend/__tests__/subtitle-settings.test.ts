@@ -42,11 +42,11 @@ describe("subtitle settings persistence", () => {
 });
 
 describe("subtitle offset — no limits", () => {
-  it("persists and reloads an offset far outside the old ±10s slider range", () => {
-    saveSubtitleSettings({ ...DEFAULT_SUBTITLE_SETTINGS, offsetSeconds: 137.4 });
-    expect(loadSubtitleSettings().offsetSeconds).toBe(137.4);
-    saveSubtitleSettings({ ...DEFAULT_SUBTITLE_SETTINGS, offsetSeconds: -3600 });
-    expect(loadSubtitleSettings().offsetSeconds).toBe(-3600);
+  it("never shares a timing offset between videos (not saved to the global blob)", () => {
+    saveSubtitleSettings({ ...DEFAULT_SUBTITLE_SETTINGS, offsetSeconds: 137.4, fontSize: 30 });
+    const loaded = loadSubtitleSettings();
+    expect(loaded.offsetSeconds).toBe(0);
+    expect(loaded.fontSize).toBe(30);
   });
 
   it("steps past the old ±10s bounds without clamping", () => {

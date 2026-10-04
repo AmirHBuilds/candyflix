@@ -50,7 +50,18 @@ export default function SeasonBrowser({
   recentVisit?: { seasonNumber: number; episodeNumber: number } | null;
 }) {
   const { episode_view: episodeView, description_length: descriptionLength } = useSettings().settings.appearance;
-  const [selected, setSelected] = useState<number | null>(initialSeason ?? seasons[0]?.season_number ?? null);
+  // Detail page: open on the season of the episode you were last on
+  // (the just-visited hint first, then the resume point) rather than
+  // always Season 1. The watch page passes initialSeason explicitly.
+  const startSeason = (() => {
+    if (initialSeason != null) return initialSeason;
+    const has = (n: number | null | undefined): n is number =>
+      n != null && seasons.some((x) => x.season_number === n);
+    if (has(recentVisit?.seasonNumber)) return recentVisit!.seasonNumber;
+    if (has(resumeEpisode?.season_number)) return resumeEpisode!.season_number as number;
+    return seasons[0]?.season_number ?? null;
+  })();
+  const [selected, setSelected] = useState<number | null>(startSeason);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -262,7 +273,7 @@ export default function SeasonBrowser({
                       handleEpisodeClick(e, `/watch/tv/${tvId}/${selected}/${episode.episode_number}`)
                     }
                     title={episode.overview || episode.name}
-                    className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border px-3 py-2.5 transition-colors ${
+                    className={`group relative flex h-14 items-center gap-3 overflow-hidden rounded-xl border px-3 transition-colors ${
                       isHighlighted
                         ? "border-accent/40 bg-white/10"
                         : "border-white/10 bg-white/[0.04] hover:bg-white/10"
@@ -271,12 +282,12 @@ export default function SeasonBrowser({
                     <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 px-1 text-sm font-semibold tabular-nums text-white/80">
                       {episode.episode_number}
                     </span>
-                    <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm ${nameClass}`}>{episode.name}</p>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <p className={`min-w-0 flex-1 truncate text-sm ${nameClass}`}>{episode.name}</p>
                       {(isNowPlaying || (isResumePoint && isPlayerContext) || isSecondary) && (
-                        <p className="truncate text-xs text-white/50">
+                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/60">
                           {isNowPlaying ? "Now playing" : isSecondary ? "In progress" : "Last watched"}
-                        </p>
+                        </span>
                       )}
                     </div>
                     {isSecondary && secondary && (

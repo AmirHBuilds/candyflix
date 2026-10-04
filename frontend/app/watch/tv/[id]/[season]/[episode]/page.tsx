@@ -6,6 +6,7 @@ import SeasonBrowser from "@/components/SeasonBrowser";
 import BackToDetailsLink from "@/components/player/BackToDetailsLink";
 import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
 import ErrorState from "@/components/ErrorState";
+import { findAdjacentEpisodes } from "@/lib/next-episode";
 
 export default async function WatchEpisodePage({
   params,
@@ -62,43 +63,22 @@ export default async function WatchEpisodePage({
   );
 
   const episodes = seasonDetail.episodes;
-  const currentIndex = episodes.findIndex((e) => e.episode_number === episodeNum);
-  const currentEpisode = currentIndex >= 0 ? episodes[currentIndex] : null;
+  const currentEpisode = episodes.find((e) => e.episode_number === episodeNum) ?? null;
 
-  let prevEp = currentIndex > 0 ? episodes[currentIndex - 1] : null;
-  let prevSeasonNum = seasonNum;
-  let nextEp = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
-  let nextSeasonNum = seasonNum;
-
-  // At a season boundary (first/last episode), roll over into the
-  // adjacent season instead of just stopping — an extra fetch, but only
-  // for the two episodes where it's actually needed.
-  if (!prevEp) {
-    const priorSeason = show.seasons
-      .filter((s) => s.season_number > 0 && s.season_number < seasonNum && s.episode_count > 0)
-      .sort((a, b) => b.season_number - a.season_number)[0];
-    if (priorSeason) {
-      const priorSeasonDetail = await getSeason(id, priorSeason.season_number);
-      const lastEpisode = priorSeasonDetail.episodes[priorSeasonDetail.episodes.length - 1];
-      if (lastEpisode) {
-        prevEp = lastEpisode;
-        prevSeasonNum = priorSeason.season_number;
-      }
-    }
-  }
-  if (!nextEp) {
-    const followingSeason = show.seasons
-      .filter((s) => s.season_number > seasonNum && s.episode_count > 0)
-      .sort((a, b) => a.season_number - b.season_number)[0];
-    if (followingSeason) {
-      const followingSeasonDetail = await getSeason(id, followingSeason.season_number);
-      const firstEpisode = followingSeasonDetail.episodes[0];
-      if (firstEpisode) {
-        nextEp = firstEpisode;
-        nextSeasonNum = followingSeason.season_number;
-      }
-    }
-  }
+  // The neighbouring episodes, rolling over season boundaries (see
+  // lib/next-episode.ts for the rules: no specials, nothing unaired, and
+  // the last episode of the series has no "next").
+  const { prev, next } = await findAdjacentEpisodes({
+    seasons: show.seasons,
+    seasonNumber: seasonNum,
+    episodes,
+    episodeNumber: episodeNum,
+    loadSeason: (n) => getSeason(id, n),
+  }).catch(() => ({ prev: null, next: null }));
+  const prevEp = prev?.episode ?? null;
+  const prevSeasonNum = prev?.season ?? seasonNum;
+  const nextEp = next?.episode ?? null;
+  const nextSeasonNum = next?.season ?? seasonNum;
 
   return (
     <div>

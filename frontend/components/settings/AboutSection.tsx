@@ -24,7 +24,7 @@ export default function AboutSection() {
       <SettingsCard title="Settings">
         <SettingRow
           label="Reset all settings"
-          description="Puts every setting on this account back to its default. Your watch history and Candy Box are not touched."
+          description="Puts every setting on this account back to its default. Your watch history and saved list are not touched."
         >
           {confirming ? (
             <div className="flex gap-2">

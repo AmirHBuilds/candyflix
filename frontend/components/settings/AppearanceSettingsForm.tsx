@@ -77,6 +77,11 @@ export default function AppearanceSettingsForm() {
           <Toggle id="hero-enabled" label="Banner" checked={a.hero_enabled} onChange={(hero_enabled) => set({ hero_enabled })} />
         </SettingRow>
         {a.hero_enabled && (
+          <SettingRow label="Banner description" htmlFor="hero-description" description="Show the short description under the banner title.">
+            <Toggle id="hero-description" label="Banner description" checked={a.hero_description} onChange={(hero_description) => set({ hero_description })} />
+          </SettingRow>
+        )}
+        {a.hero_enabled && (
           <SettingRow label="Banner rotation" description="How long each title stays before the next one.">
             <SegmentedControl label="Banner rotation" value={a.hero_interval_seconds} options={HERO_SECONDS} onChange={(hero_interval_seconds) => set({ hero_interval_seconds })} />
           </SettingRow>

@@ -5,6 +5,7 @@ import { addToWatchlist, getWatchlistStatus, removeFromWatchlist } from "@/lib/w
 import { getLatestTVWatchProgress, type WatchProgress } from "@/lib/playback";
 import { showToast } from "@/lib/toast";
 import type { MediaType } from "@/lib/media";
+import { useBoxName } from "@/components/BoxNameProvider";
 
 // Sizing tiers, driven by the width of the space the buttons actually
 // get (a container query, not the viewport) — the TV detail page's
@@ -68,6 +69,7 @@ export default function DetailActions({
   // which would otherwise let a click race the actual answer.
   const [inCandyBox, setInCandyBox] = useState<boolean | null>(null);
   const [pending, setPending] = useState(false);
+  const boxName = useBoxName();
 
   useEffect(() => {
     let cancelled = false;
@@ -99,8 +101,8 @@ export default function DetailActions({
       // but say so — otherwise a tap that did nothing looks broken.
       showToast(
         inCandyBox
-          ? "Couldn't remove it from your Candy Box. Please try again."
-          : "Couldn't add it to your Candy Box. Please try again."
+          ? `Couldn't remove it from ${boxName}. Please try again.`
+          : `Couldn't add it to ${boxName}. Please try again.`
       );
     } finally {
       setPending(false);
@@ -158,7 +160,7 @@ export default function DetailActions({
               : "border-white/15 text-white/80 hover:border-white/30 hover:text-white disabled:opacity-50"
           }`}
         >
-          {inCandyBox ? "✓ In Candy Box" : "Add to Candy Box"}
+          {inCandyBox ? `✓ In ${boxName}` : `Add to ${boxName}`}
         </button>
       </div>
     </div>
