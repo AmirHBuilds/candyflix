@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } fr
 import { createPortal } from "react-dom";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
-import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings, clearSubtitleOverride } from "@/lib/playback";
+import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings, getSegments } from "@/lib/playback";
 import { consumeAutoplayFlag, flagAutoplayNext } from "@/lib/autoplay";
 import { resolveInitialSubtitle } from "@/components/player/subtitle-preference";
 import { useAutoNext } from "@/components/player/useAutoNext";
@@ -12,11 +12,11 @@ import { useWatchProgress, type WatchIdentity } from "@/components/player/useWat
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
   fromGlobalStyle,
-  overridePatch,
-  resolveSubtitleSettings,
+  stylePatch,
   type SubtitleSettings,
 } from "@/components/player/subtitle-settings";
 import { loadPlayerPreferences, savePlayerPreferences } from "@/components/player/player-preferences";
+import { activeSkip, autoSkipTarget, SKIP_LABELS, type SegmentsData } from "@/components/player/skip-segments";
 import SubtitleOverlay from "@/components/player/SubtitleOverlay";
 import SubtitleSettingsPanel from "@/components/player/SubtitleSettingsPanel";
 import PlayerTooltip from "@/components/player/PlayerTooltip";
@@ -133,10 +133,14 @@ export default function VideoPlayer({
   const selectedLanguageRef = useRef<string | null>(null);
   const lastSubtitleLanguageRef = useRef<string | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
-  const globalSubtitles = useSettings().settings.subtitles;
-  const globalSubtitlesRef = useRef(globalSubtitles);
-  globalSubtitlesRef.current = globalSubtitles;
-  const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(() => fromGlobalStyle(globalSubtitles));
+  const { settings: allSettings, update: updateSettings } = useSettings();
+  const globalSubtitles = allSettings.subtitles;
+  // Timing belongs to this video; the look comes from the site-wide settings.
+  const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const subtitleSettings = useMemo<SubtitleSettings>(
+    () => ({ ...fromGlobalStyle(globalSubtitles), offsetSeconds: subtitleOffset }),
+    [globalSubtitles, subtitleOffset]
+  );
 
   const [upNextDismissed, setUpNextDismissed] = useState(false);
   const [ended, setEnded] = useState(false);
@@ -207,27 +211,22 @@ export default function VideoPlayer({
     };
   }, [selectedLanguage, allTracks]);
 
-  // A change made in the player belongs to THIS video only (when "Remember
-  // settings per video" is on; otherwise it just lasts until you leave).
-  // The shared defaults are only edited in Settings → Subtitles.
+  // Look changes (colour, size, font…) are saved to the site-wide settings, so
+  // they apply to every video. Timing is saved for this video only (when
+  // "Remember settings per video" is on; otherwise it lasts until you leave).
   const subtitleSettingsRef = useRef(subtitleSettings);
   subtitleSettingsRef.current = subtitleSettings;
-  const [hasSubtitleOverrides, setHasSubtitleOverrides] = useState(false);
 
   function updateSubtitleSettings(next: SubtitleSettings) {
-    const patch = overridePatch(subtitleSettingsRef.current, next);
-    setSubtitleSettings(next);
-    if (Object.keys(patch).length === 0) return;
-    if (playbackSettingsRef.current.remember_per_video) {
-      patchVideoSettings(identity, patch as Parameters<typeof patchVideoSettings>[1]);
-      setHasSubtitleOverrides(true);
+    const prev = subtitleSettingsRef.current;
+    const style = stylePatch(prev, next);
+    if (Object.keys(style).length > 0) void updateSettings({ subtitles: style });
+    if (next.offsetSeconds !== prev.offsetSeconds) {
+      setSubtitleOffset(next.offsetSeconds);
+      if (playbackSettingsRef.current.remember_per_video) {
+        patchVideoSettings(identity, { subtitle_offset: next.offsetSeconds });
+      }
     }
-  }
-
-  function resetSubtitlesToDefaults() {
-    setSubtitleSettings(fromGlobalStyle(globalSubtitlesRef.current));
-    setHasSubtitleOverrides(false);
-    clearSubtitleOverride(identity).catch(() => {});
   }
 
   // --- Video element event wiring ---
@@ -501,8 +500,7 @@ export default function VideoPlayer({
     // while "Remember settings per video" is on.
     const perVideo = remember_per_video ? source.video_settings ?? {} : {};
 
-    setSubtitleSettings(resolveSubtitleSettings(globalSubtitlesRef.current, perVideo as Record<string, unknown>));
-    setHasSubtitleOverrides(Object.keys(perVideo).some((k) => k.startsWith("subtitle_") && k !== "subtitle_language"));
+    setSubtitleOffset(typeof perVideo.subtitle_offset === "number" && Number.isFinite(perVideo.subtitle_offset) ? perVideo.subtitle_offset : 0);
 
     const volume = perVideo.volume ?? persisted.volume;
     const muted = perVideo.muted ?? persisted.muted;
@@ -726,6 +724,45 @@ export default function VideoPlayer({
     if (!video) return;
     video.currentTime = Math.min(Math.max(seconds, 0), video.duration || Infinity);
   }
+
+  // --- Skip intro / recap / credits (Phase 9f) ---
+  // Looked up once the video's length is known (it helps match timestamps
+  // to this exact file). Any failure just means "no skip buttons".
+  const [segments, setSegments] = useState<SegmentsData | null>(null);
+  const wantSkipData = playbackSettings.auto_skip_intro || Object.values(playbackSettings.skip_buttons).some(Boolean);
+  const hasLength = Number.isFinite(duration) && duration > 0;
+  useEffect(() => {
+    if (!wantSkipData || !hasLength) return;
+    let cancelled = false;
+    getSegments(identity, duration)
+      .then((data) => !cancelled && setSegments(data))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // `duration` is deliberately read once when it first becomes known.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantSkipData, hasLength, identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
+
+  const skipTarget = activeSkip(segments, currentTime, playbackSettings.skip_buttons);
+
+  // Auto-skip: the intro only, once per video — rewinding into it later is left alone.
+  const autoSkippedRef = useRef(false);
+  useEffect(() => {
+    const target = autoSkipTarget(segments, currentTime, playbackSettings.auto_skip_intro, autoSkippedRef.current);
+    if (target === null) return;
+    autoSkippedRef.current = true;
+    seekTo(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segments, currentTime, playbackSettings.auto_skip_intro]);
+
+  // When a skippable part begins, bring the controls up so the button is seen
+  // (it fades away with them, like the rest of the controls).
+  const skipKind = skipTarget?.kind ?? null;
+  useEffect(() => {
+    if (skipKind) handleActivity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipKind]);
 
   // Converts a pointer's clientX into a video-time seek target, based on
   // the scrub track's current on-screen bounds.
@@ -1201,6 +1238,22 @@ export default function VideoPlayer({
         </div>
       )}
 
+      {skipTarget && !showUpNext && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            seekTo(skipTarget.end);
+          }}
+          aria-label={SKIP_LABELS[skipTarget.kind]}
+          className={`absolute bottom-24 right-6 z-20 rounded-xl border border-white/30 bg-canvas/90 px-5 py-2.5 text-sm font-semibold text-white shadow-2xl backdrop-blur transition-opacity duration-200 hover:bg-white hover:text-black ${
+            showControls ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+        >
+          {SKIP_LABELS[skipTarget.kind]} ▸
+        </button>
+      )}
+
       {showUpNext && nextEpisode && (
         <div className="absolute bottom-24 right-6 z-20 flex items-center gap-3 rounded-xl border border-white/10 bg-canvas/95 p-3 shadow-2xl">
           <div className="text-sm">
@@ -1551,8 +1604,6 @@ export default function VideoPlayer({
                           onSelectLanguage={selectSubtitleLanguage}
                           settings={subtitleSettings}
                           onChange={updateSubtitleSettings}
-                          hasOverrides={hasSubtitleOverrides}
-                          onResetToDefaults={resetSubtitlesToDefaults}
                           identity={identity}
                           onTrackAdded={(track) => {
                             setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);

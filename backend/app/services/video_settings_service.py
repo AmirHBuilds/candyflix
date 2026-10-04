@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.video_settings import VideoSettings
 from app.models.watch_progress import NO_EPISODE, NO_SEASON
-from app.schemas.video_settings import SUBTITLE_KEYS, VideoSettingsPatch
+from app.schemas.video_settings import LIVE_SUBTITLE_KEYS, SUBTITLE_KEYS, VideoSettingsPatch
 
 
 def _identity(user_id, tmdb_id, media_type, season_number, episode_number):
@@ -77,6 +77,11 @@ def _is_subtitle_key(key: str) -> bool:
     return key in SUBTITLE_KEYS
 
 
+async def drop_legacy_style_keys(db: AsyncSession, user_id: uuid.UUID) -> int:
+    """Not used by the app flow; kept for a one-off cleanup if ever needed."""
+    return await clear_keys(db, user_id, set(SUBTITLE_KEYS) - set(LIVE_SUBTITLE_KEYS))
+
+
 async def clear_keys(db: AsyncSession, user_id: uuid.UUID, keys: set[str]) -> int:
     """Removes the given keys from every one of this person's videos (rows left
     empty are deleted). Used when a global subtitle default changes, so the
@@ -106,7 +111,7 @@ async def list_subtitle_overrides(db: AsyncSession, user_id: uuid.UUID) -> list[
     ).scalars().all()
     out = []
     for row in rows:
-        sub = {k: v for k, v in row.data.items() if _is_subtitle_key(k)}
+        sub = {k: v for k, v in row.data.items() if k in LIVE_SUBTITLE_KEYS}
         if sub:
             out.append((row, sub))
     return out

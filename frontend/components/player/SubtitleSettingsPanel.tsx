@@ -188,8 +188,6 @@ export default function SubtitleSettingsPanel({
   onChange,
   identity,
   onTrackAdded,
-  hasOverrides = false,
-  onResetToDefaults,
 }: {
   tracks: SubtitleTrack[];
   selectedLanguage: string | null;
@@ -198,9 +196,6 @@ export default function SubtitleSettingsPanel({
   onChange: (settings: SubtitleSettings) => void;
   identity: WatchIdentity;
   onTrackAdded: (track: SubtitleTrack) => void;
-  /** This video has its own look/timing saved. */
-  hasOverrides?: boolean;
-  onResetToDefaults?: () => void;
 }) {
   const availableLanguages = useAvailableLanguages(identity);
   const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
@@ -604,18 +599,8 @@ export default function SubtitleSettingsPanel({
           <div className="h-px bg-white/10" />
 
           <p className="text-[11px] leading-snug text-white/40">
-            Changes here apply to this video only. Your defaults for every video are in Settings → Subtitles.
+            The look applies to every video (also in Settings → Subtitles). Language and timing are for this video only.
           </p>
-          {onResetToDefaults && (
-            <button
-              type="button"
-              onClick={onResetToDefaults}
-              disabled={!hasOverrides}
-              className="rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white/80 transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Reset this video to my defaults
-            </button>
-          )}
         </div>
       )}
     </div>

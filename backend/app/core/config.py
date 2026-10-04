@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     opensubtitles_password: str = ""
     subtitle_cache_dir: str = "subtitle-cache"
 
+    # Intro / recap / credits timestamps (Phase 9f). SkipDB is asked first,
+    # IntroDB fills in whatever it lacks. Both are open read APIs (no key).
+    skipdb_base_url: str = "https://api.skipdb.tv"
+    introdb_base_url: str = "https://api.introdb.app"
+
     # Profile pictures (resized WebP files), served from /avatars.
     avatars_dir: str = "avatars"
     max_avatar_bytes: int = 5_000_000

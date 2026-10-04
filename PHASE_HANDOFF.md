@@ -638,21 +638,48 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 
 ## 21. Phase 9e — Subtitles (DONE, awaiting the user's check)
 
-**Baselines now:** backend **309 passed**; `tsc` clean; Vitest **503 passed** excluding the four live-backend files. No migration (per-video values live in the existing `video_settings.data` JSON); no new dependencies.
+**Baselines now:** backend **309 passed**; `tsc` clean; Vitest **501 passed** excluding the four live-backend files. No migration (per-video values live in the existing `video_settings.data` JSON); no new dependencies.
 
-### How it works
-- **Global look** = `settings.subtitles` (server, per person): font, weight, size, text colour, background colour/opacity, outline, shadow, position, alignment. Edited in **Settings → Subtitles** (live preview; sliders save on release; "Reset style" is two-step).
-- **Per-video overrides** (`video_settings`): the same style keys prefixed `subtitle_` (e.g. `subtitle_color`), plus `subtitle_offset` (timing, seconds, unbounded) and `subtitle_language`. Validated in `schemas/video_settings.py` (`STYLE_KEYS`, `SUBTITLE_KEYS`).
-- **In the player**, every change (language, style, timing) is saved for **that video only**, when "Remember settings per video" is on; when it's off the change lasts until you leave. The localStorage blob `candyflix:subtitle-settings` is gone; nothing subtitle-related is shared browser-wide any more. The player starts from the global look, then lays the video's own values over it (`resolveSubtitleSettings`). New button in the player's subtitle panel: **Reset this video to my defaults**.
-- **Changing a global default clears that same key** from every video (backend, in `PATCH /api/settings`, via `video_settings_service.clear_keys`; rows left empty are deleted). Timing and language are never touched by it. An invalid change (422) clears nothing.
-- **Review list** (Settings → Subtitles, below the style card): `GET /api/video-settings/subtitles` (titles from the cached TMDB lookup; falls back to "Title #id"), `DELETE /api/video-settings/subtitles?…` (one video; volume/mute kept), `DELETE /api/video-settings/subtitles/all`.
+### How it works (revised after the user's feedback: the look is site-wide)
+- **The look** = `settings.subtitles` (server, per person, one set for the whole site): font, weight, size, text colour, background colour/opacity, outline, shadow, position, alignment. It can be changed in **Settings → Subtitles** (live preview; sliders save on release; "Reset style" is two-step) **and from the player's subtitle panel** — both write the same setting, so a change made in one episode applies everywhere.
+- **Per video only:** the **language** and the **timing offset** (`video_settings`: `subtitle_language`, `subtitle_offset`, seconds, unbounded). Saved only while "Remember settings per video" is on; with it off they last until you leave the video. Nothing subtitle-related is shared browser-wide any more (the old localStorage blob is gone).
+- An earlier version of 9e stored per-video style copies; that was dropped. The API now rejects per-video style keys (422); any old `subtitle_<style>` values in `video_settings` are ignored by the app and the review list.
+- **Review list** (Settings → Subtitles, below the style card): videos that have their own language or timing. `GET /api/video-settings/subtitles` (titles via the cached TMDB lookup, "Title #id" if unavailable), `DELETE /api/video-settings/subtitles?…` (one video; volume/mute kept), `DELETE /api/video-settings/subtitles/all`.
 
 ### Please verify in a browser
 1. Settings → Subtitles: change colour, size, position; the preview follows. Open a video: subtitles use it.
-2. In the player, change the colour for one episode. Open another episode, a movie, another show: they keep the Settings look. Reopen the first: its own colour is back.
-3. Timing offset: set it on one episode; no other video has it.
-4. Settings → Subtitles → list: the episode appears with a summary; Reset makes it follow the defaults; Reset all.
-5. Change the colour in Settings after an episode had its own colour: the episode now follows the new colour (but keeps its own size/timing).
-6. Settings → Playback → turn off "Remember settings per video": player changes no longer persist.
+2. In the player, change the colour (or size) in one episode. Open another episode, a movie, another show: they all use the new look. Settings → Subtitles shows it too.
+3. Pick a language and set the timing offset in one episode; no other video has them. Reopen the first: both are back.
+4. Settings → Subtitles → list: the episode appears (language/timing); Reset forgets them for that video; Reset all.
+5. Settings → Playback → turn off "Remember settings per video": language and timing no longer persist (the look still does).
 
 ### Next: 9f Intro skipping (SkipDB → IntroDB fallback, `/api/segments`, Skip Intro/Recap/Credits buttons, auto-skip), then 9g Player controls customiser, then the big admin upgrade.
+
+
+---
+
+## 22. Phase 9f — Intro skipping (DONE; the live services can only be checked by the user)
+
+**Baselines now:** backend **330 passed**; `tsc` clean; Vitest **523 passed** excluding the four live-backend files. No migration, no new dependencies. Two new optional env-style settings (defaults are right): `SKIPDB_BASE_URL` (`https://api.skipdb.tv`), `INTRODB_BASE_URL` (`https://api.introdb.app`).
+
+### Backend
+- `GET /api/segments?media_type&tmdb_id[&season_number&episode_number][&duration]` (login required) → `{intro, recap, credits}`, each `{start, end, source}` in **seconds** or `null`. Never an error for the player: no IMDb id / TMDB trouble / providers down → all null.
+- `services/segment_service.py`: TMDB id → IMDb id (existing `get_*_imdb_id`), then **SkipDB first** (`/api/segments?imdb_id&season&episode&duration`, its `outro` → our `credits`; `match: "out-of-range"` is ignored), then **IntroDB** (`/segments?imdb_id&season&episode` or `&is_movie=true`) only for the kinds SkipDB lacked. Both report ms (IntroDB's `start_sec/end_sec` accepted as a fallback). Bad data (end ≤ start, < 3 s, intro/recap > 600 s, credits > 3600 s, start past the file's length) is dropped; ends are clamped to the length.
+- **Nothing is stored in Postgres** (a test checks no segment/skip table exists). Redis only: hits 24 h, "nothing known" 1 h, provider error 60 s. Cache key includes the file length rounded to 10 s (SkipDB uses it to match timestamps to the exact release).
+- The two APIs' docs were read for this (SkipDB https://skipdb.tv/docs, IntroDB https://api.introdb.app OpenAPI). Tests use respx fixtures of those shapes; the real services weren't reachable from the sandbox.
+
+### Player
+- `components/player/skip-segments.ts` (pure logic) + `getSegments` in `lib/playback.ts` + wiring in `VideoPlayer`. Looked up once the video's length is known, only if auto-skip or any button is on.
+- **Skip Intro / Skip Recap / Skip Credits** button (bottom right, same slot as "Up next"; hidden while "Up next" shows). Appears while that part plays (not for its last second); **fades away and returns with the player controls**; when a part begins the controls are brought up once so the button is noticed. Click = jump to the end of the part (credits → end of the credits, which leads into Up next / autoplay).
+- **Auto-skip intro** (setting `auto_skip_intro`, default off): jumps past the intro as soon as playback is inside it, **once per video**; rewinding into it later is left alone (the button is still there). Intro only; works even if the Skip Intro button is switched off.
+- Settings → Playback → **Skipping**: auto-skip toggle + one toggle per button (all buttons default on).
+- SkipDB's terms: its data is never persisted by us (Redis cache only).
+
+### Please verify in a browser (live services needed)
+1. Settings → Playback → Skipping: toggles save. Open a popular show episode (try one from a major series): at the start of the intro the controls come up and **Skip Intro** appears; click it.
+2. Turn **Skip intro automatically** on; open another episode: it jumps by itself; rewind into the intro: it does not jump again, the button is there.
+3. Near the end, **Skip Credits** appears; clicking it goes to the end / next episode.
+4. A title with no data (or the mock video): no buttons, no errors.
+5. Watch the backend log for `segments: … failed` lines if nothing ever shows up (network from the server to api.skipdb.tv / api.introdb.app).
+
+### Next: 9g Player controls customiser (control registry, customiser dialog with a placeholder image, persistence, extra controls); then the big admin upgrade phase (messages, drill-down, full visibility).

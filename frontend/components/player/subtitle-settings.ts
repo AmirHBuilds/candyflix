@@ -87,10 +87,10 @@ export function parseOffsetInput(text: string): number | null {
 
 // --- Global defaults (Settings → Subtitles) and per-video overrides ---------
 //
-// The global look lives on the server (settings.subtitles, snake_case). One
-// video can override any style key, plus the timing offset, which exists
-// per video only. Stored per-video keys are the global key with a
-// `subtitle_` prefix.
+// The look (font, colours, size, position…) is one setting for the whole
+// site, kept on the server (settings.subtitles, snake_case) and changeable
+// from the player or from Settings → Subtitles. Only the language and the
+// timing offset belong to a single video (video_settings).
 
 export type GlobalSubtitleStyle = import("@/lib/settings").Settings["subtitles"];
 
@@ -115,27 +115,11 @@ export function fromGlobalStyle(global: GlobalSubtitleStyle): SubtitleSettings {
   return out as SubtitleSettings;
 }
 
-/** Defaults with this video's own values laid over them. */
-export function resolveSubtitleSettings(
-  global: GlobalSubtitleStyle,
-  perVideo: Record<string, unknown> | undefined
-): SubtitleSettings {
-  const base = fromGlobalStyle(global) as unknown as Record<string, unknown>;
-  for (const [snake, camel] of STYLE_FIELDS) {
-    const v = perVideo?.[`subtitle_${snake}`];
-    if (v !== undefined && v !== null) base[camel] = v;
-  }
-  const off = perVideo?.subtitle_offset;
-  if (typeof off === "number" && Number.isFinite(off)) base.offsetSeconds = off;
-  return base as unknown as SubtitleSettings;
-}
-
-/** What to save for this video after a change: only the keys that differ from before. */
-export function overridePatch(prev: SubtitleSettings, next: SubtitleSettings): Record<string, unknown> {
+/** The style keys that differ between two settings objects, as a global settings patch. */
+export function stylePatch(prev: SubtitleSettings, next: SubtitleSettings): Partial<GlobalSubtitleStyle> {
   const patch: Record<string, unknown> = {};
   for (const [snake, camel] of STYLE_FIELDS) {
-    if (prev[camel] !== next[camel]) patch[`subtitle_${snake}`] = next[camel];
+    if (prev[camel] !== next[camel]) patch[snake] = next[camel];
   }
-  if (prev.offsetSeconds !== next.offsetSeconds) patch.subtitle_offset = next.offsetSeconds;
-  return patch;
+  return patch as Partial<GlobalSubtitleStyle>;
 }

@@ -8,7 +8,7 @@ import {
 } from "@/components/player/subtitle-settings";
 
 import { DEFAULT_SETTINGS } from "@/lib/settings";
-import { fromGlobalStyle, overridePatch, resolveSubtitleSettings } from "@/components/player/subtitle-settings";
+import { fromGlobalStyle, stylePatch } from "@/components/player/subtitle-settings";
 
 const G = DEFAULT_SETTINGS.subtitles;
 
@@ -22,22 +22,10 @@ describe("global defaults and per-video overrides", () => {
     expect(s).toMatchObject({ color: "#ff0000", fontSize: 30, backgroundOpacity: 0.2, offsetSeconds: 0 });
   });
 
-  it("lays this video's own values over the defaults, and nothing else changes", () => {
-    const s = resolveSubtitleSettings({ ...G, color: "#ff0000" }, { subtitle_font_size: 40, subtitle_offset: -3.5, volume: 0.2 });
-    expect(s.fontSize).toBe(40);
-    expect(s.offsetSeconds).toBe(-3.5);
-    expect(s.color).toBe("#ff0000"); // global
-  });
-
-  it("ignores junk per-video values", () => {
-    const s = resolveSubtitleSettings(G, { subtitle_offset: "x", subtitle_color: null });
-    expect(s).toEqual(DEFAULT_SUBTITLE_SETTINGS);
-  });
-
-  it("saves only what changed, under the per-video key names", () => {
+  it("sends only the changed look keys, as global setting names; timing is not one of them", () => {
     const next = { ...DEFAULT_SUBTITLE_SETTINGS, fontSize: 30, offsetSeconds: 1.5, shadow: false };
-    expect(overridePatch(DEFAULT_SUBTITLE_SETTINGS, next)).toEqual({ subtitle_font_size: 30, subtitle_offset: 1.5, subtitle_shadow: false });
-    expect(overridePatch(next, next)).toEqual({});
+    expect(stylePatch(DEFAULT_SUBTITLE_SETTINGS, next)).toEqual({ font_size: 30, shadow: false });
+    expect(stylePatch(next, next)).toEqual({});
   });
 
   it("never reads or writes a shared browser-wide copy", () => {

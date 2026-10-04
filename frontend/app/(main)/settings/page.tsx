@@ -28,7 +28,7 @@ export default async function SettingsPage() {
         </SettingsSection>
         <SettingsSection id="playback" title={label("playback")}>
           <PlaybackSettingsForm />
-          <ComingSoon title="More playback options" items={["Skip intro / auto-skip", "Customise the player's buttons"]} />
+          <ComingSoon title="More playback options" items={["Customise the player's buttons"]} />
         </SettingsSection>
         <SettingsSection id="subtitles" title={label("subtitles")}>
           <SubtitleSettingsForm />

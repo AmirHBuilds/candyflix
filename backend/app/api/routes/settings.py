@@ -15,8 +15,7 @@ from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.models.user import User
 from app.schemas.settings import UserSettings
-from app.schemas.video_settings import STYLE_KEYS
-from app.services import settings_service, video_settings_service
+from app.services import settings_service
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -36,18 +35,11 @@ async def patch_my_settings(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        result = await settings_service.patch_settings(db, current_user.id, patch)
+        return await settings_service.patch_settings(db, current_user.id, patch)
     except settings_service.SettingsValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.problems
         )
-    # A new global subtitle default replaces any per-video value for that same
-    # key (timing offset and language are per-video only and never touched).
-    sent = patch.get("subtitles")
-    if isinstance(sent, dict):
-        keys = {f"subtitle_{k}" for k in sent if k in STYLE_KEYS}
-        await video_settings_service.clear_keys(db, current_user.id, keys)
-    return result
 
 
 @router.delete("", response_model=UserSettings)

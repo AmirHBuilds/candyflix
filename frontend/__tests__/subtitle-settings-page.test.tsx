@@ -86,7 +86,7 @@ const item = (over = {}) => ({
   season_number: 2,
   episode_number: 5,
   title: "Breaking Bad",
-  settings: { subtitle_language: "fa", subtitle_offset: 1.5, subtitle_color: "#fff000", subtitle_shadow: false },
+  settings: { subtitle_language: "fa", subtitle_offset: 1.5 },
   updated_at: null,
   ...over,
 });
@@ -96,7 +96,7 @@ describe("Settings → videos with their own subtitle settings", () => {
     vi.mocked(playback.listSubtitleOverrides).mockResolvedValue([item(), item({ media_type: "movie", season_number: null, episode_number: null, tmdb_id: 603, title: null, settings: { subtitle_language: "off" } })]);
     render(<SubtitleOverridesCard />);
     expect(await screen.findByText("Breaking Bad")).toBeInTheDocument();
-    expect(screen.getByText(/Season 2 · Episode 5 — Persian.*· timing \+1.5 s · 2 style changes/)).toBeInTheDocument();
+    expect(screen.getByText(/Season 2 · Episode 5 — Persian.*· timing \+1.5 s/)).toBeInTheDocument();
     expect(screen.getByText("Title #603")).toBeInTheDocument();
     expect(screen.getByText(/Movie — captions off/)).toBeInTheDocument();
   });

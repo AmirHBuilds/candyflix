@@ -71,5 +71,5 @@ Goal: a real Settings area where each person tunes how CandyFlix looks and plays
 - **9c Appearance — DONE** (see PHASE_HANDOFF.md §19; originally: colour-token migration → themes (default Candy at Night) → home layout (grid/swipe rows) → episode view (list/blocks) → description length → extras).
 - **9d Playback basics (DONE):** autoplay next + Up-next overlay (+ cross-season next-episode logic), auto subtitles, save-progress (resume only) + movie visit record + Clear history, per-video remember plumbing.
 - **9e Subtitles (DONE, see PHASE_HANDOFF §21):** global style page, per-video overrides (+ clear-key-on-global-change), review/delete list.
-- **9f Intro skipping:** TMDB→IMDb id, SkipDB→IntroDB fallback, `/api/segments`, player button + auto-skip.
+- **9f Intro skipping (DONE, see PHASE_HANDOFF §22):** TMDB→IMDb id, SkipDB→IntroDB fallback, `/api/segments`, player button + auto-skip.
 - **9g Player controls customiser** (placeholder image in `frontend/public/images/`), extra controls.

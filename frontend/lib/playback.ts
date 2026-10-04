@@ -22,19 +22,8 @@ export type VideoSettingsData = {
   muted?: boolean;
   // A language code, or "off" for "captions off for this video".
   subtitle_language?: string;
-  // Per-video subtitle look and timing (see components/player/subtitle-settings.ts).
+  // Timing correction for this video, in seconds.
   subtitle_offset?: number;
-  subtitle_font_family?: string;
-  subtitle_font_size?: number;
-  subtitle_font_weight?: number;
-  subtitle_color?: string;
-  subtitle_background_color?: string;
-  subtitle_background_opacity?: number;
-  subtitle_outline?: boolean;
-  subtitle_outline_color?: string;
-  subtitle_shadow?: boolean;
-  subtitle_position?: "bottom" | "top";
-  subtitle_align?: "left" | "center" | "right";
 };
 
 // Phase 5b — online subtitle discovery. OnlineSubtitleResult is what
@@ -590,4 +579,22 @@ export async function clearAllSubtitleOverrides(): Promise<number> {
   const res = await fetch(`${getApiBaseUrl()}/video-settings/subtitles/all`, { method: "DELETE", credentials: "include" });
   if (!res.ok) throw new Error("Couldn't reset the saved subtitle settings.");
   return (await res.json()).cleared;
+}
+
+// --- Intro / recap / credits (Phase 9f) ---
+
+export async function getSegments(
+  identity: VideoRef,
+  durationSeconds: number
+): Promise<import("@/components/player/skip-segments").SegmentsData> {
+  const query = new URLSearchParams({ media_type: identity.mediaType, tmdb_id: String(identity.tmdbId) });
+  if (identity.mediaType === "tv" && identity.seasonNumber != null && identity.episodeNumber != null) {
+    query.set("season_number", String(identity.seasonNumber));
+    query.set("episode_number", String(identity.episodeNumber));
+  }
+  if (Number.isFinite(durationSeconds) && durationSeconds > 0) query.set("duration", String(Math.round(durationSeconds * 10) / 10));
+  const res = await fetch(`${getApiBaseUrl()}/segments?${query}`, { credentials: "include", cache: "no-store" });
+  if (!res.ok) throw new Error("Couldn't load skip points.");
+  const body = await res.json();
+  return { intro: body.intro ?? null, recap: body.recap ?? null, credits: body.credits ?? null };
 }

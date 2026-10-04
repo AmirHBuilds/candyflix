@@ -274,43 +274,40 @@ class TestSubtitleOverrides:
         monkeypatch.setattr(tmdb_service, "get_movie", boom)
         monkeypatch.setattr(tmdb_service, "get_tv", boom)
 
-    async def test_style_and_offset_are_stored_per_video_and_validated(self, client, db):
+    async def test_only_language_and_timing_are_stored_per_video(self, client, db):
         _, name = await _login(client, db)
         try:
-            ok = await client.patch("/api/video-settings", params=EP, json={
-                "subtitle_color": "#FFE066", "subtitle_font_size": 30, "subtitle_offset": -137.5,
-                "subtitle_position": "top", "subtitle_shadow": False,
-            })
-            assert ok.status_code == 200 and ok.json()["subtitle_offset"] == -137.5
-            for bad in ({"subtitle_color": "red"}, {"subtitle_font_size": 5}, {"subtitle_position": "middle"}):
+            ok = await client.patch("/api/video-settings", params=EP, json={"subtitle_offset": -137.5, "subtitle_language": "fa"})
+            assert ok.status_code == 200 and ok.json() == {"subtitle_offset": -137.5, "subtitle_language": "fa"}
+            # the look is a site-wide setting now, not a per-video one
+            for bad in ({"subtitle_color": "#FFE066"}, {"subtitle_font_size": 30}, {"subtitle_position": "top"}):
                 assert (await client.patch("/api/video-settings", params=EP, json=bad)).status_code == 422
-            # another episode is untouched
             assert (await client.get("/api/video-settings", params={**EP, "episode_number": 6})).json() == {}
         finally:
             await _cleanup(db, name)
 
-    async def test_changing_a_global_default_clears_that_key_everywhere_but_not_offset_or_language(self, client, db):
+    async def test_changing_the_site_wide_look_leaves_each_videos_language_and_timing_alone(self, client, db):
         _, name = await _login(client, db)
         try:
-            await client.patch("/api/video-settings", params=EP, json={
-                "subtitle_color": "#FFE066", "subtitle_font_size": 30, "subtitle_offset": 2.0, "subtitle_language": "fa", "volume": 0.5,
-            })
-            await client.patch("/api/video-settings", params=MOVIE, json={"subtitle_color": "#8fe3c7"})
-            res = await client.patch("/api/settings", json={"subtitles": {"color": "#ff0000"}})
-            assert res.status_code == 200
-            assert (await client.get("/api/video-settings", params=EP)).json() == {
-                "subtitle_font_size": 30, "subtitle_offset": 2.0, "subtitle_language": "fa", "volume": 0.5,
-            }
-            assert (await client.get("/api/video-settings", params=MOVIE)).json() == {}  # row emptied, so removed
+            await client.patch("/api/video-settings", params=EP, json={"subtitle_offset": 2.0, "subtitle_language": "fa"})
+            res = await client.patch("/api/settings", json={"subtitles": {"color": "#ff0000", "font_size": 30}})
+            assert res.status_code == 200 and res.json()["subtitles"]["color"] == "#ff0000"
+            assert (await client.get("/api/video-settings", params=EP)).json() == {"subtitle_offset": 2.0, "subtitle_language": "fa"}
+            # and the look is the same for every video, because it isn't per video
+            assert (await client.get("/api/settings")).json()["subtitles"]["font_size"] == 30
         finally:
             await _cleanup(db, name)
 
-    async def test_an_invalid_global_change_clears_nothing(self, client, db):
-        _, name = await _login(client, db)
+    async def test_old_per_video_style_values_are_ignored_by_the_review_list(self, client, db):
+        user, name = await _login(client, db)
         try:
-            await client.patch("/api/video-settings", params=EP, json={"subtitle_color": "#FFE066"})
-            assert (await client.patch("/api/settings", json={"subtitles": {"color": "nope"}})).status_code == 422
-            assert (await client.get("/api/video-settings", params=EP)).json() == {"subtitle_color": "#FFE066"}
+            from app.models.video_settings import VideoSettings
+            db.add(VideoSettings(user_id=user.id, tmdb_id=1396, media_type="tv", season_number=2, episode_number=5,
+                                 data={"subtitle_color": "#FFE066", "subtitle_offset": 1.0}))
+            db.add(VideoSettings(user_id=user.id, tmdb_id=603, media_type="movie", data={"subtitle_color": "#FFE066"}))
+            await db.commit()
+            listed = (await client.get("/api/video-settings/subtitles")).json()
+            assert len(listed) == 1 and listed[0]["settings"] == {"subtitle_offset": 1.0}
         finally:
             await _cleanup(db, name)
 
@@ -333,7 +330,7 @@ class TestSubtitleOverrides:
     async def test_clear_all_and_privacy(self, client, db):
         _, a = await _login(client, db)
         try:
-            await client.patch("/api/video-settings", params=EP, json={"subtitle_color": "#FFE066"})
+            await client.patch("/api/video-settings", params=EP, json={"subtitle_language": "fa"})
             await client.patch("/api/video-settings", params=MOVIE, json={"subtitle_offset": 1})
             client.cookies.clear()
             _, b = await _login(client, db)

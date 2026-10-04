@@ -19,8 +19,6 @@ function describeSettings(settings: SubtitleOverride["settings"]): string {
   }
   const offset = settings.subtitle_offset;
   if (typeof offset === "number") parts.push(`timing ${offset > 0 ? "+" : ""}${offset} s`);
-  const look = Object.keys(settings).filter((k) => k.startsWith("subtitle_") && k !== "subtitle_language" && k !== "subtitle_offset").length;
-  if (look) parts.push(`${look} style change${look === 1 ? "" : "s"}`);
   return parts.join(" · ");
 }
 
@@ -71,8 +69,8 @@ export default function SubtitleOverridesCard() {
 
   return (
     <SettingsCard
-      title="Videos with their own subtitle settings"
-      description="Language, timing or style you changed inside the player for one movie or episode. Remove one to make that video follow your defaults again."
+      title="Videos with their own subtitle language or timing"
+      description="The language or timing you set inside the player for one movie or episode. Reset one to forget them for that video."
     >
       {error ? (
         <p role="alert" className="px-5 py-4 text-sm text-red-300">

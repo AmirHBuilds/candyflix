@@ -17,12 +17,19 @@ vi.mock("@/lib/playback", async () => {
     saveWatchProgressBeacon: vi.fn(),
     recordEpisodeVisit: vi.fn(),
     recordMovieVisit: vi.fn(),
+    getSegments: vi.fn().mockResolvedValue({ intro: null, recap: null, credits: null }),
   };
+});
+
+vi.mock("@/lib/settings", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/settings")>("@/lib/settings");
+  return { ...actual, patchSettings: vi.fn() };
 });
 
 import VideoPlayer from "@/components/player/VideoPlayer";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import * as playback from "@/lib/playback";
+import * as settingsLib from "@/lib/settings";
 import { consumeAutoplayFlag, flagAutoplayNext } from "@/lib/autoplay";
 import { DEFAULT_SETTINGS, type Settings } from "@/lib/settings";
 import type { PlaybackSource } from "@/lib/playback";
@@ -34,6 +41,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(playback.searchOnlineSubtitles).mockReset().mockResolvedValue({ results: [], hasMore: false });
   vi.mocked(playback.downloadOnlineSubtitle).mockReset();
+  vi.mocked(playback.getSegments).mockReset().mockResolvedValue({ intro: null, recap: null, credits: null });
   window.sessionStorage.clear();
   window.localStorage.clear();
   currentTimeValue = 0;
@@ -301,12 +309,13 @@ describe("Subtitles on start", () => {
   });
 });
 
-describe("Subtitle look and language are per video", () => {
+describe("Subtitle look is site-wide; language and timing are per video", () => {
   const fa = { language: "fa", label: "Persian", url: "/subtitle-cache/fa.vtt", format: "vtt" as const };
   const vtt = "WEBVTT\n\n00:00:00.000 --> 00:00:50.000\nHello there";
 
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => vtt }));
+    vi.mocked(settingsLib.patchSettings).mockImplementation(async () => DEFAULT_SETTINGS);
   });
 
   function mountStyled(globalOver: Partial<Settings["subtitles"]>, video_settings: PlaybackSource["video_settings"] = {}) {
@@ -324,7 +333,6 @@ describe("Subtitle look and language are per video", () => {
     first.unmount();
     mount({ source: { subtitles: [fa] } });
     expect(screen.getByLabelText("Turn on subtitles")).toBeInTheDocument();
-    expect(window.localStorage.getItem("candyflix:player-preferences") ?? "").not.toContain("subtitleLanguage\":\"fa");
   });
 
   it("uses the colour and size from Settings → Subtitles", async () => {
@@ -333,19 +341,119 @@ describe("Subtitle look and language are per video", () => {
     expect(text).toHaveStyle({ color: "rgb(255, 0, 0)", fontSize: "30px" });
   });
 
-  it("this video's own colour wins over the default, with the rest still from the default", async () => {
-    mountStyled({ color: "#ff0000", font_size: 30 }, { subtitle_color: "#00ff00" });
-    const text = await screen.findByText("Hello there");
-    expect(text).toHaveStyle({ color: "rgb(0, 255, 0)", fontSize: "30px" });
+  it("this video's saved timing is applied (and the look is untouched)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => "WEBVTT\n\n00:00:10.000 --> 00:00:50.000\nLate line" }));
+    mountStyled({}, { subtitle_offset: -10 }); // shows 10 s earlier, so a 10 s cue is visible at t = 0
+    expect(await screen.findByText("Late line")).toBeInTheDocument();
   });
 
-  it("per-video values are ignored when 'Remember settings per video' is off", async () => {
-    render(
-      <SettingsProvider initial={{ ...DEFAULT_SETTINGS, playback: { ...DEFAULT_SETTINGS.playback, remember_per_video: false, auto_subtitles: { enabled: true, language: "fa", fallback_language: null } } }}>
-        <VideoPlayer source={source({ subtitles: [fa], video_settings: { subtitle_color: "#00ff00" } })} title="t" identity={identity} backHref="/" nextEpisode={null} />
-      </SettingsProvider>
-    );
-    const text = await screen.findByText("Hello there");
-    expect(text).toHaveStyle({ color: "rgb(255, 255, 255)" });
+  it("timing from another video is not used", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => "WEBVTT\n\n00:00:10.000 --> 00:00:50.000\nLate line" }));
+    mountStyled({});
+    await act(async () => {});
+    expect(screen.queryByText("Late line")).toBeNull();
+  });
+});
+
+describe("Skip intro / recap / credits", () => {
+  const seg = (start: number, end: number) => ({ start, end, source: "skipdb" as const });
+  const withSegments = (over: Partial<Awaited<ReturnType<typeof playback.getSegments>>> = {}) =>
+    vi.mocked(playback.getSegments).mockResolvedValue({ intro: seg(10, 60), recap: seg(0, 8), credits: seg(90, 100), ...over });
+
+  async function mountAt(time: number, opts: Parameters<typeof mount>[0] = {}) {
+    currentTimeValue = time;
+    const view = mount({ next: null, ...opts });
+    await act(async () => {});
+    const video = videoOf(view.container);
+    act(() => void video.dispatchEvent(new Event("timeupdate")));
+    return { ...view, video };
+  }
+
+  it("asks for the skip points once the length is known, with this video's identity and length", async () => {
+    withSegments();
+    await mountAt(0);
+    expect(playback.getSegments).toHaveBeenCalledTimes(1);
+    expect(playback.getSegments).toHaveBeenCalledWith(expect.objectContaining({ tmdbId: 1396, seasonNumber: 1, episodeNumber: 2 }), 100);
+  });
+
+  it("doesn't ask when auto-skip and every button are off", async () => {
+    withSegments();
+    await mountAt(0, { playback: { auto_skip_intro: false, skip_buttons: { intro: false, recap: false, credits: false } } });
+    expect(playback.getSegments).not.toHaveBeenCalled();
+  });
+
+  it("shows Skip Intro during the intro, and clicking it jumps to the end of the intro", async () => {
+    withSegments();
+    const { video } = await mountAt(20);
+    fireEvent.click(screen.getByLabelText("Skip Intro"));
+    expect(video.currentTime).toBe(60);
+  });
+
+  it("shows the recap and credits buttons in their parts, and nothing between them", async () => {
+    withSegments();
+    const first = await mountAt(3);
+    expect(screen.getByLabelText("Skip Recap")).toBeInTheDocument();
+    first.unmount();
+    const second = await mountAt(95);
+    expect(screen.getByLabelText("Skip Credits")).toBeInTheDocument();
+    second.unmount();
+    await mountAt(70);
+    expect(screen.queryByLabelText(/^Skip /)).toBeNull();
+  });
+
+  it("a button switched off in Settings isn't shown", async () => {
+    withSegments();
+    await mountAt(20, { playback: { skip_buttons: { intro: false, recap: true, credits: true } } });
+    expect(screen.queryByLabelText("Skip Intro")).toBeNull();
+  });
+
+  it("no data (or a failed lookup) means no buttons and no error", async () => {
+    vi.mocked(playback.getSegments).mockRejectedValue(new Error("down"));
+    await mountAt(20);
+    expect(screen.queryByLabelText(/^Skip /)).toBeNull();
+  });
+
+  it("the button hides with the controls and comes back with them", async () => {
+    withSegments();
+    vi.useFakeTimers();
+    const { video, container } = await mountAt(20);
+    const button = () => screen.getByLabelText("Skip Intro");
+    expect(button().className).toContain("opacity-100");
+    Object.defineProperty(video, "paused", { configurable: true, get: () => false });
+    tick(10_000); // the controls auto-hide while playing
+    expect(button().className).toContain("opacity-0");
+    act(() => void fireEvent.mouseMove(container.firstElementChild as HTMLElement));
+    expect(button().className).toContain("opacity-100");
+  });
+
+  describe("auto-skip", () => {
+    it("jumps past the intro by itself when on, once", async () => {
+      withSegments();
+      const { video } = await mountAt(12, { playback: { auto_skip_intro: true } });
+      expect(video.currentTime).toBe(60);
+      // rewinding into the intro afterwards is left alone
+      currentTimeValue = 20;
+      act(() => void video.dispatchEvent(new Event("timeupdate")));
+      expect(video.currentTime).toBe(20);
+      expect(screen.getByLabelText("Skip Intro")).toBeInTheDocument(); // the button is still there to use
+    });
+
+    it("does nothing when off", async () => {
+      withSegments();
+      const { video } = await mountAt(12, { playback: { auto_skip_intro: false } });
+      expect(video.currentTime).toBe(12);
+    });
+
+    it("never auto-skips credits or recap", async () => {
+      withSegments();
+      const { video } = await mountAt(95, { playback: { auto_skip_intro: true } });
+      expect(video.currentTime).toBe(95);
+    });
+
+    it("works even if the Skip Intro button is switched off", async () => {
+      withSegments();
+      const { video } = await mountAt(12, { playback: { auto_skip_intro: true, skip_buttons: { intro: false, recap: true, credits: true } } });
+      expect(video.currentTime).toBe(60);
+    });
   });
 });

@@ -79,7 +79,7 @@ export default function SubtitleSettingsForm() {
   return (
     <SettingsCard
       title="Subtitle style"
-      description="How subtitles look in every video. A change made inside the player only applies to that one video."
+      description="How subtitles look in every video. Changing the look inside the player updates this too. Language and timing are remembered per video."
     >
       <div className="flex items-center justify-center bg-black/60 px-4 py-10" aria-label="Preview">
         <span
@@ -161,7 +161,7 @@ export default function SubtitleSettingsForm() {
       </SettingRow>
       <SettingRow
         label="Back to the standard look"
-        description="Puts the style above back to its defaults. Like any change here, it also replaces what individual videos had saved for these settings."
+        description="Puts the style above back to its defaults."
       >
         {confirming ? (
           <div className="flex gap-2">

@@ -150,3 +150,29 @@ describe("About → Reset all settings", () => {
     expect(await screen.findByRole("button", { name: "Reset…" })).toBeInTheDocument();
   });
 });
+
+describe("Playback → Skipping", () => {
+  const renderForm = () =>
+    render(
+      <SettingsProvider initial={DEFAULT_SETTINGS}>
+        <PlaybackSettingsForm />
+      </SettingsProvider>
+    );
+
+  it("shows the defaults: buttons on, auto-skip off", () => {
+    renderForm();
+    expect(screen.getByRole("switch", { name: "Skip intro automatically" })).toHaveAttribute("aria-checked", "false");
+    for (const name of ["Skip Intro button", "Skip Recap button", "Skip Credits button"]) {
+      expect(screen.getByRole("switch", { name })).toHaveAttribute("aria-checked", "true");
+    }
+  });
+
+  it("each switch saves just its own key", async () => {
+    renderForm();
+    fireEvent.click(screen.getByRole("switch", { name: "Skip intro automatically" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Skip Recap button" }));
+    await waitFor(() => expect(lib.patchSettings).toHaveBeenCalledTimes(2));
+    expect(lib.patchSettings).toHaveBeenCalledWith({ playback: { auto_skip_intro: true } });
+    expect(lib.patchSettings).toHaveBeenCalledWith({ playback: { skip_buttons: { recap: false } } });
+  });
+});
