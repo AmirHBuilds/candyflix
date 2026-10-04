@@ -4,6 +4,8 @@ import AccountSettingsForm from "@/components/settings/AccountSettingsForm";
 import AppearanceSettingsForm from "@/components/settings/AppearanceSettingsForm";
 import PlaybackSettingsForm from "@/components/settings/PlaybackSettingsForm";
 import PrivacyDataForm from "@/components/settings/PrivacyDataForm";
+import SubtitleOverridesCard from "@/components/settings/SubtitleOverridesCard";
+import SubtitleSettingsForm from "@/components/settings/SubtitleSettingsForm";
 import SettingsBar from "@/components/settings/SettingsBar";
 import SettingsSection from "@/components/settings/SettingsSection";
 import { ComingSoon } from "@/components/settings/controls";
@@ -29,13 +31,8 @@ export default async function SettingsPage() {
           <ComingSoon title="More playback options" items={["Skip intro / auto-skip", "Customise the player's buttons"]} />
         </SettingsSection>
         <SettingsSection id="subtitles" title={label("subtitles")}>
-          <ComingSoon
-            title="Subtitle defaults"
-            items={[
-              "Default font, size, colours, background and position for all subtitles",
-              "Saved per-video subtitle settings, with a way to review them",
-            ]}
-          />
+          <SubtitleSettingsForm />
+          <SubtitleOverridesCard />
         </SettingsSection>
         <SettingsSection id="account" title={label("account")}>
           <AccountSettingsForm user={user} />

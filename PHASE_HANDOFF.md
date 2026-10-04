@@ -632,3 +632,27 @@ Open a movie from halfway down a list (starts at top); TV page opens on the last
 
 ### Later
 Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I understand" + acceptance stats, full visibility) becomes its own phase after 9g. Then 9e Subtitles, 9f Intro skipping, 9g Controls customiser.
+
+
+---
+
+## 21. Phase 9e — Subtitles (DONE, awaiting the user's check)
+
+**Baselines now:** backend **309 passed**; `tsc` clean; Vitest **503 passed** excluding the four live-backend files. No migration (per-video values live in the existing `video_settings.data` JSON); no new dependencies.
+
+### How it works
+- **Global look** = `settings.subtitles` (server, per person): font, weight, size, text colour, background colour/opacity, outline, shadow, position, alignment. Edited in **Settings → Subtitles** (live preview; sliders save on release; "Reset style" is two-step).
+- **Per-video overrides** (`video_settings`): the same style keys prefixed `subtitle_` (e.g. `subtitle_color`), plus `subtitle_offset` (timing, seconds, unbounded) and `subtitle_language`. Validated in `schemas/video_settings.py` (`STYLE_KEYS`, `SUBTITLE_KEYS`).
+- **In the player**, every change (language, style, timing) is saved for **that video only**, when "Remember settings per video" is on; when it's off the change lasts until you leave. The localStorage blob `candyflix:subtitle-settings` is gone; nothing subtitle-related is shared browser-wide any more. The player starts from the global look, then lays the video's own values over it (`resolveSubtitleSettings`). New button in the player's subtitle panel: **Reset this video to my defaults**.
+- **Changing a global default clears that same key** from every video (backend, in `PATCH /api/settings`, via `video_settings_service.clear_keys`; rows left empty are deleted). Timing and language are never touched by it. An invalid change (422) clears nothing.
+- **Review list** (Settings → Subtitles, below the style card): `GET /api/video-settings/subtitles` (titles from the cached TMDB lookup; falls back to "Title #id"), `DELETE /api/video-settings/subtitles?…` (one video; volume/mute kept), `DELETE /api/video-settings/subtitles/all`.
+
+### Please verify in a browser
+1. Settings → Subtitles: change colour, size, position; the preview follows. Open a video: subtitles use it.
+2. In the player, change the colour for one episode. Open another episode, a movie, another show: they keep the Settings look. Reopen the first: its own colour is back.
+3. Timing offset: set it on one episode; no other video has it.
+4. Settings → Subtitles → list: the episode appears with a summary; Reset makes it follow the defaults; Reset all.
+5. Change the colour in Settings after an episode had its own colour: the episode now follows the new colour (but keeps its own size/timing).
+6. Settings → Playback → turn off "Remember settings per video": player changes no longer persist.
+
+### Next: 9f Intro skipping (SkipDB → IntroDB fallback, `/api/segments`, Skip Intro/Recap/Credits buttons, auto-skip), then 9g Player controls customiser, then the big admin upgrade.

@@ -85,32 +85,57 @@ export function parseOffsetInput(text: string): number | null {
   return Math.round(n * 1000) / 1000 || 0; // "|| 0" turns -0 into 0
 }
 
-const STORAGE_KEY = "candyflix:subtitle-settings";
+// --- Global defaults (Settings → Subtitles) and per-video overrides ---------
+//
+// The global look lives on the server (settings.subtitles, snake_case). One
+// video can override any style key, plus the timing offset, which exists
+// per video only. Stored per-video keys are the global key with a
+// `subtitle_` prefix.
 
-export function loadSubtitleSettings(): SubtitleSettings {
-  if (typeof window === "undefined") return DEFAULT_SUBTITLE_SETTINGS;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_SUBTITLE_SETTINGS;
-    const parsed = JSON.parse(raw);
-    // Timing offset belongs to one video; never restored from the shared blob.
-    const merged = { ...DEFAULT_SUBTITLE_SETTINGS, ...parsed, offsetSeconds: 0 };
-    // Not a range check (any finite number is valid) — just refuses
-    // junk from hand-edited/corrupt storage so the overlay can't get NaN.
-    if (typeof merged.offsetSeconds !== "number" || !Number.isFinite(merged.offsetSeconds)) {
-      merged.offsetSeconds = DEFAULT_SUBTITLE_SETTINGS.offsetSeconds;
-    }
-    return merged;
-  } catch {
-    return DEFAULT_SUBTITLE_SETTINGS;
-  }
+export type GlobalSubtitleStyle = import("@/lib/settings").Settings["subtitles"];
+
+const STYLE_FIELDS = [
+  ["font_family", "fontFamily"],
+  ["font_size", "fontSize"],
+  ["font_weight", "fontWeight"],
+  ["color", "color"],
+  ["background_color", "backgroundColor"],
+  ["background_opacity", "backgroundOpacity"],
+  ["outline", "outline"],
+  ["outline_color", "outlineColor"],
+  ["shadow", "shadow"],
+  ["position", "position"],
+  ["align", "align"],
+] as const;
+
+/** The person's defaults as the player's settings object (offset always starts at 0). */
+export function fromGlobalStyle(global: GlobalSubtitleStyle): SubtitleSettings {
+  const out: Record<string, unknown> = { offsetSeconds: 0 };
+  for (const [snake, camel] of STYLE_FIELDS) out[camel] = global[snake];
+  return out as SubtitleSettings;
 }
 
-export function saveSubtitleSettings(settings: SubtitleSettings): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...settings, offsetSeconds: 0 }));
-  } catch {
-    // Storage full/unavailable — settings just won't persist this time.
+/** Defaults with this video's own values laid over them. */
+export function resolveSubtitleSettings(
+  global: GlobalSubtitleStyle,
+  perVideo: Record<string, unknown> | undefined
+): SubtitleSettings {
+  const base = fromGlobalStyle(global) as unknown as Record<string, unknown>;
+  for (const [snake, camel] of STYLE_FIELDS) {
+    const v = perVideo?.[`subtitle_${snake}`];
+    if (v !== undefined && v !== null) base[camel] = v;
   }
+  const off = perVideo?.subtitle_offset;
+  if (typeof off === "number" && Number.isFinite(off)) base.offsetSeconds = off;
+  return base as unknown as SubtitleSettings;
+}
+
+/** What to save for this video after a change: only the keys that differ from before. */
+export function overridePatch(prev: SubtitleSettings, next: SubtitleSettings): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  for (const [snake, camel] of STYLE_FIELDS) {
+    if (prev[camel] !== next[camel]) patch[`subtitle_${snake}`] = next[camel];
+  }
+  if (prev.offsetSeconds !== next.offsetSeconds) patch.subtitle_offset = next.offsetSeconds;
+  return patch;
 }

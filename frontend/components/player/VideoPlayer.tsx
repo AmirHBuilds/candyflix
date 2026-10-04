@@ -4,15 +4,16 @@ import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } fr
 import { createPortal } from "react-dom";
 import { getStaticOrigin } from "@/lib/api-client";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
-import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings } from "@/lib/playback";
+import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings, clearSubtitleOverride } from "@/lib/playback";
 import { consumeAutoplayFlag, flagAutoplayNext } from "@/lib/autoplay";
 import { resolveInitialSubtitle } from "@/components/player/subtitle-preference";
 import { useAutoNext } from "@/components/player/useAutoNext";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
-  loadSubtitleSettings,
-  saveSubtitleSettings,
+  fromGlobalStyle,
+  overridePatch,
+  resolveSubtitleSettings,
   type SubtitleSettings,
 } from "@/components/player/subtitle-settings";
 import { loadPlayerPreferences, savePlayerPreferences } from "@/components/player/player-preferences";
@@ -132,7 +133,10 @@ export default function VideoPlayer({
   const selectedLanguageRef = useRef<string | null>(null);
   const lastSubtitleLanguageRef = useRef<string | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
-  const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(loadSubtitleSettings());
+  const globalSubtitles = useSettings().settings.subtitles;
+  const globalSubtitlesRef = useRef(globalSubtitles);
+  globalSubtitlesRef.current = globalSubtitles;
+  const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(() => fromGlobalStyle(globalSubtitles));
 
   const [upNextDismissed, setUpNextDismissed] = useState(false);
   const [ended, setEnded] = useState(false);
@@ -203,9 +207,27 @@ export default function VideoPlayer({
     };
   }, [selectedLanguage, allTracks]);
 
+  // A change made in the player belongs to THIS video only (when "Remember
+  // settings per video" is on; otherwise it just lasts until you leave).
+  // The shared defaults are only edited in Settings → Subtitles.
+  const subtitleSettingsRef = useRef(subtitleSettings);
+  subtitleSettingsRef.current = subtitleSettings;
+  const [hasSubtitleOverrides, setHasSubtitleOverrides] = useState(false);
+
   function updateSubtitleSettings(next: SubtitleSettings) {
+    const patch = overridePatch(subtitleSettingsRef.current, next);
     setSubtitleSettings(next);
-    saveSubtitleSettings(next);
+    if (Object.keys(patch).length === 0) return;
+    if (playbackSettingsRef.current.remember_per_video) {
+      patchVideoSettings(identity, patch as Parameters<typeof patchVideoSettings>[1]);
+      setHasSubtitleOverrides(true);
+    }
+  }
+
+  function resetSubtitlesToDefaults() {
+    setSubtitleSettings(fromGlobalStyle(globalSubtitlesRef.current));
+    setHasSubtitleOverrides(false);
+    clearSubtitleOverride(identity).catch(() => {});
   }
 
   // --- Video element event wiring ---
@@ -478,6 +500,9 @@ export default function VideoPlayer({
     // This video's own saved tweaks win over the "last used" ones, but only
     // while "Remember settings per video" is on.
     const perVideo = remember_per_video ? source.video_settings ?? {} : {};
+
+    setSubtitleSettings(resolveSubtitleSettings(globalSubtitlesRef.current, perVideo as Record<string, unknown>));
+    setHasSubtitleOverrides(Object.keys(perVideo).some((k) => k.startsWith("subtitle_") && k !== "subtitle_language"));
 
     const volume = perVideo.volume ?? persisted.volume;
     const muted = perVideo.muted ?? persisted.muted;
@@ -1526,6 +1551,8 @@ export default function VideoPlayer({
                           onSelectLanguage={selectSubtitleLanguage}
                           settings={subtitleSettings}
                           onChange={updateSubtitleSettings}
+                          hasOverrides={hasSubtitleOverrides}
+                          onResetToDefaults={resetSubtitlesToDefaults}
                           identity={identity}
                           onTrackAdded={(track) => {
                             setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);

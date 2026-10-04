@@ -13,7 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.models.user import User
-from app.schemas.video_settings import ClearedResult, VideoSettingsPatch
+from app.models.watch_progress import NO_EPISODE, NO_SEASON
+from app.schemas.video_settings import ClearedResult, SubtitleOverride, VideoSettingsPatch
+from app.services import tmdb_service
 from app.services import video_settings_service as service
 
 router = APIRouter(prefix="/video-settings", tags=["video-settings"])
@@ -63,3 +65,49 @@ async def delete_video_settings(
 @router.delete("/all", response_model=ClearedResult)
 async def delete_all_video_settings(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     return ClearedResult(cleared=await service.delete_all(db, user.id))
+
+
+# --- Review list: videos that have their own subtitle settings ---
+
+async def _title_for(media_type: str, tmdb_id: int) -> str | None:
+    try:
+        detail = await (tmdb_service.get_movie(tmdb_id) if media_type == "movie" else tmdb_service.get_tv(tmdb_id))
+        return detail.title
+    except Exception:  # a title we can't look up is still listed, by id
+        return None
+
+
+@router.get("/subtitles", response_model=list[SubtitleOverride])
+async def list_subtitle_overrides(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = await service.list_subtitle_overrides(db, user.id)
+    titles: dict[tuple[str, int], str | None] = {}
+    out = []
+    for row, sub in rows:
+        key = (row.media_type, row.tmdb_id)
+        if key not in titles:
+            titles[key] = await _title_for(*key)
+        out.append(
+            SubtitleOverride(
+                media_type=row.media_type,
+                tmdb_id=row.tmdb_id,
+                season_number=None if row.season_number == NO_SEASON else row.season_number,
+                episode_number=None if row.episode_number == NO_EPISODE else row.episode_number,
+                title=titles[key],
+                settings=sub,
+                updated_at=row.updated_at.isoformat() if row.updated_at else None,
+            )
+        )
+    return out
+
+
+@router.delete("/subtitles/all", response_model=ClearedResult)
+async def clear_all_subtitle_overrides(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return ClearedResult(cleared=await service.clear_subtitle_all(db, user.id))
+
+
+@router.delete("/subtitles", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_subtitle_override(
+    ref: VideoRef = Depends(), user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    await service.clear_subtitle_one(db, user.id, ref.tmdb_id, ref.media_type, ref.season_number, ref.episode_number)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

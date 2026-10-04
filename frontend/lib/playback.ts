@@ -22,6 +22,19 @@ export type VideoSettingsData = {
   muted?: boolean;
   // A language code, or "off" for "captions off for this video".
   subtitle_language?: string;
+  // Per-video subtitle look and timing (see components/player/subtitle-settings.ts).
+  subtitle_offset?: number;
+  subtitle_font_family?: string;
+  subtitle_font_size?: number;
+  subtitle_font_weight?: number;
+  subtitle_color?: string;
+  subtitle_background_color?: string;
+  subtitle_background_opacity?: number;
+  subtitle_outline?: boolean;
+  subtitle_outline_color?: string;
+  subtitle_shadow?: boolean;
+  subtitle_position?: "bottom" | "top";
+  subtitle_align?: "left" | "center" | "right";
 };
 
 // Phase 5b — online subtitle discovery. OnlineSubtitleResult is what
@@ -534,4 +547,47 @@ export function parseResumeHintFromSearchParams(
   const episodeNumber = Number(episode);
   if (!Number.isFinite(seasonNumber) || !Number.isFinite(episodeNumber)) return null;
   return { seasonNumber, episodeNumber };
+}
+
+// --- Review list: videos with their own subtitle settings ---
+
+export type SubtitleOverride = {
+  media_type: "movie" | "tv";
+  tmdb_id: number;
+  season_number: number | null;
+  episode_number: number | null;
+  title: string | null;
+  settings: Record<string, string | number | boolean>;
+  updated_at: string | null;
+};
+
+type VideoRef = { mediaType: "movie" | "tv"; tmdbId: number; seasonNumber?: number | null; episodeNumber?: number | null };
+
+function videoQuery(identity: VideoRef): string {
+  const query = new URLSearchParams({ media_type: identity.mediaType, tmdb_id: String(identity.tmdbId) });
+  if (identity.mediaType === "tv" && identity.seasonNumber != null && identity.episodeNumber != null) {
+    query.set("season_number", String(identity.seasonNumber));
+    query.set("episode_number", String(identity.episodeNumber));
+  }
+  return query.toString();
+}
+
+export async function listSubtitleOverrides(): Promise<SubtitleOverride[]> {
+  const res = await fetch(`${getApiBaseUrl()}/video-settings/subtitles`, { credentials: "include", cache: "no-store" });
+  if (!res.ok) throw new Error("Couldn't load your saved subtitle settings.");
+  return res.json();
+}
+
+export async function clearSubtitleOverride(identity: VideoRef): Promise<void> {
+  const res = await fetch(`${getApiBaseUrl()}/video-settings/subtitles?${videoQuery(identity)}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Couldn't reset that video's subtitles.");
+}
+
+export async function clearAllSubtitleOverrides(): Promise<number> {
+  const res = await fetch(`${getApiBaseUrl()}/video-settings/subtitles/all`, { method: "DELETE", credentials: "include" });
+  if (!res.ok) throw new Error("Couldn't reset the saved subtitle settings.");
+  return (await res.json()).cleared;
 }

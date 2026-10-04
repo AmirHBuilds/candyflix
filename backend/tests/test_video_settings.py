@@ -261,3 +261,93 @@ class TestClearHistory:
                 await _cleanup(db, other_name)
         finally:
             await _cleanup(db, mine)
+
+
+class TestSubtitleOverrides:
+    @pytest.fixture(autouse=True)
+    def no_tmdb(self, monkeypatch):
+        from app.services import tmdb_service
+
+        async def boom(*a, **k):
+            raise RuntimeError("offline")
+
+        monkeypatch.setattr(tmdb_service, "get_movie", boom)
+        monkeypatch.setattr(tmdb_service, "get_tv", boom)
+
+    async def test_style_and_offset_are_stored_per_video_and_validated(self, client, db):
+        _, name = await _login(client, db)
+        try:
+            ok = await client.patch("/api/video-settings", params=EP, json={
+                "subtitle_color": "#FFE066", "subtitle_font_size": 30, "subtitle_offset": -137.5,
+                "subtitle_position": "top", "subtitle_shadow": False,
+            })
+            assert ok.status_code == 200 and ok.json()["subtitle_offset"] == -137.5
+            for bad in ({"subtitle_color": "red"}, {"subtitle_font_size": 5}, {"subtitle_position": "middle"}):
+                assert (await client.patch("/api/video-settings", params=EP, json=bad)).status_code == 422
+            # another episode is untouched
+            assert (await client.get("/api/video-settings", params={**EP, "episode_number": 6})).json() == {}
+        finally:
+            await _cleanup(db, name)
+
+    async def test_changing_a_global_default_clears_that_key_everywhere_but_not_offset_or_language(self, client, db):
+        _, name = await _login(client, db)
+        try:
+            await client.patch("/api/video-settings", params=EP, json={
+                "subtitle_color": "#FFE066", "subtitle_font_size": 30, "subtitle_offset": 2.0, "subtitle_language": "fa", "volume": 0.5,
+            })
+            await client.patch("/api/video-settings", params=MOVIE, json={"subtitle_color": "#8fe3c7"})
+            res = await client.patch("/api/settings", json={"subtitles": {"color": "#ff0000"}})
+            assert res.status_code == 200
+            assert (await client.get("/api/video-settings", params=EP)).json() == {
+                "subtitle_font_size": 30, "subtitle_offset": 2.0, "subtitle_language": "fa", "volume": 0.5,
+            }
+            assert (await client.get("/api/video-settings", params=MOVIE)).json() == {}  # row emptied, so removed
+        finally:
+            await _cleanup(db, name)
+
+    async def test_an_invalid_global_change_clears_nothing(self, client, db):
+        _, name = await _login(client, db)
+        try:
+            await client.patch("/api/video-settings", params=EP, json={"subtitle_color": "#FFE066"})
+            assert (await client.patch("/api/settings", json={"subtitles": {"color": "nope"}})).status_code == 422
+            assert (await client.get("/api/video-settings", params=EP)).json() == {"subtitle_color": "#FFE066"}
+        finally:
+            await _cleanup(db, name)
+
+    async def test_review_list_and_clearing(self, client, db):
+        _, name = await _login(client, db)
+        try:
+            await client.patch("/api/video-settings", params=EP, json={"subtitle_language": "fa", "volume": 0.3})
+            await client.patch("/api/video-settings", params=MOVIE, json={"volume": 0.2})  # no subtitle keys: not listed
+            listed = (await client.get("/api/video-settings/subtitles")).json()
+            assert len(listed) == 1
+            assert listed[0]["tmdb_id"] == 1396 and listed[0]["season_number"] == 2 and listed[0]["episode_number"] == 5
+            assert listed[0]["settings"] == {"subtitle_language": "fa"} and listed[0]["title"] is None
+
+            assert (await client.delete("/api/video-settings/subtitles", params=EP)).status_code == 204
+            assert (await client.get("/api/video-settings", params=EP)).json() == {"volume": 0.3}  # volume kept
+            assert (await client.get("/api/video-settings/subtitles")).json() == []
+        finally:
+            await _cleanup(db, name)
+
+    async def test_clear_all_and_privacy(self, client, db):
+        _, a = await _login(client, db)
+        try:
+            await client.patch("/api/video-settings", params=EP, json={"subtitle_color": "#FFE066"})
+            await client.patch("/api/video-settings", params=MOVIE, json={"subtitle_offset": 1})
+            client.cookies.clear()
+            _, b = await _login(client, db)
+            try:
+                assert (await client.get("/api/video-settings/subtitles")).json() == []
+                assert (await client.delete("/api/video-settings/subtitles/all")).json() == {"cleared": 0}
+            finally:
+                await _cleanup(db, b)
+            client.cookies.clear()
+            await client.post("/api/auth/login", json={"username": a, "password": "password123"})
+            assert (await client.delete("/api/video-settings/subtitles/all")).json() == {"cleared": 2}
+        finally:
+            await _cleanup(db, a)
+
+    async def test_review_endpoints_require_login(self, client):
+        assert (await client.get("/api/video-settings/subtitles")).status_code == 401
+        assert (await client.delete("/api/video-settings/subtitles/all")).status_code == 401

@@ -300,3 +300,52 @@ describe("Subtitles on start", () => {
     expect(playback.patchVideoSettings).toHaveBeenLastCalledWith(identity, { subtitle_language: "off" });
   });
 });
+
+describe("Subtitle look and language are per video", () => {
+  const fa = { language: "fa", label: "Persian", url: "/subtitle-cache/fa.vtt", format: "vtt" as const };
+  const vtt = "WEBVTT\n\n00:00:00.000 --> 00:00:50.000\nHello there";
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => vtt }));
+  });
+
+  function mountStyled(globalOver: Partial<Settings["subtitles"]>, video_settings: PlaybackSource["video_settings"] = {}) {
+    return render(
+      <SettingsProvider initial={{ ...DEFAULT_SETTINGS, subtitles: { ...DEFAULT_SETTINGS.subtitles, ...globalOver } }}>
+        <VideoPlayer source={source({ subtitles: [fa], video_settings: { subtitle_language: "fa", ...video_settings } })} title="t" identity={identity} backHref="/" nextEpisode={null} />
+      </SettingsProvider>
+    );
+  }
+
+  it("a language picked in one video does not carry over to the next one", () => {
+    const first = mount({ source: { subtitles: [fa] } });
+    fireEvent.click(screen.getByLabelText("Turn on subtitles"));
+    expect(screen.getByLabelText("Turn off subtitles")).toBeInTheDocument();
+    first.unmount();
+    mount({ source: { subtitles: [fa] } });
+    expect(screen.getByLabelText("Turn on subtitles")).toBeInTheDocument();
+    expect(window.localStorage.getItem("candyflix:player-preferences") ?? "").not.toContain("subtitleLanguage\":\"fa");
+  });
+
+  it("uses the colour and size from Settings → Subtitles", async () => {
+    mountStyled({ color: "#ff0000", font_size: 30 });
+    const text = await screen.findByText("Hello there");
+    expect(text).toHaveStyle({ color: "rgb(255, 0, 0)", fontSize: "30px" });
+  });
+
+  it("this video's own colour wins over the default, with the rest still from the default", async () => {
+    mountStyled({ color: "#ff0000", font_size: 30 }, { subtitle_color: "#00ff00" });
+    const text = await screen.findByText("Hello there");
+    expect(text).toHaveStyle({ color: "rgb(0, 255, 0)", fontSize: "30px" });
+  });
+
+  it("per-video values are ignored when 'Remember settings per video' is off", async () => {
+    render(
+      <SettingsProvider initial={{ ...DEFAULT_SETTINGS, playback: { ...DEFAULT_SETTINGS.playback, remember_per_video: false, auto_subtitles: { enabled: true, language: "fa", fallback_language: null } } }}>
+        <VideoPlayer source={source({ subtitles: [fa], video_settings: { subtitle_color: "#00ff00" } })} title="t" identity={identity} backHref="/" nextEpisode={null} />
+      </SettingsProvider>
+    );
+    const text = await screen.findByText("Hello there");
+    expect(text).toHaveStyle({ color: "rgb(255, 255, 255)" });
+  });
+});

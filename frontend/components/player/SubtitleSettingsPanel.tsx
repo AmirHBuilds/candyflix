@@ -16,15 +16,15 @@ const selectClass =
   "w-full appearance-none rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-white outline-none focus:border-accent/60";
 const rangeClass = "w-full accent-accent";
 
-const TEXT_COLOR_PRESETS = ["#ffffff", "#FFE066", "#8fe3c7", "#c9a6ff", "#FF5FA2"];
-const BG_COLOR_PRESETS = ["#000000", "#0b0b12", "#2b2b2b", "#ffffff"];
+export const TEXT_COLOR_PRESETS = ["#ffffff", "#FFE066", "#8fe3c7", "#c9a6ff", "#FF5FA2"];
+export const BG_COLOR_PRESETS = ["#000000", "#0b0b12", "#2b2b2b", "#ffffff"];
 
 // A small round swatch picker: a handful of one-click presets, plus a
 // dashed "custom" swatch that hides a native color input underneath it —
 // looks like a normal swatch button, but tapping it opens the OS color
 // picker. Keeps the common cases one tap away without the raw <input
 // type="color"> browser chrome sitting in the layout.
-function ColorSwatchRow({
+export function ColorSwatchRow({
   value,
   onChange,
   presets,
@@ -188,6 +188,8 @@ export default function SubtitleSettingsPanel({
   onChange,
   identity,
   onTrackAdded,
+  hasOverrides = false,
+  onResetToDefaults,
 }: {
   tracks: SubtitleTrack[];
   selectedLanguage: string | null;
@@ -196,6 +198,9 @@ export default function SubtitleSettingsPanel({
   onChange: (settings: SubtitleSettings) => void;
   identity: WatchIdentity;
   onTrackAdded: (track: SubtitleTrack) => void;
+  /** This video has its own look/timing saved. */
+  hasOverrides?: boolean;
+  onResetToDefaults?: () => void;
 }) {
   const availableLanguages = useAvailableLanguages(identity);
   const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
@@ -595,6 +600,22 @@ export default function SubtitleSettingsPanel({
             <span className={labelClass}>Timing offset</span>
             <OffsetStepper value={settings.offsetSeconds} onChange={(v) => set("offsetSeconds", v)} />
           </div>
+
+          <div className="h-px bg-white/10" />
+
+          <p className="text-[11px] leading-snug text-white/40">
+            Changes here apply to this video only. Your defaults for every video are in Settings → Subtitles.
+          </p>
+          {onResetToDefaults && (
+            <button
+              type="button"
+              onClick={onResetToDefaults}
+              disabled={!hasOverrides}
+              className="rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white/80 transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Reset this video to my defaults
+            </button>
+          )}
         </div>
       )}
     </div>

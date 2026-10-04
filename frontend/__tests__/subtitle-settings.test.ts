@@ -1,67 +1,55 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   DEFAULT_SUBTITLE_SETTINGS,
   formatOffset,
   formatOffsetForEditing,
-  loadSubtitleSettings,
   parseOffsetInput,
-  saveSubtitleSettings,
   stepOffsetSeconds,
 } from "@/components/player/subtitle-settings";
 
-beforeEach(() => {
-  window.localStorage.clear();
-});
+import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { fromGlobalStyle, overridePatch, resolveSubtitleSettings } from "@/components/player/subtitle-settings";
 
-describe("subtitle settings persistence", () => {
-  it("returns defaults when nothing is saved", () => {
-    expect(loadSubtitleSettings()).toEqual(DEFAULT_SUBTITLE_SETTINGS);
+const G = DEFAULT_SETTINGS.subtitles;
+
+describe("global defaults and per-video overrides", () => {
+  it("the defaults file matches the player's built-in defaults, with offset 0", () => {
+    expect(fromGlobalStyle(G)).toEqual(DEFAULT_SUBTITLE_SETTINGS);
   });
 
-  it("round-trips a saved settings object", () => {
-    const custom = { ...DEFAULT_SUBTITLE_SETTINGS, fontSize: 30, color: "#ff0000" };
-    saveSubtitleSettings(custom);
-
-    expect(loadSubtitleSettings()).toEqual(custom);
+  it("uses the person's global style", () => {
+    const s = fromGlobalStyle({ ...G, color: "#ff0000", font_size: 30, background_opacity: 0.2 });
+    expect(s).toMatchObject({ color: "#ff0000", fontSize: 30, backgroundOpacity: 0.2, offsetSeconds: 0 });
   });
 
-  it("merges partial/older saved data with current defaults (forward compatibility)", () => {
-    window.localStorage.setItem("candyflix:subtitle-settings", JSON.stringify({ fontSize: 18 }));
-
-    const loaded = loadSubtitleSettings();
-    expect(loaded.fontSize).toBe(18);
-    expect(loaded.color).toBe(DEFAULT_SUBTITLE_SETTINGS.color);
+  it("lays this video's own values over the defaults, and nothing else changes", () => {
+    const s = resolveSubtitleSettings({ ...G, color: "#ff0000" }, { subtitle_font_size: 40, subtitle_offset: -3.5, volume: 0.2 });
+    expect(s.fontSize).toBe(40);
+    expect(s.offsetSeconds).toBe(-3.5);
+    expect(s.color).toBe("#ff0000"); // global
   });
 
-  it("falls back to defaults on corrupted JSON instead of throwing", () => {
-    window.localStorage.setItem("candyflix:subtitle-settings", "{not valid json");
+  it("ignores junk per-video values", () => {
+    const s = resolveSubtitleSettings(G, { subtitle_offset: "x", subtitle_color: null });
+    expect(s).toEqual(DEFAULT_SUBTITLE_SETTINGS);
+  });
 
-    expect(() => loadSubtitleSettings()).not.toThrow();
-    expect(loadSubtitleSettings()).toEqual(DEFAULT_SUBTITLE_SETTINGS);
+  it("saves only what changed, under the per-video key names", () => {
+    const next = { ...DEFAULT_SUBTITLE_SETTINGS, fontSize: 30, offsetSeconds: 1.5, shadow: false };
+    expect(overridePatch(DEFAULT_SUBTITLE_SETTINGS, next)).toEqual({ subtitle_font_size: 30, subtitle_offset: 1.5, subtitle_shadow: false });
+    expect(overridePatch(next, next)).toEqual({});
+  });
+
+  it("never reads or writes a shared browser-wide copy", () => {
+    window.localStorage.setItem("candyflix:subtitle-settings", JSON.stringify({ fontSize: 50 }));
+    expect(fromGlobalStyle(G).fontSize).toBe(22);
   });
 });
 
 describe("subtitle offset — no limits", () => {
-  it("never shares a timing offset between videos (not saved to the global blob)", () => {
-    saveSubtitleSettings({ ...DEFAULT_SUBTITLE_SETTINGS, offsetSeconds: 137.4, fontSize: 30 });
-    const loaded = loadSubtitleSettings();
-    expect(loaded.offsetSeconds).toBe(0);
-    expect(loaded.fontSize).toBe(30);
-  });
-
   it("steps past the old ±10s bounds without clamping", () => {
     expect(stepOffsetSeconds(10, 100)).toBe(10.1);
     expect(stepOffsetSeconds(-10, -100)).toBe(-10.1);
-  });
-
-  it("refuses a non-numeric stored offset (falls back to 0) but keeps the rest", () => {
-    window.localStorage.setItem(
-      "candyflix:subtitle-settings",
-      JSON.stringify({ fontSize: 18, offsetSeconds: "abc" })
-    );
-    const loaded = loadSubtitleSettings();
-    expect(loaded.offsetSeconds).toBe(0);
-    expect(loaded.fontSize).toBe(18);
   });
 });
 
