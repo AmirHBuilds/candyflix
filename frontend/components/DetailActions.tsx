@@ -129,7 +129,7 @@ export default function DetailActions({
       <div className={GRID_BY_LABEL[labelSize]}>
         <a
           href={watchHref}
-          className={`${BUTTON_BASE} bg-[#FF5FA2] text-[#0b0b12] hover:bg-[#FF5FA2]/90 ${
+          className={`${BUTTON_BASE} bg-accent text-on-accent hover:bg-accent/90 ${
             resumeLabel ? "pr-[calc(var(--pad)_-_0.5rem)]" : ""
           }`}
         >
@@ -143,7 +143,7 @@ export default function DetailActions({
               relative to the font (em) so it can't make the button
               taller than the fixed h-12. */}
           {resumeLabel && (
-            <span className="rounded-md bg-[#0b0b12] px-2 py-1 text-[0.8em] font-semibold leading-none text-white">
+            <span className="rounded-md bg-canvas px-2 py-1 text-[0.8em] font-semibold leading-none text-white">
               {resumeLabel}
             </span>
           )}
@@ -154,7 +154,7 @@ export default function DetailActions({
           aria-pressed={inCandyBox === true}
           className={`${BUTTON_BASE} border transition-colors disabled:cursor-not-allowed ${
             inCandyBox
-              ? "border-[#FF5FA2] bg-[#FF5FA2]/10 text-[#FF5FA2] hover:bg-[#FF5FA2]/20 disabled:opacity-70"
+              ? "border-accent bg-accent/10 text-accent hover:bg-accent/20 disabled:opacity-70"
               : "border-white/15 text-white/80 hover:border-white/30 hover:text-white disabled:opacity-50"
           }`}
         >

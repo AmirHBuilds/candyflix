@@ -1,0 +1,46 @@
+{
+  "appearance": {
+    "theme": "candy-at-night",
+    "home_layout": "grid",
+    "items_per_section": 24,
+    "episode_view": "list",
+    "description_length": "standard",
+    "text_size": "default",
+    "reduce_motion": "auto",
+    "hero_enabled": true,
+    "hero_interval_seconds": 7,
+    "show_ratings": true,
+    "show_years": true
+  },
+  "playback": {
+    "autoplay_next": true,
+    "autoplay_on_open": true,
+    "auto_skip_intro": false,
+    "skip_buttons": {
+      "intro": true,
+      "recap": true,
+      "credits": true
+    },
+    "seek_seconds": 10,
+    "auto_subtitles": {
+      "enabled": false,
+      "language": "en",
+      "fallback_language": null
+    },
+    "save_progress": true,
+    "remember_per_video": true
+  },
+  "subtitles": {
+    "font_family": "Inter, system-ui, sans-serif",
+    "font_size": 22,
+    "font_weight": 500,
+    "color": "#ffffff",
+    "background_color": "#000000",
+    "background_opacity": 0.6,
+    "outline": true,
+    "outline_color": "#000000",
+    "shadow": true,
+    "position": "bottom",
+    "align": "center"
+  }
+}

@@ -1,10 +1,80 @@
 @import "tailwindcss";
 
+/* ---- Colour tokens ----
+   Every colour in the app comes from these (Tailwind turns each into
+   background, text and border utilities such as bg-canvas and text-accent). A theme
+   is just a different set of values, applied by <html data-theme="...">;
+   "Candy at Night" is the default and needs no attribute. The values are
+   mirrored in lib/themes.ts for the picker's swatches — a test keeps the
+   two in sync. White/black overlays (text-white/60, bg-black/70) are
+   deliberately NOT tokens: they work on every dark palette. */
+@theme {
+  --color-canvas: #0b0b12; /* page background */
+  --color-surface: #14141f; /* menus, dialogs, toasts */
+  --color-surface-deep: #0e0e17; /* the search overlay */
+  --color-accent: #ff5fa2; /* buttons, active states, links */
+  --color-accent-hover: #ff85b8;
+  --color-on-accent: #0b0b12; /* text/icons sitting on the accent */
+  --color-secondary: #c9a6ff;
+  --color-highlight: #8fe3c7; /* ratings, "watched", success */
+}
+
+html[data-theme="midnight"] {
+  --color-canvas: #080d1a;
+  --color-surface: #111b33;
+  --color-surface-deep: #0b1224;
+  --color-accent: #5b9dff;
+  --color-accent-hover: #8dbbff;
+  --color-on-accent: #06101f;
+  --color-secondary: #a5b4ff;
+  --color-highlight: #7ee0e8;
+}
+
+html[data-theme="mint"] {
+  --color-canvas: #08120f;
+  --color-surface: #10211b;
+  --color-surface-deep: #0a1713;
+  --color-accent: #3ddc97;
+  --color-accent-hover: #6febb5;
+  --color-on-accent: #05130d;
+  --color-secondary: #9ed8ff;
+  --color-highlight: #f5d76e;
+}
+
+html[data-theme="lilac"] {
+  --color-canvas: #0e0a17;
+  --color-surface: #1a1328;
+  --color-surface-deep: #130e1f;
+  --color-accent: #b58cff;
+  --color-accent-hover: #cdaeff;
+  --color-on-accent: #120a1f;
+  --color-secondary: #ff9ed2;
+  --color-highlight: #8fe3c7;
+}
+
+html[data-theme="sunset"] {
+  --color-canvas: #140a0a;
+  --color-surface: #23140f;
+  --color-surface-deep: #1a0e0b;
+  --color-accent: #ff8a3d;
+  --color-accent-hover: #ffaa6e;
+  --color-on-accent: #1a0c04;
+  --color-secondary: #ff6b7a;
+  --color-highlight: #ffd166;
+}
+
+html[data-theme="mono"] {
+  --color-canvas: #000000;
+  --color-surface: #141414;
+  --color-surface-deep: #0a0a0a;
+  --color-accent: #ffffff;
+  --color-accent-hover: #d4d4d4;
+  --color-on-accent: #000000;
+  --color-secondary: #bdbdbd;
+  --color-highlight: #e5e5e5;
+}
+
 :root {
-  --color-candy-bg: #0b0b12;
-  --color-candy-raspberry: #ff5fa2;
-  --color-candy-lilac: #c9a6ff;
-  --color-candy-mint: #8fe3c7;
   /* Tells the browser to render native form controls (select dropdowns,
      checkboxes, etc.) with a dark-appropriate palette. Without this, an
      open <select>'s options list uses the browser's default light
@@ -13,8 +83,17 @@
   color-scheme: dark;
 }
 
+/* Text size setting: everything is sized in rem, so scaling the root
+   scales the whole interface (and the layout adapts to it). */
+html[data-text-size="small"] {
+  font-size: 90%;
+}
+html[data-text-size="large"] {
+  font-size: 112.5%;
+}
+
 body {
-  background: var(--color-candy-bg);
+  background: var(--color-canvas);
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
@@ -28,7 +107,7 @@ select {
 }
 
 select option {
-  background-color: #15151f;
+  background-color: var(--color-surface);
   color: #ffffff;
 }
 /* Hide scrollbar on the horizontal trending row while keeping it scrollable */
@@ -129,20 +208,31 @@ select option {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out both;
-  }
+/* "Reduce motion" setting (Appearance): auto follows the device, on
+   always calms things, off keeps animations even if the device asks to
+   reduce them. The entrance animations are the default; the calming
+   block removes them (and shortens every other transition). */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
 
-  .animate-fade-up {
-    animation: fadeUp 0.35s ease-out both;
-  }
+.animate-fade-up {
+  animation: fadeUp 0.35s ease-out both;
+}
+
+html[data-motion="on"] *,
+html[data-motion="on"] *::before,
+html[data-motion="on"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html:not([data-motion="off"]) *,
+  html:not([data-motion="off"]) *::before,
+  html:not([data-motion="off"]) *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

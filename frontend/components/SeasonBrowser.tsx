@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { getSeason, stillUrl, type SeasonSummary, type Episode } from "@/lib/media";
 import { getSeasonWatchProgress, navigateWithResumeHint, type WatchProgress } from "@/lib/playback";
+import { useSettings } from "@/components/SettingsProvider";
 import ErrorState from "@/components/ErrorState";
 import { EpisodeListSkeleton } from "@/components/Skeleton";
 
@@ -48,6 +49,7 @@ export default function SeasonBrowser({
   // same race the hint already closes for the resume point itself.
   recentVisit?: { seasonNumber: number; episodeNumber: number } | null;
 }) {
+  const { episode_view: episodeView, description_length: descriptionLength } = useSettings().settings.appearance;
   const [selected, setSelected] = useState<number | null>(initialSeason ?? seasons[0]?.season_number ?? null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -201,7 +203,7 @@ export default function SeasonBrowser({
             onClick={() => setSelected(season.season_number)}
             className={
               selected === season.season_number
-                ? "rounded-full bg-[#FF5FA2] px-4 py-1.5 text-sm font-medium text-[#0B0B12]"
+                ? "rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-on-accent"
                 : "rounded-full border border-white/15 px-4 py-1.5 text-sm text-white/60 hover:text-white/90"
             }
           >
@@ -216,7 +218,15 @@ export default function SeasonBrowser({
       )}
 
       {!loading && !error && (
-        <ul className="flex flex-col divide-y divide-white/10">
+        <ul
+          className={
+            episodeView === "blocks"
+              ? // Adaptive columns: one on a phone, two on a small tablet,
+                // three or four on a desktop — whatever fits at 15rem each.
+                "grid grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-2"
+              : "flex flex-col divide-y divide-white/10"
+          }
+        >
           {episodes.map((episode) => {
             const still = stillUrl(episode.still_path);
             const isNowPlaying = selected === initialSeason && episode.episode_number === currentEpisode;
@@ -238,9 +248,45 @@ export default function SeasonBrowser({
             // distinct mint color there instead, plus its own label.
             let nameClass = "text-white/90 group-hover:text-white";
             if (isNowPlaying) {
-              nameClass = "font-medium text-[#FF5FA2]";
+              nameClass = "font-medium text-accent";
             } else if (isResumePoint) {
-              nameClass = isPlayerContext ? "font-medium text-[#8FE3C7]" : "font-medium text-[#FF5FA2]";
+              nameClass = isPlayerContext ? "font-medium text-highlight" : "font-medium text-accent";
+            }
+
+            if (episodeView === "blocks") {
+              return (
+                <li key={episode.episode_number}>
+                  <a
+                    href={`/watch/tv/${tvId}/${selected}/${episode.episode_number}`}
+                    onClick={(e) =>
+                      handleEpisodeClick(e, `/watch/tv/${tvId}/${selected}/${episode.episode_number}`)
+                    }
+                    title={episode.overview || episode.name}
+                    className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border px-3 py-2.5 transition-colors ${
+                      isHighlighted
+                        ? "border-accent/40 bg-white/10"
+                        : "border-white/10 bg-white/[0.04] hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 px-1 text-sm font-semibold tabular-nums text-white/80">
+                      {episode.episode_number}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm ${nameClass}`}>{episode.name}</p>
+                      {(isNowPlaying || (isResumePoint && isPlayerContext) || isSecondary) && (
+                        <p className="truncate text-xs text-white/50">
+                          {isNowPlaying ? "Now playing" : isSecondary ? "In progress" : "Last watched"}
+                        </p>
+                      )}
+                    </div>
+                    {isSecondary && secondary && (
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-black/50">
+                        <div className="h-full bg-accent" style={{ width: `${Math.round(secondary.fraction * 100)}%` }} />
+                      </div>
+                    )}
+                  </a>
+                </li>
+              );
             }
 
             return (
@@ -254,7 +300,7 @@ export default function SeasonBrowser({
                 >
                   <div
                     className={`relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-lg bg-white/5 ${
-                      isSecondary ? "ring-1 ring-[#FF5FA2]/50" : ""
+                      isSecondary ? "ring-1 ring-accent/50" : ""
                     }`}
                   >
                     {still && (
@@ -274,7 +320,7 @@ export default function SeasonBrowser({
                     {isSecondary && secondary && (
                       <div className="absolute inset-x-0 bottom-0 h-1 bg-black/50">
                         <div
-                          className="h-full bg-[#FF5FA2]"
+                          className="h-full bg-accent"
                           style={{ width: `${Math.round(secondary.fraction * 100)}%` }}
                         />
                       </div>
@@ -288,10 +334,16 @@ export default function SeasonBrowser({
                         <span className="ml-2 text-xs font-normal text-white/50">Last watched</span>
                       )}
                       {isSecondary && (
-                        <span className="ml-2 text-xs font-normal text-[#FF5FA2]/80">In progress</span>
+                        <span className="ml-2 text-xs font-normal text-accent/80">In progress</span>
                       )}
                     </p>
-                    <p className="mt-1 line-clamp-2 text-sm text-white/50">{episode.overview}</p>
+                    <p
+                      className={`mt-1 text-sm text-white/50 ${
+                        descriptionLength === "short" ? "line-clamp-1" : descriptionLength === "full" ? "" : "line-clamp-2"
+                      }`}
+                    >
+                      {episode.overview}
+                    </p>
                   </div>
                 </a>
               </li>

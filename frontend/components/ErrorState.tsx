@@ -57,7 +57,7 @@ export default function ErrorState({
       role="alert"
       className={`animate-fade-up flex flex-col items-center gap-4 text-center ${compact ? "py-10" : "py-20"}`}
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FF5FA2]/10 text-[#FF5FA2]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent">
         <svg
           width="26"
           height="26"

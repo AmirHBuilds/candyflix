@@ -1,9 +1,9 @@
 """
 Authentication routes.
 
-No signup, no OAuth, no email verification, no password reset, no 2FA.
-Users are provisioned only via the seed script (see app/cli.py). This
-is a small, private, invite-only app.
+No public signup, no OAuth, no email verification. People are created by
+an admin (or the CLI in app/cli.py) — this is a small, private,
+invite-only app.
 """
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,13 +12,13 @@ from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME, session_cookie_kwargs
 from app.models.user import User
-from app.schemas.auth import LoginRequest, UserPublic
+from app.schemas.auth import LoginRequest, ProfileEntry, UserPublic
 from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.get("/users", response_model=list[UserPublic])
+@router.get("/users", response_model=list[ProfileEntry])
 async def list_users(db: AsyncSession = Depends(get_db)):
     """
     Powers the 'Who's watching?' screen — a public list of profile
@@ -41,6 +41,15 @@ async def login(
             detail="Incorrect username or password",
         )
 
+    # Only said after the password was right, so guessing can't be used
+    # to discover which accounts exist or are switched off.
+    if user.is_disabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account has been disabled. Please ask an admin.",
+        )
+
+    await auth_service.record_login(db, user)
     token = await auth_service.create_session(user.id)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,

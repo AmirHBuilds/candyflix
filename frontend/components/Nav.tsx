@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getCurrentUser, type UserPublic } from "@/lib/auth";
+import Avatar from "@/components/Avatar";
+import { getCurrentUser, onUserChanged, type UserPublic } from "@/lib/auth";
 import LogoutButton from "@/components/LogoutButton";
+import UserMenu from "@/components/UserMenu";
 import NavSearch from "@/components/NavSearch";
 
 const LINKS = [
@@ -54,9 +56,13 @@ export default function Nav() {
   const showSearchRow = !isPlayerPage || playerSearchOpen;
 
   useEffect(() => {
-    getCurrentUser()
-      .then(setUser)
-      .catch(() => setUser(null));
+    const load = () =>
+      getCurrentUser()
+        .then(setUser)
+        .catch(() => setUser(null));
+    load();
+    // Changing your name or picture on the account page updates the header.
+    return onUserChanged(load);
   }, []);
 
   // Close the mobile menu and the player's search box whenever the
@@ -67,7 +73,7 @@ export default function Nav() {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0B0B12]/95 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-canvas/95 backdrop-blur">
       <div className="flex items-center gap-4 px-6 py-4 sm:px-10">
         <Link href="/" className="text-lg font-semibold tracking-tight">
           🍬 CandyFlix
@@ -94,9 +100,8 @@ export default function Nav() {
           )}
 
           {user && (
-            <div className="hidden items-center gap-3 text-sm text-white/60 sm:flex">
-              <span>{user.display_name}</span>
-              <LogoutButton />
+            <div className="hidden sm:block">
+              <UserMenu user={user} />
             </div>
           )}
 
@@ -130,9 +135,26 @@ export default function Nav() {
             );
           })}
           {user && (
-            <div className="flex items-center justify-between border-t border-white/10 px-6 py-4 text-sm text-white/60">
-              <span>{user.display_name}</span>
-              <LogoutButton />
+            <div className="border-t border-white/10">
+              <div className="flex items-center gap-3 px-6 pb-1 pt-4">
+                <Avatar name={user.display_name} src={user.avatar_url} size={28} />
+                <p className="text-sm text-white/40">{user.display_name}</p>
+              </div>
+              <Link
+                href="/settings"
+                className={`block px-6 py-4 text-base ${pathname.startsWith("/settings") ? "text-white" : "text-white/60"}`}
+              >
+                Settings
+              </Link>
+              {user.is_admin && (
+                <Link
+                  href="/admin"
+                  className={`block px-6 py-4 text-base ${pathname.startsWith("/admin") ? "text-white" : "text-white/60"}`}
+                >
+                  Admin panel
+                </Link>
+              )}
+              <LogoutButton className="block w-full px-6 py-4 text-left text-base text-white/60 disabled:opacity-40" />
             </div>
           )}
         </nav>

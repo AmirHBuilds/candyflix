@@ -100,6 +100,7 @@ def _to_media_item_typed(raw: dict, media_type: str) -> MediaItem:
         poster_path=raw.get("poster_path"),
         backdrop_path=raw.get("backdrop_path"),
         rating=raw.get("vote_average"),
+        overview=(raw.get("overview") or "").strip() or None,
     )
 
 

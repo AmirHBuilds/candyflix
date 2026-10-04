@@ -61,8 +61,10 @@ candyflix/
    ```
    docker compose up --build
    ```
-   (The backend container applies database migrations automatically
-   on startup — no manual `alembic upgrade head` step needed here.)
+   (Database migrations are applied automatically: the container's
+   entrypoint runs `alembic upgrade head`, and the app itself does the
+   same when it starts — so even a hot reload picks up new migrations.
+   You never type it. Set `AUTO_MIGRATE=false` to turn the in-app step off.)
 3. Visit:
    - Frontend: http://localhost:3000
    - Backend: http://localhost:8000/api
@@ -104,6 +106,17 @@ docker compose exec backend python -m app.cli create-user candy "Candy"
 docker compose exec backend python -m app.cli create-user mom "Mom"
 docker compose exec backend python -m app.cli create-user sister "Sister"
 ```
+
+Add `--admin` to make someone an admin right away, or change it later:
+```
+docker compose exec backend python -m app.cli create-user dad "Dad" --admin
+docker compose exec backend python -m app.cli set-admin mom            # promote
+docker compose exec backend python -m app.cli set-admin mom --revoke   # demote
+```
+Admins also get an **Admin panel** (from the name menu) for adding users,
+resetting passwords, disabling/deleting accounts, a usage dashboard and
+system health. Everyone can change their profile picture, display name and
+password in Settings → Account.
 
 List existing users:
 ```

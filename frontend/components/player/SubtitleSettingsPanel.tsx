@@ -13,8 +13,8 @@ import {
 
 const labelClass = "text-[11px] font-medium uppercase tracking-wider text-white/40";
 const selectClass =
-  "w-full appearance-none rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-white outline-none focus:border-[#FF5FA2]/60";
-const rangeClass = "w-full accent-[#FF5FA2]";
+  "w-full appearance-none rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-white outline-none focus:border-accent/60";
+const rangeClass = "w-full accent-accent";
 
 const TEXT_COLOR_PRESETS = ["#ffffff", "#FFE066", "#8fe3c7", "#c9a6ff", "#FF5FA2"];
 const BG_COLOR_PRESETS = ["#000000", "#0b0b12", "#2b2b2b", "#ffffff"];
@@ -44,7 +44,7 @@ function ColorSwatchRow({
           onClick={() => onChange(c)}
           className={`h-7 w-7 shrink-0 rounded-full border-2 transition-all hover:scale-110 ${
             !isCustom && value.toLowerCase() === c.toLowerCase()
-              ? "border-[#FF5FA2] scale-110"
+              ? "border-accent scale-110"
               : "border-white/15"
           }`}
           style={{ backgroundColor: c }}
@@ -52,7 +52,7 @@ function ColorSwatchRow({
       ))}
       <label
         className={`relative flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 text-[13px] leading-none transition-all hover:scale-110 ${
-          isCustom ? "border-[#FF5FA2] scale-110 text-white" : "border-dashed border-white/25 text-white/50 hover:text-white/80"
+          isCustom ? "border-accent scale-110 text-white" : "border-dashed border-white/25 text-white/50 hover:text-white/80"
         }`}
         style={isCustom ? { backgroundColor: value } : undefined}
         title="Custom color"
@@ -90,7 +90,7 @@ function SegmentedControl<T extends string>({
           type="button"
           onClick={() => onChange(o.value)}
           className={`min-w-0 flex-1 truncate rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors ${
-            value === o.value ? "bg-[#FF5FA2] text-[#0b0b12]" : "text-white/60 hover:text-white"
+            value === o.value ? "bg-accent text-on-accent" : "text-white/60 hover:text-white"
           }`}
         >
           {o.label}
@@ -120,7 +120,7 @@ function Toggle({
       <span className="text-xs font-medium text-white/70">{label}</span>
       <span
         className={`relative inline-flex h-4 w-7 shrink-0 rounded-full transition-colors ${
-          checked ? "bg-[#FF5FA2]" : "bg-white/20"
+          checked ? "bg-accent" : "bg-white/20"
         }`}
       >
         <span
@@ -351,7 +351,7 @@ export default function SubtitleSettingsPanel({
   }
 
   return (
-    <div className="w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b12]/95 shadow-2xl backdrop-blur">
+    <div className="w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur">
       <div className="flex flex-col gap-1.5 border-b border-white/10 p-4">
         <span className={labelClass}>Subtitles</span>
         <select
@@ -392,7 +392,7 @@ export default function SubtitleSettingsPanel({
                 type="button"
                 onClick={runBrowse}
                 disabled={browsing}
-                className="shrink-0 rounded-lg bg-[#FF5FA2] px-3 text-sm font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
+                className="shrink-0 rounded-lg bg-accent px-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-50"
               >
                 {browsing ? "…" : "Search"}
               </button>
@@ -443,7 +443,7 @@ export default function SubtitleSettingsPanel({
                       type="button"
                       onClick={() => useBrowseResult(r)}
                       disabled={browseDownloadingId !== null}
-                      className="shrink-0 rounded-full bg-[#FF5FA2] px-2.5 py-1 text-[11px] font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8] disabled:opacity-50"
+                      className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-50"
                     >
                       {browseDownloadingId === r.file_id ? "Adding…" : "Use"}
                     </button>

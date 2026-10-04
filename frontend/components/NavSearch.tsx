@@ -75,11 +75,11 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
         // Below `sm` the box is edge to edge (see Nav), so square
         // corners and no side borders — a rounded, bordered pill would
         // look clipped against the screen edges.
-        className="w-full rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-white placeholder-white/30 outline-none focus:border-[#FF5FA2]/60 max-sm:rounded-none max-sm:border-x-0"
+        className="w-full rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-white placeholder-white/30 outline-none focus:border-accent/60 max-sm:rounded-none max-sm:border-x-0"
       />
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-3 max-h-[80dvh] overflow-y-auto rounded-2xl border border-white/10 max-sm:rounded-none max-sm:border-x-0 bg-[#0E0E17]/98 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
+        <div className="absolute left-0 right-0 top-full z-30 mt-3 max-h-[80dvh] overflow-y-auto rounded-2xl border border-white/10 max-sm:rounded-none max-sm:border-x-0 bg-surface-deep/98 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
           {/* Placeholder cards while the first results load; on later
               keystrokes the previous results stay put (see
               useDebouncedSearch) and a quiet line says it's refreshing. */}
@@ -93,7 +93,7 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
           )}
 
           {!loading && error && (
-            <p className="py-6 text-center text-[#FF5FA2]">{error}</p>
+            <p className="py-6 text-center text-accent">{error}</p>
           )}
 
           {!loading && !error && visible.length === 0 && (
@@ -109,7 +109,7 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
                 <button
                   type="button"
                   onClick={goToFullSearch}
-                  className="mt-5 w-full rounded-xl border border-white/10 py-3 text-center text-sm font-medium text-[#FF5FA2] hover:bg-white/5"
+                  className="mt-5 w-full rounded-xl border border-white/10 py-3 text-center text-sm font-medium text-accent hover:bg-white/5"
                 >
                   See all results for &quot;{trimmed}&quot;
                 </button>

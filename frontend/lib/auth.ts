@@ -9,11 +9,26 @@
 import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 
 export type UserPublic = {
+  is_admin?: boolean; // only on the signed-in person's own record (/auth/me, login)
   id: string;
   username: string;
   display_name: string;
+  avatar_url?: string | null; // a path like /avatars/<file>.webp, served by the backend
   created_at: string;
 };
+
+// Account changes (name, picture) happen on a page far from the header, so
+// they announce themselves and the header re-reads the person.
+const USER_CHANGED = "candyflix:user-changed";
+
+export function notifyUserChanged(): void {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(USER_CHANGED));
+}
+
+export function onUserChanged(listener: () => void): () => void {
+  window.addEventListener(USER_CHANGED, listener);
+  return () => window.removeEventListener(USER_CHANGED, listener);
+}
 
 export async function listUsers(): Promise<UserPublic[]> {
   const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/users`, {

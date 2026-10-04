@@ -21,7 +21,7 @@ const RATING_OPTIONS: { value: number | undefined; label: string }[] = [
 ];
 
 const selectClass =
-  "w-full appearance-none rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white outline-none focus:border-[#FF5FA2]/60";
+  "w-full appearance-none rounded-xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white outline-none focus:border-accent/60";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -79,7 +79,7 @@ export default function AdvancedSearchPanel({
             height="16"
             viewBox="0 0 16 16"
             fill="none"
-            className="text-[#C9A6FF]"
+            className="text-secondary"
             aria-hidden="true"
           >
             <path
@@ -91,7 +91,7 @@ export default function AdvancedSearchPanel({
           </svg>
           Advanced Search
           {hasActiveFilters && (
-            <span className="rounded-full bg-[#FF5FA2]/20 px-2 py-0.5 text-xs font-medium text-[#FF5FA2]">
+            <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">
               Active
             </span>
           )}
@@ -172,7 +172,7 @@ export default function AdvancedSearchPanel({
             <button
               type="button"
               onClick={handleApply}
-              className="rounded-xl bg-[#FF5FA2] px-5 py-2.5 text-sm font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+              className="rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-on-accent hover:bg-accent/90"
             >
               Search
             </button>

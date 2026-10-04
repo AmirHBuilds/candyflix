@@ -10,6 +10,8 @@ export type MediaItem = {
   poster_path: string | null;
   backdrop_path: string | null;
   rating: number | null;
+  // Synopsis, only used by the home hero banner (cards ignore it).
+  overview?: string | null;
 };
 
 export type MovieDetail = {
@@ -242,4 +244,18 @@ export function shortenOverview(text: string, maxLength = 200): string {
   // Otherwise cut at the last full word and mark it as truncated.
   const lastSpace = window.lastIndexOf(" ");
   return `${window.slice(0, lastSpace > 0 ? lastSpace : maxLength)}…`;
+}
+
+
+export type DescriptionLength = "short" | "standard" | "full";
+
+/**
+ * Applies the "Description length" setting to a synopsis. `standardMax` is
+ * the budget the screen used before the setting existed (so "standard"
+ * changes nothing); "short" is about half of it, "full" is the whole text.
+ */
+export function overviewForLength(text: string, length: DescriptionLength, standardMax = 200): string {
+  if (!text) return text;
+  if (length === "full") return text;
+  return shortenOverview(text, length === "short" ? Math.round(standardMax * 0.55) : standardMax);
 }

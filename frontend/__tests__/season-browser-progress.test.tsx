@@ -64,11 +64,11 @@ describe("SeasonBrowser — resume point (detail-page 'pink name')", () => {
 
     await screen.findByText(/Pilot/);
     const ep3 = episodeRow(/\.\.\.And the Bag's in the River/);
-    expect(ep3.querySelector("p")).toHaveClass("text-[#FF5FA2]");
+    expect(ep3.querySelector("p")).toHaveClass("text-accent");
     expect(ep3.textContent).not.toMatch(/Now playing/);
 
     const ep1 = episodeRow(/Pilot/);
-    expect(ep1.querySelector("p")).not.toHaveClass("text-[#FF5FA2]");
+    expect(ep1.querySelector("p")).not.toHaveClass("text-accent");
   });
 
   it("does not mark the resume-point episode as 'In progress' too — only the pink name", async () => {
@@ -164,15 +164,15 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     await screen.findByText("Now playing");
     const ep1 = episodeRow(/Pilot/);
     expect(ep1.textContent).toContain("Now playing");
-    expect(ep1.querySelector("p")).toHaveClass("text-[#FF5FA2]");
+    expect(ep1.querySelector("p")).toHaveClass("text-accent");
 
     const ep3 = episodeRow(/\.\.\.And the Bag's in the River/);
     expect(ep3.textContent).toContain("Last watched");
     expect(ep3.textContent).not.toMatch(/Now playing|In progress/);
     // Distinct from "Now playing"'s pink — this is the fix for "both of
     // them have pink title".
-    expect(ep3.querySelector("p")).toHaveClass("text-[#8FE3C7]");
-    expect(ep3.querySelector("p")).not.toHaveClass("text-[#FF5FA2]");
+    expect(ep3.querySelector("p")).toHaveClass("text-highlight");
+    expect(ep3.querySelector("p")).not.toHaveClass("text-accent");
 
     expect(screen.queryByText("In progress")).not.toBeInTheDocument();
   });
@@ -192,7 +192,7 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     const row = ep3.closest("a")!;
     expect(row.textContent).toContain("Now playing");
     expect(row.textContent).not.toContain("Last watched");
-    expect(row.querySelector("p")).toHaveClass("text-[#FF5FA2]");
+    expect(row.querySelector("p")).toHaveClass("text-accent");
   });
 
   it("does not show a stale 'Last watched' on an episode behind the one just navigated to", async () => {
@@ -215,8 +215,8 @@ describe("SeasonBrowser — watch-page 'Now playing' still works", () => {
     await screen.findByText("Now playing");
     const ep1 = episodeRow(/Pilot/);
     expect(ep1.textContent).not.toMatch(/Last watched|In progress/);
-    expect(ep1.querySelector("p")).not.toHaveClass("text-[#FF5FA2]");
-    expect(ep1.querySelector("p")).not.toHaveClass("text-[#8FE3C7]");
+    expect(ep1.querySelector("p")).not.toHaveClass("text-accent");
+    expect(ep1.querySelector("p")).not.toHaveClass("text-highlight");
 
     expect(screen.queryByText("Last watched")).not.toBeInTheDocument();
   });

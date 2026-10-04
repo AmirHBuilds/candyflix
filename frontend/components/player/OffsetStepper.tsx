@@ -12,7 +12,7 @@ import {
 // `‹  -2.3 S  ›` — the two chevrons nudge the timing by 100 ms, and the
 // number itself is click-to-edit for big jumps. No limits anywhere.
 const stepButtonClass =
-  "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/80 transition hover:bg-[#FF5FA2]/20 hover:text-[#FF5FA2] active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5FA2]/70";
+  "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/80 transition hover:bg-accent/20 hover:text-accent active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent/70";
 // Inherits the panel's normal body font (Inter) — no display serif, no italic.
 const valueClass = "text-2xl font-semibold tabular-nums";
 
@@ -91,7 +91,7 @@ export default function OffsetStepper({
                   setEditing(false);
                 }
               }}
-              className={`${valueClass} w-full min-w-0 border-b-2 border-[#FF5FA2] bg-transparent text-center text-white outline-none`}
+              className={`${valueClass} w-full min-w-0 border-b-2 border-accent bg-transparent text-center text-white outline-none`}
             />
             <span className="text-sm font-semibold tracking-widest text-white/40">S</span>
           </div>
@@ -103,7 +103,7 @@ export default function OffsetStepper({
             onClick={startEditing}
             className="flex min-w-0 flex-1 items-baseline justify-center gap-1.5 rounded-xl px-2 py-1.5 transition hover:bg-white/[0.05]"
           >
-            <span className={`${valueClass} ${active ? "text-[#FF5FA2]" : "text-white"}`}>{number}</span>
+            <span className={`${valueClass} ${active ? "text-accent" : "text-white"}`}>{number}</span>
             <span className="text-sm font-semibold tracking-widest text-white/40">{unit}</span>
           </button>
         )}

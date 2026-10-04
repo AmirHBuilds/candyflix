@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { backdropUrl, detailHref, type MediaItem } from "@/lib/media";
+import { backdropUrl, detailHref, overviewForLength, type MediaItem } from "@/lib/media";
+import { useSettings } from "@/components/SettingsProvider";
 import DetailActions from "@/components/DetailActions";
 
-const ROTATE_MS = 7000;
 const MAX_SLIDES = 5;
 const SWIPE_THRESHOLD_PX = 40;
 
 export default function HeroCarousel({ items }: { items: MediaItem[] }) {
-  const slides = items.slice(0, MAX_SLIDES);
+  const { settings } = useSettings();
+  const { hero_enabled, hero_interval_seconds, description_length } = settings.appearance;
+  const rotateMs = hero_interval_seconds * 1000;
+  const slides = hero_enabled ? items.slice(0, MAX_SLIDES) : [];
   const [index, setIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -21,7 +24,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
     if (slides.length > 1) {
       timerRef.current = setInterval(() => {
         setIndex((i) => (i + 1) % slides.length);
-      }, ROTATE_MS);
+      }, rotateMs);
     }
   }
 
@@ -31,7 +34,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length]);
+  }, [slides.length, rotateMs]);
 
   function goTo(i: number) {
     setIndex(((i % slides.length) + slides.length) % slides.length);
@@ -80,16 +83,28 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
                 className="object-cover object-top"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B12] via-[#0B0B12]/55 to-[#0B0B12]/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/55 to-canvas/10" />
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-12">
-              <p className="mb-2 text-sm font-medium uppercase tracking-wide text-[#8FE3C7]">
+              <p className="mb-2 text-sm font-medium uppercase tracking-wide text-highlight">
                 Trending Now · {typeLabel} · {item.year ?? ""}
               </p>
               <Link href={detailHref(item)} className="group inline-block">
-                <p className="mb-5 max-w-2xl font-[family-name:var(--font-display)] text-4xl font-semibold italic text-white group-hover:underline sm:text-6xl">
+                <p className="mb-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl font-semibold italic text-white group-hover:underline sm:text-6xl">
                   {item.title}
                 </p>
               </Link>
+              {/* A short synopsis under the title. Clamped to two lines on
+                  phones (the banner is tall but not endless) and three
+                  from sm up; the text is already trimmed to a sentence. */}
+              {item.overview && (
+                <p
+                  className={`mb-5 max-w-xl text-sm text-white/75 [text-shadow:0_1px_8px_rgb(0_0_0/0.6)] sm:text-base ${
+                    description_length === "full" ? "line-clamp-6" : "line-clamp-2 sm:line-clamp-3"
+                  }`}
+                >
+                  {overviewForLength(item.overview, description_length, 180)}
+                </p>
+              )}
               <DetailActions tmdbId={item.tmdb_id} mediaType={item.media_type} />
             </div>
           </div>
@@ -123,7 +138,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
                 aria-label={`Go to slide ${i + 1}`}
                 onClick={() => goTo(i)}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-6 bg-[#FF5FA2]" : "w-1.5 bg-white/30"
+                  i === index ? "w-6 bg-accent" : "w-1.5 bg-white/30"
                 }`}
               />
             ))}

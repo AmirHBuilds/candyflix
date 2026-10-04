@@ -1,0 +1,142 @@
+import re
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# Lowercase letters, digits, dot, underscore, hyphen; 3-32 chars; must start
+# with a letter or digit. Keeps names URL- and CLI-friendly and unambiguous.
+USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,31}$")
+
+
+def _clean_username(value: str) -> str:
+    value = value.strip().lower()
+    if not USERNAME_RE.match(value):
+        raise ValueError(
+            "Username must be 3-32 characters: lowercase letters, numbers, '.', '_' or '-', "
+            "starting with a letter or number."
+        )
+    return value
+
+
+def _clean_display_name(value: str) -> str:
+    value = " ".join(value.split())
+    if not value:
+        raise ValueError("Display name can't be empty")
+    return value
+
+
+class AdminUser(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    username: str
+    display_name: str
+    is_admin: bool
+    is_disabled: bool
+    created_at: datetime
+    last_login_at: datetime | None = None
+    avatar_url: str | None = None
+    watchlist_count: int = 0
+    watched_count: int = 0
+
+
+class AdminUserCreate(BaseModel):
+    username: str
+    display_name: str = Field(min_length=1, max_length=50)
+    password: str = Field(min_length=8, max_length=128)
+    is_admin: bool = False
+
+    @field_validator("username")
+    @classmethod
+    def _u(cls, v):
+        return _clean_username(v)
+
+    @field_validator("display_name")
+    @classmethod
+    def _d(cls, v):
+        return _clean_display_name(v)
+
+
+class AdminUserUpdate(BaseModel):
+    """Every field optional: only what is sent changes."""
+
+    username: str | None = None
+    display_name: str | None = Field(default=None, min_length=1, max_length=50)
+    is_admin: bool | None = None
+    is_disabled: bool | None = None
+
+    @field_validator("username")
+    @classmethod
+    def _u(cls, v):
+        return None if v is None else _clean_username(v)
+
+    @field_validator("display_name")
+    @classmethod
+    def _d(cls, v):
+        return None if v is None else _clean_display_name(v)
+
+
+class AdminPasswordReset(BaseModel):
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class TopTitle(BaseModel):
+    tmdb_id: int
+    media_type: str
+    title: str | None
+    viewers: int
+
+
+class DayActivity(BaseModel):
+    date: str  # YYYY-MM-DD
+    saves: int  # watch-progress saves that day
+    active_users: int
+
+
+class RecentLogin(BaseModel):
+    id: uuid.UUID
+    username: str
+    display_name: str
+    avatar_url: str | None
+    last_login_at: datetime
+
+
+class AdminStats(BaseModel):
+    users_total: int
+    admins: int
+    disabled: int
+    active_last_7_days: int
+    watchlist_items: int
+    watched_items: int
+    activity: list[DayActivity]
+    top_titles: list[TopTitle]
+    recent_logins: list[RecentLogin]
+
+
+class ServiceCheck(BaseModel):
+    ok: bool
+    detail: str
+    latency_ms: int | None = None
+
+
+class StorageInfo(BaseModel):
+    files: int
+    bytes: int
+
+
+class SystemStatus(BaseModel):
+    database: ServiceCheck
+    redis: ServiceCheck
+    tmdb: ServiceCheck
+    opensubtitles: ServiceCheck
+    subtitle_cache: StorageInfo
+    avatars: StorageInfo
+    app_version: str
+    python_version: str
+    auto_migrate: bool
+    debug: bool
+
+
+class ClearedResult(BaseModel):
+    cleared: int

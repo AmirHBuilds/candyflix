@@ -87,19 +87,22 @@ describe("loading.tsx route files", () => {
 describe("motion CSS", () => {
   const css = readFileSync(join(__dirname, "..", "app", "globals.css"), "utf8");
 
-  it("defines the entrance animations only for people who haven't asked for reduced motion", () => {
-    const noPref = css.slice(css.indexOf("@media (prefers-reduced-motion: no-preference)"));
-    expect(noPref).toContain(".animate-fade-in");
-    expect(noPref).toContain(".animate-fade-up");
-    // ...and not outside that block.
-    const before = css.slice(0, css.indexOf("@media (prefers-reduced-motion: no-preference)"));
-    expect(before).not.toMatch(/\.animate-fade-(in|up)\s*\{/);
+  it("defines the entrance animations, which the calming rules below then switch off when asked", () => {
+    expect(css).toMatch(/\.animate-fade-in\s*\{/);
+    expect(css).toMatch(/\.animate-fade-up\s*\{/);
   });
 
-  it("calms every animation/transition when reduced motion is requested", () => {
+  it("calms every animation/transition when the device asks to reduce motion — unless the person overrides it to Off", () => {
     const reduce = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+    expect(reduce).toContain('html:not([data-motion="off"])');
     expect(reduce).toContain("animation-duration: 0.01ms !important");
     expect(reduce).toContain("transition-duration: 0.01ms !important");
+  });
+
+  it("calms them always when the person sets Reduce motion to On", () => {
+    const on = css.slice(css.indexOf('html[data-motion="on"] *'), css.indexOf("@media (prefers-reduced-motion: reduce)"));
+    expect(on).toContain("animation-duration: 0.01ms !important");
+    expect(on).toContain("transition-duration: 0.01ms !important");
   });
 });
 

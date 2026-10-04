@@ -32,7 +32,7 @@ const ICON_PATHS: Record<Icon, React.ReactNode> = {
 };
 
 export const stateActionClass =
-  "inline-flex h-11 items-center justify-center rounded-xl bg-[#FF5FA2] px-6 text-sm font-semibold text-[#0B0B12] transition-colors hover:bg-[#FF5FA2]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF5FA2]";
+  "inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-sm font-semibold text-on-accent transition-colors hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 /**
  * "There's nothing here (yet)" — a friendly centred block instead of a
@@ -56,7 +56,7 @@ export default function EmptyState({
 }) {
   return (
     <div className={`animate-fade-up flex flex-col items-center gap-4 text-center ${compact ? "py-10" : "py-20"}`}>
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.05] text-[#FF5FA2]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.05] text-accent">
         <svg
           width="26"
           height="26"

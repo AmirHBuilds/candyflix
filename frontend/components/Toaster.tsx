@@ -6,8 +6,8 @@ import { dismissToast, getToasts, subscribe, type Toast } from "@/lib/toast";
 const NO_TOASTS: Toast[] = [];
 
 const ACCENT: Record<Toast["kind"], string> = {
-  error: "border-l-[#FF5FA2]",
-  success: "border-l-[#8FE3C7]",
+  error: "border-l-accent",
+  success: "border-l-highlight",
   info: "border-l-white/40",
 };
 
@@ -31,7 +31,7 @@ export default function Toaster() {
         <div
           key={t.id}
           role={t.kind === "error" ? "alert" : "status"}
-          className={`animate-fade-up pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-white/10 border-l-4 bg-[#14141F]/95 py-3 pl-4 pr-2 text-sm text-white shadow-2xl backdrop-blur ${ACCENT[t.kind]}`}
+          className={`animate-fade-up pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-white/10 border-l-4 bg-surface/95 py-3 pl-4 pr-2 text-sm text-white shadow-2xl backdrop-blur ${ACCENT[t.kind]}`}
         >
           <p className="min-w-0 flex-1 py-0.5">{t.message}</p>
           <button

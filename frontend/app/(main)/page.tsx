@@ -3,6 +3,8 @@ import { getTrending, getPopularMovies, getPopularTV, type MediaItem } from "@/l
 import { getContinueWatchingServer, type ContinueWatchingItem } from "@/lib/continue-watching-server";
 import HeroCarousel from "@/components/HeroCarousel";
 import MediaGrid from "@/components/MediaGrid";
+import MediaRow from "@/components/MediaRow";
+import { getServerSettings } from "@/lib/settings-server";
 import ErrorState from "@/components/ErrorState";
 
 // Generic over T (not hardcoded to MediaItem) so a caller passing a
@@ -27,6 +29,7 @@ export function Section({
   error,
   max = 24,
   viewAllHref,
+  layout = "grid",
 }: {
   title: string;
   items: GridItem[];
@@ -41,6 +44,9 @@ export function Section({
   // items than this row displays — currently only Continue Watching
   // uses this, but any future section can.
   viewAllHref?: string;
+  // "grid" (the classic wrapped grid) or "rows" (one swipeable row);
+  // from Settings → Appearance → Home layout.
+  layout?: "grid" | "rows";
 }) {
   if (error) return null; // fail quietly per-section rather than break the whole page
   if (items.length === 0) return null;
@@ -60,7 +66,7 @@ export function Section({
           </Link>
         )}
       </div>
-      <MediaGrid items={visible} />
+      {layout === "rows" ? <MediaRow items={visible} label={title} /> : <MediaGrid items={visible} />}
     </section>
   );
 }
@@ -107,13 +113,15 @@ export default async function Home() {
   // through with its own small catch. Not logged-in / nothing in
   // progress both surface as an empty list, and Section already renders
   // nothing for that case, same as every other row.
-  const [today, week, movies, tv, continueWatching] = await Promise.all([
+  const [today, week, movies, tv, continueWatching, settings] = await Promise.all([
     safeLoad(() => getTrending("day")),
     safeLoad(() => getTrending("week")),
     safeLoad(() => getPopularMovies()),
     safeLoad(() => getPopularTV()),
     getContinueWatchingServer().catch(() => ({ items: [] as ContinueWatchingItem[], hasMore: false })),
+    getServerSettings(),
   ]);
+  const { home_layout: layout, items_per_section: max } = settings.appearance;
 
   const heroUnavailable = today.error && week.error;
 
@@ -130,11 +138,13 @@ export default async function Home() {
         items={toContinueWatchingItems(continueWatching.items)}
         error={null}
         viewAllHref={continueWatching.hasMore ? "/continue-watching" : undefined}
+        max={max}
+        layout={layout}
       />
-      <Section title="Trending Today" items={today.items} error={today.error} />
-      <Section title="Trending This Week" items={week.items} error={week.error} />
-      <Section title="Popular Movies" items={movies.items} error={movies.error} />
-      <Section title="Popular TV Shows" items={tv.items} error={tv.error} />
+      <Section title="Trending Today" items={today.items} error={today.error} max={max} layout={layout} />
+      <Section title="Trending This Week" items={week.items} error={week.error} max={max} layout={layout} />
+      <Section title="Popular Movies" items={movies.items} error={movies.error} max={max} layout={layout} />
+      <Section title="Popular TV Shows" items={tv.items} error={tv.error} max={max} layout={layout} />
     </div>
   );
 }

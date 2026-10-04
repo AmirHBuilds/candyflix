@@ -47,7 +47,7 @@ export default function SearchPageClient() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="What do you want to watch?"
-        className="w-full max-w-xl rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white placeholder-white/30 outline-none focus:border-[#FF5FA2]/60"
+        className="w-full max-w-xl rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white placeholder-white/30 outline-none focus:border-accent/60"
       />
 
       {loading && results.length === 0 && (

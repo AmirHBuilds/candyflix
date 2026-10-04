@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Avatar from "@/components/Avatar";
 import { getCurrentUser, listUsers, login, type UserPublic } from "@/lib/auth";
 
 // Deterministic, non-hardcoded accent per profile — cycles through the
@@ -64,7 +65,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-8">
           <h2 className="text-lg text-white/70">Who&apos;s watching?</h2>
 
-          {loadError && <p className="text-sm text-[#FF5FA2]">{loadError}</p>}
+          {loadError && <p className="text-sm text-accent">{loadError}</p>}
 
           {!users && !loadError && (
             <p className="text-sm text-white/40">Loading profiles…</p>
@@ -88,12 +89,13 @@ export default function LoginPage() {
                   }}
                   className="group flex flex-col items-center gap-3"
                 >
-                  <span
-                    className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-semibold text-[#0B0B12] transition-transform duration-150 group-hover:scale-105"
-                    style={{ backgroundColor: PROFILE_COLORS[i % PROFILE_COLORS.length] }}
-                  >
-                    {user.display_name.charAt(0).toUpperCase()}
-                  </span>
+                  <Avatar
+                    name={user.display_name}
+                    src={user.avatar_url}
+                    size={80}
+                    color={PROFILE_COLORS[i % PROFILE_COLORS.length]}
+                    className="transition-transform duration-150 group-hover:scale-105"
+                  />
                   <span className="text-sm text-white/80">{user.display_name}</span>
                 </button>
               ))}
@@ -107,18 +109,12 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="flex w-full max-w-xs flex-col items-center gap-5"
         >
-          <span
-            className="flex h-16 w-16 items-center justify-center rounded-full text-xl font-semibold text-[#0B0B12]"
-            style={{
-              backgroundColor:
-                PROFILE_COLORS[
-                  (users ?? []).findIndex((u) => u.id === selectedUser.id) %
-                    PROFILE_COLORS.length
-                ],
-            }}
-          >
-            {selectedUser.display_name.charAt(0).toUpperCase()}
-          </span>
+          <Avatar
+            name={selectedUser.display_name}
+            src={selectedUser.avatar_url}
+            size={64}
+            color={PROFILE_COLORS[Math.max(0, (users ?? []).findIndex((u) => u.id === selectedUser.id)) % PROFILE_COLORS.length]}
+          />
           <p className="text-white/80">{selectedUser.display_name}</p>
 
           <input
@@ -127,15 +123,15 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-white placeholder-white/30 outline-none focus:border-[#FF5FA2]/60"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-white placeholder-white/30 outline-none focus:border-accent/60"
           />
 
-          {authError && <p className="text-sm text-[#FF5FA2]">{authError}</p>}
+          {authError && <p className="text-sm text-accent">{authError}</p>}
 
           <button
             type="submit"
             disabled={submitting || password.length === 0}
-            className="w-full rounded-xl bg-[#FF5FA2] py-3 font-medium text-[#0B0B12] transition-opacity disabled:opacity-40"
+            className="w-full rounded-xl bg-accent py-3 font-medium text-on-accent transition-opacity disabled:opacity-40"
           >
             {submitting ? "Checking…" : "Continue"}
           </button>

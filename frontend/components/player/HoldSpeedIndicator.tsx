@@ -21,7 +21,7 @@ export default function HoldSpeedIndicator({ rate }: { rate: number }) {
       <div className="w-40" aria-hidden="true">
         <div className="relative h-1 rounded-full bg-white/25">
           <div
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF5FA2]"
+            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"
             style={{ left: `${holdRateToGauge(rate) * 100}%` }}
           />
         </div>

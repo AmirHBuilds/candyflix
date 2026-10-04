@@ -49,6 +49,16 @@ class Settings(BaseSettings):
     opensubtitles_password: str = ""
     subtitle_cache_dir: str = "subtitle-cache"
 
+    # Profile pictures (resized WebP files), served from /avatars.
+    avatars_dir: str = "avatars"
+    max_avatar_bytes: int = 5_000_000
+
+    # Apply pending database migrations whenever the app starts. The
+    # Docker entrypoint already does this on container start; this also
+    # covers `uvicorn --reload`, which restarts the app *without* going
+    # back through the entrypoint (so new migrations were being missed).
+    auto_migrate: bool = True
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 

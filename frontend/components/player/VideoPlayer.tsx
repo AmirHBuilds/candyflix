@@ -18,9 +18,8 @@ import SubtitleSettingsPanel from "@/components/player/SubtitleSettingsPanel";
 import PlayerTooltip from "@/components/player/PlayerTooltip";
 import HoldSpeedIndicator from "@/components/player/HoldSpeedIndicator";
 import { useHoldSpeed } from "@/components/player/useHoldSpeed";
+import { useSettings } from "@/components/SettingsProvider";
 
-const SKIP_SECONDS = 10;
-const SEEK_STEP_SECONDS = 5;
 const AUTO_HIDE_MS = 3000;
 const UP_NEXT_THRESHOLD_SECONDS = 20;
 const DOUBLE_TAP_MS = 300;
@@ -148,6 +147,11 @@ export default function VideoPlayer({
   // Press-and-hold speed control (touch / mouse on the video surface, or
   // the Space bar). See hold-speed.ts for the behaviour.
   const hold = useHoldSpeed(videoRef);
+
+  // One setting (Settings → Playback → Seek time) drives the arrow keys,
+  // J / L and the double-tap zones. Read fresh each render, so a change
+  // made in another tab/page applies without reloading the player.
+  const seekSeconds = useSettings().settings.playback.seek_seconds;
 
   const videoUrl = `${getStaticOrigin()}${source.url}`;
 
@@ -914,18 +918,18 @@ export default function VideoPlayer({
         togglePlay();
         break;
       case "j":
-        seekBy(-SKIP_SECONDS);
+        seekBy(-seekSeconds);
         setSkipPulse({ side: "left", nonce: Date.now() });
         break;
       case "l":
-        seekBy(SKIP_SECONDS);
+        seekBy(seekSeconds);
         setSkipPulse({ side: "right", nonce: Date.now() });
         break;
       case "ArrowLeft":
-        seekBy(-SEEK_STEP_SECONDS);
+        seekBy(-seekSeconds);
         break;
       case "ArrowRight":
-        seekBy(SEEK_STEP_SECONDS);
+        seekBy(seekSeconds);
         break;
       case "ArrowUp":
         e.preventDefault();
@@ -998,7 +1002,7 @@ export default function VideoPlayer({
     const now = Date.now();
     const last = lastTapRef.current;
     if (last && last.zone === zone && now - last.time < DOUBLE_TAP_MS) {
-      seekBy(zone === "left" ? -SKIP_SECONDS : SKIP_SECONDS);
+      seekBy(zone === "left" ? -seekSeconds : seekSeconds);
       setSkipPulse({ side: zone, nonce: now });
       lastTapRef.current = null;
     } else {
@@ -1046,13 +1050,13 @@ export default function VideoPlayer({
       >
         <button
           aria-label="Play/pause, or double-click to rewind 10 seconds"
-          className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#FF5FA2]/70"
+          className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-accent/70"
           style={{ WebkitTapHighlightColor: "transparent" }}
           onClick={() => handleTapZone("left")}
         />
         <button
           aria-label="Play/pause, or double-click to forward 10 seconds"
-          className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#FF5FA2]/70"
+          className="flex-1 outline-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-accent/70"
           style={{ WebkitTapHighlightColor: "transparent" }}
           onClick={() => handleTapZone("right")}
         />
@@ -1066,7 +1070,7 @@ export default function VideoPlayer({
           }`}
         >
           {skipPulse.side === "left" ? <BackIcon /> : <ForwardIcon />}
-          <span className="text-xs">10s</span>
+          <span className="text-xs">{seekSeconds}s</span>
         </div>
       )}
 
@@ -1088,7 +1092,7 @@ export default function VideoPlayer({
           <p className="text-sm text-white/80">This is taking longer than expected to load.</p>
           <button
             onClick={retryLoad}
-            className="rounded-lg bg-[#FF5FA2] px-4 py-2 text-sm font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent/90"
           >
             Retry
           </button>
@@ -1097,21 +1101,21 @@ export default function VideoPlayer({
 
       {buffering && !videoStuck && !error && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-[#FF5FA2]" />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-accent" />
         </div>
       )}
 
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80 px-6 text-center">
           <p className="text-white/90">{error}</p>
-          <a href={backHref} className="text-sm text-[#C9A6FF] underline">
+          <a href={backHref} className="text-sm text-secondary underline">
             Back to details
           </a>
         </div>
       )}
 
       {showUpNext && nextEpisode && (
-        <div className="absolute bottom-24 right-6 z-20 flex items-center gap-3 rounded-xl border border-white/10 bg-[#0b0b12]/95 p-3 shadow-2xl">
+        <div className="absolute bottom-24 right-6 z-20 flex items-center gap-3 rounded-xl border border-white/10 bg-canvas/95 p-3 shadow-2xl">
           <div className="text-sm">
             <p className="text-white/50">Up next</p>
             <p className="text-white/90">{nextEpisode.label}</p>
@@ -1119,7 +1123,7 @@ export default function VideoPlayer({
           <a
             href={nextEpisode.href}
             onClick={(e) => handleEpisodeNavClick(e, nextEpisode.href)}
-            className="rounded-lg bg-[#FF5FA2] px-3 py-1.5 text-sm font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent/90"
           >
             Play
           </a>
@@ -1137,7 +1141,7 @@ export default function VideoPlayer({
         <div className="absolute inset-0 flex items-center justify-center bg-black/70">
           <button
             onClick={replay}
-            className="rounded-xl bg-[#FF5FA2] px-6 py-3 font-medium text-[#0b0b12] hover:bg-[#FF5FA2]/90"
+            className="rounded-xl bg-accent px-6 py-3 font-medium text-on-accent hover:bg-accent/90"
           >
             Watch Again
           </button>
@@ -1146,7 +1150,7 @@ export default function VideoPlayer({
 
       {sleepTimerFired && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70">
-          <div className="mx-4 flex max-w-xs flex-col items-center gap-4 rounded-2xl border border-white/10 bg-[#0b0b12]/95 p-6 text-center shadow-2xl">
+          <div className="mx-4 flex max-w-xs flex-col items-center gap-4 rounded-2xl border border-white/10 bg-canvas/95 p-6 text-center shadow-2xl">
             <p className="text-base font-medium text-white">Sleep timer ended playback</p>
             <div className="flex w-full gap-2">
               <button
@@ -1157,7 +1161,7 @@ export default function VideoPlayer({
               </button>
               <button
                 onClick={dismissSleepTimerDialog}
-                className="flex-1 rounded-lg bg-[#FF5FA2] px-4 py-2.5 text-sm font-semibold text-[#0b0b12] transition-colors hover:bg-[#ff85b8]"
+                className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
               >
                 OK
               </button>
@@ -1203,11 +1207,11 @@ export default function VideoPlayer({
               style={{ width: `${duration ? (Math.min(bufferedEnd, duration) / duration) * 100 : 0}%` }}
             />
             <div
-              className="absolute left-0 top-0 h-full rounded-full bg-[#FF5FA2]"
+              className="absolute left-0 top-0 h-full rounded-full bg-accent"
               style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
             >
               <div
-                className={`absolute top-1/2 rounded-full bg-[#FF5FA2] shadow-[0_0_2px_rgba(0,0,0,0.6)] transition-all duration-150 ease-out ${
+                className={`absolute top-1/2 rounded-full bg-accent shadow-[0_0_2px_rgba(0,0,0,0.6)] transition-all duration-150 ease-out ${
                   scrubHover || scrubDragging ? "h-4 w-4" : "h-[13px] w-[13px]"
                 }`}
                 style={{ right: scrubHover || scrubDragging ? "-8px" : "-6.5px", transform: "translateY(-50%)" }}
@@ -1280,7 +1284,7 @@ export default function VideoPlayer({
                 step={0.05}
                 value={muted ? 0 : volume}
                 onChange={(e) => changeVolume(Number(e.target.value))}
-                className="w-20 accent-[#FF5FA2]"
+                className="w-20 accent-accent"
                 aria-label="Volume"
               />
             </div>
@@ -1335,7 +1339,7 @@ export default function VideoPlayer({
                     {settingsMenu === "root" && (
                       <div
                         style={{ maxHeight: settingsMenuMaxHeight }}
-                        className="w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur"
+                        className="w-56 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-canvas/95 py-1 shadow-2xl backdrop-blur"
                       >
                         <button
                           onClick={() => setSettingsMenu("speed")}
@@ -1373,7 +1377,7 @@ export default function VideoPlayer({
                     {settingsMenu === "speed" && (
                       <div
                         style={{ maxHeight: settingsMenuMaxHeight }}
-                        className="w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur"
+                        className="w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-canvas/95 py-1 shadow-2xl backdrop-blur"
                       >
                         <button
                           onClick={() => setSettingsMenu("root")}
@@ -1390,7 +1394,7 @@ export default function VideoPlayer({
                               setSettingsMenu("root");
                             }}
                             className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
-                              s === playbackRate ? "text-[#FF5FA2]" : "text-white/90"
+                              s === playbackRate ? "text-accent" : "text-white/90"
                             }`}
                           >
                             {s === 1 ? "Normal" : `${s}x`}
@@ -1402,7 +1406,7 @@ export default function VideoPlayer({
                     {settingsMenu === "sleepTimer" && (
                       <div
                         style={{ maxHeight: settingsMenuMaxHeight }}
-                        className="w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-[#0b0b12]/95 py-1 shadow-2xl backdrop-blur"
+                        className="w-48 overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-canvas/95 py-1 shadow-2xl backdrop-blur"
                       >
                         <button
                           onClick={() => setSettingsMenu("root")}
@@ -1417,7 +1421,7 @@ export default function VideoPlayer({
                             setSettingsMenu("root");
                           }}
                           className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
-                            sleepTimerMinutes === null ? "text-[#FF5FA2]" : "text-white/90"
+                            sleepTimerMinutes === null ? "text-accent" : "text-white/90"
                           }`}
                         >
                           Off
@@ -1430,7 +1434,7 @@ export default function VideoPlayer({
                               setSettingsMenu("root");
                             }}
                             className={`block w-full px-3 py-2 text-left text-sm hover:bg-white/10 ${
-                              m === sleepTimerMinutes ? "text-[#FF5FA2]" : "text-white/90"
+                              m === sleepTimerMinutes ? "text-accent" : "text-white/90"
                             }`}
                           >
                             {m} minutes
@@ -1446,7 +1450,7 @@ export default function VideoPlayer({
                       >
                         <button
                           onClick={() => setSettingsMenu("root")}
-                          className="flex w-56 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-[#0b0b12]/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
+                          className="flex w-56 shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-canvas/95 px-3 py-2.5 text-left text-sm text-white/90 shadow-2xl backdrop-blur hover:bg-white/10"
                         >
                           <BackChevronIcon />
                           Subtitles
@@ -1622,7 +1626,7 @@ function CCIcon({ active }: { active: boolean }) {
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill={active ? "#FF5FA2" : "currentColor"}
+      fill={active ? "var(--color-accent)" : "currentColor"}
     >
       <path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1z" />
     </svg>

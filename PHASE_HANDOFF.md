@@ -1,4 +1,4 @@
-# CandyFlix — Project Handoff (through Phase 7 + 7 follow-up updates; Phase 8 in progress)
+# CandyFlix — Project Handoff (through Phase 7 + 7 follow-up updates; Phase 8 in progress; Phase 9a built)
 
 > **Reader:** a fresh instance of Claude with **no memory** of the prior conversations, plus a zip of the current codebase.
 > **Purpose:** give you everything needed to continue without re-deriving decisions.
@@ -504,3 +504,102 @@ Cause was **not reproducible here**; the user's Docker log showed (a) `GET /` ta
 
 ### Remaining Phase 8 work
 Further mobile refinement only if the user finds specific issues. Small leftovers from §7.2 / §11 (Continue Watching nav link, "next episode" logic, cleanup SQL for show 312949) are still untouched. Candidate extras not built: hero image fade, toast on player-side failures, retry buttons inside the search dropdown.
+
+---
+
+## 16. Hero banner description (DONE) and Phase 9 plan (awaiting go-ahead)
+
+- **Hero banner now shows a short synopsis under the title** (movies and TV): backend `MediaItem` gained optional `overview` (filled from TMDB trending/list items; `""`/missing → `null`; +1 backend test, now 119), frontend `MediaItem.overview?`, `HeroCarousel` renders `shortenOverview(overview, 180)` clamped to 2 lines on phones / 3 from `sm` up, with a text-shadow; nothing is rendered when there's no overview (+7 tests in `hero-carousel.test.tsx`). Note `overview` is now present on every list/search response (small payload increase; cards ignore it).
+- **Phase 9 (Settings & personalisation)** — see `PHASE9_PLAN.md` for the full plan, decisions to confirm, and the 9a–9f build order. Nothing of Phase 9 is built yet.
+
+---
+
+## 17. Phase 9a — Settings foundation (DONE, awaiting the user's visual check)
+
+Decisions and the full roadmap are in `PHASE9_PLAN.md` ("Confirmed decisions" section). **Baselines now:** backend 170 passed; `tsc` clean; Vitest 354 passed / 21 failed (the same four live-backend files, §7.1). +51 backend, +68 frontend tests this step.
+
+### Backend
+- **Migration `bc7270a45725`** (run `alembic upgrade head`): `users.is_admin` (bool, default false), `users.last_login_at`, new `user_settings` table (`user_id` PK/FK cascade, `data` JSON, `version`, `updated_at`). Data step: if no admin exists, the **oldest user becomes admin** (so an existing install has a first admin). Verified up/down/up.
+- **Settings are stored sparsely** (`models/user_settings.py`): only what the person changed; defaults are merged at read time (`services/settings_service.py`) so improved defaults reach everyone who never touched a setting; no row = all defaults.
+- **`schemas/settings.py`** defines the whole document (`appearance`, `playback`, `subtitles` groups) with defaults equal to today's behaviour (24 items/section, hero 7 s, seek 10 s, description `standard`, theme `candy-at-night`, ...) and validation (enums, ranges, hex colours). Groups for later phases already exist, so 9b–9g just start consuming fields. `subtitles` has **no timing offset** by design.
+- **`/api/settings`** (auth required, own settings only): `GET` full resolved document · `PATCH` deep-merge (nested objects merge; **`null` resets a key to its default**; unknown keys and invalid values → **422 with a list of readable problems and nothing saved**; the stored value is the *validated* one, "12"→12) · `DELETE` reset all. A corrupt stored value is dropped on read (`resolve_leniently`) instead of breaking pages.
+- **Roles:** `UserPublic` (own record: `/auth/me`, login) now has `is_admin`; the public `/auth/users` "Who's watching?" list uses the new `ProfileEntry` (no `is_admin`, so roles aren't visible to anyone). `deps.require_admin` (403) is ready for 9b. Login stamps `last_login_at`.
+- **CLI:** `create-user ... --admin`, `set-admin <username> [--revoke]`, `list-users` shows `[admin]`.
+- **Defaults parity:** `frontend/lib/settings-defaults.json` is the frontend's copy; a backend test fails if it drifts. Regenerate with:
+  `cd backend && python -c "import json,sys; sys.path.insert(0,'.'); from app.schemas.settings import UserSettings; print(json.dumps(UserSettings().model_dump(), indent=2))" > ../frontend/lib/settings-defaults.json`
+
+### Frontend
+- `lib/settings.ts` (types, `applyPatch` mirroring the server's merge/null rule, `getSettings`/`patchSettings`/`resetSettings`, `SettingsError`), `lib/settings-server.ts` (`getServerSettings`: forwards the cookie, **never throws** — falls back to defaults).
+- `components/SettingsProvider.tsx`: `useSettings()` → `{settings, update(patch), reset()}`. Changes show **instantly** (optimistic), save in the background; only the answer to the **most recently issued** save is adopted (a unit test caught an earlier version where a late stale response overwrote a newer change); failure → toast + re-sync. Works without a provider (defaults, no-op) so the login page/tests don't need one. Mounted in **`(main)/layout` and `watch/layout`**, which now load user + settings in parallel.
+- **Name → menu** (`components/UserMenu.tsx`): avatar initial + name + chevron; menu = Settings, Log out; closes on outside click / Escape (focus returns) / navigation; arrow/Home/End keys; Admin badge for admins. Phone menu: name, Settings, Log out. `LogoutButton` takes an optional `className`.
+- **`/settings`** (`app/(main)/settings/*`): sidebar on desktop / scrollable pills on phones; sections Appearance, Playback, Subtitles, Account, Privacy & data, About. Shared building blocks in `components/settings/controls.tsx` (`SettingsCard`, `SettingRow`, `Toggle`, `SegmentedControl`, `ComingSoon`). **Only two things are live in 9a:** Playback → **Seek time** (5/10/15/20/30 s) and About → **Reset all settings** (two-step). Everything else shows an honest "coming in an upcoming update" card.
+- **Seek time drives the player:** arrow keys, J/L and the double-tap zones all use `playback.seek_seconds`, and the on-screen pulse shows the real number. **Behaviour change:** arrow keys used to skip 5 s (J/L and double-tap 10 s); now all use one value, default 10 s. (VideoPlayer itself isn't render-tested; a source-level test guards the wiring.)
+
+### Please verify in a browser
+1. Header: name button → menu (Settings, Log out); phone hamburger shows name, Settings, Log out. Log out still returns to "Who's watching?".
+2. `/settings`: sections switch; Playback → pick a seek time, reload, it's remembered; open the same account on another browser/phone and it's the same. Arrow keys / J / L / double-tap use it.
+3. About → Reset all settings (two clicks) puts seek time back to 10 s.
+4. **Run the migration** (`alembic upgrade head` in the backend container) — the oldest account becomes admin; confirm with `python -m app.cli list-users`.
+
+### Next: 9b Account & Admin (see PHASE9_PLAN.md)
+
+
+---
+
+## 18. Phase 9b — Account & Admin (DONE, awaiting the user's visual check)
+
+**Note:** the sandbox was reset twice mid-phase and the first 9b implementation was lost; it was rebuilt from scratch and re-tested. **Baselines now:** backend **272 passed**; `tsc` clean; Vitest **385 passed** excluding the four live-backend files (login, logout, media-pages, nav-search — they need a seeded backend + TMDB and can't run in the sandbox; same as §7.1). +102 backend, +31 frontend tests this step.
+
+### Backend
+- **Migration `ba7454288764`** (chain `bc7270a45725 → ba7454288764`): `users.avatar_path`, `users.is_disabled`. Verified up/down/up.
+- **Auto-migrate:** `entrypoint.sh` still runs `alembic upgrade head`; additionally `app/core/migrate.py` runs it in the app's lifespan (off the event loop, absolute paths, doesn't silence loggers) because `uvicorn --reload` skips the entrypoint. `AUTO_MIGRATE=false` disables the in-app step.
+- **Sessions:** a `user_sessions:<id>` Redis set indexes each person's sessions → `invalidate_user_sessions(user_id, keep_token=None)`. Used on admin password reset / disable / delete (everywhere) and on a self password change (other devices only).
+- **Disabled accounts:** correct password + disabled → 403 "disabled"; wrong password still 401 (no account probing); existing sessions get 401 "Account disabled" at once.
+- **`/api/account`** (any signed-in user): `PATCH /profile` (display name only — username can't be changed here), `POST /password` (204; needs current password; must differ; ≥ 8 chars), `PUT /avatar` (multipart), `DELETE /avatar`.
+- **Avatars:** validated and **re-encoded by Pillow** to 256×256 WebP, random filename, EXIF rotation applied, metadata stripped, JPEG/PNG/WebP/GIF only, ≤ 5 MB (`MAX_AVATAR_BYTES`), pixel cap; old file deleted on replace/remove/user delete (path-contained). Served at `/avatars/<file>` (StaticFiles); stored in `backend/avatars/`.
+- **`/api/admin`** (all routes `require_admin`; 401 signed out, 403 regular user): users list/create/PATCH (username, display name, admin, disabled)/reset password/delete; `/stats` (counts, 14-day activity, top 5 titles, recent logins); `/system` (DB, Redis, TMDB live check, OpenSubtitles config-only, cache sizes, versions); clear TMDB cache (Redis `tmdb:*`), clear subtitle cache. **Safety rules live in the service layer:** can't disable/delete yourself, at least one active admin must remain, can't reset your own password via admin (use Account).
+- New pip deps: `Pillow`, `python-multipart` (rebuild the image: `docker compose up --build`).
+
+### Frontend
+- `components/Avatar.tsx` (picture or coloured initial; falls back if the image fails) used in the header, phone menu, login picker and account/admin pages; picture URLs are `getStaticOrigin() + avatar_url`.
+- **Settings → Account** (`AccountSettingsForm`): picture upload/remove, display name, read-only username, password change (confirm field, inline server errors), **disabled 2FA switch** ("coming soon — Telegram"). Changes call `notifyUserChanged()` so the header re-reads the person.
+- **`/admin`** (`components/admin/*`): tabs Overview (stat tiles, 14-day bars, most watched, recent sign-ins), Users (add / edit incl. username & admin / reset password / disable-enable / delete with type-the-username confirmation; no destructive actions on your own row), System (health dots, cache clearing, versions). Non-admins who open the URL get an "Admins only" page; **Admin panel** link in the name menu and phone menu for admins only.
+
+### Please verify in a browser
+1. Rebuild and start (`docker compose up --build`); confirm the migration ran in the backend log.
+2. Settings → Account: upload a picture (header and login picker update), change the name, change the password (other browser gets signed out).
+3. As an admin: Admin panel → add a user (tick admin), reset a password, disable then try to sign in as them (should say disabled), delete a test user. Check System shows TMDB/DB/Redis state.
+4. As a non-admin, open `/admin` — "Admins only".
+5. CLI: `create-user x "X" --admin`, `set-admin x --revoke`.
+
+### Next: 9c Appearance (colour-token migration → themes → home layout → episode view → description length)
+
+
+---
+
+## 19. Phase 9c — Appearance (DONE, awaiting the user's visual check)
+
+**Baselines now:** backend 272 passed (unchanged — the settings schema already had every appearance key); `tsc` clean; Vitest **422 passed** excluding the four live-backend files (login, logout, media-pages, nav-search; same as §7.1). +38 frontend tests this step. No migration, no new dependencies.
+
+### Colour tokens and themes
+- **Every palette colour is now a token** in `app/globals.css` (`@theme`): `canvas` (page), `surface` (menus/dialogs/toasts), `surface-deep` (search overlay), `accent`, `accent-hover`, `on-accent` (text on the accent), `secondary` (lilac), `highlight` (mint). Use `bg-canvas`, `text-accent`, `border-l-highlight`, `bg-surface/95` … never a raw hex. White/black overlays (`text-white/60`, `bg-black/70`) stay as they are — they work on any dark palette. The 32 files were migrated mechanically; the card glow uses `color-mix(var(--color-accent))`; the player's active-icon fill uses `var(--color-accent)`.
+- **Themes** = `html[data-theme="…"]` blocks overriding the tokens: Candy at Night (default, no block needed), Midnight, Mint, Lilac, Sunset, Mono. `lib/themes.ts` mirrors the key colours for the picker's swatches. **To add a theme:** add the CSS block, add it to `THEMES`, add the id to the backend `Theme` literal + `frontend/lib/settings.ts`. Tests check swatches == CSS, every theme defines every token, text-on-accent contrast ≥ 4.5:1, and **no component may hard-code a palette hex** (allowed exceptions: login avatar colours, subtitle colour pickers).
+- **No flash:** the root layout (`app/layout.tsx`) is now async, reads the settings (`getServerSettings`, memoised per request so the layouts share one backend call) and writes `data-theme`, `data-text-size`, `data-motion` on `<html>`; `generateViewport` sets the phone address-bar colour from the theme. `SettingsProvider` keeps those attributes current, so picking a theme switches instantly. Signed-out pages get the defaults (the settings call just returns 401 → defaults).
+- **Gotcha found while verifying:** a `*/` sequence inside a CSS comment (e.g. `bg-*/text-*`) silently ends the comment and breaks every rule after it; a test now parses `globals.css` with postcss.
+
+### Settings → Appearance (all live)
+Theme swatches · Home layout **Grid / Swipe rows** · Titles per section (12/18/24/36/48) · Banner on/off + rotation (5/7/10/15 s) · Show ratings · Show years · Episode list **Rows / Compact blocks** · Description length **Short / Standard / Full** · Text size (90% / 100% / 112.5% of the root font size — everything is rem) · Reduce motion **Auto / On / Off** (Auto follows the device; Off keeps animations even if the device asks to reduce them).
+- *Swipe rows* (`components/MediaRow.tsx`): native horizontal scroll with scroll-snap; arrow buttons on hover for mouse devices (hidden on touch). `Section` takes `layout` and `max`; the home page passes them from the settings. Continue Watching is capped by the same value (the backend still fetches 24, so 36/48 only matters for the other rows).
+- *Compact blocks* (`SeasonBrowser`): `[ 12 ] Episode name` chips in `grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))]` — 1 column on phones, more on wider screens; same Now playing / Last watched / In progress states (name colour, small caption, progress bar). Works on the detail page and in the player's episode list. The summary is in the chip's tooltip.
+- *Description length* (`lib/media.ts#overviewForLength`, `components/Overview.tsx`): "standard" is exactly today's behaviour (200 chars on detail pages, 180 in the banner); short ≈ 55% of that; full = whole text (banner clamps at 6 lines). Episode summaries clamp to 1 line / 2 lines / none.
+- `MediaCard` is now a client component (reads show_ratings / show_years).
+
+### Please verify in a browser
+1. Settings → Appearance: click each theme — the whole app recolours at once, including the header menu, dialogs, toasts, the player (open a video) and the Admin panel. Reload: no flash of the old theme. Check the same account on a second device.
+2. Home layout → Swipe rows: rows swipe on the phone (snap to cards); on desktop, arrows appear on hover. Titles per section changes the counts. Turn the banner off / change its speed.
+3. Episode list → Compact blocks on a show page and in the player's episode list; resize to see 1/2/3+ columns.
+4. Description length on the banner, a movie page, a show page, and episode summaries.
+5. Text size Large/Small; Reduce motion On (animations stop) / Off.
+6. Mono theme: white accent — confirm buttons/text on it are readable.
+
+### Next: 9d Playback basics (autoplay next + Up-next overlay, cross-season next episode, auto subtitles, save-progress toggle + movie visit record + Clear history, per-video remember)

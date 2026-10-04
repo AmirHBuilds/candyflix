@@ -1,5 +1,8 @@
+"use client";
+
 import FadeImage from "@/components/FadeImage";
 import Link from "next/link";
+import { useSettings } from "@/components/SettingsProvider";
 import { detailHref, posterUrl, type MediaItem } from "@/lib/media";
 
 export default function MediaCard({
@@ -18,12 +21,13 @@ export default function MediaCard({
    * Watching's series items only; omitted everywhere else. */
   badge?: string;
 }) {
+  const { show_ratings, show_years } = useSettings().settings.appearance;
   const poster = posterUrl(item.poster_path, "w500");
   const typeLabel = item.media_type === "movie" ? "Movie" : "TV";
 
   return (
     <Link href={href ?? detailHref(item)} onClick={onNavigate} className="group block w-full min-w-0">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 transition-all duration-200 group-hover:ring-[#FF5FA2]/50 group-hover:shadow-[0_0_24px_-4px_rgba(255,95,162,0.35)]">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 transition-all duration-200 group-hover:ring-accent/50 group-hover:shadow-[0_0_24px_-4px_color-mix(in_srgb,var(--color-accent)_35%,transparent)]">
         {poster ? (
           <FadeImage
             src={poster}
@@ -46,10 +50,10 @@ export default function MediaCard({
       <p className="mt-2 truncate text-sm text-white/80">{item.title}</p>
       <div className="flex items-center justify-between text-xs text-white/40">
         <span className="truncate">
-          {item.year ?? "—"} · {typeLabel}
+          {show_years ? `${item.year ?? "—"} · ${typeLabel}` : typeLabel}
         </span>
-        {item.rating != null && (
-          <span className="ml-2 shrink-0 text-[#8FE3C7]">★ {item.rating.toFixed(1)}</span>
+        {show_ratings && item.rating != null && (
+          <span className="ml-2 shrink-0 text-highlight">★ {item.rating.toFixed(1)}</span>
         )}
       </div>
     </Link>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getMovie, getSimilarMovies, backdropUrl, posterUrl, shortenOverview } from "@/lib/media";
+import { getMovie, getSimilarMovies, backdropUrl, posterUrl } from "@/lib/media";
+import Overview from "@/components/Overview";
 import DetailActions from "@/components/DetailActions";
 import MediaGrid from "@/components/MediaGrid";
 
@@ -35,7 +36,7 @@ export default async function MovieDetailPage({
         {backdrop && (
           <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover object-top" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B12] via-[#0B0B12]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/50 to-transparent" />
       </div>
 
       <div className="flex flex-col gap-6 sm:flex-row">
@@ -74,7 +75,7 @@ export default async function MovieDetailPage({
             </div>
           )}
 
-          <p className="max-w-2xl text-white/70">{shortenOverview(movie.overview)}</p>
+          <Overview text={movie.overview} className="max-w-2xl text-white/70" />
 
           <DetailActions tmdbId={movie.tmdb_id} mediaType="movie" />
         </div>

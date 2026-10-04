@@ -46,3 +46,7 @@ backend/subtitle-cache/
 Thumbs.db
 .idea/
 .vscode/
+
+# profile pictures uploaded by users
+backend/avatars/*
+!backend/avatars/.gitkeep

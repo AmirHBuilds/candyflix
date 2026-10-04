@@ -110,7 +110,7 @@ describe("DetailActions — button sizing (class structure only; real widths nee
     const chip = screen.getByText("S1:E8");
     expect(chip).toHaveClass("rounded-md");
     expect(chip).not.toHaveClass("rounded-full");
-    expect(chip).toHaveClass("bg-[#0b0b12]", "text-white");
+    expect(chip).toHaveClass("bg-canvas", "text-white");
   });
 
   it("uses the wider-threshold class set for a long label like S10:E12", () => {

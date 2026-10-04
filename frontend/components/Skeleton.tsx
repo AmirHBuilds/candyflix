@@ -119,7 +119,7 @@ export function PlayerSkeleton() {
   return (
     <LoadingRegion>
       <div className="flex aspect-video max-h-[calc(100dvh-8rem)] w-full items-center justify-center bg-black">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#FF5FA2]" />
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-accent" />
       </div>
     </LoadingRegion>
   );

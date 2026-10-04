@@ -62,8 +62,8 @@ describe("mobile guards", () => {
     // Read as text: importing the layout would pull in next/font, which
     // only exists inside the Next build.
     const layout = read("app/layout.tsx");
-    expect(layout).toMatch(/export const viewport: Viewport/);
-    expect(layout).toContain('themeColor: "#0B0B12"');
+    expect(layout).toMatch(/export async function generateViewport\(\): Promise<Viewport>/);
+    expect(layout).toContain("themeColor: themeCanvas(");
     expect(layout).toContain('colorScheme: "dark"');
   });
 });

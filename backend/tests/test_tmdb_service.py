@@ -345,6 +345,38 @@ async def test_get_trending_filters_and_normalizes():
 
 
 @respx.mock
+async def test_trending_items_carry_the_overview_for_the_hero_banner():
+    respx.get(f"{settings.tmdb_base_url}/trending/all/day").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "page": 1,
+                "total_pages": 1,
+                "results": [
+                    {
+                        "id": 1396,
+                        "media_type": "tv",
+                        "name": "Breaking Bad",
+                        "first_air_date": "2008-01-20",
+                        "overview": "  A chemistry teacher turns to crime.  ",
+                    },
+                    # TMDB sends "" (not null) when it has no synopsis.
+                    {"id": 2, "media_type": "movie", "title": "Quiet", "overview": ""},
+                    # ...and sometimes omits the key entirely.
+                    {"id": 3, "media_type": "movie", "title": "Silent"},
+                ],
+            },
+        )
+    )
+
+    items = {i.tmdb_id: i for i in await tmdb_service.get_trending()}
+
+    assert items[1396].overview == "A chemistry teacher turns to crime."
+    assert items[2].overview is None
+    assert items[3].overview is None
+
+
+@respx.mock
 async def test_get_trending_uses_cache_on_second_call():
     route = respx.get(f"{settings.tmdb_base_url}/trending/all/day").mock(
         return_value=httpx.Response(200, json=TRENDING_RESPONSE)

@@ -31,5 +31,16 @@ async def get_current_user(
     user = await auth_service.get_user_by_id(db, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if user.is_disabled:
+        # 401 so the app signs the person out, same as an expired session.
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account disabled")
 
     return user
+
+
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """For admin-only routes. 403 (not 404) so the UI can tell "you're not
+    allowed" from "doesn't exist"."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    return current_user

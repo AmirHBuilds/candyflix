@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getTVShow, getSimilarTV, backdropUrl, posterUrl, shortenOverview } from "@/lib/media";
+import { getTVShow, getSimilarTV, backdropUrl, posterUrl } from "@/lib/media";
 import { getLatestTVWatchProgressServer } from "@/lib/playback-server";
 import { mergeResumeWithHint, parseResumeHintFromSearchParams } from "@/lib/playback";
+import Overview from "@/components/Overview";
 import DetailActions from "@/components/DetailActions";
 import SeasonBrowser from "@/components/SeasonBrowser";
 import MediaGrid from "@/components/MediaGrid";
@@ -56,7 +57,7 @@ export default async function TVDetailPage({
         {backdrop && (
           <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover object-top" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B12] via-[#0B0B12]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/50 to-transparent" />
       </div>
 
       <div className="flex flex-col gap-6 sm:flex-row">
@@ -94,7 +95,7 @@ export default async function TVDetailPage({
             </div>
           )}
 
-          <p className="max-w-2xl text-white/70">{shortenOverview(show.overview)}</p>
+          <Overview text={show.overview} className="max-w-2xl text-white/70" />
 
           <DetailActions tmdbId={show.tmdb_id} mediaType="tv" tvProgress={watchProgress} />
         </div>

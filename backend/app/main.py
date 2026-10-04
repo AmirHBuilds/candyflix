@@ -20,24 +20,29 @@ existing WatchProgress table; no new modeling work, same
 enrich-at-read-time pattern as the watchlist.
 """
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
+    account,
+    admin,
     auth,
     continue_watching,
     health,
     movies,
     playback,
     search,
+    settings as settings_routes,
     subtitles,
     trending,
     tv,
     watchlist,
 )
 from app.core.config import get_settings
+from app.core.migrate import run_migrations
 
 settings = get_settings()
 
@@ -72,7 +77,15 @@ class NoCacheStaticFiles(StaticFiles):
         return response
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    if settings.auto_migrate:
+        await run_migrations()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.app_name,
     description="Backend API for CandyFlix — a small, private movie & TV app.",
     version="0.1.0",
@@ -90,6 +103,11 @@ app.mount("/mock-videos", NoCacheStaticFiles(directory=settings.mock_videos_dir)
 # Plain StaticFiles here (not NoCacheStaticFiles) — these are small,
 # whole-file text downloads, not the range-requested video streams the
 # Cache-Control workaround above exists for.
+# Profile pictures: our own re-encoded WebP files under random names, so
+# plain StaticFiles (cacheable) is right; the directory persists via the
+# ./backend bind mount like the subtitle cache.
+os.makedirs(settings.avatars_dir, exist_ok=True)
+app.mount("/avatars", StaticFiles(directory=settings.avatars_dir), name="avatars")
 app.mount(
     "/subtitle-cache", StaticFiles(directory=settings.subtitle_cache_dir), name="subtitle-cache"
 )
@@ -104,6 +122,9 @@ app.include_router(playback.router, prefix="/api")
 app.include_router(subtitles.router, prefix="/api")
 app.include_router(watchlist.router, prefix="/api")
 app.include_router(continue_watching.router, prefix="/api")
+app.include_router(settings_routes.router, prefix="/api")
+app.include_router(account.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
 
 @app.get("/api")

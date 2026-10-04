@@ -19,6 +19,9 @@ class MediaItem(BaseModel):
     poster_path: str | None = None
     backdrop_path: str | None = None
     rating: float | None = None
+    # TMDB's synopsis. Cards ignore it; the home hero banner shows a
+    # short version under the title. None when TMDB has no text for it.
+    overview: str | None = None
 
 
 class Genre(BaseModel):

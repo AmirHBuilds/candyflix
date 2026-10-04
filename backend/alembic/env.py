@@ -17,11 +17,14 @@ from app.core.db import Base
 from app.models import user  # noqa
 from app.models import watch_progress  # noqa
 from app.models import watchlist_item  # noqa
+from app.models import user_settings  # noqa
 
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False: this also runs inside the live app
+    # (app/core/migrate.py), and the default would silence its loggers.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
