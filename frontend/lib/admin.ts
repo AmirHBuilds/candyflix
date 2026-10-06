@@ -119,3 +119,35 @@ export const getUserDetail = (id: string) => request<UserDetail>(`/users/${id}/d
 export const getUserHistory = (id: string, offset = 0, limit = 50) =>
   request<HistoryPage>(`/users/${id}/history?limit=${limit}&offset=${offset}`, {}, "Couldn't load the watch history.");
 export const getUserWatchlist = (id: string) => request<WatchlistEntry[]>(`/users/${id}/watchlist`, {}, "Couldn't load their list.");
+
+// --- Phase 10b: drill-down lists ---
+
+export type TitleRow = {
+  tmdb_id: number;
+  media_type: "movie" | "tv";
+  title: string | null;
+  poster_path: string | null;
+  viewers: number;
+  entries: number;
+  last_watched_at: string;
+};
+export type TitlePage = { items: TitleRow[]; total: number };
+export type ViewerItem = HistoryItem & { user_id: string; username: string; display_name: string; avatar_url: string | null };
+export type ViewerPage = { items: ViewerItem[]; total: number };
+export type LoginRow = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_disabled: boolean;
+  last_login_at: string | null;
+  active_sessions: number;
+};
+
+export const getTitlesWatched = (offset = 0, limit = 50) =>
+  request<TitlePage>(`/titles?limit=${limit}&offset=${offset}`, {}, "Couldn't load the titles.");
+export const getTitleViewers = (mediaType: "movie" | "tv", tmdbId: number, offset = 0, limit = 50) =>
+  request<ViewerPage>(`/titles/${mediaType}/${tmdbId}/viewers?limit=${limit}&offset=${offset}`, {}, "Couldn't load who watched that.");
+export const getDayActivity = (day: string, offset = 0, limit = 50) =>
+  request<ViewerPage>(`/activity/${day}?limit=${limit}&offset=${offset}`, {}, "Couldn't load that day.");
+export const getSignIns = () => request<LoginRow[]>("/sign-ins", {}, "Couldn't load the sign-ins.");

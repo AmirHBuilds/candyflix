@@ -462,3 +462,116 @@ async def user_watchlist(db: AsyncSession, user_id: uuid.UUID) -> list[schemas.W
         )
         for r in rows
     ]
+
+
+# ---------- Phase 10b: drill-down lists ----------
+
+
+async def titles_watched(db: AsyncSession, limit: int, offset: int) -> schemas.TitlePage:
+    """Every title anyone has watched, most-watched first."""
+    key = (WatchProgress.tmdb_id, WatchProgress.media_type)
+    grouped = select(*key).group_by(*key).subquery()
+    total = await db.scalar(select(func.count()).select_from(grouped)) or 0
+    rows = (
+        await db.execute(
+            select(
+                *key,
+                func.count(distinct(WatchProgress.user_id)).label("viewers"),
+                func.count().label("entries"),
+                func.max(WatchProgress.updated_at).label("last"),
+            )
+            .group_by(*key)
+            .order_by(text("viewers DESC"), text("last DESC"), WatchProgress.tmdb_id)
+            .limit(limit)
+            .offset(offset)
+        )
+    ).all()
+    titles = await _titles({(mt, tid) for tid, mt, *_ in rows})
+    items = [
+        schemas.TitleRow(
+            tmdb_id=tid,
+            media_type=mt,
+            title=titles.get((mt, tid), (None, None))[0],
+            poster_path=titles.get((mt, tid), (None, None))[1],
+            viewers=viewers,
+            entries=entries,
+            last_watched_at=last,
+        )
+        for tid, mt, viewers, entries, last in rows
+    ]
+    return schemas.TitlePage(items=items, total=int(total))
+
+
+async def _viewer_items(db: AsyncSession, where, limit: int, offset: int) -> schemas.ViewerPage:
+    total = await db.scalar(select(func.count()).select_from(WatchProgress).where(*where)) or 0
+    rows = (
+        await db.execute(
+            select(WatchProgress, User)
+            .join(User, User.id == WatchProgress.user_id)
+            .where(*where)
+            .order_by(WatchProgress.updated_at.desc(), WatchProgress.id)
+            .limit(limit)
+            .offset(offset)
+        )
+    ).all()
+    titles = await _titles({(r.media_type, r.tmdb_id) for r, _ in rows})
+    items = []
+    for r, u in rows:
+        title, poster = titles.get((r.media_type, r.tmdb_id), (None, None))
+        opened_only = r.duration_seconds <= 0
+        items.append(
+            schemas.ViewerItem(
+                tmdb_id=r.tmdb_id,
+                media_type=r.media_type,
+                season_number=_none_if_sentinel(r.season_number),
+                episode_number=_none_if_sentinel(r.episode_number),
+                title=title,
+                poster_path=poster,
+                position_seconds=r.position_seconds,
+                duration_seconds=r.duration_seconds,
+                fraction=None if opened_only else max(0.0, min(1.0, r.position_seconds / r.duration_seconds)),
+                opened_only=opened_only,
+                updated_at=r.updated_at,
+                user_id=u.id,
+                username=u.username,
+                display_name=u.display_name,
+                avatar_url=u.avatar_url,
+            )
+        )
+    return schemas.ViewerPage(items=items, total=int(total))
+
+
+async def title_viewers(db: AsyncSession, media_type: str, tmdb_id: int, limit: int, offset: int) -> schemas.ViewerPage:
+    """Who has watched one title (and how far), latest first."""
+    return await _viewer_items(
+        db, [WatchProgress.media_type == media_type, WatchProgress.tmdb_id == tmdb_id], limit, offset
+    )
+
+
+async def day_activity(db: AsyncSession, day: date, limit: int, offset: int) -> schemas.ViewerPage:
+    """Everything saved on one calendar day (UTC, the same day the Overview chart groups by)."""
+    start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+    return await _viewer_items(
+        db, [WatchProgress.updated_at >= start, WatchProgress.updated_at < start + timedelta(days=1)], limit, offset
+    )
+
+
+async def sign_ins(db: AsyncSession) -> list[schemas.LoginRow]:
+    """Everyone with their last sign-in and how many sign-ins are active now, most recent first."""
+    users = (await db.execute(select(User))).scalars().all()
+    redis = get_redis()
+    counts = {u.id: int(await redis.scard(f"{auth_service.USER_SESSIONS_PREFIX}{u.id}") or 0) for u in users}
+    epoch = datetime.min.replace(tzinfo=timezone.utc)
+    users.sort(key=lambda u: u.last_login_at or epoch, reverse=True)
+    return [
+        schemas.LoginRow(
+            id=u.id,
+            username=u.username,
+            display_name=u.display_name,
+            avatar_url=u.avatar_url,
+            is_disabled=u.is_disabled,
+            last_login_at=u.last_login_at,
+            active_sessions=counts[u.id],
+        )
+        for u in users
+    ]

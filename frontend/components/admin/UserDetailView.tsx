@@ -128,7 +128,7 @@ const SECTIONS = [
   { id: "box", label: "Candy Box" },
 ] as const;
 
-export default function UserDetailView({ userId, onBack }: { userId: string; onBack: () => void }) {
+export default function UserDetailView({ userId, onBack, backLabel = "All people" }: { userId: string; onBack: () => void; backLabel?: string }) {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [section, setSection] = useState<(typeof SECTIONS)[number]["id"]>("history");
@@ -150,7 +150,7 @@ export default function UserDetailView({ userId, onBack }: { userId: string; onB
   return (
     <section aria-label="Person" className="space-y-5">
       <button type="button" onClick={onBack} className={quietButton}>
-        ← All people
+        ← {backLabel}
       </button>
       {error && !detail ? (
         <p role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-200">{error}</p>

@@ -713,3 +713,11 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 **Limits:** history is the latest position per title/episode (not a play log). Presence is independent of "Save watch progress". Sign-ins show as a count only (full list comes in 10b).
 **Baselines:** backend 353, frontend 545 (excluding the four live-backend files), tsc clean.
 **Next:** 10b drill-downs, 10c messages, 10d audit trail.
+
+## 25. Phase 10b — drill-down everywhere (v26)
+
+**Backend (admin-only):** `GET /admin/titles` (every watched title, viewers/entries, paged), `/admin/titles/{movie|tv}/{id}/viewers`, `/admin/activity/{YYYY-MM-DD}` (UTC day, same grouping as the chart), `/admin/sign-ins` (everyone, last sign-in, active devices). Tests: `test_admin_drilldown.py`.
+**Frontend:** Overview numbers are buttons: People → all people; Admins / Disabled / Active 7 days → filtered people list (client-side via `applyFilter`); Marked watched and "Most watched → See all" → titles → who watched → person; a chart bar → that day's activity; "Recent sign-ins → See all" → sign-ins. `AdminPanel` keeps a drill stack, so Back goes one level up with the right label; switching tabs clears it. Files: `DrillViews.tsx`, `OverviewTab.tsx`, `UsersTab.tsx` (filter/back props), `UserDetailView.tsx` (backLabel), `AdminPanel.tsx`. Tests: `admin-drilldown.test.tsx`.
+**Limits:** "Sign-ins" shows last sign-in + live device count (the DB keeps only the last login time, not a login log). Days with 0 saves aren't clickable.
+**Baselines:** backend 356, frontend 551 (excl. four live-backend files), tsc clean.
+**Next:** 10c messages, 10d audit trail.

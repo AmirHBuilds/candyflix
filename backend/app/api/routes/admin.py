@@ -4,6 +4,8 @@ everyone else); the safety rules (no self-lockout, at least one active
 admin) are enforced in admin_service, not just in the UI.
 """
 import uuid
+from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -145,3 +147,36 @@ async def user_watchlist(user_id: uuid.UUID, db: AsyncSession = Depends(get_db))
         return await admin_service.user_watchlist(db, user_id)
     except admin_service.AdminError as exc:
         _raise(exc)
+
+
+# --- Phase 10b: drill-down lists behind every Overview number ---
+
+
+@router.get("/titles", response_model=schemas.TitlePage)
+async def titles_watched(
+    limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), db: AsyncSession = Depends(get_db)
+):
+    return await admin_service.titles_watched(db, limit, offset)
+
+
+@router.get("/titles/{media_type}/{tmdb_id}/viewers", response_model=schemas.ViewerPage)
+async def title_viewers(
+    media_type: Literal["movie", "tv"],
+    tmdb_id: int,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    return await admin_service.title_viewers(db, media_type, tmdb_id, limit, offset)
+
+
+@router.get("/activity/{day}", response_model=schemas.ViewerPage)
+async def day_activity(
+    day: date, limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), db: AsyncSession = Depends(get_db)
+):
+    return await admin_service.day_activity(db, day, limit, offset)
+
+
+@router.get("/sign-ins", response_model=list[schemas.LoginRow])
+async def sign_ins(db: AsyncSession = Depends(get_db)):
+    return await admin_service.sign_ins(db)

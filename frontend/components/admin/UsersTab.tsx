@@ -24,7 +24,34 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function UsersTab({ currentUserId, onView }: { currentUserId: string; onView?: (id: string) => void }) {
+export type UserFilter = "admins" | "disabled" | "active";
+export const FILTER_TITLES: Record<UserFilter, string> = {
+  admins: "Admins",
+  disabled: "Disabled accounts",
+  active: "Signed in during the last 7 days",
+};
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
+export function applyFilter(users: AdminUser[], filter?: UserFilter): AdminUser[] {
+  if (filter === "admins") return users.filter((u) => u.is_admin);
+  if (filter === "disabled") return users.filter((u) => u.is_disabled);
+  if (filter === "active") return users.filter((u) => u.last_login_at && Date.now() - new Date(u.last_login_at).getTime() <= WEEK_MS);
+  return users;
+}
+
+export default function UsersTab({
+  currentUserId,
+  onView,
+  filter,
+  onBack,
+  backLabel = "Overview",
+}: {
+  currentUserId: string;
+  onView?: (id: string) => void;
+  filter?: UserFilter;
+  onBack?: () => void;
+  backLabel?: string;
+}) {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal | null>(null);
@@ -70,19 +97,30 @@ export default function UsersTab({ currentUserId, onView }: { currentUserId: str
   }
   if (!users) return <p className="text-sm text-white/50">Loading users…</p>;
 
+  const shown = applyFilter(users, filter);
+
   return (
     <section aria-label="Users" className="space-y-4">
+      {onBack && (
+        <div className="space-y-3">
+          <button type="button" onClick={onBack} className={quietButton}>
+            ← {backLabel}
+          </button>
+          <h2 className="text-xl font-semibold text-white">{filter ? FILTER_TITLES[filter] : "People"}</h2>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-white/50">
-          {users.length} {users.length === 1 ? "person" : "people"}
+          {shown.length} {shown.length === 1 ? "person" : "people"}
         </p>
         <button type="button" onClick={() => setModal({ kind: "create" })} className={primaryButton}>
           Add user
         </button>
       </div>
+      {shown.length === 0 && <p className="text-sm text-white/40">Nobody here.</p>}
 
       <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
-        {users.map((user) => {
+        {shown.map((user) => {
           const isMe = user.id === currentUserId;
           return (
             <li key={user.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">

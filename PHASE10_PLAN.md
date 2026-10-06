@@ -9,7 +9,7 @@ Because this shows people's activity to the admin, **every person is told so**: 
   1. Presence heartbeat (`POST /api/presence`, Redis only, 45 s TTL) → **Watching now** card on the admin Overview (auto-refreshes) and on each person's page.
   2. **Person page** (Admin → Users → View): profile facts, what they're watching now, **full watch history** (every title/episode: where they stopped, how far, when; paged), their **Candy Box** contents, active sign-ins.
   3. The privacy notice for everyone.
-- **10b Drill-down everywhere:** every number on the Overview opens its full list (admins, disabled, active in the last 7 days, titles with who watched them, all sign-ins, a day's activity).
+- **10b Drill-down everywhere (DONE, v26):** every number on the Overview opens its full list (admins, disabled, active in the last 7 days, titles with who watched them, all sign-ins, a day's activity).
 - **10c Messages:** admin composes a message for everyone or chosen people; it shows at the top of the site until they press **I understand**; admin sees who has accepted (and when), who hasn't, counts; can edit/expire/delete. Table `announcements` + `announcement_targets` + `announcement_acks`.
 - **10d Audit trail (small):** a log of admin actions (viewing someone's history, sending messages, account changes) so the "see everything" power is itself visible to the admin(s).
 

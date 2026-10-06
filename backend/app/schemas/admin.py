@@ -196,3 +196,45 @@ class UserDetail(BaseModel):
     now_watching: NowWatching | None = None
     active_sessions: int = 0
     last_activity: datetime | None = None
+
+
+# ---------- Phase 10b: drill-down lists ----------
+
+
+class TitleRow(BaseModel):
+    tmdb_id: int
+    media_type: str
+    title: str | None = None
+    poster_path: str | None = None
+    viewers: int  # different people
+    entries: int  # titles/episodes saved (a series counts each episode)
+    last_watched_at: datetime
+
+
+class TitlePage(BaseModel):
+    items: list[TitleRow]
+    total: int
+
+
+class ViewerItem(HistoryItem):
+    """One person's saved position on a title/episode (used for 'who watched this' and 'a day's activity')."""
+
+    user_id: uuid.UUID
+    username: str
+    display_name: str
+    avatar_url: str | None = None
+
+
+class ViewerPage(BaseModel):
+    items: list[ViewerItem]
+    total: int
+
+
+class LoginRow(BaseModel):
+    id: uuid.UUID
+    username: str
+    display_name: str
+    avatar_url: str | None = None
+    is_disabled: bool = False
+    last_login_at: datetime | None = None
+    active_sessions: int = 0
