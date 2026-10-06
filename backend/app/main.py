@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
+    announcements,
     account,
     admin,
     auth,
@@ -133,6 +134,7 @@ app.include_router(video_settings.router, prefix="/api")
 app.include_router(site.router, prefix="/api")
 app.include_router(segments.router, prefix="/api")
 app.include_router(presence.router, prefix="/api")
+app.include_router(announcements.router, prefix="/api")
 
 
 @app.get("/api")

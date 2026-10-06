@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerCurrentUser } from "@/lib/session";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import Nav from "@/components/Nav";
 import { BoxNameProvider } from "@/components/BoxNameProvider";
 import Footer from "@/components/Footer";
@@ -23,6 +24,7 @@ export default async function MainLayout({
       <BoxNameProvider displayName={user.display_name}>
       <ScrollToTop />
       <div className="flex min-h-dvh flex-col">
+        <AnnouncementBanner />
         <Nav />
         <main className="flex-1 px-6 py-8 sm:px-10">{children}</main>
         <Footer />

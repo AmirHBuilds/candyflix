@@ -180,3 +180,68 @@ async def day_activity(
 @router.get("/sign-ins", response_model=list[schemas.LoginRow])
 async def sign_ins(db: AsyncSession = Depends(get_db)):
     return await admin_service.sign_ins(db)
+
+
+# --- Phase 10c: messages to people ("I understand") ---
+
+from app.schemas import announcements as ann_schemas  # noqa: E402
+from app.services import announcement_service  # noqa: E402
+
+
+@router.get("/announcements", response_model=list[ann_schemas.AnnouncementOut])
+async def list_announcements(db: AsyncSession = Depends(get_db)):
+    return await announcement_service.list_all(db)
+
+
+@router.post("/announcements", response_model=ann_schemas.AnnouncementOut, status_code=status.HTTP_201_CREATED)
+async def create_announcement(
+    payload: ann_schemas.AnnouncementCreate, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
+    try:
+        return await announcement_service.create(db, actor, payload)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.get("/announcements/{announcement_id}", response_model=ann_schemas.AnnouncementDetail)
+async def announcement_detail(announcement_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    try:
+        return await announcement_service.detail(db, announcement_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.get("/announcements/{announcement_id}/targets", response_model=list[uuid.UUID])
+async def announcement_targets(announcement_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    try:
+        await announcement_service.detail(db, announcement_id)  # 404 if missing
+        return await announcement_service.target_ids(db, announcement_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.patch("/announcements/{announcement_id}", response_model=ann_schemas.AnnouncementOut)
+async def update_announcement(
+    announcement_id: uuid.UUID, payload: ann_schemas.AnnouncementUpdate, db: AsyncSession = Depends(get_db)
+):
+    try:
+        return await announcement_service.update(db, announcement_id, payload)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.post("/announcements/{announcement_id}/reshow", response_model=schemas.ClearedResult)
+async def reshow_announcement(announcement_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    try:
+        return schemas.ClearedResult(cleared=await announcement_service.reshow(db, announcement_id))
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.delete("/announcements/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_announcement(announcement_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    try:
+        await announcement_service.remove(db, announcement_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

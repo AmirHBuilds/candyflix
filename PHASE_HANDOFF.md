@@ -721,3 +721,12 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 **Limits:** "Sign-ins" shows last sign-in + live device count (the DB keeps only the last login time, not a login log). Days with 0 saves aren't clickable.
 **Baselines:** backend 356, frontend 551 (excl. four live-backend files), tsc clean.
 **Next:** 10c messages, 10d audit trail.
+
+## 26. Phase 10c — messages with "I understand" (v27)
+
+**DB:** migration `b7d2f4a91c33` (after `a1c3e5f70912`): `announcements`, `announcement_targets`, `announcement_acks` (all cascade on user delete; `created_by` SET NULL). Auto-migrates on start.
+**Backend:** `announcement_service`; people: `GET /api/announcements/pending`, `POST /api/announcements/{id}/ack` (204, idempotent, 404 if not meant for you); admin: `GET/POST /admin/announcements`, `GET/PATCH/DELETE /admin/announcements/{id}`, `GET …/targets`, `POST …/reshow` ("ask everyone again" = clears acceptances). Tests: `test_announcements.py`.
+**Rules:** audience "all" = every non-disabled person, incl. people added later; "selected" = chosen people. Shown while active (not stopped), not past `expires_at`, not yet accepted. Title ≤120, text ≤2000, end time must be in the future. Switching to "selected" needs people; switching to "all" drops the target list.
+**Frontend:** `AnnouncementBanner` at the very top of the main layout (refreshes each minute and on tab focus; each message has its own "I understand"; failed save keeps it); admin **Messages** tab (`MessagesTab.tsx`): list with "x of y understood", New message dialog (everyone / chosen people, optional end time), message page with who understood + when, Edit, Stop/Show again, Ask everyone again, Delete (two-step). Tests: `announcements.test.tsx`.
+**Baselines:** backend 364, frontend 560 (excl. four live-backend files), tsc clean.
+**Next:** 10d audit trail (also a candidate home for a real sign-in log).

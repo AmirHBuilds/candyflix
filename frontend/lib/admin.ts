@@ -151,3 +151,40 @@ export const getTitleViewers = (mediaType: "movie" | "tv", tmdbId: number, offse
 export const getDayActivity = (day: string, offset = 0, limit = 50) =>
   request<ViewerPage>(`/activity/${day}?limit=${limit}&offset=${offset}`, {}, "Couldn't load that day.");
 export const getSignIns = () => request<LoginRow[]>("/sign-ins", {}, "Couldn't load the sign-ins.");
+
+// --- Phase 10c: messages ("I understand") ---
+
+export type AnnouncementStatus = "active" | "expired" | "stopped";
+export type Announcement = {
+  id: string;
+  title: string;
+  body: string;
+  audience: "all" | "selected";
+  created_at: string;
+  created_by_name: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+  status: AnnouncementStatus;
+  recipients: number;
+  accepted: number;
+};
+export type AnnouncementPerson = { user_id: string; username: string; display_name: string; avatar_url: string | null; acked_at: string | null };
+export type AnnouncementDetail = Announcement & { people: AnnouncementPerson[] };
+export type AnnouncementInput = {
+  title: string;
+  body: string;
+  audience: "all" | "selected";
+  user_ids: string[];
+  expires_at: string | null;
+};
+
+export const listAnnouncements = () => request<Announcement[]>("/announcements", {}, "Couldn't load the messages.");
+export const getAnnouncement = (id: string) => request<AnnouncementDetail>(`/announcements/${id}`, {}, "Couldn't load that message.");
+export const getAnnouncementTargets = (id: string) => request<string[]>(`/announcements/${id}/targets`, {}, "Couldn't load who it's for.");
+export const createAnnouncement = (body: AnnouncementInput) =>
+  request<Announcement>("/announcements", { method: "POST", body: JSON.stringify(body) }, "Couldn't send that message.");
+export const updateAnnouncement = (id: string, body: Partial<AnnouncementInput> & { is_active?: boolean }) =>
+  request<Announcement>(`/announcements/${id}`, { method: "PATCH", body: JSON.stringify(body) }, "Couldn't save the changes.");
+export const reshowAnnouncement = (id: string) =>
+  request<{ cleared: number }>(`/announcements/${id}/reshow`, { method: "POST" }, "Couldn't show it again.");
+export const deleteAnnouncement = (id: string) => request<void>(`/announcements/${id}`, { method: "DELETE" }, "Couldn't delete that message.");
