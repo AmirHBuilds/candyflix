@@ -2,7 +2,7 @@
 
 The user's decisions (Oct 2026): the admin can see **what each person is watching right now**, their **full watch history**, and everything else on this server, drill into every section, and send **public messages** that stay on screen until the person clicks "I understand".
 
-Because this shows people's activity to the admin, **every person is told so**: Settings → Privacy & data says "The server admin can see what you watch here: what's playing now, your history and your list." (Built in 10a.)
+Because this shows people's activity to the admin, **every person is told so**: Settings → Privacy & data says "Your activity on CandyFlix is visible to the server admin and is recorded to help with troubleshooting and keep things running smoothly." (worded on purpose without listing what is recorded; the user asked for a calm text) (Built in 10a.)
 
 ## Build order (each step ships green, with tests + handoff + zip)
 - **10a Live + people (DONE, v25):**
@@ -11,7 +11,7 @@ Because this shows people's activity to the admin, **every person is told so**: 
   3. The privacy notice for everyone.
 - **10b Drill-down everywhere (DONE, v26):** every number on the Overview opens its full list (admins, disabled, active in the last 7 days, titles with who watched them, all sign-ins, a day's activity).
 - **10c Messages (DONE, v27):** admin composes a message for everyone or chosen people; it shows at the top of the site until they press **I understand**; admin sees who has accepted (and when), who hasn't, counts; can edit/expire/delete. Table `announcements` + `announcement_targets` + `announcement_acks`.
-- **10d Audit trail (small):** a log of admin actions (viewing someone's history, sending messages, account changes) so the "see everything" power is itself visible to the admin(s).
+- **10d Audit trail (DONE, v28):** a log of admin actions (viewing someone's history, sending messages, account changes) so the "see everything" power is itself visible to the admin(s).
 
 ## Limits to remember
 - History is the existing `watch_progress` table: one row per title/episode with the *latest* position and time. It is not a play-by-play log (no record of each separate viewing).

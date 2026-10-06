@@ -238,3 +238,37 @@ class LoginRow(BaseModel):
     is_disabled: bool = False
     last_login_at: datetime | None = None
     active_sessions: int = 0
+
+
+# ---------- Phase 10d: audit trail ----------
+
+
+class AuditEntry(BaseModel):
+    id: uuid.UUID
+    at: datetime
+    actor_id: uuid.UUID | None = None
+    actor_name: str
+    action: str
+    target_user_id: uuid.UUID | None = None
+    target_name: str | None = None
+    detail: str | None = None
+
+
+class AuditPage(BaseModel):
+    items: list[AuditEntry]
+    total: int
+
+
+class SignInEntry(BaseModel):
+    id: uuid.UUID
+    at: datetime
+    user_id: uuid.UUID
+    username: str
+    display_name: str
+    avatar_url: str | None = None
+    device: str
+
+
+class SignInPage(BaseModel):
+    items: list[SignInEntry]
+    total: int

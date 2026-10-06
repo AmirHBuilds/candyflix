@@ -53,7 +53,7 @@ export function DrillHeader({ title, subtitle, onBack, backLabel }: { title: str
 }
 
 /** Loads a paged list ("Load more") and shows loading / empty / error states. */
-function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[]; total: number }>) {
+export function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[]; total: number }>) {
   const [items, setItems] = useState<T[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +80,7 @@ function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[]; total:
   return { items, total, error, busy, more };
 }
 
-function MoreButton({ shown, total, busy, onMore }: { shown: number; total: number; busy: boolean; onMore: () => void }) {
+export function MoreButton({ shown, total, busy, onMore }: { shown: number; total: number; busy: boolean; onMore: () => void }) {
   if (shown >= total) return null;
   return (
     <button type="button" disabled={busy} onClick={onMore} className={quietButton}>
@@ -89,7 +89,7 @@ function MoreButton({ shown, total, busy, onMore }: { shown: number; total: numb
   );
 }
 
-function PagedState({ total, error, hasItems, empty }: { total: number | null; error: string | null; hasItems: boolean; empty: string }) {
+export function PagedState({ total, error, hasItems, empty }: { total: number | null; error: string | null; hasItems: boolean; empty: string }) {
   if (error) return <p role="alert" className="text-sm text-red-300">{error}</p>;
   if (total === null) return <p className="text-sm text-white/50">Loading…</p>;
   if (total === 0 && !hasItems) return <p className="text-sm text-white/40">{empty}</p>;

@@ -188,3 +188,24 @@ export const updateAnnouncement = (id: string, body: Partial<AnnouncementInput> 
 export const reshowAnnouncement = (id: string) =>
   request<{ cleared: number }>(`/announcements/${id}/reshow`, { method: "POST" }, "Couldn't show it again.");
 export const deleteAnnouncement = (id: string) => request<void>(`/announcements/${id}`, { method: "DELETE" }, "Couldn't delete that message.");
+
+// --- Phase 10d: audit trail ---
+
+export type AuditEntry = {
+  id: string;
+  at: string;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  target_user_id: string | null;
+  target_name: string | null;
+  detail: string | null;
+};
+export type AuditPage = { items: AuditEntry[]; total: number };
+export type SignInEntry = { id: string; at: string; user_id: string; username: string; display_name: string; avatar_url: string | null; device: string };
+export type SignInPage = { items: SignInEntry[]; total: number };
+
+export const getAuditTrail = (offset = 0, limit = 50) =>
+  request<AuditPage>(`/audit?limit=${limit}&offset=${offset}`, {}, "Couldn't load the admin log.");
+export const getSignInLog = (offset = 0, limit = 50) =>
+  request<SignInPage>(`/sign-in-log?limit=${limit}&offset=${offset}`, {}, "Couldn't load the sign-in log.");

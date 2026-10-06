@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DayView, SignInsView, TitleViewersView, TitlesView } from "@/components/admin/DrillViews";
 import FooterTab from "@/components/admin/FooterTab";
+import LogTab from "@/components/admin/LogTab";
 import MessagesTab from "@/components/admin/MessagesTab";
 import OverviewTab, { type OverviewDrill } from "@/components/admin/OverviewTab";
 import SystemTab from "@/components/admin/SystemTab";
@@ -13,6 +14,7 @@ const TABS = [
   { id: "overview", label: "Overview" },
   { id: "users", label: "Users" },
   { id: "messages", label: "Messages" },
+  { id: "log", label: "Log" },
   { id: "footer", label: "Footer" },
   { id: "system", label: "System" },
 ] as const;
@@ -98,6 +100,7 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
             {tab === "overview" && <OverviewTab onDrill={push} />}
             {tab === "users" && <UsersTab currentUserId={currentUserId} onView={toPerson} />}
             {tab === "messages" && <MessagesTab />}
+            {tab === "log" && <LogTab />}
             {tab === "footer" && <FooterTab />}
             {tab === "system" && <SystemTab />}
           </>

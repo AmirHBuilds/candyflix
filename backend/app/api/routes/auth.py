@@ -5,7 +5,7 @@ No public signup, no OAuth, no email verification. People are created by
 an admin (or the CLI in app/cli.py) — this is a small, private,
 invite-only app.
 """
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -31,6 +31,7 @@ async def list_users(db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=UserPublic)
 async def login(
     payload: LoginRequest,
+    request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
@@ -49,7 +50,7 @@ async def login(
             detail="This account has been disabled. Please ask an admin.",
         )
 
-    await auth_service.record_login(db, user)
+    await auth_service.record_login(db, user, request.headers.get("user-agent"))
     token = await auth_service.create_session(user.id)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,

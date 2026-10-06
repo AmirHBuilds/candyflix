@@ -15,7 +15,7 @@ from app.core.db import get_db
 from app.models.user import User
 from app.schemas import admin as schemas
 from app.schemas.site import Footer
-from app.services import admin_service, site_service
+from app.services import admin_service, audit_service, site_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -30,11 +30,28 @@ async def list_users(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/users", response_model=schemas.AdminUser, status_code=status.HTTP_201_CREATED)
-async def create_user(payload: schemas.AdminUserCreate, db: AsyncSession = Depends(get_db)):
+async def create_user(
+    payload: schemas.AdminUserCreate, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
     try:
-        return await admin_service.create_user(db, payload)
+        created = await admin_service.create_user(db, payload)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await audit_service.record(
+        db, actor, "user.create", target_name=created.display_name, detail="Admin account" if created.is_admin else None
+    )
+    return created
+
+
+async def _audit_user_update(db: AsyncSession, actor: User, after: schemas.AdminUser, before: tuple) -> None:
+    username, display_name, is_admin, is_disabled = before
+    plain = [label for label, old, new in (("username", username, after.username), ("display name", display_name, after.display_name)) if old != new]
+    if plain:
+        await audit_service.record(db, actor, "user.update", target_name=after.display_name, target=None, detail="Changed " + " and ".join(plain))
+    if is_disabled != after.is_disabled:
+        await audit_service.record(db, actor, "user.disable" if after.is_disabled else "user.enable", target_name=after.display_name)
+    if is_admin != after.is_admin:
+        await audit_service.record(db, actor, "user.make_admin" if after.is_admin else "user.remove_admin", target_name=after.display_name)
 
 
 @router.patch("/users/{user_id}", response_model=schemas.AdminUser)
@@ -46,9 +63,12 @@ async def update_user(
 ):
     try:
         target = await admin_service.get_user(db, user_id)
-        return await admin_service.update_user(db, actor, target, payload)
+        before = (target.username, target.display_name, target.is_admin, target.is_disabled)
+        result = await admin_service.update_user(db, actor, target, payload)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await _audit_user_update(db, actor, result, before)
+    return result
 
 
 @router.post("/users/{user_id}/password", status_code=status.HTTP_204_NO_CONTENT)
@@ -63,6 +83,7 @@ async def reset_password(
         await admin_service.reset_password(db, actor, target, payload.new_password)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await audit_service.record(db, actor, "user.password_reset", target=target)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -74,9 +95,11 @@ async def delete_user(
 ):
     try:
         target = await admin_service.get_user(db, user_id)
+        name = target.display_name
         await admin_service.delete_user(db, actor, target)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await audit_service.record(db, actor, "user.delete", target_name=name)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -93,13 +116,17 @@ async def system(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/system/clear-tmdb-cache", response_model=schemas.ClearedResult)
-async def clear_tmdb_cache():
-    return schemas.ClearedResult(cleared=await admin_service.clear_tmdb_cache())
+async def clear_tmdb_cache(actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    cleared = await admin_service.clear_tmdb_cache()
+    await audit_service.record(db, actor, "cache.tmdb_clear", detail=f"{cleared} entries")
+    return schemas.ClearedResult(cleared=cleared)
 
 
 @router.post("/system/clear-subtitle-cache", response_model=schemas.ClearedResult)
-async def clear_subtitle_cache():
-    return schemas.ClearedResult(cleared=admin_service.clear_subtitle_cache())
+async def clear_subtitle_cache(actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    cleared = admin_service.clear_subtitle_cache()
+    await audit_service.record(db, actor, "cache.subtitle_clear", detail=f"{cleared} files")
+    return schemas.ClearedResult(cleared=cleared)
 
 
 @router.get("/footer", response_model=Footer)
@@ -108,8 +135,10 @@ async def read_footer(db: AsyncSession = Depends(get_db)):
 
 
 @router.put("/footer", response_model=Footer)
-async def update_footer(payload: Footer, db: AsyncSession = Depends(get_db)):
-    return await site_service.set_footer(db, payload)
+async def update_footer(payload: Footer, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    saved = await site_service.set_footer(db, payload)
+    await audit_service.record(db, actor, "footer.update")
+    return saved
 
 
 # --- Phase 10a: what people are watching (admins see all of it; people are told, see Settings -> Privacy & data) ---
@@ -133,18 +162,28 @@ async def user_history(
     user_id: uuid.UUID,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    actor: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        return await admin_service.watch_history(db, user_id, limit, offset)
+        page = await admin_service.watch_history(db, user_id, limit, offset)
+        if offset == 0:
+            await audit_service.record(
+                db, actor, "history.view", target=await admin_service.get_user(db, user_id), dedupe=audit_service.VIEW_DEDUPE
+            )
+        return page
     except admin_service.AdminError as exc:
         _raise(exc)
 
 
 @router.get("/users/{user_id}/watchlist", response_model=list[schemas.WatchlistEntry])
-async def user_watchlist(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def user_watchlist(user_id: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     try:
-        return await admin_service.user_watchlist(db, user_id)
+        items = await admin_service.user_watchlist(db, user_id)
+        await audit_service.record(
+            db, actor, "watchlist.view", target=await admin_service.get_user(db, user_id), dedupe=audit_service.VIEW_DEDUPE
+        )
+        return items
     except admin_service.AdminError as exc:
         _raise(exc)
 
@@ -198,9 +237,14 @@ async def create_announcement(
     payload: ann_schemas.AnnouncementCreate, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     try:
-        return await announcement_service.create(db, actor, payload)
+        created = await announcement_service.create(db, actor, payload)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await audit_service.record(
+        db, actor, "announcement.create", target_name=created.title,
+        detail="For everyone" if created.audience == "all" else f"For {created.recipients} chosen people",
+    )
+    return created
 
 
 @router.get("/announcements/{announcement_id}", response_model=ann_schemas.AnnouncementDetail)
@@ -222,26 +266,62 @@ async def announcement_targets(announcement_id: uuid.UUID, db: AsyncSession = De
 
 @router.patch("/announcements/{announcement_id}", response_model=ann_schemas.AnnouncementOut)
 async def update_announcement(
-    announcement_id: uuid.UUID, payload: ann_schemas.AnnouncementUpdate, db: AsyncSession = Depends(get_db)
+    announcement_id: uuid.UUID,
+    payload: ann_schemas.AnnouncementUpdate,
+    actor: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
 ):
     try:
-        return await announcement_service.update(db, announcement_id, payload)
+        updated = await announcement_service.update(db, announcement_id, payload)
     except admin_service.AdminError as exc:
         _raise(exc)
+    only_toggle = payload.model_fields_set == {"is_active"}
+    action = ("announcement.resume" if updated.is_active else "announcement.stop") if only_toggle else "announcement.update"
+    await audit_service.record(db, actor, action, target_name=updated.title)
+    return updated
 
 
 @router.post("/announcements/{announcement_id}/reshow", response_model=schemas.ClearedResult)
-async def reshow_announcement(announcement_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def reshow_announcement(
+    announcement_id: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
     try:
-        return schemas.ClearedResult(cleared=await announcement_service.reshow(db, announcement_id))
+        title = (await announcement_service.detail(db, announcement_id)).title
+        cleared = await announcement_service.reshow(db, announcement_id)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await audit_service.record(db, actor, "announcement.reshow", target_name=title)
+    return schemas.ClearedResult(cleared=cleared)
 
 
 @router.delete("/announcements/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_announcement(announcement_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def delete_announcement(
+    announcement_id: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
     try:
+        title = (await announcement_service.detail(db, announcement_id)).title
         await announcement_service.remove(db, announcement_id)
     except admin_service.AdminError as exc:
         _raise(exc)
+    await audit_service.record(db, actor, "announcement.delete", target_name=title)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- Phase 10d: audit trail ---
+
+
+@router.get("/audit", response_model=schemas.AuditPage)
+async def audit_trail(
+    limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), db: AsyncSession = Depends(get_db)
+):
+    return await audit_service.list_audit(db, limit, offset)
+
+
+@router.get("/sign-in-log", response_model=schemas.SignInPage)
+async def sign_in_log(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    user_id: uuid.UUID | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    return await audit_service.list_sign_ins(db, limit, offset, user_id)

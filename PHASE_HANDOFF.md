@@ -730,3 +730,13 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 **Frontend:** `AnnouncementBanner` at the very top of the main layout (refreshes each minute and on tab focus; each message has its own "I understand"; failed save keeps it); admin **Messages** tab (`MessagesTab.tsx`): list with "x of y understood", New message dialog (everyone / chosen people, optional end time), message page with who understood + when, Edit, Stop/Show again, Ask everyone again, Delete (two-step). Tests: `announcements.test.tsx`.
 **Baselines:** backend 364, frontend 560 (excl. four live-backend files), tsc clean.
 **Next:** 10d audit trail (also a candidate home for a real sign-in log).
+
+## 27. Phase 10d — audit trail + sign-in log (v28) — ends Phase 10
+
+**Privacy note (user's request):** Settings → Privacy & data → "Activity": "Your activity on CandyFlix is visible to the server admin and is recorded to help with troubleshooting and keep things running smoothly." No list of what is recorded, but it does say the admin can see it.
+**DB:** migration `c4e8a1d63b77`: `audit_log` (names are snapshots; user ids SET NULL so the trail survives deleting people) and `sign_in_log` (cascade; stores a truncated User-Agent, no IP).
+**Backend:** `audit_service` (`record`, `list_audit`, `record_sign_in`, `device_label`). Logged: user create/edit/disable/enable/make-admin/remove-admin/password-reset/delete; looking at someone's history (first page) or Candy Box, once per admin+person per 10 minutes (polled screens like now-watching/detail aren't logged); message create/edit/stop/resume/ask-again/delete; footer edit; cache clears. Failed actions aren't logged. Every successful login adds a sign-in line (failed attempts aren't logged). `GET /admin/audit`, `GET /admin/sign-in-log?user_id`. Tests: `test_audit.py`.
+**Frontend:** admin **Log** tab (`LogTab.tsx`): "Admin actions" as plain sentences ("Candy looked at Bob's watch history") and "Sign-ins" with device ("Chrome on Windows"), both paged. Tests: `admin-log.test.tsx`.
+**Limits:** sign-in history starts from this version (older logins only have the last-login stamp). No retention/cleanup yet (rows are tiny; add a purge later if wanted). The log isn't tamper-proof against someone with database access.
+**Baselines:** backend 371, frontend 564 (excl. four live-backend files), tsc clean.
+**Phase 10 is complete (10a–10d).** Remaining older items: Continue Watching nav link; cleanup SQL for show 312949; 2FA via Telegram.
