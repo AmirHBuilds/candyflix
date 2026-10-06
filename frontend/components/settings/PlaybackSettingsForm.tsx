@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import PlayerControlsDialog from "@/components/settings/PlayerControlsDialog";
+import { SWITCHABLE, type ControlId } from "@/components/player/controls";
 import { useSettings } from "@/components/SettingsProvider";
 import { SegmentedControl, SettingRow, SettingsCard, Toggle } from "@/components/settings/controls";
 import { SUBTITLE_LANGUAGES } from "@/lib/languages";
@@ -17,6 +20,8 @@ export default function PlaybackSettingsForm() {
   const { settings, update } = useSettings();
   const p = settings.playback;
   const auto = p.auto_subtitles;
+  const [customising, setCustomising] = useState(false);
+  const shown = SWITCHABLE.filter((c) => p.controls[c.id as ControlId]).length;
 
   return (
     <>
@@ -119,6 +124,22 @@ export default function PlaybackSettingsForm() {
           <Toggle id="skip-btn-credits" label="Skip Credits button" checked={p.skip_buttons.credits} onChange={(credits) => update({ playback: { skip_buttons: { credits } } })} />
         </SettingRow>
       </SettingsCard>
+
+      <SettingsCard title="Player buttons" description="Which buttons the video player shows.">
+        <SettingRow
+          label="Customise player buttons"
+          description={`${shown} of ${SWITCHABLE.length} optional buttons shown. Play/Pause and Settings are always there. Hiding a button also turns off its keyboard shortcut.`}
+        >
+          <button
+            type="button"
+            onClick={() => setCustomising(true)}
+            className="h-10 rounded-xl bg-white/10 px-4 text-sm font-medium text-white/80 transition-colors hover:bg-white/15"
+          >
+            Customise…
+          </button>
+        </SettingRow>
+      </SettingsCard>
+      {customising && <PlayerControlsDialog onClose={() => setCustomising(false)} />}
 
       <SettingsCard title="Remembering" description="What CandyFlix keeps for you.">
         <SettingRow

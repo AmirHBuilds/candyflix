@@ -29,7 +29,17 @@
       "fallback_language": null
     },
     "save_progress": true,
-    "remember_per_video": true
+    "remember_per_video": true,
+    "controls": {
+      "episodes": true,
+      "volume": true,
+      "time": true,
+      "captions": true,
+      "fullscreen": true,
+      "seek_back": false,
+      "seek_forward": false,
+      "pip": false
+    }
   },
   "subtitles": {
     "font_family": "Inter, system-ui, sans-serif",

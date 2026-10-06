@@ -32,6 +32,16 @@ export type Settings = {
     auto_subtitles: { enabled: boolean; language: string; fallback_language: string | null };
     save_progress: boolean;
     remember_per_video: boolean;
+    controls: {
+      episodes: boolean;
+      volume: boolean;
+      time: boolean;
+      captions: boolean;
+      fullscreen: boolean;
+      seek_back: boolean;
+      seek_forward: boolean;
+      pip: boolean;
+    };
   };
   subtitles: {
     font_family: string;

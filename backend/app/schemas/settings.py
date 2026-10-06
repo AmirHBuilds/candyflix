@@ -58,6 +58,22 @@ class AutoSubtitles(_Group):
     fallback_language: str | None = Field(default=None, min_length=2, max_length=10)
 
 
+class PlayerControls(_Group):
+    """Which buttons the player's control bar shows. Play/Pause and Settings
+    are always there and so aren't listed. A hidden control's keyboard
+    shortcut is switched off too."""
+
+    episodes: bool = True  # previous / next episode (Shift+P / Shift+N)
+    volume: bool = True  # mute button + slider (M, up/down arrows)
+    time: bool = True  # "12:03 / 45:10"
+    captions: bool = True  # subtitles on/off (C)
+    fullscreen: bool = True  # (F)
+    # Extras, off until chosen.
+    seek_back: bool = False  # jump back by the seek time
+    seek_forward: bool = False  # jump forward by the seek time
+    pip: bool = False  # picture-in-picture (P)
+
+
 class PlaybackSettings(_Group):
     autoplay_next: bool = True
     # A video starts playing by itself when opened. (Before 9d the player always
@@ -74,6 +90,7 @@ class PlaybackSettings(_Group):
     save_progress: bool = True
     # Remember volume + subtitle tweaks separately for each movie/episode.
     remember_per_video: bool = True
+    controls: PlayerControls = PlayerControls()
 
 
 class SubtitleStyle(_Group):

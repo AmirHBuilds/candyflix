@@ -183,6 +183,12 @@ export default function VideoPlayer({
   // J / L and the double-tap zones. Read fresh each render, so a change
   // made in another tab/page applies without reloading the player.
   const seekSeconds = playbackSettings.seek_seconds;
+  const controls = playbackSettings.controls;
+  // Picture-in-picture only where the browser can do it.
+  const [pipSupported, setPipSupported] = useState(false);
+  useEffect(() => {
+    setPipSupported(typeof document !== "undefined" && !!document.pictureInPictureEnabled);
+  }, []);
 
   const videoUrl = `${getStaticOrigin()}${source.url}`;
 
@@ -927,6 +933,17 @@ export default function VideoPlayer({
     return () => clearInterval(interval);
   }, [sleepTimerEndsAt]);
 
+  async function togglePip() {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      else await video.requestPictureInPicture();
+    } catch {
+      // Refused (another PiP window, a policy): nothing to do.
+    }
+  }
+
   async function toggleFullscreen() {
     if (!containerRef.current) return;
     if (document.fullscreenElement) {
@@ -1056,30 +1073,36 @@ export default function VideoPlayer({
         seekBy(seekSeconds);
         break;
       case "ArrowUp":
+        if (!controls.volume) break;
         e.preventDefault();
         changeVolume(Math.min((videoRef.current?.volume ?? 1) + 0.1, 1));
         break;
       case "ArrowDown":
+        if (!controls.volume) break;
         e.preventDefault();
         changeVolume(Math.max((videoRef.current?.volume ?? 1) - 0.1, 0));
         break;
       case "m":
-        toggleMute();
+        if (controls.volume) toggleMute();
         break;
       case "f":
-        void toggleFullscreen();
+        if (controls.fullscreen) void toggleFullscreen();
         break;
       case "c":
-        handleCaptionsButtonClick();
+        if (controls.captions) handleCaptionsButtonClick();
         break;
       case "s":
         setSettingsMenu((v) => (v ? null : "root"));
         break;
       case "n":
-        if (e.shiftKey && nextEpisode) navigateWithResumeHint(identity, nextEpisode.href, playbackSettingsRef.current.save_progress);
+        if (controls.episodes && e.shiftKey && nextEpisode) navigateWithResumeHint(identity, nextEpisode.href, playbackSettingsRef.current.save_progress);
         break;
       case "p":
-        if (e.shiftKey && prevEpisode) navigateWithResumeHint(identity, prevEpisode.href, playbackSettingsRef.current.save_progress);
+        if (e.shiftKey) {
+          if (controls.episodes && prevEpisode) navigateWithResumeHint(identity, prevEpisode.href, playbackSettingsRef.current.save_progress);
+        } else if (controls.pip && pipSupported) {
+          void togglePip();
+        }
         break;
       default:
         break;
@@ -1374,7 +1397,40 @@ export default function VideoPlayer({
             </button>
           </PlayerTooltip>
 
-          {(prevEpisode || nextEpisode) && (
+          {(controls.seek_back || controls.seek_forward) && (
+            <div className="flex items-center gap-0.5 rounded-full bg-white/15 p-1">
+              {controls.seek_back && (
+                <PlayerTooltip label={`Back ${seekSeconds} seconds`} shortcuts={["J"]}>
+                  <button
+                    aria-label={`Back ${seekSeconds} seconds`}
+                    onClick={() => {
+                      seekBy(-seekSeconds);
+                      setSkipPulse({ side: "left", nonce: Date.now() });
+                    }}
+                    className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                  >
+                    <BackIcon />
+                  </button>
+                </PlayerTooltip>
+              )}
+              {controls.seek_forward && (
+                <PlayerTooltip label={`Forward ${seekSeconds} seconds`} shortcuts={["L"]}>
+                  <button
+                    aria-label={`Forward ${seekSeconds} seconds`}
+                    onClick={() => {
+                      seekBy(seekSeconds);
+                      setSkipPulse({ side: "right", nonce: Date.now() });
+                    }}
+                    className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/20 hover:text-white"
+                  >
+                    <ForwardIcon />
+                  </button>
+                </PlayerTooltip>
+              )}
+            </div>
+          )}
+
+          {controls.episodes && (prevEpisode || nextEpisode) && (
             <div className="flex items-center gap-0.5 rounded-full bg-white/15 p-1">
               {prevEpisode && (
                 <PlayerTooltip label="Previous episode" shortcuts={["Shift+P"]}>
@@ -1403,6 +1459,7 @@ export default function VideoPlayer({
             </div>
           )}
 
+          {controls.volume && (
           <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 pl-1 pr-2">
             <PlayerTooltip label={muted || volume === 0 ? "Unmute" : "Mute"} shortcuts={["M"]}>
               <button
@@ -1432,12 +1489,16 @@ export default function VideoPlayer({
               />
             </div>
           </div>
+          )}
 
-          <div className="flex h-10 items-center whitespace-nowrap rounded-full bg-white/15 px-3.5 text-sm font-medium tabular-nums text-white">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </div>
+          {controls.time && (
+            <div className="flex h-10 items-center whitespace-nowrap rounded-full bg-white/15 px-3.5 text-sm font-medium tabular-nums text-white">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+          )}
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
+            {controls.captions && (
             <PlayerTooltip
               label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
               shortcuts={["C"]}
@@ -1452,6 +1513,7 @@ export default function VideoPlayer({
                 <CCIcon active={!!selectedLanguage} />
               </button>
             </PlayerTooltip>
+            )}
 
             <div className="relative">
               {/* No tooltip while the menu is open — it would sit on top of it. */}
@@ -1621,6 +1683,19 @@ export default function VideoPlayer({
                 )}
             </div>
 
+            {controls.pip && pipSupported && (
+              <PlayerTooltip label="Picture in picture" shortcuts={["P"]} align="end">
+                <button
+                  aria-label="Picture in picture"
+                  onClick={() => void togglePip()}
+                  className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                >
+                  <PipIcon />
+                </button>
+              </PlayerTooltip>
+            )}
+
+            {controls.fullscreen && (
             <PlayerTooltip label={fullscreen ? "Exit fullscreen" : "Fullscreen"} shortcuts={["F"]} align="end">
               <button
                 aria-label="Fullscreen"
@@ -1630,6 +1705,7 @@ export default function VideoPlayer({
                 {fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
               </button>
             </PlayerTooltip>
+            )}
           </div>
         </div>
       </div>
@@ -1781,6 +1857,14 @@ function GearIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
       <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+    </svg>
+  );
+}
+function PipIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <rect x="12" y="11" width="7" height="5" rx="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }

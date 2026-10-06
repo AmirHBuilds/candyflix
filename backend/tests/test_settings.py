@@ -423,3 +423,18 @@ def test_frontend_defaults_file_matches_the_backend_defaults():
     if not path.exists():  # e.g. running inside a backend-only container
         pytest.skip("frontend sources not present")
     assert json.loads(path.read_text()) == UserSettings().model_dump()
+
+
+def test_player_controls_defaults_and_validation():
+    from pydantic import ValidationError
+
+    from app.services import settings_service
+
+    c = UserSettings().playback.controls
+    assert (c.episodes, c.volume, c.time, c.captions, c.fullscreen) == (True, True, True, True, True)
+    assert (c.seek_back, c.seek_forward, c.pip) == (False, False, False)  # extras start off
+    assert settings_service.resolve({"playback": {"controls": {"pip": True}}}).playback.controls.pip is True
+    # Play/Pause and Settings can't be removed: there is no such key to set.
+    assert settings_service.unknown_paths({"playback": {"controls": {"play": False}}}, UserSettings) == ["Unknown setting 'playback.controls.play'"]
+    with pytest.raises(ValidationError):
+        settings_service.resolve({"playback": {"controls": {"volume": "maybe"}}})

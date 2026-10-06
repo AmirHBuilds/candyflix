@@ -683,3 +683,25 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 5. Watch the backend log for `segments: … failed` lines if nothing ever shows up (network from the server to api.skipdb.tv / api.introdb.app).
 
 ### Next: 9g Player controls customiser (control registry, customiser dialog with a placeholder image, persistence, extra controls); then the big admin upgrade phase (messages, drill-down, full visibility).
+
+
+---
+
+## 23. Phase 9g — Player controls customiser (DONE, awaiting the user's check)
+
+**Baselines now:** backend **331 passed**; `tsc` clean; Vitest **542 passed** excluding the four live-backend files. No migration, no new dependencies. Regenerated `frontend/lib/settings-defaults.json` (§17 one-liner).
+
+### What it does
+- New setting `playback.controls` (backend `PlayerControls`, mirrored in `lib/settings.ts`): `episodes, volume, time, captions, fullscreen` (default on) and the extras `seek_back, seek_forward, pip` (default off). **Play/Pause and Settings have no key, so they can't be removed** (the API rejects an unknown key).
+- `components/player/controls.ts` is the registry (id, label, description, shortcuts, locked/extra); the player and the customiser both read it, and a test checks it matches the settings keys.
+- **Player (`VideoPlayer`)**: each button is drawn only when its control is on. **A removed control's shortcut is off too:** episodes → Shift+N / Shift+P; volume → M, ↑, ↓; captions → C; fullscreen → F; picture-in-picture → P (new). Seeking with ←/→/J/L, Space/K and S always work. The extras: two "jump back / forward by your seek time" buttons (next to Play) and a picture-in-picture button (only shown where `document.pictureInPictureEnabled`).
+- **Settings → Playback → Player buttons → Customise…** opens `PlayerControlsDialog`: a mock-up of the control bar over the placeholder frame `frontend/public/images/player-preview.png` (**replace it with any ~1280×720 image under the same name**; see `public/images/README.txt`). Tap a button in the mock-up to remove it; removed ones stay as dotted ghosts to tap back. Below: a switch per control with its shortcut hint, locked rows marked "Always on", and "Back to the standard buttons". Changes save at once (same settings pipeline as everything else).
+
+### Please verify in a browser
+1. Settings → Playback → Customise… : the mock bar shows over the frame; remove Volume and Fullscreen; open a video — those buttons are gone, and M / ↑ / ↓ / F do nothing; ←/→ still seek.
+2. Turn on Jump back / Jump forward: two buttons appear next to Play and move by your seek time. Turn on Picture in picture (Chrome/Edge/Safari): the button and the P key work.
+3. On a movie the previous/next episode buttons never show; on a series, removing them also stops Shift+N / Shift+P.
+4. Phone: the bar is still usable with fewer buttons (they wrap as before); Settings is always there.
+5. "Back to the standard buttons" restores the original bar.
+
+### Next: the big admin upgrade phase (public messages with "I understand", per-section / per-user drill-down, full visibility). It needs a short design pass with the user first (see PHASE9_PLAN.md "later").

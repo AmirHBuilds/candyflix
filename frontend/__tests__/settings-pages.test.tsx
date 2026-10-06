@@ -67,7 +67,7 @@ describe("the one long settings page", () => {
     const headings = SETTINGS_SECTIONS.map((x) => document.getElementById(`${x.id}-heading`)?.textContent);
     expect(headings).toEqual(SETTINGS_SECTIONS.map((x) => x.label));
     expect(screen.getByRole("radiogroup", { name: "Seek time" })).toBeInTheDocument();
-    expect(screen.getAllByText(/coming in an upcoming update/i)).toHaveLength(1);
+    expect(screen.queryByText(/coming in an upcoming update/i)).toBeNull();
   });
 
   it("sends a signed-out visitor to login", async () => {

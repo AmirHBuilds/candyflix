@@ -8,7 +8,6 @@ import SubtitleOverridesCard from "@/components/settings/SubtitleOverridesCard";
 import SubtitleSettingsForm from "@/components/settings/SubtitleSettingsForm";
 import SettingsBar from "@/components/settings/SettingsBar";
 import SettingsSection from "@/components/settings/SettingsSection";
-import { ComingSoon } from "@/components/settings/controls";
 import { SETTINGS_SECTIONS } from "@/lib/settings-sections";
 import { getServerCurrentUser } from "@/lib/session";
 
@@ -28,7 +27,6 @@ export default async function SettingsPage() {
         </SettingsSection>
         <SettingsSection id="playback" title={label("playback")}>
           <PlaybackSettingsForm />
-          <ComingSoon title="More playback options" items={["Customise the player's buttons"]} />
         </SettingsSection>
         <SettingsSection id="subtitles" title={label("subtitles")}>
           <SubtitleSettingsForm />
