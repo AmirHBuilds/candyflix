@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Flag from "@/components/player/Flag";
 import { SettingRow, SettingsCard } from "@/components/settings/controls";
 import { SUBTITLE_LANGUAGES } from "@/lib/languages";
 import {
@@ -88,7 +89,10 @@ export default function SubtitleOverridesCard() {
                 key={`${o.media_type}-${o.tmdb_id}-${o.season_number}-${o.episode_number}`}
                 className="flex items-center justify-between gap-4 border-t border-white/10 px-5 py-3 first:border-t-0"
               >
-                <div className="min-w-0">
+                {typeof o.settings.subtitle_language === "string" && o.settings.subtitle_language !== "off" && (
+                  <Flag language={o.settings.subtitle_language} />
+                )}
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-white">{o.title ?? `Title #${o.tmdb_id}`}</p>
                   <p className="truncate text-xs text-white/50">
                     {whereLabel(o)} — {describeSettings(o.settings)}

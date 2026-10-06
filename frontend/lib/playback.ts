@@ -8,6 +8,8 @@ export type SubtitleTrack = {
   // A subtitle the server re-timed against this video's audio; it replaces
   // the unsynced track of the same language.
   synced?: boolean;
+  // "source" = comes with the video; "opensubtitles" = fetched from there.
+  origin?: "source" | "opensubtitles";
 };
 
 export type PlaybackSource = {

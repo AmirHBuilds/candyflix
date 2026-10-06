@@ -49,7 +49,7 @@ async def get_default_english_track(
         )
         path = await opensubtitles_service.download(best.file_id, cache_key)
         return SubtitleTrackOut(
-            language="en", label="English", url=f"/subtitle-cache/{path.name}", format="srt"
+            language="en", label="English", url=f"/subtitle-cache/{path.name}", format="srt", origin="opensubtitles"
         )
     except (TMDBError, OpenSubtitlesError) as e:
         logger.warning(

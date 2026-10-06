@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
+import { useState } from "react";
+import Flag from "@/components/player/Flag";
 import OffsetStepper from "@/components/player/OffsetStepper";
+import OpenSubtitlesBrowser from "@/components/player/OpenSubtitlesBrowser";
+import SubtitleRow from "@/components/player/SubtitleRow";
 import SyncSubtitleControl from "@/components/player/SyncSubtitleControl";
+import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
-import {
-  downloadOnlineSubtitle,
-  searchOnlineSubtitles,
-  type OnlineSubtitleResult,
-  type SubtitleTrack,
-} from "@/lib/playback";
+import type { SubtitleTrack } from "@/lib/playback";
 
 const labelClass = "text-[11px] font-medium uppercase tracking-wider text-white/40";
 const selectClass =
@@ -134,55 +132,15 @@ function Toggle({
   );
 }
 
-// Discovers what languages OpenSubtitles has for this title (one
-// unfiltered search, grouped down to the best/most-downloaded file per
-// language) so the dropdown can list them directly — picking one
-// downloads that language's top match and selects it in a single step.
-// Anything this search doesn't surface (rare languages, or titles with
-// so many uploads that page one doesn't cover everything) is still
-// reachable via the "Search for language…" option below.
-function useAvailableLanguages(identity: WatchIdentity) {
-  const [languages, setLanguages] = useState<OnlineSubtitleResult[]>([]);
+type TabId = "source" | "opensubtitles" | "synced" | "style";
 
-  useEffect(() => {
-    let cancelled = false;
-    searchOnlineSubtitles({
-      mediaType: identity.mediaType,
-      tmdbId: identity.tmdbId,
-      seasonNumber: identity.seasonNumber,
-      episodeNumber: identity.episodeNumber,
-    })
-      .then(({ results }) => {
-        if (cancelled) return;
-        const byLanguage = new Map<string, OnlineSubtitleResult>();
-        for (const r of results) {
-          // search() on the backend already sorts most-downloaded first,
-          // so the first entry seen per language is the best one.
-          if (!byLanguage.has(r.language)) byLanguage.set(r.language, r);
-        }
-        setLanguages([...byLanguage.values()]);
-      })
-      .catch(() => {
-        // Silent — worst case the dropdown just doesn't offer extra
-        // languages this time; the ones already active, and manual
-        // search, still work fine.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
-
-  return languages;
+function EmptyNote({ children }: { children: React.ReactNode }) {
+  return <p className="rounded-xl bg-white/[0.04] p-4 text-center text-sm leading-relaxed text-white/50">{children}</p>;
 }
-
-// Sentinel value for the dropdown's last option — picking it doesn't
-// select a language, it opens the small "search by code" box below.
-// Kept out of the real language-code space (a genuine ISO code is never
-// this long) so it can't collide with anything OpenSubtitles returns.
-const SEARCH_OPTION_VALUE = "__search_by_code__";
 
 export default function SubtitleSettingsPanel({
   tracks,
+  listedTracks,
   selectedLanguage,
   onSelectLanguage,
   settings,
@@ -190,7 +148,10 @@ export default function SubtitleSettingsPanel({
   identity,
   onTrackAdded,
 }: {
+  // The track actually used for each language (what plays).
   tracks: SubtitleTrack[];
+  // Every track the video has been offered, for the Source and Synced tabs.
+  listedTracks: SubtitleTrack[];
   selectedLanguage: string | null;
   onSelectLanguage: (language: string | null) => void;
   settings: SubtitleSettings;
@@ -198,154 +159,28 @@ export default function SubtitleSettingsPanel({
   identity: WatchIdentity;
   onTrackAdded: (track: SubtitleTrack) => void;
 }) {
-  const availableLanguages = useAvailableLanguages(identity);
-  const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
-  const [addError, setAddError] = useState<string | null>(null);
+  const active = selectedLanguage ? tracks.find((t) => t.language === selectedLanguage) : undefined;
+  const sourceTracks = listedTracks.filter((t) => !t.synced && t.origin === "source");
+  const syncedTracks = listedTracks.filter((t) => t.synced);
 
-  const selectedTrack = selectedLanguage ? tracks.find((t) => t.language === selectedLanguage) : undefined;
-  const knownLanguages = new Set(tracks.map((t) => t.language));
-  const moreLanguages = availableLanguages.filter((l) => !knownLanguages.has(l.language));
+  const [tab, setTab] = useState<TabId>(() => {
+    if (active?.synced) return "synced";
+    if (active) return active.origin === "source" ? "source" : "opensubtitles";
+    return sourceTracks.length > 0 ? "source" : "opensubtitles";
+  });
+  // The OpenSubtitles tab is only built once it's been opened (it makes a request),
+  // and stays built afterwards so switching tabs doesn't lose the search.
+  const [osOpened, setOsOpened] = useState(tab === "opensubtitles");
 
-  const [showBrowse, setShowBrowse] = useState(false);
-  const [browseQuery, setBrowseQuery] = useState("");
-  const [browsing, setBrowsing] = useState(false);
-  const [browseError, setBrowseError] = useState<string | null>(null);
-  const [browseResults, setBrowseResults] = useState<OnlineSubtitleResult[] | null>(null);
-  const [browseDownloadingId, setBrowseDownloadingId] = useState<number | null>(null);
-  const [browsePage, setBrowsePage] = useState(1);
-  const [browseHasMore, setBrowseHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const tabs: { id: TabId; label: string; count?: number }[] = [
+    { id: "source", label: "Source", count: sourceTracks.length },
+    { id: "opensubtitles", label: "OpenSubtitles" },
+    ...(syncedTracks.length > 0 ? [{ id: "synced" as const, label: "Synced", count: syncedTracks.length }] : []),
+    { id: "style", label: "Style" },
+  ];
 
-  async function handleSelect(value: string) {
-    if (value === SEARCH_OPTION_VALUE) {
-      // The <select>'s value stays bound to selectedLanguage below, so on
-      // the next render it snaps back to showing the real current
-      // selection rather than sticking on this sentinel — no manual
-      // reset needed.
-      setShowBrowse(true);
-      return;
-    }
-    if (!value || knownLanguages.has(value)) {
-      onSelectLanguage(value || null);
-      return;
-    }
-    // One of the discovered-but-not-downloaded-yet options.
-    const candidate = moreLanguages.find((l) => l.language === value);
-    if (!candidate) return;
-
-    setAddingLanguage(value);
-    setAddError(null);
-    try {
-      const track = await downloadOnlineSubtitle({
-        mediaType: identity.mediaType,
-        tmdbId: identity.tmdbId,
-        seasonNumber: identity.seasonNumber,
-        episodeNumber: identity.episodeNumber,
-        fileId: candidate.file_id,
-        language: candidate.language,
-        label: candidate.label,
-      });
-      onTrackAdded(track);
-      onSelectLanguage(track.language);
-    } catch (e) {
-      setAddError(e instanceof Error ? e.message : "Couldn't add that language.");
-    } finally {
-      setAddingLanguage(null);
-    }
-  }
-
-  // Runs even with an empty query — that's "browse everything uploaded
-  // for this title" (first page, most-downloaded first). A non-empty
-  // query narrows to uploads whose release name contains it (e.g.
-  // "bluray"), which matters because two releases of the same title in
-  // the same language can still be a second or two out of sync with
-  // each other — this lets someone pick the specific one that matches
-  // what they're actually watching, not just a language.
-  async function runBrowse() {
-    setBrowsing(true);
-    setBrowseError(null);
-    try {
-      const { results, hasMore } = await searchOnlineSubtitles({
-        mediaType: identity.mediaType,
-        tmdbId: identity.tmdbId,
-        seasonNumber: identity.seasonNumber,
-        episodeNumber: identity.episodeNumber,
-        query: browseQuery.trim() || undefined,
-        page: 1,
-      });
-      setBrowseResults(results);
-      setBrowsePage(1);
-      setBrowseHasMore(hasMore);
-      if (results.length === 0) {
-        setBrowseError(
-          browseQuery.trim()
-            ? `No uploads found matching "${browseQuery.trim()}".`
-            : "No subtitles found for this title."
-        );
-      }
-    } catch (e) {
-      setBrowseError(e instanceof Error ? e.message : "Couldn't search for subtitles.");
-      setBrowseResults(null);
-      setBrowseHasMore(false);
-    } finally {
-      setBrowsing(false);
-    }
-  }
-
-  async function loadMoreBrowseResults() {
-    const nextPage = browsePage + 1;
-    setLoadingMore(true);
-    setBrowseError(null);
-    try {
-      const { results, hasMore } = await searchOnlineSubtitles({
-        mediaType: identity.mediaType,
-        tmdbId: identity.tmdbId,
-        seasonNumber: identity.seasonNumber,
-        episodeNumber: identity.episodeNumber,
-        query: browseQuery.trim() || undefined,
-        page: nextPage,
-      });
-      // Same file can legitimately show up again across pages if the
-      // query filter (applied after fetching) thins a page down —
-      // de-duped by file_id just in case.
-      setBrowseResults((prev) => {
-        const existingIds = new Set((prev ?? []).map((r) => r.file_id));
-        return [...(prev ?? []), ...results.filter((r) => !existingIds.has(r.file_id))];
-      });
-      setBrowsePage(nextPage);
-      setBrowseHasMore(hasMore);
-    } catch (e) {
-      setBrowseError(e instanceof Error ? e.message : "Couldn't load more results.");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
-  async function useBrowseResult(result: OnlineSubtitleResult) {
-    setBrowseDownloadingId(result.file_id);
-    setBrowseError(null);
-    try {
-      const track = await downloadOnlineSubtitle({
-        mediaType: identity.mediaType,
-        tmdbId: identity.tmdbId,
-        seasonNumber: identity.seasonNumber,
-        episodeNumber: identity.episodeNumber,
-        fileId: result.file_id,
-        language: result.language,
-        label: result.label,
-      });
-      onTrackAdded(track);
-      onSelectLanguage(track.language);
-      setShowBrowse(false);
-      setBrowseResults(null);
-      setBrowseQuery("");
-      setBrowseHasMore(false);
-      setBrowsePage(1);
-    } catch (e) {
-      setBrowseError(e instanceof Error ? e.message : "Couldn't download that subtitle file.");
-    } finally {
-      setBrowseDownloadingId(null);
-    }
+  function choose(track: SubtitleTrack) {
+    onTrackAdded(track);
   }
 
   function set<K extends keyof SubtitleSettings>(key: K, value: SubtitleSettings[K]) {
@@ -353,134 +188,115 @@ export default function SubtitleSettingsPanel({
   }
 
   return (
-    <div className="w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur">
-      <div className="flex flex-col gap-1.5 border-b border-white/10 p-4">
-        <span className={labelClass}>Subtitles</span>
-        <select
-          className={selectClass}
-          value={addingLanguage ?? selectedLanguage ?? ""}
-          disabled={addingLanguage !== null}
-          onChange={(e) => handleSelect(e.target.value)}
-        >
-          <option value="">Off</option>
-          {tracks.map((t) => (
-            <option key={t.language} value={t.language}>
-              {t.label}
-              {t.synced ? " · synced" : ""}
-            </option>
-          ))}
-          {moreLanguages.map((l) => (
-            <option key={l.language} value={l.language}>
-              {l.label}
-            </option>
-          ))}
-          <option value={SEARCH_OPTION_VALUE}>Search all subtitles…</option>
-        </select>
-        {addingLanguage && <span className="text-xs text-white/50">Adding subtitle…</span>}
-        {addError && <span className="text-xs text-red-400">{addError}</span>}
-
-        {selectedTrack &&
-          (selectedTrack.synced ? (
-            <span className="mt-1 text-xs text-white/50">Synced to this video ✓</span>
-          ) : (
-            <div className="mt-1">
-              <SyncSubtitleControl track={selectedTrack} identity={identity} onSynced={onTrackAdded} />
+    <div
+      role="dialog"
+      aria-label="Subtitles"
+      className="flex max-h-[min(78dvh,36rem)] w-[40rem] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur"
+    >
+      {/* What's showing now, with the quick actions for it. */}
+      <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 p-3 sm:p-4">
+        <div className="flex items-center gap-3">
+          {active ? <Flag language={active.language} size="lg" /> : <Flag language={null} size="lg" />}
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-white/40">Subtitles</div>
+            <div className="truncate text-base font-semibold text-white">
+              {active ? active.label : "Off"}
+              {active?.synced && <span className="ml-2 text-xs font-medium text-accent">synced</span>}
             </div>
-          ))}
-
-        {showBrowse && (
-          <div className="mt-1 flex flex-col gap-2 rounded-xl bg-white/[0.04] p-3">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                autoFocus
-                value={browseQuery}
-                onChange={(e) => setBrowseQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && runBrowse()}
-                placeholder="Release, language, or blank for all…"
-                className={`${selectClass} flex-1`}
-              />
-              <button
-                type="button"
-                onClick={runBrowse}
-                disabled={browsing}
-                className="shrink-0 rounded-lg bg-accent px-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-50"
-              >
-                {browsing ? "…" : "Search"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowBrowse(false);
-                  setBrowseError(null);
-                  setBrowseResults(null);
-                  setBrowseHasMore(false);
-                  setBrowsePage(1);
-                }}
-                aria-label="Cancel"
-                className="shrink-0 rounded-lg bg-white/10 px-3 text-sm text-white/70 transition-colors hover:bg-white/20 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            {browseError && <span className="text-xs text-red-400">{browseError}</span>}
-
-            {browseResults && browseResults.length > 0 && (
-              <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto">
-                {browseResults.map((r) => (
-                  <li
-                    key={r.file_id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.05] px-2.5 py-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-white">
-                        {r.label}
-                        {r.hearing_impaired ? " · HI" : ""}
-                      </div>
-                      {/* Full release name, wrapped rather than truncated —
-                          it's often the only way to tell releases apart
-                          (resolution, source, encoder), so cutting it off
-                          with an ellipsis was hiding the exact info this
-                          list exists to show. break-all because release
-                          names are dot-separated with no spaces, so the
-                          browser has no natural word-break point otherwise. */}
-                      {r.release && (
-                        <div className="mt-0.5 break-all text-[11px] leading-snug text-white/45">
-                          {r.release}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => useBrowseResult(r)}
-                      disabled={browseDownloadingId !== null}
-                      className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-50"
-                    >
-                      {browseDownloadingId === r.file_id ? "Adding…" : "Use"}
-                    </button>
-                  </li>
-                ))}
-                {browseHasMore && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={loadMoreBrowseResults}
-                      disabled={loadingMore}
-                      className="mt-1 w-full rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/20 hover:text-white disabled:opacity-50"
-                    >
-                      {loadingMore ? "Loading…" : "Load more"}
-                    </button>
-                  </li>
-                )}
-              </ul>
-            )}
           </div>
-        )}
+          {active ? (
+            <button
+              type="button"
+              onClick={() => onSelectLanguage(null)}
+              className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              Turn off
+            </button>
+          ) : null}
+        </div>
+        {active && !active.synced && <SyncSubtitleControl track={active} identity={identity} onSynced={choose} />}
+        {active?.synced && <p className="text-xs text-white/50">Matched to this video&apos;s audio ✓</p>}
       </div>
 
-      {selectedLanguage && (
-        <div className="flex max-h-[60dvh] flex-col gap-5 overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+        {/* Tabs: a row on phones, a column on the left from tablet width up. */}
+        <div
+          role="tablist"
+          aria-label="Subtitle sources"
+          className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/10 p-2 sm:w-44 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r"
+        >
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`subtab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls={`subpanel-${t.id}`}
+              onClick={() => {
+                setTab(t.id);
+                if (t.id === "opensubtitles") setOsOpened(true);
+              }}
+              className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors sm:flex-none sm:justify-between sm:px-3 sm:text-left sm:text-sm ${
+                tab === t.id ? "bg-accent text-on-accent" : "text-white/65 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {t.label}
+              {t.count != null && t.count > 0 && (
+                <span className={`rounded-full px-1.5 text-[11px] ${tab === t.id ? "bg-black/15" : "bg-white/10 text-white/60"}`}>
+                  {t.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
+          <div role="tabpanel" id="subpanel-source" aria-labelledby="subtab-source" hidden={tab !== "source"} className="flex flex-col gap-1.5">
+            {sourceTracks.length === 0 ? (
+              <EmptyNote>
+                This video doesn&apos;t come with subtitles of its own. Look in the OpenSubtitles tab.
+              </EmptyNote>
+            ) : (
+              sourceTracks.map((t) => (
+                <SubtitleRow
+                  key={t.url}
+                  language={t.language}
+                  title={t.label}
+                  detail="Comes with the video"
+                  active={active?.url === t.url}
+                  onClick={() => choose(t)}
+                />
+              ))
+            )}
+          </div>
+
+          <div
+            role="tabpanel"
+            id="subpanel-opensubtitles"
+            aria-labelledby="subtab-opensubtitles"
+            hidden={tab !== "opensubtitles"}
+          >
+            {osOpened && <OpenSubtitlesBrowser identity={identity} activeUrl={active?.url ?? null} onPicked={choose} />}
+          </div>
+
+          {syncedTracks.length > 0 && (
+            <div role="tabpanel" id="subpanel-synced" aria-labelledby="subtab-synced" hidden={tab !== "synced"} className="flex flex-col gap-1.5">
+              {syncedTracks.map((t) => (
+                <SubtitleRow
+                  key={t.url}
+                  language={t.language}
+                  title={t.label}
+                  detail="Re-timed to this video"
+                  badges={["Synced"]}
+                  active={active?.url === t.url}
+                  onClick={() => choose(t)}
+                />
+              ))}
+            </div>
+          )}
+
+          <div role="tabpanel" id="subpanel-style" aria-labelledby="subtab-style" hidden={tab !== "style"} className="flex flex-col gap-5">
           {/* Live preview, so a change is visible immediately without
               hunting for it under this panel on the actual video. */}
           <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/50 px-3 py-6">
@@ -608,13 +424,14 @@ export default function SubtitleSettingsPanel({
             <OffsetStepper value={settings.offsetSeconds} onChange={(v) => set("offsetSeconds", v)} />
           </div>
 
-          <div className="h-px bg-white/10" />
+            <div className="h-px bg-white/10" />
 
-          <p className="text-[11px] leading-snug text-white/40">
-            The look applies to every video (also in Settings → Subtitles). Language and timing are for this video only.
-          </p>
+            <p className="text-[11px] leading-snug text-white/40">
+              The look applies to every video (also in Settings → Subtitles). Language and timing are for this video only.
+            </p>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

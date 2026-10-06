@@ -146,7 +146,7 @@ class TestPlaybackSource:
             assert body["source_type"] == "mock"
             assert body["url"] == "/mock-videos/test.mp4"
             assert body["subtitles"] == [
-                {"language": "en", "label": "English", "url": "/subtitle-cache/movie-550-en-1.srt", "format": "srt", "synced": False}
+                {"language": "en", "label": "English", "url": "/subtitle-cache/movie-550-en-1.srt", "format": "srt", "synced": False, "origin": "source"}
             ]
             assert body["resume_position_seconds"] is None
         finally:

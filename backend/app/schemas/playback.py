@@ -20,6 +20,10 @@ class SubtitleTrackOut(BaseModel):
     # True for a subtitle the server re-timed against this video's audio
     # (Phase 11). It replaces the unsynced track of the same language.
     synced: bool = False
+    # Where the track came from: "source" = delivered with the video by its
+    # source (none yet with the mock provider), "opensubtitles" = fetched from
+    # OpenSubtitles. The player's subtitle menu sorts tracks into tabs by this.
+    origin: Literal["source", "opensubtitles"] = "source"
 
 
 class PlaybackSource(BaseModel):

@@ -106,6 +106,7 @@ def _track_for(job_id: str) -> SubtitleTrackOut | None:
             url=f"/subtitle-cache/{out.name}",
             format="srt",
             synced=True,
+            origin="opensubtitles",
         )
     except Exception:
         logger.warning("Unreadable sync sidecar %s", side)

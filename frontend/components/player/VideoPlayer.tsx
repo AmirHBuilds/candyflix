@@ -19,6 +19,7 @@ import {
 import { loadPlayerPreferences, savePlayerPreferences } from "@/components/player/player-preferences";
 import { activeSkip, autoSkipTarget, SKIP_LABELS, type SegmentsData } from "@/components/player/skip-segments";
 import SubtitleOverlay from "@/components/player/SubtitleOverlay";
+import Flag from "@/components/player/Flag";
 import SubtitleSettingsPanel from "@/components/player/SubtitleSettingsPanel";
 import PlayerTooltip from "@/components/player/PlayerTooltip";
 import HoldSpeedIndicator from "@/components/player/HoldSpeedIndicator";
@@ -74,11 +75,24 @@ export default function VideoPlayer({
   // tracks live here instead and get merged into every place that reads
   // the subtitle list.
   const [onlineTracks, setOnlineTracks] = useState<SubtitleTrack[]>([]);
-  // A synced subtitle (Phase 11) replaces the unsynced one of its language.
+  // Every track offered so far (the video's own, synced ones, and ones picked this session),
+  // each once, for the Source / Synced tabs of the subtitle menu.
+  const listedTracks = useMemo(() => {
+    const seen = new Set<string>();
+    return [...source.subtitles, ...onlineTracks].filter((t) => !seen.has(t.url) && !!seen.add(t.url));
+  }, [source.subtitles, onlineTracks]);
+  // What plays is one track per language. The latest pick wins (so choosing another
+  // release, or finishing a sync, takes over); a synced track kept from an earlier visit
+  // beats the unsynced one that came with the page.
   const allTracks = useMemo(() => {
-    const all = [...source.subtitles, ...onlineTracks];
-    const synced = new Set(all.filter((t) => t.synced).map((t) => t.language));
-    return all.filter((t) => t.synced || !synced.has(t.language));
+    const ordered = [
+      ...source.subtitles.filter((t) => !t.synced),
+      ...source.subtitles.filter((t) => t.synced),
+      ...onlineTracks,
+    ];
+    const byLanguage = new Map<string, SubtitleTrack>();
+    for (const t of ordered) byLanguage.set(t.language, t);
+    return [...byLanguage.values()];
   }, [source.subtitles, onlineTracks]);
   const [buffering, setBuffering] = useState(true);
   const bufferingRef = useRef(buffering);
@@ -1567,7 +1581,8 @@ export default function VideoPlayer({
                           className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white/90 hover:bg-white/10"
                         >
                           <span>Subtitles</span>
-                          <span className="text-white/50">
+                          <span className="flex items-center gap-2 text-white/50">
+                            {selectedLanguage && <Flag language={selectedLanguage} size="sm" />}
                             {selectedLanguage
                               ? (allTracks.find((t) => t.language === selectedLanguage)?.label ??
                                 selectedLanguage)
@@ -1669,6 +1684,7 @@ export default function VideoPlayer({
                         </button>
                         <SubtitleSettingsPanel
                           tracks={allTracks}
+                          listedTracks={listedTracks}
                           selectedLanguage={selectedLanguage}
                           onSelectLanguage={selectSubtitleLanguage}
                           settings={subtitleSettings}
