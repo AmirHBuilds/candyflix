@@ -9,6 +9,10 @@ vi.mock("@/lib/admin", () => ({
   resetAdminPassword: vi.fn(),
   deleteAdminUser: vi.fn(),
   getAdminStats: vi.fn(),
+  getNowWatching: vi.fn().mockResolvedValue([]),
+  getUserDetail: vi.fn(),
+  getUserHistory: vi.fn(),
+  getUserWatchlist: vi.fn(),
   getSystemStatus: vi.fn(),
   clearTmdbCache: vi.fn(),
   clearSubtitleCache: vi.fn(),
@@ -65,6 +69,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(admin.listAdminUsers).mockResolvedValue([me, bob]);
   vi.mocked(admin.getAdminStats).mockResolvedValue(stats);
+  vi.mocked(admin.getNowWatching).mockResolvedValue([]);
   vi.mocked(admin.getSystemStatus).mockResolvedValue(system);
 });
 

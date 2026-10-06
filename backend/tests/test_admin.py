@@ -96,6 +96,12 @@ class TestAccessControl:
         ("get", "/api/admin/system", {}),
         ("post", "/api/admin/system/clear-tmdb-cache", {}),
         ("post", "/api/admin/system/clear-subtitle-cache", {}),
+        ("get", "/api/admin/footer", {}),
+        ("put", "/api/admin/footer", {"json": {"enabled": True}}),
+        ("get", "/api/admin/now-watching", {}),
+        ("get", f"/api/admin/users/{uuid.uuid4()}/detail", {}),
+        ("get", f"/api/admin/users/{uuid.uuid4()}/history", {}),
+        ("get", f"/api/admin/users/{uuid.uuid4()}/watchlist", {}),
     ]
 
     @pytest.mark.parametrize("method,path,kwargs", ROUTES)

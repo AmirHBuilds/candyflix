@@ -3,6 +3,7 @@
 import { useState } from "react";
 import FooterTab from "@/components/admin/FooterTab";
 import OverviewTab from "@/components/admin/OverviewTab";
+import UserDetailView from "@/components/admin/UserDetailView";
 import SystemTab from "@/components/admin/SystemTab";
 import UsersTab from "@/components/admin/UsersTab";
 
@@ -17,6 +18,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function AdminPanel({ currentUserId }: { currentUserId: string }) {
   const [tab, setTab] = useState<TabId>("overview");
+  const [viewing, setViewing] = useState<string | null>(null);
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-white">Admin panel</h1>
@@ -29,7 +31,10 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
             id={`admin-tab-${t.id}`}
             aria-selected={tab === t.id}
             aria-controls={`admin-panel-${t.id}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              setViewing(null);
+            }}
             className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
               tab === t.id ? "bg-accent/15 text-accent" : "text-white/60 hover:bg-white/5 hover:text-white"
             }`}
@@ -40,7 +45,8 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
       </div>
       <div role="tabpanel" id={`admin-panel-${tab}`} aria-labelledby={`admin-tab-${tab}`}>
         {tab === "overview" && <OverviewTab />}
-        {tab === "users" && <UsersTab currentUserId={currentUserId} />}
+        {tab === "users" &&
+          (viewing ? <UserDetailView userId={viewing} onBack={() => setViewing(null)} /> : <UsersTab currentUserId={currentUserId} onView={setViewing} />)}
         {tab === "footer" && <FooterTab />}
         {tab === "system" && <SystemTab />}
       </div>

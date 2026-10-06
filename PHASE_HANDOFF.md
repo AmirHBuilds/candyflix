@@ -705,3 +705,11 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 5. "Back to the standard buttons" restores the original bar.
 
 ### Next: the big admin upgrade phase (public messages with "I understand", per-section / per-user drill-down, full visibility). It needs a short design pass with the user first (see PHASE9_PLAN.md "later").
+
+## 24. Phase 10a — admin sees what people watch (v25)
+
+**Backend:** `presence_service` (Redis `presence:<user_id>`, 45 s TTL), `POST /api/presence` and `/api/presence/stop`; admin `GET /admin/now-watching`, `/users/{id}/detail`, `/history?limit&offset`, `/watchlist`. Tests: `test_admin_activity.py`, extended `ROUTES` in `test_admin.py`.
+**Frontend:** `usePresence` (15 s heartbeat, play/pause, pagehide, unmount stop) in `VideoPlayer`; `NowWatchingCard` (polls 10 s) on Overview; `UserDetailView` (profile, now watching, paged history, Candy Box) opened from a "View" button in Users; privacy row in Settings → Privacy & data. Tests: `admin-activity.test.tsx`.
+**Limits:** history is the latest position per title/episode (not a play log). Presence is independent of "Save watch progress". Sign-ins show as a count only (full list comes in 10b).
+**Baselines:** backend 353, frontend 545 (excluding the four live-backend files), tsc clean.
+**Next:** 10b drill-downs, 10c messages, 10d audit trail.

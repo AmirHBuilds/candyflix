@@ -77,3 +77,45 @@ export const clearSubtitleCache = () =>
 export const getAdminFooter = () => request<import("@/lib/site").FooterContent>("/footer", {}, "Couldn't load the footer.");
 export const saveAdminFooter = (body: import("@/lib/site").FooterContent) =>
   request<import("@/lib/site").FooterContent>("/footer", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the footer.");
+
+// --- Phase 10a: what people are watching ---
+
+export type NowWatching = {
+  user_id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  tmdb_id: number;
+  media_type: "movie" | "tv";
+  season_number: number | null;
+  episode_number: number | null;
+  title: string | null;
+  poster_path: string | null;
+  position_seconds: number;
+  duration_seconds: number;
+  playing: boolean;
+  since: string;
+  last_beat: string;
+};
+export type HistoryItem = {
+  tmdb_id: number;
+  media_type: "movie" | "tv";
+  season_number: number | null;
+  episode_number: number | null;
+  title: string | null;
+  poster_path: string | null;
+  position_seconds: number;
+  duration_seconds: number;
+  fraction: number | null;
+  opened_only: boolean;
+  updated_at: string;
+};
+export type HistoryPage = { items: HistoryItem[]; total: number };
+export type WatchlistEntry = { tmdb_id: number; media_type: "movie" | "tv"; title: string | null; poster_path: string | null; added_at: string };
+export type UserDetail = { user: AdminUser; now_watching: NowWatching | null; active_sessions: number; last_activity: string | null };
+
+export const getNowWatching = () => request<NowWatching[]>("/now-watching", {}, "Couldn't load who is watching.");
+export const getUserDetail = (id: string) => request<UserDetail>(`/users/${id}/detail`, {}, "Couldn't load that person.");
+export const getUserHistory = (id: string, offset = 0, limit = 50) =>
+  request<HistoryPage>(`/users/${id}/history?limit=${limit}&offset=${offset}`, {}, "Couldn't load the watch history.");
+export const getUserWatchlist = (id: string) => request<WatchlistEntry[]>(`/users/${id}/watchlist`, {}, "Couldn't load their list.");

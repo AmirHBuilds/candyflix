@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
+import NowWatchingCard from "@/components/admin/NowWatchingCard";
 import { getAdminStats, type AdminStats } from "@/lib/admin";
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -43,6 +44,8 @@ export default function OverviewTab() {
         <Stat label="Active, last 7 days" value={stats.active_last_7_days} />
         <Stat label="Marked watched" value={stats.watched_items} />
       </div>
+
+      <NowWatchingCard />
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
         <h2 className="text-sm font-semibold text-white">Watching, last 14 days</h2>

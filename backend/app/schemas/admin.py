@@ -140,3 +140,59 @@ class SystemStatus(BaseModel):
 
 class ClearedResult(BaseModel):
     cleared: int
+
+
+# ---------- Phase 10a: what people are watching ----------
+
+
+class NowWatching(BaseModel):
+    user_id: uuid.UUID
+    username: str
+    display_name: str
+    avatar_url: str | None = None
+    tmdb_id: int
+    media_type: str
+    season_number: int | None = None
+    episode_number: int | None = None
+    title: str | None = None
+    poster_path: str | None = None
+    position_seconds: float
+    duration_seconds: float
+    playing: bool
+    since: datetime
+    last_beat: datetime
+
+
+class HistoryItem(BaseModel):
+    tmdb_id: int
+    media_type: str
+    season_number: int | None = None
+    episode_number: int | None = None
+    title: str | None = None
+    poster_path: str | None = None
+    position_seconds: float
+    duration_seconds: float
+    # 0..1, or None when it was only opened (no position was saved).
+    fraction: float | None = None
+    opened_only: bool = False
+    updated_at: datetime
+
+
+class HistoryPage(BaseModel):
+    items: list[HistoryItem]
+    total: int
+
+
+class WatchlistEntry(BaseModel):
+    tmdb_id: int
+    media_type: str
+    title: str | None = None
+    poster_path: str | None = None
+    added_at: datetime
+
+
+class UserDetail(BaseModel):
+    user: AdminUser
+    now_watching: NowWatching | None = None
+    active_sessions: int = 0
+    last_activity: datetime | None = None

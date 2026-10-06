@@ -34,6 +34,7 @@ from app.api.routes import (
     health,
     movies,
     playback,
+    presence,
     search,
     segments,
     settings as settings_routes,
@@ -131,6 +132,7 @@ app.include_router(admin.router, prefix="/api")
 app.include_router(video_settings.router, prefix="/api")
 app.include_router(site.router, prefix="/api")
 app.include_router(segments.router, prefix="/api")
+app.include_router(presence.router, prefix="/api")
 
 
 @app.get("/api")

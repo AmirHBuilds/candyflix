@@ -58,6 +58,12 @@ export default function PrivacyDataForm() {
   return (
     <SettingsCard title="Privacy & data" description="Things CandyFlix remembers about what you watch.">
       <SettingRow
+        label="Who can see what you watch"
+        description="The server admin can see what you watch here: what's playing now, your history and your list. Nobody else can."
+      >
+        <span className="text-sm text-white/40">Always on</span>
+      </SettingRow>
+      <SettingRow
         label="Watch history"
         description="Forgets where you stopped in every movie and episode, your last-watched episodes and your Continue Watching row. Your saved list isn't touched."
       >

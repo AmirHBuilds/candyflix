@@ -327,3 +327,138 @@ def clear_subtitle_cache() -> int:
                 p.unlink(missing_ok=True)
                 removed += 1
     return removed
+
+
+# ---------- Phase 10a: what people are watching ----------
+
+
+async def _titles(keys: set[tuple[str, int]]) -> dict[tuple[str, int], tuple[str | None, str | None]]:
+    """(media_type, tmdb_id) -> (title, poster_path), from the cached TMDB lookups.
+    A title TMDB can't give us is listed without a name rather than dropped."""
+
+    async def one(key):
+        media_type, tmdb_id = key
+        try:
+            detail = await (tmdb_service.get_movie(tmdb_id) if media_type == "movie" else tmdb_service.get_tv(tmdb_id))
+            return key, (detail.title, detail.poster_path)
+        except Exception:
+            return key, (None, None)
+
+    return dict(await asyncio.gather(*(one(k) for k in keys)))
+
+
+def _none_if_sentinel(value: int) -> int | None:
+    return None if value < 0 else value
+
+
+async def now_watching(db: AsyncSession, only_user: uuid.UUID | None = None) -> list[schemas.NowWatching]:
+    from app.services import presence_service
+
+    if only_user is not None:
+        one = await presence_service.get_now(only_user)
+        entries = [(only_user, one)] if one else []
+    else:
+        entries = await presence_service.list_now()
+    if not entries:
+        return []
+    users = {
+        u.id: u
+        for u in (await db.execute(select(User).where(User.id.in_([uid for uid, _ in entries])))).scalars().all()
+    }
+    titles = await _titles({(e["media_type"], e["tmdb_id"]) for _, e in entries})
+    out = []
+    for uid, e in entries:
+        user = users.get(uid)
+        if user is None or user.is_disabled:
+            continue
+        title, poster = titles.get((e["media_type"], e["tmdb_id"]), (None, None))
+        out.append(
+            schemas.NowWatching(
+                user_id=uid,
+                username=user.username,
+                display_name=user.display_name,
+                avatar_url=user.avatar_url,
+                tmdb_id=e["tmdb_id"],
+                media_type=e["media_type"],
+                season_number=e.get("season_number"),
+                episode_number=e.get("episode_number"),
+                title=title,
+                poster_path=poster,
+                position_seconds=e["position_seconds"],
+                duration_seconds=e["duration_seconds"],
+                playing=bool(e.get("playing")),
+                since=datetime.fromtimestamp(e.get("since", e["at"]), timezone.utc),
+                last_beat=datetime.fromtimestamp(e["at"], timezone.utc),
+            )
+        )
+    out.sort(key=lambda n: n.since)
+    return out
+
+
+async def user_detail(db: AsyncSession, user_id: uuid.UUID) -> schemas.UserDetail:
+    await get_user(db, user_id)  # 404 if missing
+    admin_user = await _admin_view(db, user_id)
+    now = await now_watching(db, only_user=user_id)
+    sessions = await get_redis().scard(f"{auth_service.USER_SESSIONS_PREFIX}{user_id}")
+    last = await db.scalar(select(func.max(WatchProgress.updated_at)).where(WatchProgress.user_id == user_id))
+    return schemas.UserDetail(
+        user=admin_user,
+        now_watching=now[0] if now else None,
+        active_sessions=int(sessions or 0),
+        last_activity=last,
+    )
+
+
+async def watch_history(db: AsyncSession, user_id: uuid.UUID, limit: int, offset: int) -> schemas.HistoryPage:
+    await get_user(db, user_id)
+    total = await db.scalar(select(func.count()).where(WatchProgress.user_id == user_id)) or 0
+    rows = (
+        await db.execute(
+            select(WatchProgress)
+            .where(WatchProgress.user_id == user_id)
+            .order_by(WatchProgress.updated_at.desc(), WatchProgress.id)
+            .limit(limit)
+            .offset(offset)
+        )
+    ).scalars().all()
+    titles = await _titles({(r.media_type, r.tmdb_id) for r in rows})
+    items = []
+    for r in rows:
+        title, poster = titles.get((r.media_type, r.tmdb_id), (None, None))
+        opened_only = r.duration_seconds <= 0
+        items.append(
+            schemas.HistoryItem(
+                tmdb_id=r.tmdb_id,
+                media_type=r.media_type,
+                season_number=_none_if_sentinel(r.season_number),
+                episode_number=_none_if_sentinel(r.episode_number),
+                title=title,
+                poster_path=poster,
+                position_seconds=r.position_seconds,
+                duration_seconds=r.duration_seconds,
+                fraction=None if opened_only else max(0.0, min(1.0, r.position_seconds / r.duration_seconds)),
+                opened_only=opened_only,
+                updated_at=r.updated_at,
+            )
+        )
+    return schemas.HistoryPage(items=items, total=int(total))
+
+
+async def user_watchlist(db: AsyncSession, user_id: uuid.UUID) -> list[schemas.WatchlistEntry]:
+    await get_user(db, user_id)
+    rows = (
+        await db.execute(
+            select(WatchlistItem).where(WatchlistItem.user_id == user_id).order_by(WatchlistItem.added_at.desc())
+        )
+    ).scalars().all()
+    titles = await _titles({(r.media_type, r.tmdb_id) for r in rows})
+    return [
+        schemas.WatchlistEntry(
+            tmdb_id=r.tmdb_id,
+            media_type=r.media_type,
+            title=titles.get((r.media_type, r.tmdb_id), (None, None))[0],
+            poster_path=titles.get((r.media_type, r.tmdb_id), (None, None))[1],
+            added_at=r.added_at,
+        )
+        for r in rows
+    ]

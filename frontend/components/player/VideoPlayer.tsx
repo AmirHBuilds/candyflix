@@ -8,6 +8,7 @@ import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, 
 import { consumeAutoplayFlag, flagAutoplayNext } from "@/lib/autoplay";
 import { resolveInitialSubtitle } from "@/components/player/subtitle-preference";
 import { useAutoNext } from "@/components/player/useAutoNext";
+import { usePresence } from "@/components/player/usePresence";
 import { useWatchProgress, type WatchIdentity } from "@/components/player/useWatchProgress";
 import { parseSubtitles, type Cue } from "@/components/player/subtitle-utils";
 import {
@@ -162,6 +163,7 @@ export default function VideoPlayer({
   playbackSettingsRef.current = playbackSettings;
 
   useWatchProgress(videoRef, identity, progressRestored, playbackSettings.save_progress);
+  usePresence(videoRef, identity);
 
   // Autoplay next episode: once a video has ENDED and there is a next
   // episode, count down 5 s and go (Cancel / Play now on the card below).

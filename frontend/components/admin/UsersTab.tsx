@@ -24,7 +24,7 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function UsersTab({ currentUserId }: { currentUserId: string }) {
+export default function UsersTab({ currentUserId, onView }: { currentUserId: string; onView?: (id: string) => void }) {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal | null>(null);
@@ -101,6 +101,11 @@ export default function UsersTab({ currentUserId }: { currentUserId: string }) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
+                {onView && (
+                  <button type="button" onClick={() => onView(user.id)} className={quietButton} aria-label={`View ${user.display_name}`}>
+                    View
+                  </button>
+                )}
                 <button type="button" onClick={() => setModal({ kind: "edit", user })} className={quietButton} aria-label={`Edit ${user.display_name}`}>
                   Edit
                 </button>

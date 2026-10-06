@@ -5,7 +5,7 @@ admin) are enforced in admin_service, not just in the UI.
 """
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
@@ -108,3 +108,40 @@ async def read_footer(db: AsyncSession = Depends(get_db)):
 @router.put("/footer", response_model=Footer)
 async def update_footer(payload: Footer, db: AsyncSession = Depends(get_db)):
     return await site_service.set_footer(db, payload)
+
+
+# --- Phase 10a: what people are watching (admins see all of it; people are told, see Settings -> Privacy & data) ---
+
+
+@router.get("/now-watching", response_model=list[schemas.NowWatching])
+async def now_watching(db: AsyncSession = Depends(get_db)):
+    return await admin_service.now_watching(db)
+
+
+@router.get("/users/{user_id}/detail", response_model=schemas.UserDetail)
+async def user_detail(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    try:
+        return await admin_service.user_detail(db, user_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.get("/users/{user_id}/history", response_model=schemas.HistoryPage)
+async def user_history(
+    user_id: uuid.UUID,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await admin_service.watch_history(db, user_id, limit, offset)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+
+
+@router.get("/users/{user_id}/watchlist", response_model=list[schemas.WatchlistEntry])
+async def user_watchlist(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    try:
+        return await admin_service.user_watchlist(db, user_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)

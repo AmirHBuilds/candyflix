@@ -598,3 +598,36 @@ export async function getSegments(
   const body = await res.json();
   return { intro: body.intro ?? null, recap: body.recap ?? null, credits: body.credits ?? null };
 }
+
+// --- "Watching now" heartbeat (Phase 10a; the admin sees it) ---
+
+export function sendPresence(
+  identity: VideoRef,
+  state: { positionSeconds: number; durationSeconds: number; playing: boolean }
+): void {
+  const body = {
+    tmdb_id: identity.tmdbId,
+    media_type: identity.mediaType,
+    season_number: identity.mediaType === "tv" ? identity.seasonNumber ?? null : null,
+    episode_number: identity.mediaType === "tv" ? identity.episodeNumber ?? null : null,
+    position_seconds: Math.max(0, state.positionSeconds || 0),
+    duration_seconds: Math.max(0, Number.isFinite(state.durationSeconds) ? state.durationSeconds : 0),
+    playing: state.playing,
+  };
+  void fetch(`${getApiBaseUrl()}/presence`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+export function stopPresence(): void {
+  const url = `${getApiBaseUrl()}/presence/stop`;
+  if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+    navigator.sendBeacon(url, new Blob([], { type: "application/json" }));
+    return;
+  }
+  void fetch(url, { method: "POST", credentials: "include", keepalive: true }).catch(() => {});
+}
