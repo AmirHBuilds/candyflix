@@ -5,6 +5,9 @@ export type SubtitleTrack = {
   label: string;
   url: string;
   format: "srt" | "vtt";
+  // A subtitle the server re-timed against this video's audio; it replaces
+  // the unsynced track of the same language.
+  synced?: boolean;
 };
 
 export type PlaybackSource = {

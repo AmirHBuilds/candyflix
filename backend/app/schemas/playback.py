@@ -17,6 +17,9 @@ class SubtitleTrackOut(BaseModel):
     label: str  # human-readable, e.g. "English"
     url: str
     format: Literal["srt", "vtt"]  # frontend converts srt -> vtt before use
+    # True for a subtitle the server re-timed against this video's audio
+    # (Phase 11). It replaces the unsynced track of the same language.
+    synced: bool = False
 
 
 class PlaybackSource(BaseModel):

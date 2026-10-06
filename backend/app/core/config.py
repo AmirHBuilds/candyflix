@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     opensubtitles_username: str = ""
     opensubtitles_password: str = ""
     subtitle_cache_dir: str = "subtitle-cache"
+    # Phase 11 — subtitle sync. Holds the "speech map" of each video (where
+    # people talk), so syncing a second subtitle for the same video is instant.
+    # Synced subtitles themselves are written into subtitle_cache_dir.
+    sync_cache_dir: str = "sync-cache"
 
     # Intro / recap / credits timestamps (Phase 9f). SkipDB is asked first,
     # IntroDB fills in whatever it lacks. Both are open read APIs (no key).

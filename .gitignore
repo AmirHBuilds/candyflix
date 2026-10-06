@@ -50,3 +50,7 @@ Thumbs.db
 # profile pictures uploaded by users
 backend/avatars/*
 !backend/avatars/.gitkeep
+
+# --- Synced subtitles' speech maps (regenerable cache) ---
+backend/sync-cache/*
+!backend/sync-cache/.gitkeep

@@ -48,3 +48,9 @@ def get_mock_video_url() -> str:
             f"Add a video file ({', '.join(sorted(VIDEO_EXTENSIONS))}) there to test playback."
         )
     return f"/mock-videos/{video.name}"
+
+
+def get_mock_video_path() -> Path | None:
+    """The file behind get_mock_video_url(), for server-side work on the video
+    itself (subtitle sync listens to its audio). None when there's no video."""
+    return _find_mock_video()

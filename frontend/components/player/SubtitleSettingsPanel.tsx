@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
 import OffsetStepper from "@/components/player/OffsetStepper";
+import SyncSubtitleControl from "@/components/player/SyncSubtitleControl";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 import {
   downloadOnlineSubtitle,
@@ -201,6 +202,7 @@ export default function SubtitleSettingsPanel({
   const [addingLanguage, setAddingLanguage] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
 
+  const selectedTrack = selectedLanguage ? tracks.find((t) => t.language === selectedLanguage) : undefined;
   const knownLanguages = new Set(tracks.map((t) => t.language));
   const moreLanguages = availableLanguages.filter((l) => !knownLanguages.has(l.language));
 
@@ -364,6 +366,7 @@ export default function SubtitleSettingsPanel({
           {tracks.map((t) => (
             <option key={t.language} value={t.language}>
               {t.label}
+              {t.synced ? " · synced" : ""}
             </option>
           ))}
           {moreLanguages.map((l) => (
@@ -375,6 +378,15 @@ export default function SubtitleSettingsPanel({
         </select>
         {addingLanguage && <span className="text-xs text-white/50">Adding subtitle…</span>}
         {addError && <span className="text-xs text-red-400">{addError}</span>}
+
+        {selectedTrack &&
+          (selectedTrack.synced ? (
+            <span className="mt-1 text-xs text-white/50">Synced to this video ✓</span>
+          ) : (
+            <div className="mt-1">
+              <SyncSubtitleControl track={selectedTrack} identity={identity} onSynced={onTrackAdded} />
+            </div>
+          ))}
 
         {showBrowse && (
           <div className="mt-1 flex flex-col gap-2 rounded-xl bg-white/[0.04] p-3">

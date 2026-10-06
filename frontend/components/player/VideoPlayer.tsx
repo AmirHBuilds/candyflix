@@ -74,7 +74,12 @@ export default function VideoPlayer({
   // tracks live here instead and get merged into every place that reads
   // the subtitle list.
   const [onlineTracks, setOnlineTracks] = useState<SubtitleTrack[]>([]);
-  const allTracks = useMemo(() => [...source.subtitles, ...onlineTracks], [source.subtitles, onlineTracks]);
+  // A synced subtitle (Phase 11) replaces the unsynced one of its language.
+  const allTracks = useMemo(() => {
+    const all = [...source.subtitles, ...onlineTracks];
+    const synced = new Set(all.filter((t) => t.synced).map((t) => t.language));
+    return all.filter((t) => t.synced || !synced.has(t.language));
+  }, [source.subtitles, onlineTracks]);
   const [buffering, setBuffering] = useState(true);
   const bufferingRef = useRef(buffering);
   useEffect(() => {

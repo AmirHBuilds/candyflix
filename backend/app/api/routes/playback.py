@@ -14,9 +14,20 @@ from app.providers import mock_provider
 from app.providers.mock_provider import MockVideoNotConfigured
 from app.schemas.playback import EpisodeVisitIn, MovieVisitIn, PlaybackSource, WatchProgressIn, WatchProgressOut
 from app.schemas.video_settings import ClearedResult
-from app.services import subtitle_service, video_settings_service, watch_progress_service
+from app.services import subtitle_service, subtitle_sync_service, video_settings_service, watch_progress_service
 
 router = APIRouter(tags=["playback"])
+
+
+def _subtitle_tracks(default_track, media_type, tmdb_id, season_number, episode_number):
+    """The default track, plus any synced subtitles kept for this video. A synced
+    track replaces the unsynced one of the same language."""
+    synced = subtitle_sync_service.synced_tracks_for_video(
+        subtitle_sync_service.video_key(media_type, tmdb_id, season_number, episode_number)
+    )
+    tracks = [default_track] if default_track else []
+    synced_languages = {t.language for t in synced}
+    return [t for t in tracks if t.language not in synced_languages] + synced
 
 
 @router.get("/playback/movie/{tmdb_id}", response_model=PlaybackSource)
@@ -38,7 +49,7 @@ async def playback_movie(
     return PlaybackSource(
         source_type="mock",
         url=url,
-        subtitles=[default_track] if default_track else [],
+        subtitles=_subtitle_tracks(default_track, "movie", tmdb_id, None, None),
         resume_position_seconds=progress.position_seconds if progress else None,
         video_settings=await video_settings_service.get(db, current_user.id, tmdb_id, "movie", None, None),
     )
@@ -67,7 +78,7 @@ async def playback_episode(
     return PlaybackSource(
         source_type="mock",
         url=url,
-        subtitles=[default_track] if default_track else [],
+        subtitles=_subtitle_tracks(default_track, "tv", tmdb_id, season_number, episode_number),
         resume_position_seconds=progress.position_seconds if progress else None,
         video_settings=await video_settings_service.get(
             db, current_user.id, tmdb_id, "tv", season_number, episode_number
