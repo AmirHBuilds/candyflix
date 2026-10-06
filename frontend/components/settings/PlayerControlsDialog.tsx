@@ -1,25 +1,24 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Dialog from "@/components/admin/Dialog";
 import { CONTROLS, SWITCHABLE, type ControlId } from "@/components/player/controls";
+import {
+  BackIcon,
+  CCIcon,
+  ForwardIcon,
+  FullscreenIcon,
+  GearIcon,
+  NextIcon,
+  PipIcon,
+  PlayIcon,
+  PrevIcon,
+  VolumeHighIcon,
+} from "@/components/player/icons";
 import { useSettings } from "@/components/SettingsProvider";
 import { Toggle } from "@/components/settings/controls";
 
 export const PLAYER_PREVIEW_IMAGE = "/images/player-preview.png";
-
-// What each button looks like in the little mock-up.
-const GLYPHS: Record<string, string> = {
-  play: "▶",
-  seek_back: "↺",
-  seek_forward: "↻",
-  episodes: "⏮ ⏭",
-  volume: "♪",
-  time: "12:03 / 45:10",
-  captions: "CC",
-  settings: "⚙",
-  pip: "PiP",
-  fullscreen: "⛶",
-};
 
 /**
  * Choose which buttons the player shows. The mock-up bar sits on a
@@ -32,7 +31,9 @@ export default function PlayerControlsDialog({ onClose }: { onClose: () => void 
   const controls = settings.playback.controls;
   const set = (id: ControlId, value: boolean) => update({ playback: { controls: { [id]: value } } });
 
-  function MockButton({ id }: { id: (typeof CONTROLS)[number]["id"] }) {
+  // One button of the preview: looks like the real one. Tap to remove; a removed button stays as a
+  // dotted ghost to tap again. Play and Settings are locked.
+  function Btn({ id, children, round = true }: { id: (typeof CONTROLS)[number]["id"]; children: ReactNode; round?: boolean }) {
     const info = CONTROLS.find((c) => c.id === id)!;
     const on = info.locked ? true : controls[id as ControlId];
     return (
@@ -42,42 +43,69 @@ export default function PlayerControlsDialog({ onClose }: { onClose: () => void 
         onClick={() => set(id as ControlId, !on)}
         aria-label={`${on ? "Remove" : "Add"} ${info.label} ${info.locked ? "(always shown)" : "button"}`}
         title={info.locked ? `${info.label}: always shown` : `${on ? "Remove" : "Add"} ${info.label}`}
-        className={`h-7 min-w-7 whitespace-nowrap rounded-full px-2 text-[11px] font-medium transition-colors ${
-          info.locked
-            ? "bg-white/25 text-white"
-            : on
-              ? "bg-white/20 text-white hover:bg-white/30"
-              : "border border-dashed border-white/40 text-white/50 hover:text-white"
+        className={`flex h-8 items-center justify-center text-white transition-all sm:h-9 ${round ? "w-8 rounded-full sm:w-9" : "rounded-full px-3 text-sm font-medium tabular-nums"} ${
+          on
+            ? info.locked
+              ? "opacity-100"
+              : "text-white/90 hover:bg-white/20"
+            : "border border-dashed border-white/50 opacity-50 hover:opacity-100"
         }`}
       >
-        {GLYPHS[id]}
+        {children}
       </button>
     );
   }
+  const pill = "flex items-center gap-0.5 rounded-full bg-white/15 p-1";
+  const showPill = (id: ControlId) => controls[id];
 
   return (
-    <Dialog title="Customise player buttons" onClose={onClose}>
+    <Dialog title="Customise player buttons" onClose={onClose} wide>
       <div className="space-y-5">
         <p className="text-sm text-white/60">
-          Tap a button below to remove it from the player. Dotted ones are hidden — tap to bring them back. A removed button&apos;s keyboard shortcut stops working too.
+          This is your player. Tap a button to remove it; a dotted one is hidden, tap it to bring it back. A removed button&apos;s keyboard shortcut stops working too.
         </p>
 
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black" data-testid="player-mockup">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={PLAYER_PREVIEW_IMAGE} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-1.5 bg-gradient-to-t from-black/90 to-transparent px-3 pb-2 pt-8">
-            <MockButton id="play" />
-            <MockButton id="seek_back" />
-            <MockButton id="seek_forward" />
-            <MockButton id="episodes" />
-            <MockButton id="volume" />
-            <MockButton id="time" />
-            <span className="ml-auto flex items-center gap-1.5">
-              <MockButton id="captions" />
-              <MockButton id="settings" />
-              <MockButton id="pip" />
-              <MockButton id="fullscreen" />
-            </span>
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-3 pb-3 pt-14 sm:px-5 sm:pb-4">
+            {/* the progress bar, as in the player */}
+            <div className="relative mb-3 h-1 w-full rounded-full bg-white/25">
+              <div className="absolute left-0 top-0 h-full w-[27%] rounded-full bg-accent">
+                <div className="absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-accent" />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 sm:h-10 sm:w-10">
+                <Btn id="play"><PlayIcon /></Btn>
+              </div>
+              <div className={pill}>
+                <Btn id="seek_back"><BackIcon /></Btn>
+                <Btn id="seek_forward"><ForwardIcon /></Btn>
+              </div>
+              <div className={pill}>
+                <Btn id="episodes" round={false}>
+                  <PrevIcon />
+                  <span className="w-1" />
+                  <NextIcon />
+                </Btn>
+              </div>
+              <div className={`${pill} pr-3`}>
+                <Btn id="volume"><VolumeHighIcon /></Btn>
+                <span className={`h-1 w-16 rounded-full bg-white/30 transition-opacity ${showPill("volume") ? "" : "opacity-30"}`}>
+                  <span className="block h-full w-2/3 rounded-full bg-accent" />
+                </span>
+              </div>
+              <div className={pill}>
+                <Btn id="time" round={false}>12:03 / 45:10</Btn>
+              </div>
+              <div className={`${pill} ml-auto`}>
+                <Btn id="captions"><CCIcon active={false} /></Btn>
+                <Btn id="settings"><GearIcon /></Btn>
+                <Btn id="pip"><PipIcon /></Btn>
+                <Btn id="fullscreen"><FullscreenIcon /></Btn>
+              </div>
+            </div>
           </div>
         </div>
 

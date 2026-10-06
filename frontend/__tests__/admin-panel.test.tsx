@@ -23,6 +23,15 @@ import AdminPanel from "@/components/admin/AdminPanel";
 import * as admin from "@/lib/admin";
 import { showToast } from "@/lib/toast";
 
+// Row actions live in a "⋯" menu: open the person's menu (if it isn't open) and return the item.
+function menuItem(label: string): HTMLElement {
+  const item = screen.queryByRole("menuitem", { name: label });
+  if (item) return item;
+  const person = label.split(" ").pop()!;
+  fireEvent.click(screen.getByRole("button", { name: `Actions for ${person}` }));
+  return screen.getByRole("menuitem", { name: label });
+}
+
 const u = (over: Partial<admin.AdminUser>): admin.AdminUser => ({
   id: "u1",
   username: "bob",
@@ -101,11 +110,11 @@ describe("Admin panel", () => {
     it("marks you and admins, and offers no self-destructive actions on your own row", async () => {
       await openUsers();
       expect(screen.getByText("You")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Edit Root" })).toBeInTheDocument();
+      expect(menuItem("Edit Root")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Delete Root" })).toBeNull();
       expect(screen.queryByRole("button", { name: "Disable Root" })).toBeNull();
       expect(screen.queryByRole("button", { name: "Reset password for Root" })).toBeNull();
-      expect(screen.getByRole("button", { name: "Delete Bob" })).toBeInTheDocument();
+      expect(menuItem("Delete Bob")).toBeInTheDocument();
     });
 
     it("adds a user once the form is valid", async () => {
@@ -143,7 +152,7 @@ describe("Admin panel", () => {
     it("edits only what changed", async () => {
       vi.mocked(admin.updateAdminUser).mockResolvedValue(bob);
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Edit Bob" }));
+      fireEvent.click(menuItem("Edit Bob"));
       const dialog = screen.getByRole("dialog");
       fireEvent.change(within(dialog).getByLabelText("Display name"), { target: { value: "Robert" } });
       fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -152,7 +161,7 @@ describe("Admin panel", () => {
 
     it("saving with no changes just closes", async () => {
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Edit Bob" }));
+      fireEvent.click(menuItem("Edit Bob"));
       fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Save" }));
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       expect(admin.updateAdminUser).not.toHaveBeenCalled();
@@ -161,7 +170,7 @@ describe("Admin panel", () => {
     it("promotes to admin from the edit dialog", async () => {
       vi.mocked(admin.updateAdminUser).mockResolvedValue(bob);
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Edit Bob" }));
+      fireEvent.click(menuItem("Edit Bob"));
       const dialog = screen.getByRole("dialog");
       fireEvent.click(within(dialog).getByLabelText(/^Admin/));
       fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -171,7 +180,7 @@ describe("Admin panel", () => {
     it("disables and re-enables with one click", async () => {
       vi.mocked(admin.updateAdminUser).mockResolvedValue(bob);
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Disable Bob" }));
+      fireEvent.click(menuItem("Disable Bob"));
       await waitFor(() => expect(admin.updateAdminUser).toHaveBeenCalledWith("u1", { is_disabled: true }));
     });
 
@@ -179,13 +188,13 @@ describe("Admin panel", () => {
       vi.mocked(admin.listAdminUsers).mockResolvedValue([me, u({ is_disabled: true })]);
       await openUsers();
       expect(screen.getByText("Disabled")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Enable Bob" })).toBeInTheDocument();
+      expect(menuItem("Enable Bob")).toBeInTheDocument();
     });
 
     it("resets a password", async () => {
       vi.mocked(admin.resetAdminPassword).mockResolvedValue(undefined);
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Reset password for Bob" }));
+      fireEvent.click(menuItem("Reset password for Bob"));
       const dialog = screen.getByRole("dialog");
       const submit = within(dialog).getByRole("button", { name: "Reset password" });
       expect(submit).toBeDisabled();
@@ -197,7 +206,7 @@ describe("Admin panel", () => {
     it("only deletes after typing the username", async () => {
       vi.mocked(admin.deleteAdminUser).mockResolvedValue(undefined);
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Delete Bob" }));
+      fireEvent.click(menuItem("Delete Bob"));
       const dialog = screen.getByRole("dialog");
       const submit = within(dialog).getByRole("button", { name: "Delete" });
       expect(submit).toBeDisabled();
@@ -210,10 +219,10 @@ describe("Admin panel", () => {
 
     it("closes a dialog with Escape or Cancel", async () => {
       await openUsers();
-      fireEvent.click(screen.getByRole("button", { name: "Edit Bob" }));
+      fireEvent.click(menuItem("Edit Bob"));
       fireEvent.keyDown(document, { key: "Escape" });
       expect(screen.queryByRole("dialog")).toBeNull();
-      fireEvent.click(screen.getByRole("button", { name: "Edit Bob" }));
+      fireEvent.click(menuItem("Edit Bob"));
       fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
       expect(screen.queryByRole("dialog")).toBeNull();
     });

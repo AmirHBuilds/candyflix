@@ -113,12 +113,12 @@ describe("UserDetailView", () => {
     expect(screen.queryByRole("button", { name: /Load more/ })).toBeNull();
   });
 
-  it("shows the Candy Box tab and goes back", async () => {
+  it("shows the person's own box tab and goes back", async () => {
     vi.mocked(admin.getUserHistory).mockResolvedValue({ items: [], total: 0 });
     const onBack = vi.fn();
     render(<UserDetailView userId="u1" onBack={onBack} />);
     expect(await screen.findByText("No watch history yet.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Candy Box" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Bob Box" }));
     expect(await screen.findByText("Saved One")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /All people/ }));
     expect(onBack).toHaveBeenCalled();

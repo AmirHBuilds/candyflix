@@ -18,7 +18,7 @@ afterEach(cleanup);
 describe("describe()", () => {
   it("turns actions into sentences", () => {
     expect(describeEntry(entry({ action: "history.view", target_name: "Bob" }))).toBe("Candy looked at Bob's watch history");
-    expect(describeEntry(entry({ action: "watchlist.view", target_name: "Bob" }))).toBe("Candy looked at Bob's Candy Box");
+    expect(describeEntry(entry({ action: "watchlist.view", target_name: "Bob" }))).toBe("Candy looked at Bob Box");
     expect(describeEntry(entry({ action: "user.password_reset", target_name: "Bob" }))).toBe("Candy reset Bob's password");
     expect(describeEntry(entry({ action: "announcement.create", target_name: "Hi" }))).toBe("Candy sent the message “Hi”");
     expect(describeEntry(entry({ action: "footer.update" }))).toBe("Candy edited the footer");

@@ -13,7 +13,10 @@ import {
 
 export type LanguageGroup = { language: string; label: string; items: OnlineSubtitleResult[] };
 
-/** Groups results by language. Inside a group: most downloaded first. Groups: the one with the most-downloaded file first. */
+/** Pinned to the top of the list. */
+export const PINNED_LANGUAGE = "en";
+
+/** Groups results by language. Inside a group: most downloaded first. Groups: English pinned first, then the one with the most-downloaded file. */
 export function groupByLanguage(results: OnlineSubtitleResult[]): LanguageGroup[] {
   const map = new Map<string, LanguageGroup>();
   for (const r of results) {
@@ -23,7 +26,11 @@ export function groupByLanguage(results: OnlineSubtitleResult[]): LanguageGroup[
   }
   const groups = [...map.values()];
   for (const g of groups) g.items.sort((a, b) => b.downloads - a.downloads);
-  groups.sort((a, b) => b.items[0].downloads - a.items[0].downloads);
+  groups.sort(
+    (a, b) =>
+      Number(b.language === PINNED_LANGUAGE) - Number(a.language === PINNED_LANGUAGE) ||
+      b.items[0].downloads - a.items[0].downloads
+  );
   return groups;
 }
 
@@ -189,7 +196,8 @@ export default function OpenSubtitlesBrowser({
         <div className={`flex flex-col gap-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
           {groups.map((g) => (
             <section key={g.language} aria-label={g.label} className="flex flex-col gap-1.5">
-              <h4 className="flex items-baseline gap-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-white/45">
+              <h4 className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-white/45">
+                {g.language === PINNED_LANGUAGE && <PinIcon />}
                 {g.label}
                 <span className="font-normal normal-case tracking-normal text-white/30">{g.items.length}</span>
               </h4>
@@ -197,8 +205,7 @@ export default function OpenSubtitlesBrowser({
                 <SubtitleRow
                   key={r.file_id}
                   language={r.language}
-                  title={r.release ? shortRelease(r.release) : r.label}
-                  detail={r.release && shortRelease(r.release) !== r.release.replace(/[._]+/g, " ").trim() ? r.release : null}
+                  title={r.release ?? r.label}
                   badges={r.hearing_impaired ? ["HI"] : undefined}
                   active={!!activeUrl && new RegExp(`-${r.file_id}\\.srt$`).test(activeUrl)}
                   busy={pickingId === r.file_id}
@@ -233,11 +240,12 @@ export default function OpenSubtitlesBrowser({
   );
 }
 
-// Release names are long dotted strings; the row title shows the first readable chunk and the
-// full name sits underneath, since that full name is what tells two uploads apart.
-function shortRelease(release: string): string {
-  const cleaned = release.replace(/[._]+/g, " ").trim();
-  return cleaned.length > 38 ? `${cleaned.slice(0, 36).trimEnd()}…` : cleaned;
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3 w-3 text-accent" fill="currentColor" aria-label="Pinned" role="img">
+      <path d="M14 3l7 7-2 1-3-1-3.5 3.5.5 4.5-1.5 1.5L8.5 15 4 19.5 3.5 20 4 19.5 8.5 15 5 11.5 6.5 10l4.5.5L14.5 7 14 4z" />
+    </svg>
+  );
 }
 
 function DownloadIcon() {

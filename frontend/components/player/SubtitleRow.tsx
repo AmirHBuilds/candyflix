@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Flag from "@/components/player/Flag";
 
 // One subtitle in a list: flag tile on the left, name and a small detail line,
@@ -24,8 +24,15 @@ export default function SubtitleRow({
   onClick: () => void;
   trailing?: ReactNode;
 }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  // When the menu opens, bring the subtitle in use into view (inside the menu's own scroll area only).
+  useEffect(() => {
+    if (active) centerInScrollArea(ref.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
       disabled={disabled}
@@ -51,6 +58,16 @@ export default function SubtitleRow({
       </span>
     </button>
   );
+}
+
+/** Scrolls the nearest `[data-scroll-area]` so `el` sits in the middle. Never scrolls the page. */
+export function centerInScrollArea(el: HTMLElement | null) {
+  const area = el?.closest<HTMLElement>("[data-scroll-area]");
+  if (!el || !area) return;
+  const a = area.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  if (a.height === 0) return; // hidden tab: nothing to scroll yet
+  area.scrollTop += r.top - a.top - (a.height - r.height) / 2;
 }
 
 function CheckIcon() {

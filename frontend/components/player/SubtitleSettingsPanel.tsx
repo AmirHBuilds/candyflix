@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Flag from "@/components/player/Flag";
 import OffsetStepper from "@/components/player/OffsetStepper";
 import OpenSubtitlesBrowser from "@/components/player/OpenSubtitlesBrowser";
-import SubtitleRow from "@/components/player/SubtitleRow";
+import SubtitleRow, { centerInScrollArea } from "@/components/player/SubtitleRow";
 import SyncSubtitleControl from "@/components/player/SyncSubtitleControl";
 import { FONT_OPTIONS, type SubtitleSettings } from "@/components/player/subtitle-settings";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
@@ -172,6 +172,16 @@ export default function SubtitleSettingsPanel({
   // and stays built afterwards so switching tabs doesn't lose the search.
   const [osOpened, setOsOpened] = useState(tab === "opensubtitles");
 
+  // Switching tabs: show the subtitle in use if this tab lists it.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      const row = scrollRef.current?.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) [aria-current="true"]');
+      if (row) centerInScrollArea(row);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [tab]);
+
   const tabs: { id: TabId; label: string; count?: number }[] = [
     { id: "source", label: "Source", count: sourceTracks.length },
     { id: "opensubtitles", label: "OpenSubtitles" },
@@ -191,15 +201,15 @@ export default function SubtitleSettingsPanel({
     <div
       role="dialog"
       aria-label="Subtitles"
-      className="flex max-h-[min(78dvh,36rem)] w-[40rem] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur"
+      className="flex max-h-[min(72dvh,30rem)] w-[26rem] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur"
     >
       {/* What's showing now, with the quick actions for it. */}
-      <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 p-3 sm:p-4">
+      <div className="flex shrink-0 flex-col gap-2.5 border-b border-white/10 p-3">
         <div className="flex items-center gap-3">
-          {active ? <Flag language={active.language} size="lg" /> : <Flag language={null} size="lg" />}
+          <Flag language={active?.language ?? null} size="md" />
           <div className="min-w-0 flex-1">
             <div className="text-[11px] font-medium uppercase tracking-wider text-white/40">Subtitles</div>
-            <div className="truncate text-base font-semibold text-white">
+            <div className="truncate text-sm font-semibold text-white">
               {active ? active.label : "Off"}
               {active?.synced && <span className="ml-2 text-xs font-medium text-accent">synced</span>}
             </div>
@@ -218,12 +228,12 @@ export default function SubtitleSettingsPanel({
         {active?.synced && <p className="text-xs text-white/50">Matched to this video&apos;s audio ✓</p>}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
-        {/* Tabs: a row on phones, a column on the left from tablet width up. */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Tabs: one compact row across the top. */}
         <div
           role="tablist"
           aria-label="Subtitle sources"
-          className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/10 p-2 sm:w-44 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r"
+          className="flex shrink-0 gap-1 border-b border-white/10 p-1.5"
         >
           {tabs.map((t) => (
             <button
@@ -237,7 +247,7 @@ export default function SubtitleSettingsPanel({
                 setTab(t.id);
                 if (t.id === "opensubtitles") setOsOpened(true);
               }}
-              className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors sm:flex-none sm:justify-between sm:px-3 sm:text-left sm:text-sm ${
+              className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors ${
                 tab === t.id ? "bg-accent text-on-accent" : "text-white/65 hover:bg-white/10 hover:text-white"
               }`}
             >
@@ -251,7 +261,7 @@ export default function SubtitleSettingsPanel({
           ))}
         </div>
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
+        <div ref={scrollRef} data-scroll-area className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3">
           <div role="tabpanel" id="subpanel-source" aria-labelledby="subtab-source" hidden={tab !== "source"} className="flex flex-col gap-1.5">
             {sourceTracks.length === 0 ? (
               <EmptyNote>

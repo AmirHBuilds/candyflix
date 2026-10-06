@@ -10,10 +10,13 @@ export default function Dialog({
   title,
   onClose,
   children,
+  wide = false,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** Nearly full-width, for dialogs that show something to look at. */
+  wide?: boolean;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -64,7 +67,7 @@ export default function Dialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="animate-fade-up max-h-[90dvh] w-full overflow-y-auto rounded-t-2xl border border-white/10 bg-surface p-5 shadow-2xl focus:outline-none sm:max-w-md sm:rounded-2xl"
+        className={`animate-fade-up max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-white/10 bg-surface p-5 shadow-2xl focus:outline-none sm:rounded-2xl ${wide ? "sm:max-w-5xl" : "sm:max-w-md"}`}
       >
         <h2 id={titleId} className="mb-4 text-lg font-semibold text-white">
           {title}

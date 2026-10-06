@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { MoreButton, PagedState, usePaged, when } from "@/components/admin/DrillViews";
+import { boxNameFor } from "@/lib/box-name";
 import { getAuditTrail, getSignInLog, type AuditEntry } from "@/lib/admin";
 
 const PAGE = 50;
@@ -32,7 +33,7 @@ export function describe(e: AuditEntry): string {
     case "history.view":
       return `${who} looked at ${t}'s watch history`;
     case "watchlist.view":
-      return `${who} looked at ${t}'s Candy Box`;
+      return `${who} looked at ${e.target_name ? boxNameFor(e.target_name) : "someone's box"}`;
     case "announcement.create":
       return `${who} sent the message ${q}`;
     case "announcement.update":

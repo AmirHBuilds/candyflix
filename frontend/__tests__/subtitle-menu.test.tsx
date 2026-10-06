@@ -73,6 +73,10 @@ describe("helpers", () => {
     expect(groups.map((g) => g.language)).toEqual(["en", "pt-BR", "fa"]);
     expect(groups[0].items.map((i) => i.file_id)).toEqual([3, 2, 5]);
   });
+  it("pins English first even when another language has more downloads", () => {
+    const groups = groupByLanguage([r(1, "fa", "Persian", 99999, "x"), r(2, "en", "English", 5, "y")]);
+    expect(groups.map((g) => g.language)).toEqual(["en", "fa"]);
+  });
   it("turns language names into a language filter and leaves release words alone", () => {
     expect(languageCodeForQuery("persian")).toBe("fa");
     expect(languageCodeForQuery("Persian")).toBe("fa");

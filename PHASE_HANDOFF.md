@@ -761,3 +761,14 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 **Tests:** `subtitle-menu.test.tsx` (17: flags incl. every flag file exists, grouping/sorting, language-vs-release search, download/pick, in-use marker, tabs, Sync button rules). Looked at phone (390 px) and desktop (1100 px) renders in Chromium.
 **Baselines:** backend 387, frontend 587 (excl. four live-backend files), tsc clean.
 **Limits:** the flag for a language is a best guess (a language isn't a country); the first OpenSubtitles page only shows the languages present in it — use the search for others; the Source tab stays empty until a real video source supplies subtitles.
+
+## 30. Phase 11c — subtitle menu tweaks + admin/player fixes (v31)
+
+**Subtitle menu:** (1) English is pinned first in the OpenSubtitles list with a small pin; other languages follow by downloads. (2) Each OpenSubtitles row shows the release name once (it used to show a shortened copy and the full copy). (3) Tabs moved to a compact row across the top and the panel is narrower (26 rem, was 40) with a slimmer header. (4) Opening the menu scrolls to the subtitle in use (inside the menu only, never the page); switching tabs does the same.
+**Admin:** a person's own box is named after them ("Eve Box") in their detail tab, the audit log and the delete warning; it used to say "Candy Box". People rows have a ⋯ menu (`ActionMenu.tsx`: View, Edit, Reset password, Disable/Enable, Delete) instead of a row of buttons.
+**Player:** the skip intro / recap / credits button is a solid white pill with an accent ring and a skip icon, and it now stays on screen for the whole segment (it used to fade with the controls). "Customise player buttons" now looks like the player (real icons moved to `player/icons.tsx` and shared, same rounded groups, progress bar, volume slider) and opens in a near-full-width dialog (`Dialog wide`).
+**Tests:** admin tests use the ⋯ menu (helper `menuItem`), skip-button test rewritten, subtitle-menu tests extended. Baselines: backend 387, frontend 588, tsc clean.
+
+## Planned next (the user's later requests, not started)
+- **Phase 12 — more rating sources on the detail page:** Rotten Tomatoes, IMDb, Metacritic etc. with icons; each person can switch sources on/off in Settings; shown on the detail page only, not on cards. Needs a ratings data source (e.g. OMDb API key) and the icons (the user offered to upload them if the sandbox can't fetch them).
+- **Phase 13 — feature banners on the home page:** three banners introducing CandyFlix features between the top three rows; admin can switch each off and edit its text; charming icon/illustration style.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import ActionMenu from "@/components/admin/ActionMenu";
 import Avatar from "@/components/Avatar";
 import Dialog, { dangerButton, fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import {
@@ -11,6 +12,7 @@ import {
   updateAdminUser,
   type AdminUser,
 } from "@/lib/admin";
+import { boxNameFor } from "@/lib/box-name";
 import { showToast } from "@/lib/toast";
 
 type Modal =
@@ -123,7 +125,7 @@ export default function UsersTab({
         {shown.map((user) => {
           const isMe = user.id === currentUserId;
           return (
-            <li key={user.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">
+            <li key={user.id} className="flex items-center gap-3 px-4 py-4">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar name={user.display_name} src={user.avatar_url} size={44} />
                 <div className="min-w-0">
@@ -138,29 +140,20 @@ export default function UsersTab({
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {onView && (
-                  <button type="button" onClick={() => onView(user.id)} className={quietButton} aria-label={`View ${user.display_name}`}>
-                    View
-                  </button>
-                )}
-                <button type="button" onClick={() => setModal({ kind: "edit", user })} className={quietButton} aria-label={`Edit ${user.display_name}`}>
-                  Edit
-                </button>
-                {!isMe && (
-                  <>
-                    <button type="button" onClick={() => setModal({ kind: "password", user })} className={quietButton} aria-label={`Reset password for ${user.display_name}`}>
-                      Reset password
-                    </button>
-                    <button type="button" onClick={() => toggleDisabled(user)} className={quietButton} aria-label={`${user.is_disabled ? "Enable" : "Disable"} ${user.display_name}`}>
-                      {user.is_disabled ? "Enable" : "Disable"}
-                    </button>
-                    <button type="button" onClick={() => setModal({ kind: "delete", user })} className={`${quietButton} text-red-300`} aria-label={`Delete ${user.display_name}`}>
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
+              <ActionMenu
+                label={`Actions for ${user.display_name}`}
+                actions={[
+                  ...(onView ? [{ label: "View", ariaLabel: `View ${user.display_name}`, onSelect: () => onView(user.id) }] : []),
+                  { label: "Edit", ariaLabel: `Edit ${user.display_name}`, onSelect: () => setModal({ kind: "edit", user }) },
+                  ...(isMe
+                    ? []
+                    : [
+                        { label: "Reset password", ariaLabel: `Reset password for ${user.display_name}`, onSelect: () => setModal({ kind: "password", user }) },
+                        { label: user.is_disabled ? "Enable" : "Disable", ariaLabel: `${user.is_disabled ? "Enable" : "Disable"} ${user.display_name}`, onSelect: () => toggleDisabled(user) },
+                        { label: "Delete", ariaLabel: `Delete ${user.display_name}`, onSelect: () => setModal({ kind: "delete", user }), danger: true },
+                      ]),
+                ]}
+              />
             </li>
           );
         })}
@@ -316,7 +309,7 @@ function DeleteDialog({ user, onClose, onDone }: { user: AdminUser; onClose: () 
     <Dialog title={`Delete ${user.display_name}?`} onClose={onClose}>
       <form onSubmit={submit}>
         <p className="text-sm text-white/70">
-          This permanently removes their account, Candy Box, watch history and settings. It can&apos;t be undone. To keep the account but stop
+          This permanently removes their account, {boxNameFor(user.display_name)}, watch history and settings. It can&apos;t be undone. To keep the account but stop
           them signing in, use <strong>Disable</strong> instead.
         </p>
         <div className="mt-4">

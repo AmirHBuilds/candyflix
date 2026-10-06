@@ -413,17 +413,18 @@ describe("Skip intro / recap / credits", () => {
     expect(screen.queryByLabelText(/^Skip /)).toBeNull();
   });
 
-  it("the button hides with the controls and comes back with them", async () => {
+  it("stays on screen while the intro plays, even after the controls hide", async () => {
     withSegments();
     vi.useFakeTimers();
-    const { video, container } = await mountAt(20);
+    const { video } = await mountAt(20);
     const button = () => screen.getByLabelText("Skip Intro");
-    expect(button().className).toContain("opacity-100");
+    // a bright, solid button (white with an accent ring) rather than a dark one that vanishes on dark scenes
+    expect(button().className).toContain("bg-white");
+    expect(button().className).toContain("ring-accent");
     Object.defineProperty(video, "paused", { configurable: true, get: () => false });
     tick(10_000); // the controls auto-hide while playing
-    expect(button().className).toContain("opacity-0");
-    act(() => void fireEvent.mouseMove(container.firstElementChild as HTMLElement));
-    expect(button().className).toContain("opacity-100");
+    expect(button().className).not.toContain("opacity-0");
+    expect(button().className).not.toContain("pointer-events-none");
   });
 
   describe("auto-skip", () => {

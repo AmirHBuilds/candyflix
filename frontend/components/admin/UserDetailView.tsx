@@ -12,6 +12,7 @@ import {
   type UserDetail,
   type WatchlistEntry,
 } from "@/lib/admin";
+import { boxNameFor } from "@/lib/box-name";
 import { posterUrl } from "@/lib/media";
 
 const PAGE = 50;
@@ -123,15 +124,18 @@ function Box({ userId, name }: { userId: string; name: string }) {
   );
 }
 
-const SECTIONS = [
-  { id: "history", label: "Watch history" },
-  { id: "box", label: "Candy Box" },
-] as const;
+const SECTION_IDS = ["history", "box"] as const;
+
+// The second tab is that person's own box ("Eve Box"), not the viewer's.
+const sectionsFor = (displayName: string) => [
+  { id: "history" as const, label: "Watch history" },
+  { id: "box" as const, label: boxNameFor(displayName) },
+];
 
 export default function UserDetailView({ userId, onBack, backLabel = "All people" }: { userId: string; onBack: () => void; backLabel?: string }) {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [section, setSection] = useState<(typeof SECTIONS)[number]["id"]>("history");
+  const [section, setSection] = useState<(typeof SECTION_IDS)[number]>("history");
 
   useEffect(() => {
     let alive = true;
@@ -186,7 +190,7 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
           </div>
 
           <div role="tablist" aria-label="Person sections" className="flex gap-2">
-            {SECTIONS.map((s) => (
+            {sectionsFor(detail.user.display_name).map((s) => (
               <button
                 key={s.id}
                 type="button"
