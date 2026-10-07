@@ -1,4 +1,4 @@
-"""SiteSetting — site-wide values an admin can edit (today: the footer)."""
+"""SiteSetting — site-wide values an admin can edit (the footer, the home banners)."""
 from datetime import datetime, timezone
 
 from sqlalchemy import JSON, DateTime, String

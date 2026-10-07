@@ -49,3 +49,46 @@ class Footer(BaseModel):
     @classmethod
     def _strip(cls, v: str) -> str:
         return v.strip()
+
+
+class Banner(BaseModel):
+    """One of the three feature banners on the home page. The picture is fixed per slot; the words are the admin's."""
+
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = True
+    title: str = Field(default="", max_length=60)
+    text: str = Field(default="", max_length=220)
+
+    @field_validator("title", "text")
+    @classmethod
+    def _strip(cls, v: str) -> str:
+        return v.strip()
+
+
+DEFAULT_BANNERS = [
+    Banner(
+        title="Subtitles that fit",
+        text="Pick a subtitle from OpenSubtitles, then tap Sync and CandyFlix lines it up with the video's audio. It remembers the fixed one for next time.",
+    ),
+    Banner(
+        title="Right where you left off",
+        text="Resume any movie or episode from the same spot, skip intros with one tap, and keep your own CandyBox of things to watch.",
+    ),
+    Banner(
+        title="Make it yours",
+        text="Pick a colour theme, arrange the player's buttons, peek at every rating, and watch a trailer before you commit to movie night.",
+    ),
+]
+
+
+class HomeBanners(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    banners: list[Banner] = Field(default_factory=lambda: [b.model_copy() for b in DEFAULT_BANNERS], min_length=3, max_length=3)
+
+    @field_validator("banners")
+    @classmethod
+    def _enabled_ones_need_words(cls, v: list[Banner]) -> list[Banner]:
+        for b in v:
+            if b.enabled and not (b.title and b.text):
+                raise ValueError("A banner that is switched on needs a title and some text")
+        return v

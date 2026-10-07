@@ -4,6 +4,8 @@ import { getContinueWatchingServer, type ContinueWatchingItem } from "@/lib/cont
 import HeroCarousel from "@/components/HeroCarousel";
 import MediaGrid from "@/components/MediaGrid";
 import MediaRow from "@/components/MediaRow";
+import HomeBanner from "@/components/HomeBanner";
+import { getBannersServer } from "@/lib/site";
 import { getServerSettings } from "@/lib/settings-server";
 import ErrorState from "@/components/ErrorState";
 
@@ -113,13 +115,14 @@ export default async function Home() {
   // through with its own small catch. Not logged-in / nothing in
   // progress both surface as an empty list, and Section already renders
   // nothing for that case, same as every other row.
-  const [today, week, movies, tv, continueWatching, settings] = await Promise.all([
+  const [today, week, movies, tv, continueWatching, settings, banners] = await Promise.all([
     safeLoad(() => getTrending("day")),
     safeLoad(() => getTrending("week")),
     safeLoad(() => getPopularMovies()),
     safeLoad(() => getPopularTV()),
     getContinueWatchingServer().catch(() => ({ items: [] as ContinueWatchingItem[], hasMore: false })),
     getServerSettings(),
+    getBannersServer(),
   ]);
   const { home_layout: layout, items_per_section: max } = settings.appearance;
 
@@ -133,18 +136,23 @@ export default async function Home() {
 
       <HeroCarousel items={today.items.length > 0 ? today.items : week.items} />
 
-      <Section
-        title="Continue Watching"
-        items={toContinueWatchingItems(continueWatching.items)}
-        error={null}
-        viewAllHref={continueWatching.hasMore || continueWatching.items.length > max ? "/continue-watching" : undefined}
-        max={max}
-        layout={layout}
-      />
-      <Section title="Trending Today" items={today.items} error={today.error} max={max} layout={layout} />
-      <Section title="Trending This Week" items={week.items} error={week.error} max={max} layout={layout} />
-      <Section title="Popular Movies" items={movies.items} error={movies.error} max={max} layout={layout} />
-      <Section title="Popular TV Shows" items={tv.items} error={tv.error} max={max} layout={layout} />
+      {/* The sections that actually have something to show, with a feature banner after each of the
+          first three (a banner the admin switched off just leaves its gap out). */}
+      {[
+        { key: "continue", title: "Continue Watching", items: toContinueWatchingItems(continueWatching.items), error: null as string | null, viewAllHref: continueWatching.hasMore || continueWatching.items.length > max ? "/continue-watching" : undefined },
+        { key: "today", title: "Trending Today", items: today.items, error: today.error },
+        { key: "week", title: "Trending This Week", items: week.items, error: week.error },
+        { key: "movies", title: "Popular Movies", items: movies.items, error: movies.error },
+        { key: "tv", title: "Popular TV Shows", items: tv.items, error: tv.error },
+      ]
+        .filter((s) => !s.error && s.items.length > 0)
+        .flatMap((s, index) => {
+          const banner = index < 3 ? banners.banners[index] : undefined;
+          return [
+            <Section key={s.key} title={s.title} items={s.items} error={null} viewAllHref={s.viewAllHref} max={max} layout={layout} />,
+            ...(banner?.enabled ? [<HomeBanner key={`banner-${index}`} banner={banner} slot={index as 0 | 1 | 2} />] : []),
+          ];
+        })}
     </div>
   );
 }

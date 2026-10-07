@@ -14,7 +14,7 @@ from app.api.deps import require_admin
 from app.core.db import get_db
 from app.models.user import User
 from app.schemas import admin as schemas
-from app.schemas.site import Footer
+from app.schemas.site import Footer, HomeBanners
 from app.services import admin_service, audit_service, site_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -138,6 +138,18 @@ async def read_footer(db: AsyncSession = Depends(get_db)):
 async def update_footer(payload: Footer, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     saved = await site_service.set_footer(db, payload)
     await audit_service.record(db, actor, "footer.update")
+    return saved
+
+
+@router.get("/banners", response_model=HomeBanners)
+async def read_banners(db: AsyncSession = Depends(get_db)):
+    return await site_service.get_banners(db)
+
+
+@router.put("/banners", response_model=HomeBanners)
+async def update_banners(payload: HomeBanners, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    saved = await site_service.set_banners(db, payload)
+    await audit_service.record(db, actor, "banners.update")
     return saved
 
 

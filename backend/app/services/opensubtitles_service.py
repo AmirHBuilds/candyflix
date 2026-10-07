@@ -29,6 +29,7 @@ this, that redirect response (a small HTML page, not JSON) gets treated
 as the real API response and fails to parse, surfacing as a confusing
 "OpenSubtitles returned an unexpected error (301)".
 """
+import json
 import logging
 from pathlib import Path
 from typing import NamedTuple
@@ -185,6 +186,24 @@ def _imdb_id_to_numeric(imdb_id: str) -> int:
     return int(imdb_id.lower().removeprefix("tt"))
 
 
+SEARCH_CACHE_TTL = 600
+
+
+async def _cache_get(key: str) -> dict | None:
+    try:
+        raw = await get_redis().get(key)
+        return json.loads(raw) if raw else None
+    except Exception:  # a cache problem must never break a search
+        return None
+
+
+async def _cache_set(key: str, data: dict) -> None:
+    try:
+        await get_redis().set(key, json.dumps(data), ex=SEARCH_CACHE_TTL)
+    except Exception:
+        pass
+
+
 class SearchPage(NamedTuple):
     results: list[OnlineSubtitleResult]
     has_more: bool
@@ -227,17 +246,24 @@ async def search(
     if language:
         params["languages"] = language
 
-    async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0, follow_redirects=True) as client:
-        try:
-            response = await client.get("/subtitles", headers=await _auth_headers(), params=params)
-        except httpx.RequestError as e:
-            logger.warning("OpenSubtitles search request failed to reach the server: %s", e)
-            raise OpenSubtitlesError(502, f"Could not reach OpenSubtitles: {e}") from e
+    # The raw answer is kept for a few minutes: opening a video's page searches English for the
+    # automatic subtitle, and the subtitle menu then asks for the same list again. The daily quota
+    # is small, so the second ask (and a re-opened menu) shouldn't cost another request.
+    cache_key = "ossearch:" + json.dumps(params, sort_keys=True)
+    data = await _cache_get(cache_key)
+    if data is None:
+        async with httpx.AsyncClient(base_url=OPENSUBTITLES_BASE, timeout=10.0, follow_redirects=True) as client:
+            try:
+                response = await client.get("/subtitles", headers=await _auth_headers(), params=params)
+            except httpx.RequestError as e:
+                logger.warning("OpenSubtitles search request failed to reach the server: %s", e)
+                raise OpenSubtitlesError(502, f"Could not reach OpenSubtitles: {e}") from e
 
-    if response.status_code != 200:
-        raise _error_for_status(response, "search")
+        if response.status_code != 200:
+            raise _error_for_status(response, "search")
 
-    data = response.json()
+        data = response.json()
+        await _cache_set(cache_key, data)
     total_pages = data.get("total_pages") or 1
     has_more = page < total_pages
 

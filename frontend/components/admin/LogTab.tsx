@@ -46,6 +46,8 @@ export function describe(e: AuditEntry): string {
       return `${who} asked everyone to read ${q} again`;
     case "announcement.delete":
       return `${who} deleted the message ${q}`;
+    case "banners.update":
+      return `${who} edited the home banners`;
     case "footer.update":
       return `${who} edited the footer`;
     case "cache.tmdb_clear":

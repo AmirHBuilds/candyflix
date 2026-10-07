@@ -249,3 +249,9 @@ summary {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* The little drifting motion of the home banners' pictures (only when motion is welcome). */
+@keyframes bannerFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-6px) rotate(1deg); }
+}

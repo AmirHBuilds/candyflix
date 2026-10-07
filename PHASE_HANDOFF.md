@@ -798,3 +798,12 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - "Show more": scroll position is saved and restored; `SubtitleRow` only auto-centres on mount while the list is still unscrolled.
 - Player surface is `touch-pan-y` (was `touch-none`), so swiping vertically on the video scrolls the page.
 - OpenSubtitlesBrowser takes `activeLanguage`; if the playing subtitle (e.g. the automatic English one) isn't on the first all-languages page, it is looked up (one extra search by language) so it shows as selected.
+- OpenSubtitles `search()` now caches the raw answer in Redis for 10 min (`ossearch:` keys, fail-soft), so the automatic English lookup and the menu's lookup share one OpenSubtitles request. `tests/conftest.py` turns the cache off for other tests; `test_opensubtitles_search_cache.py` covers it.
+
+## 33. Phase 13 — home feature banners (zip `candyflix-phase13-banners-v1`, applies after `candyflix-phase12-ratings-v3`)
+- Three banners on the home page, one after each of the first three **visible** rows (Continue Watching is skipped when empty, so then they follow Trending Today / This Week / Popular Movies). `app/(main)/page.tsx` builds the non-empty section list and interleaves `HomeBanner`s.
+- Content: `site_settings` key `home_banners` → `HomeBanners {banners: [Banner{enabled,title≤60,text≤220}] ×3}` (`schemas/site.py`, `site_service.get_banners/set_banners`). Public `GET /api/site/banners`; admin `GET/PUT /api/admin/banners` (audit `banners.update`). A switched-on banner needs title+text; a switched-off one may be empty. Bad stored value → defaults. No migration (same table as the footer).
+- Admin → new **Banners** tab (`BannersTab.tsx`): per banner a switch, title, text (with counter).
+- Pictures: `components/HomeBanner.tsx`, three inline-SVG scenes (subtitle sync, play + progress, palette) in the theme's accent/secondary/highlight colours, gently floating (motion-safe). Fixed per slot; only the words are editable. The middle banner is mirrored on wide screens.
+- Defaults describe: subtitles+sync, resume/skip intro/CandyBox, themes/player buttons/ratings/trailer.
+- Tests: backend 412 pass (`test_home_banners.py`), frontend 607 pass (`home-banners.test.tsx`).

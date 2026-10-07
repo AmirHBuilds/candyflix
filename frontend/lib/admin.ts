@@ -210,3 +210,7 @@ export const getAuditTrail = (offset = 0, limit = 50) =>
   request<AuditPage>(`/audit?limit=${limit}&offset=${offset}`, {}, "Couldn't load the admin log.");
 export const getSignInLog = (offset = 0, limit = 50) =>
   request<SignInPage>(`/sign-in-log?limit=${limit}&offset=${offset}`, {}, "Couldn't load the sign-in log.");
+
+export const getAdminBanners = () => request<import("@/lib/site").HomeBannersContent>("/banners", {}, "Couldn't load the banners.");
+export const saveAdminBanners = (body: import("@/lib/site").HomeBannersContent) =>
+  request<import("@/lib/site").HomeBannersContent>("/banners", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the banners.");
