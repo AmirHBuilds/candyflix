@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     tmdb_api_key: str = ""
     tmdb_base_url: str = "https://api.themoviedb.org/3"
 
+    # Phase 12 — IMDb / Rotten Tomatoes / Metacritic scores on the detail pages,
+    # from OMDb. Free key (1,000 requests a day): https://www.omdbapi.com/apikey.aspx
+    # Without a key those scores are simply not shown (TMDB's own score still is).
+    omdb_api_key: str = ""
+    omdb_base_url: str = "https://www.omdbapi.com/"
+
     # Session / auth secret (used starting Phase 2)
     session_secret: str = "change-me-in-env"
 

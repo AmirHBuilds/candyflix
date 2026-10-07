@@ -100,7 +100,7 @@ describe("OpenSubtitlesBrowser", () => {
     // order of groups on the page
     expect(screen.getAllByRole("region").map((s) => s.getAttribute("aria-label"))).toEqual(["English", "Portuguese (Brazil)", "Persian"]);
     expect(within(english).getByText("20k")).toBeTruthy();
-    expect(within(english).getByText("HI")).toBeTruthy();
+    expect(within(english).queryByText("HI")).toBeNull(); // no tags on rows
   });
 
   it("downloads and hands over the pick", async () => {
@@ -119,7 +119,7 @@ describe("OpenSubtitlesBrowser", () => {
     const english = await screen.findByRole("region", { name: "English" });
     const current = within(english).getAllByRole("button").filter((b) => b.getAttribute("aria-current") === "true");
     expect(current).toHaveLength(1);
-    expect(within(current[0]).getByText("HI")).toBeTruthy();
+    expect(within(current[0]).getByText("Show.S01E02.720p.WEB")).toBeTruthy();
   });
 
   it("searches OpenSubtitles from the same menu: a language name becomes a language filter, other words a release search", async () => {

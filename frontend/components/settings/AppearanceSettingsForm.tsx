@@ -1,5 +1,7 @@
 "use client";
 
+import RatingIcon from "@/components/RatingIcon";
+import { RATING_SOURCES } from "@/lib/rating-sources";
 import { useSettings } from "@/components/SettingsProvider";
 import { SegmentedControl, SettingRow, SettingsCard, Toggle } from "@/components/settings/controls";
 import type { Settings } from "@/lib/settings";
@@ -92,6 +94,22 @@ export default function AppearanceSettingsForm() {
         <SettingRow label="Show years" htmlFor="show-years" description="The release year under each poster.">
           <Toggle id="show-years" label="Show years" checked={a.show_years} onChange={(show_years) => set({ show_years })} />
         </SettingRow>
+      </SettingsCard>
+
+      <SettingsCard title="Ratings on a title's page" description="Which scores appear next to a movie or show when you open it. (They are not shown on the posters.)">
+        {RATING_SOURCES.map((r) => (
+          <SettingRow key={r.id} label={r.label} htmlFor={`rating-${r.id}`} description={r.description}>
+            <div className="flex items-center gap-3">
+              <RatingIcon source={r.id} size={22} />
+              <Toggle
+                id={`rating-${r.id}`}
+                label={`Show ${r.label}`}
+                checked={a.rating_sources[r.id]}
+                onChange={(v) => update({ appearance: { rating_sources: { [r.id]: v } } })}
+              />
+            </div>
+          </SettingRow>
+        ))}
       </SettingsCard>
 
       <SettingsCard title="Shows and descriptions">

@@ -92,6 +92,21 @@ describe("Appearance settings", () => {
   });
 });
 
+describe("ratings on a title's page", () => {
+  it("lists every source with a switch, all on to begin with", () => {
+    renderForm();
+    for (const name of ["TMDB", "IMDb", "Rotten Tomatoes", "Metacritic"]) {
+      expect(screen.getByRole("switch", { name: `Show ${name}` }).getAttribute("aria-checked")).toBe("true");
+    }
+  });
+
+  it("switching one off saves just that source", async () => {
+    renderForm();
+    fireEvent.click(screen.getByRole("switch", { name: "Show Rotten Tomatoes" }));
+    await waitFor(() => expect(lib.patchSettings).toHaveBeenCalledWith({ appearance: { rating_sources: { rotten_tomatoes: false } } }));
+  });
+});
+
 function within_group(groupName: string, optionName: string): HTMLElement {
   const group = screen.getByRole("radiogroup", { name: groupName });
   return Array.from(group.querySelectorAll<HTMLElement>('[role="radio"]')).find((el) => el.textContent === optionName)!;

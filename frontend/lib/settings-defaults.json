@@ -11,7 +11,13 @@
     "hero_description": true,
     "hero_interval_seconds": 7,
     "show_ratings": true,
-    "show_years": true
+    "show_years": true,
+    "rating_sources": {
+      "tmdb": true,
+      "imdb": true,
+      "rotten_tomatoes": true,
+      "metacritic": true
+    }
   },
   "playback": {
     "autoplay_next": true,

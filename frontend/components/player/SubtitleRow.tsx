@@ -7,7 +7,6 @@ export default function SubtitleRow({
   language,
   title,
   detail,
-  badges,
   active,
   busy,
   disabled,
@@ -17,7 +16,6 @@ export default function SubtitleRow({
   language: string;
   title: string;
   detail?: string | null;
-  badges?: string[];
   active?: boolean;
   busy?: boolean;
   disabled?: boolean;
@@ -43,17 +41,12 @@ export default function SubtitleRow({
     >
       <Flag language={language} />
       <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-          <span className="text-sm font-medium text-white">{title}</span>
-          {badges?.map((b) => (
-            <span key={b} className="rounded bg-white/10 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-white/60">
-              {b}
-            </span>
-          ))}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+          <span className="min-w-0 text-sm font-medium text-white [overflow-wrap:anywhere]">{title}</span>
         </span>
-        {detail && <span className="mt-0.5 line-clamp-2 break-all text-[11px] leading-snug text-white/45">{detail}</span>}
+        {detail && <span className="mt-0.5 line-clamp-2 text-[11px] [overflow-wrap:anywhere] leading-snug text-white/45">{detail}</span>}
       </span>
-      <span className="shrink-0 text-xs text-white/60">
+      <span className="ml-1 shrink-0 whitespace-nowrap text-xs text-white/60">
         {busy ? "Adding…" : active ? <CheckIcon /> : trailing}
       </span>
     </button>

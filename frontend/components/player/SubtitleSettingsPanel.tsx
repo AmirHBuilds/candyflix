@@ -298,7 +298,6 @@ export default function SubtitleSettingsPanel({
                   language={t.language}
                   title={t.label}
                   detail="Re-timed to this video"
-                  badges={["Synced"]}
                   active={active?.url === t.url}
                   onClick={() => choose(t)}
                 />

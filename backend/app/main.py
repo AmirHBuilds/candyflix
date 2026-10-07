@@ -36,6 +36,7 @@ from app.api.routes import (
     movies,
     playback,
     presence,
+    ratings,
     search,
     segments,
     settings as settings_routes,
@@ -127,6 +128,7 @@ app.include_router(tv.router, prefix="/api")
 app.include_router(playback.router, prefix="/api")
 app.include_router(subtitles.router, prefix="/api")
 app.include_router(subtitle_sync.router, prefix="/api")
+app.include_router(ratings.router, prefix="/api")
 app.include_router(watchlist.router, prefix="/api")
 app.include_router(continue_watching.router, prefix="/api")
 app.include_router(settings_routes.router, prefix="/api")

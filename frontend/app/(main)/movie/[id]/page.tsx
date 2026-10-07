@@ -1,3 +1,4 @@
+import DetailRatings from "@/components/DetailRatings";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getMovie, getSimilarMovies, backdropUrl, posterUrl } from "@/lib/media";
@@ -58,9 +59,10 @@ export default async function MovieDetailPage({
             <p className="mt-1 text-white/50">
               {movie.year}
               {movie.runtime_minutes ? ` · ${movie.runtime_minutes} min` : ""}
-              {movie.rating ? ` · ★ ${movie.rating.toFixed(1)}` : ""}
             </p>
           </div>
+
+          <DetailRatings mediaType="movie" tmdbId={movie.tmdb_id} tmdbRating={movie.rating ?? null} />
 
           {movie.genres.length > 0 && (
             <div className="flex flex-wrap gap-2">

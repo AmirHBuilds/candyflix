@@ -1,3 +1,4 @@
+import DetailRatings from "@/components/DetailRatings";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTVShow, getSimilarTV, backdropUrl, posterUrl } from "@/lib/media";
@@ -78,9 +79,10 @@ export default async function TVDetailPage({
             </h1>
             <p className="mt-1 text-white/50">
               {show.year}
-              {show.rating ? ` · ★ ${show.rating.toFixed(1)}` : ""}
             </p>
           </div>
+
+          <DetailRatings mediaType="tv" tmdbId={show.tmdb_id} tmdbRating={show.rating ?? null} />
 
           {show.genres.length > 0 && (
             <div className="flex flex-wrap gap-2">

@@ -206,7 +206,6 @@ export default function OpenSubtitlesBrowser({
                   key={r.file_id}
                   language={r.language}
                   title={r.release ?? r.label}
-                  badges={r.hearing_impaired ? ["HI"] : undefined}
                   active={!!activeUrl && new RegExp(`-${r.file_id}\\.srt$`).test(activeUrl)}
                   busy={pickingId === r.file_id}
                   disabled={pickingId !== null}
@@ -242,8 +241,8 @@ export default function OpenSubtitlesBrowser({
 
 function PinIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-3 w-3 text-accent" fill="currentColor" aria-label="Pinned" role="img">
-      <path d="M14 3l7 7-2 1-3-1-3.5 3.5.5 4.5-1.5 1.5L8.5 15 4 19.5 3.5 20 4 19.5 8.5 15 5 11.5 6.5 10l4.5.5L14.5 7 14 4z" />
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 rotate-45 text-accent" fill="currentColor" aria-label="Pinned" role="img">
+      <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
     </svg>
   );
 }
