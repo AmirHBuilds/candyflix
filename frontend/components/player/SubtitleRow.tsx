@@ -28,7 +28,9 @@ export default function SubtitleRow({
   const ref = useRef<HTMLButtonElement>(null);
   // When the menu opens, bring the subtitle in use into view (inside the menu's own scroll area only).
   useEffect(() => {
-    if (active) centerInScrollArea(ref.current);
+    // Only when the list hasn't been scrolled yet: rows that appear later ("Show more") must not move the view.
+    const area = ref.current?.closest<HTMLElement>("[data-scroll-area]");
+    if (active && (!area || area.scrollTop === 0)) centerInScrollArea(ref.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (

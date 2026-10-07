@@ -247,7 +247,7 @@ export default function SubtitleSettingsPanel({
                 if (t.id === "opensubtitles") setOsOpened(true);
               }}
               className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-                tab === t.id ? "bg-white/15 text-white" : "text-white/55 hover:bg-white/[0.08] hover:text-white"
+                tab === t.id ? "bg-accent text-on-accent" : "text-white/65 hover:bg-white/10 hover:text-white"
               }`}
             >
               {t.label}
@@ -286,7 +286,7 @@ export default function SubtitleSettingsPanel({
             aria-labelledby="subtab-opensubtitles"
             hidden={tab !== "opensubtitles"}
           >
-            {osOpened && <OpenSubtitlesBrowser identity={identity} activeUrl={active?.url ?? null} onPicked={choose} />}
+            {osOpened && <OpenSubtitlesBrowser identity={identity} activeUrl={active?.url ?? null} activeLanguage={active?.language ?? null} onPicked={choose} />}
           </div>
 
           {syncedTracks.length > 0 && (

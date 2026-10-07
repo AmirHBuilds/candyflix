@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * A small modal: Escape and a backdrop click close it, focus moves in on
@@ -56,9 +57,11 @@ export default function Dialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per open
   }, []);
 
-  return (
+  // Drawn straight into <body>, so no part of the page (the sticky header and its search, a
+  // transformed ancestor) can sit on top of it.
+  const modal = (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -76,6 +79,7 @@ export default function Dialog({
       </div>
     </div>
   );
+  return typeof document === "undefined" ? null : createPortal(modal, document.body);
 }
 
 export const fieldClass =

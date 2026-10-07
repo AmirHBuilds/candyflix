@@ -791,3 +791,10 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - **OpenSubtitles rows** show `summarizeRelease()` (`lib/release.ts`): source · resolution · codec · 10-bit/HDR · group, e.g. `BluRay · 1080p · x265 · 10-bit · RARBG`; the full release name is the hover title. Dots/spaces/underscores/brackets normalise the same.
 - **Subtitle panel** slimmer (24rem, smaller header/tabs/rows, fewer dividers). Sync helper text is now "Fixes timing from the video's audio. Saved for next time."
 - Tests: backend 401 pass; frontend suite passes (new: release, ratings-trailer; detail-ratings removed).
+
+### 32b. Fixes after testing 12b (zip `candyflix-phase12-ratings-v3`, applies after `-v2`)
+- `Dialog` now renders through a portal into `<body>` at z-[100] (trailer/ratings windows were under the sticky navbar + search).
+- Subtitle tabs: selected tab is accent-filled again.
+- "Show more": scroll position is saved and restored; `SubtitleRow` only auto-centres on mount while the list is still unscrolled.
+- Player surface is `touch-pan-y` (was `touch-none`), so swiping vertically on the video scrolls the page.
+- OpenSubtitlesBrowser takes `activeLanguage`; if the playing subtitle (e.g. the automatic English one) isn't on the first all-languages page, it is looked up (one extra search by language) so it shows as selected.

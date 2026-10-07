@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { summarizeRelease } from "@/lib/release";
 import SubtitleRow from "@/components/player/SubtitleRow";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
@@ -59,10 +59,13 @@ const DEBOUNCE_MS = 450;
 export default function OpenSubtitlesBrowser({
   identity,
   activeUrl,
+  activeLanguage = null,
   onPicked,
 }: {
   identity: WatchIdentity;
   activeUrl: string | null;
+  // The language of the subtitle in use, so it can be found in the list even when it isn't on the first page.
+  activeLanguage?: string | null;
   onPicked: (track: SubtitleTrack) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -127,6 +130,42 @@ export default function OpenSubtitlesBrowser({
     return () => clearTimeout(t);
   }, [query, run]);
 
+  // The subtitle already playing (the automatic English one, say) is the best result of its own language
+  // but may not be on the first page of the all-languages list. Look it up once so it shows as selected.
+  const activeChecked = useRef(false);
+  useEffect(() => {
+    if (activeChecked.current || loading || !activeUrl || !activeLanguage) return;
+    const m = /^\/subtitle-cache\/(?!sync-)[^/]*-(\d+)\.srt$/.exec(activeUrl);
+    if (!m) return;
+    activeChecked.current = true;
+    const fileId = Number(m[1]);
+    if (results.some((r) => r.file_id === fileId)) return;
+    searchOnlineSubtitles({
+      mediaType: identity.mediaType,
+      tmdbId: identity.tmdbId,
+      seasonNumber: identity.seasonNumber,
+      episodeNumber: identity.episodeNumber,
+      language: activeLanguage,
+    })
+      .then((res) => {
+        const found = res.results.find((r) => r.file_id === fileId);
+        if (!found) return;
+        setResults((prev) => (prev.some((r) => r.file_id === fileId) ? prev : [...prev, found]));
+      })
+      .catch(() => {});
+  }, [loading, activeUrl, activeLanguage, results, identity.mediaType, identity.tmdbId, identity.seasonNumber, identity.episodeNumber]);
+
+  // "Show more" adds rows to the list; keep the scroll position where it was instead of jumping.
+  const keepScroll = useRef<{ area: HTMLElement; top: number } | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const k = keepScroll.current;
+    if (!k) return;
+    keepScroll.current = null;
+    k.area.scrollTop = k.top;
+    requestAnimationFrame(() => (k.area.scrollTop = k.top));
+  }, [results]);
+
   async function pick(r: OnlineSubtitleResult) {
     setPickingId(r.file_id);
     setPickError(null);
@@ -151,7 +190,7 @@ export default function OpenSubtitlesBrowser({
   const groups = groupByLanguage(results);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={rootRef} className="flex flex-col gap-3">
       <div className="relative">
         <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="11" cy="11" r="7" />
@@ -226,6 +265,8 @@ export default function OpenSubtitlesBrowser({
             <button
               type="button"
               onClick={() => {
+                const area = rootRef.current?.closest<HTMLElement>("[data-scroll-area]");
+                if (area) keepScroll.current = { area, top: area.scrollTop };
                 setLoadingMore(true);
                 void run(query, page + 1);
               }}

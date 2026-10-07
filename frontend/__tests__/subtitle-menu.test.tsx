@@ -225,3 +225,44 @@ describe("SubtitleSettingsPanel tabs", () => {
     expect(screen.getByText("Sample subtitle")).toBeTruthy();
   });
 });
+
+describe("fixes after Phase 12b", () => {
+  it("finds the playing subtitle even when it isn't on the first all-languages page", async () => {
+    const playing = r(77, "en", "English", 50000, "Show.S01E02.1080p.WEB-DL.x264-NTb");
+    vi.mocked(searchOnlineSubtitles).mockImplementation(async (o) =>
+      o.language === "en" ? { results: [playing], hasMore: false } : { results: RESULTS, hasMore: false }
+    );
+    render(<OpenSubtitlesBrowser identity={identity} activeUrl="/subtitle-cache/tv-1-1-2-en-77.srt" activeLanguage="en" onPicked={vi.fn()} />);
+    const english = await screen.findByRole("region", { name: "English" });
+    await waitFor(() => {
+      const current = within(english).getAllByRole("button").filter((b) => b.getAttribute("aria-current") === "true");
+      expect(current).toHaveLength(1);
+      expect(current[0].textContent).toContain("WEB-DL · 1080p · x264 · NTb");
+    });
+  });
+
+  it("the selected tab is filled with the accent colour", () => {
+    render(
+      <SubtitleSettingsPanel tracks={[]} listedTracks={[]} selectedLanguage={null} onSelectLanguage={vi.fn()} settings={DEFAULT_SUBTITLE_SETTINGS} onChange={vi.fn()} identity={identity} onTrackAdded={vi.fn()} />
+    );
+    const cls = screen.getByRole("tab", { selected: true }).className;
+    expect(cls).toContain("bg-accent");
+    expect(cls).not.toContain("bg-white/15");
+  });
+
+  it("'Show more' keeps the list where it was", async () => {
+    vi.mocked(searchOnlineSubtitles).mockResolvedValueOnce({ results: RESULTS, hasMore: true });
+    vi.mocked(searchOnlineSubtitles).mockResolvedValueOnce({ results: [r(9, "en", "English", 5, "Show.S01E02.extra")], hasMore: false });
+    const { container } = render(
+      <div data-scroll-area>
+        <OpenSubtitlesBrowser identity={identity} activeUrl={null} onPicked={vi.fn()} />
+      </div>
+    );
+    const area = container.querySelector<HTMLElement>("[data-scroll-area]")!;
+    fireEvent.click(await screen.findByRole("button", { name: "Show more" }));
+    area.scrollTop = 0; // jsdom has no layout; the saved position is what matters
+    const saved = vi.spyOn(area, "scrollTop", "set");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Show more" })).toBeNull());
+    expect(saved).toHaveBeenCalled();
+  });
+});

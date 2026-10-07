@@ -1227,11 +1227,12 @@ export default function VideoPlayer({
           clicks and mobile taps both go through handleTapZone). Sits
           above the video and below the control bar, which is later in
           the DOM and paints on top so its own buttons stay clickable. */}
-      {/* touch-none / select-none / no callout: a long press must reach
-          the hold-to-speed handlers instead of scrolling, selecting text
-          or opening the browser's press-and-hold menu. */}
+      {/* touch-pan-y: a vertical swipe on the video still scrolls the page (a hold
+          that stays put, or slides sideways, is the hold-to-speed gesture).
+          select-none / no callout: a long press mustn't select text or open
+          the browser's press-and-hold menu. */}
       <div
-        className="absolute inset-0 flex touch-none select-none [-webkit-touch-callout:none]"
+        className="absolute inset-0 flex touch-pan-y select-none [-webkit-touch-callout:none]"
         onContextMenu={(e) => e.preventDefault()}
         {...hold.surfaceHandlers}
       >
