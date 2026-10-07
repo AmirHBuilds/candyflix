@@ -66,6 +66,7 @@ const system: admin.SystemStatus = {
   redis: ok(),
   tmdb: { ok: false, detail: "TMDB_API_KEY is not set", latency_ms: null },
   opensubtitles: ok("API key configured", null),
+  omdb: ok("API key configured", null),
   subtitle_cache: { files: 2, bytes: 2048 },
   avatars: { files: 1, bytes: 500 },
   app_version: "0.9.0",
@@ -242,7 +243,7 @@ describe("Admin panel", () => {
       render(<AdminPanel currentUserId="me" />);
       openTab("System");
       expect(await screen.findByText("TMDB_API_KEY is not set")).toBeInTheDocument();
-      expect(screen.getAllByRole("img", { name: "OK" })).toHaveLength(3);
+      expect(screen.getAllByRole("img", { name: "OK" })).toHaveLength(4);
       expect(screen.getAllByRole("img", { name: "Problem" })).toHaveLength(1);
       expect(screen.getByText(/2 files, 2.0 KB/)).toBeInTheDocument();
       expect(screen.getByText("3.12.1")).toBeInTheDocument();

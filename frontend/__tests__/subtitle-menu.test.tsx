@@ -119,7 +119,7 @@ describe("OpenSubtitlesBrowser", () => {
     const english = await screen.findByRole("region", { name: "English" });
     const current = within(english).getAllByRole("button").filter((b) => b.getAttribute("aria-current") === "true");
     expect(current).toHaveLength(1);
-    expect(within(current[0]).getByText("Show.S01E02.720p.WEB")).toBeTruthy();
+    expect(within(current[0]).getByText("WEB · 720p")).toBeTruthy();
   });
 
   it("searches OpenSubtitles from the same menu: a language name becomes a language filter, other words a release search", async () => {

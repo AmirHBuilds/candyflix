@@ -201,15 +201,14 @@ export default function SubtitleSettingsPanel({
     <div
       role="dialog"
       aria-label="Subtitles"
-      className="flex max-h-[min(72dvh,30rem)] w-[26rem] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur"
+      className="flex max-h-[min(72dvh,30rem)] w-[24rem] max-w-[94vw] flex-col overflow-hidden rounded-2xl border border-white/10 bg-canvas/95 shadow-2xl backdrop-blur"
     >
       {/* What's showing now, with the quick actions for it. */}
-      <div className="flex shrink-0 flex-col gap-2.5 border-b border-white/10 p-3">
+      <div className="flex shrink-0 flex-col gap-2 border-b border-white/10 px-3 py-2.5">
         <div className="flex items-center gap-3">
           <Flag language={active?.language ?? null} size="md" />
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-white/40">Subtitles</div>
-            <div className="truncate text-sm font-semibold text-white">
+            <div className="truncate text-sm font-medium text-white">
               {active ? active.label : "Off"}
               {active?.synced && <span className="ml-2 text-xs font-medium text-accent">synced</span>}
             </div>
@@ -218,7 +217,7 @@ export default function SubtitleSettingsPanel({
             <button
               type="button"
               onClick={() => onSelectLanguage(null)}
-              className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+              className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
             >
               Turn off
             </button>
@@ -233,7 +232,7 @@ export default function SubtitleSettingsPanel({
         <div
           role="tablist"
           aria-label="Subtitle sources"
-          className="flex shrink-0 gap-1 border-b border-white/10 p-1.5"
+          className="flex shrink-0 gap-0.5 border-b border-white/10 px-2 py-1.5"
         >
           {tabs.map((t) => (
             <button
@@ -247,8 +246,8 @@ export default function SubtitleSettingsPanel({
                 setTab(t.id);
                 if (t.id === "opensubtitles") setOsOpened(true);
               }}
-              className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors ${
-                tab === t.id ? "bg-accent text-on-accent" : "text-white/65 hover:bg-white/10 hover:text-white"
+              className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                tab === t.id ? "bg-white/15 text-white" : "text-white/55 hover:bg-white/[0.08] hover:text-white"
               }`}
             >
               {t.label}
@@ -261,8 +260,8 @@ export default function SubtitleSettingsPanel({
           ))}
         </div>
 
-        <div ref={scrollRef} data-scroll-area className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3">
-          <div role="tabpanel" id="subpanel-source" aria-labelledby="subtab-source" hidden={tab !== "source"} className="flex flex-col gap-1.5">
+        <div ref={scrollRef} data-scroll-area className="min-h-0 min-w-0 flex-1 overflow-y-auto p-2">
+          <div role="tabpanel" id="subpanel-source" aria-labelledby="subtab-source" hidden={tab !== "source"} className="flex flex-col gap-1">
             {sourceTracks.length === 0 ? (
               <EmptyNote>
                 This video doesn&apos;t come with subtitles of its own. Look in the OpenSubtitles tab.
@@ -291,7 +290,7 @@ export default function SubtitleSettingsPanel({
           </div>
 
           {syncedTracks.length > 0 && (
-            <div role="tabpanel" id="subpanel-synced" aria-labelledby="subtab-synced" hidden={tab !== "synced"} className="flex flex-col gap-1.5">
+            <div role="tabpanel" id="subpanel-synced" aria-labelledby="subtab-synced" hidden={tab !== "synced"} className="flex flex-col gap-1">
               {syncedTracks.map((t) => (
                 <SubtitleRow
                   key={t.url}
@@ -305,10 +304,10 @@ export default function SubtitleSettingsPanel({
             </div>
           )}
 
-          <div role="tabpanel" id="subpanel-style" aria-labelledby="subtab-style" hidden={tab !== "style"} className="flex flex-col gap-5">
+          <div role="tabpanel" id="subpanel-style" aria-labelledby="subtab-style" hidden={tab !== "style"} className="flex flex-col gap-4 p-1">
           {/* Live preview, so a change is visible immediately without
               hunting for it under this panel on the actual video. */}
-          <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/50 px-3 py-6">
+          <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/50 px-3 py-4">
             <span
               style={{
                 fontFamily: settings.fontFamily,
@@ -329,7 +328,7 @@ export default function SubtitleSettingsPanel({
             </span>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <span className={labelClass}>Text</span>
             <select
               className={selectClass}
@@ -368,9 +367,7 @@ export default function SubtitleSettingsPanel({
             <ColorSwatchRow value={settings.color} onChange={(v) => set("color", v)} presets={TEXT_COLOR_PRESETS} />
           </div>
 
-          <div className="h-px bg-white/10" />
-
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <span className={labelClass}>Background</span>
             <ColorSwatchRow
               value={settings.backgroundColor}
@@ -393,9 +390,7 @@ export default function SubtitleSettingsPanel({
             </div>
           </div>
 
-          <div className="h-px bg-white/10" />
-
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <span className={labelClass}>Position &amp; style</span>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-white/50">Position</span>
@@ -433,10 +428,8 @@ export default function SubtitleSettingsPanel({
             <OffsetStepper value={settings.offsetSeconds} onChange={(v) => set("offsetSeconds", v)} />
           </div>
 
-            <div className="h-px bg-white/10" />
-
-            <p className="text-[11px] leading-snug text-white/40">
-              The look applies to every video (also in Settings → Subtitles). Language and timing are for this video only.
+            <p className="text-[11px] leading-snug text-white/35">
+              The look applies to every video. Language and timing are for this one.
             </p>
           </div>
         </div>

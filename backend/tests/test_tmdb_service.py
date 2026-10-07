@@ -668,3 +668,27 @@ async def test_missing_api_key_raises_clear_error(monkeypatch):
 
     assert exc_info.value.status_code == 500
     assert "not configured" in exc_info.value.message
+
+
+def test_trailer_key_prefers_official_trailers_over_teasers_and_other_sites():
+    data = {"videos": {"results": [
+        {"site": "YouTube", "key": "teaser", "type": "Teaser", "official": True, "published_at": "2024-05-01"},
+        {"site": "Vimeo", "key": "vimeo", "type": "Trailer", "official": True},
+        {"site": "YouTube", "key": "fan", "type": "Trailer", "official": False, "published_at": "2024-06-01"},
+        {"site": "YouTube", "key": "old", "type": "Trailer", "official": True, "published_at": "2023-01-01"},
+        {"site": "YouTube", "key": "new", "type": "Trailer", "official": True, "published_at": "2024-01-01"},
+        {"site": "YouTube", "key": "clip", "type": "Clip", "official": True},
+    ]}}
+    assert tmdb_service._trailer_key(data) == "new"
+    assert tmdb_service._trailer_key({}) is None
+
+
+@respx.mock
+async def test_get_movie_returns_the_trailer_from_the_same_request():
+    route = respx.get(f"{settings.tmdb_base_url}/movie/27205").mock(
+        return_value=httpx.Response(200, json={**MOVIE_RESPONSE, "videos": {"results": [
+            {"site": "YouTube", "key": "abc", "type": "Trailer", "official": True}]}})
+    )
+    movie = await tmdb_service.get_movie(27205)
+    assert movie.trailer_key == "abc"
+    assert route.calls[0].request.url.params["append_to_response"] == "videos"

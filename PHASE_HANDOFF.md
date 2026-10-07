@@ -782,3 +782,12 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 **Not included (ideas):** Letterboxd, Trakt, Rotten Tomatoes audience score, Metacritic user score — OMDb doesn't have them. They would need another source (e.g. MDBList, which also needs a key); `ratings_service` is the one place to add it, and `RATING_SOURCES` in `lib/rating-sources.ts` and a logo in `public/ratings/` for the frontend.
 **Icons:** `frontend/public/ratings/{imdb,rotten_tomatoes,metacritic,tmdb}.svg`, from the Simple Icons set (CC0) tinted in brand colours; replace the files to use other artwork.
 **Frontend:** `DetailRatings.tsx`, `RatingIcon.tsx`, `lib/rating-sources.ts`; defaults JSON regenerated. **Tests:** `test_ratings.py` (12), `detail-ratings.test.tsx` (7), appearance tests (+2). Baselines: backend 399, frontend 597, tsc clean.
+
+## 32. Phase 12b — ratings window, trailer, tidier subtitles (zip: `candyflix-phase12-ratings-v2`, applies after `-v1`)
+
+- **Ratings are a click, not a row.** The header shows `year · runtime` plus a pill `★ 7.8 · Ratings` (`components/RatingsButton.tsx`). OMDb is called only when it's clicked (once per page view; a failed call retries on the next open). The Phase 12 chips row (`DetailRatings`), the Settings card and the `appearance.rating_sources` setting are gone (`settings-defaults.json` regenerated).
+- **Trailer.** `get_movie`/`get_tv` add `append_to_response=videos` (no extra TMDB call); `_trailer_key` picks the best YouTube Trailer (official, newest; Teaser as a fallback). `trailer_key` is on `MovieDetail`/`TVShowDetail`. `components/TrailerButton.tsx` ("Watch trailer" pill in the same row, hidden if there's none) opens a youtube-nocookie embed in a dialog. Already-cached details (TMDB cache) show the button after the cache expires.
+- **Admin → System** shows OMDb (key configured or not; never probes, to protect the 1000/day quota).
+- **OpenSubtitles rows** show `summarizeRelease()` (`lib/release.ts`): source · resolution · codec · 10-bit/HDR · group, e.g. `BluRay · 1080p · x265 · 10-bit · RARBG`; the full release name is the hover title. Dots/spaces/underscores/brackets normalise the same.
+- **Subtitle panel** slimmer (24rem, smaller header/tabs/rows, fewer dividers). Sync helper text is now "Fixes timing from the video's audio. Saved for next time."
+- Tests: backend 401 pass; frontend suite passes (new: release, ratings-trailer; detail-ratings removed).

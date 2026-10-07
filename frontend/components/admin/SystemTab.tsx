@@ -85,6 +85,7 @@ export default function SystemTab() {
           <Check name="Redis" check={status.redis} />
           <Check name="TMDB" check={status.tmdb} />
           <Check name="OpenSubtitles" check={status.opensubtitles} />
+          <Check name="OMDb (ratings)" check={status.omdb} />
         </ul>
       </div>
 

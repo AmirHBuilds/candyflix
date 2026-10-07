@@ -49,6 +49,7 @@ class MovieDetail(BaseModel):
     backdrop_path: str | None = None
     rating: float | None = None
     runtime_minutes: int | None = None
+    trailer_key: str | None = None
 
 
 class SeasonSummary(BaseModel):
@@ -70,6 +71,7 @@ class TVShowDetail(BaseModel):
     backdrop_path: str | None = None
     rating: float | None = None
     seasons: list[SeasonSummary] = []
+    trailer_key: str | None = None
 
 
 class Episode(BaseModel):

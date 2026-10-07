@@ -22,7 +22,6 @@ export type Settings = {
     hero_interval_seconds: number;
     show_ratings: boolean;
     show_years: boolean;
-    rating_sources: { tmdb: boolean; imdb: boolean; rotten_tomatoes: boolean; metacritic: boolean };
   };
   playback: {
     autoplay_next: boolean;

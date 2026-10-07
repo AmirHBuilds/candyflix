@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { summarizeRelease } from "@/lib/release";
 import SubtitleRow from "@/components/player/SubtitleRow";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 import { SUBTITLE_LANGUAGES } from "@/lib/languages";
@@ -205,7 +206,8 @@ export default function OpenSubtitlesBrowser({
                 <SubtitleRow
                   key={r.file_id}
                   language={r.language}
-                  title={r.release ?? r.label}
+                  title={summarizeRelease(r.release) || r.label}
+                  fullTitle={r.release ?? undefined}
                   active={!!activeUrl && new RegExp(`-${r.file_id}\\.srt$`).test(activeUrl)}
                   busy={pickingId === r.file_id}
                   disabled={pickingId !== null}

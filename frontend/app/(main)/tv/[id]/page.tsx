@@ -1,4 +1,5 @@
-import DetailRatings from "@/components/DetailRatings";
+import RatingsButton from "@/components/RatingsButton";
+import TrailerButton from "@/components/TrailerButton";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTVShow, getSimilarTV, backdropUrl, posterUrl } from "@/lib/media";
@@ -77,12 +78,13 @@ export default async function TVDetailPage({
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold">
               {show.title}
             </h1>
-            <p className="mt-1 text-white/50">
-              {show.year}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-white/50">
+              <span>{show.year}</span>
+              <RatingsButton mediaType="tv" tmdbId={show.tmdb_id} tmdbRating={show.rating ?? null} />
+              {show.trailer_key && <TrailerButton youtubeKey={show.trailer_key} title={show.title} />}
+            </div>
           </div>
 
-          <DetailRatings mediaType="tv" tmdbId={show.tmdb_id} tmdbRating={show.rating ?? null} />
 
           {show.genres.length > 0 && (
             <div className="flex flex-wrap gap-2">

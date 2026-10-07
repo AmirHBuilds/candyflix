@@ -32,6 +32,7 @@ export type SystemStatus = {
   redis: ServiceCheck;
   tmdb: ServiceCheck;
   opensubtitles: ServiceCheck;
+  omdb: ServiceCheck;
   subtitle_cache: { files: number; bytes: number };
   avatars: { files: number; bytes: number };
   app_version: string;

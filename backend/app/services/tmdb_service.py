@@ -313,8 +313,23 @@ async def search(query: str) -> list[MediaItem]:
     return [item for item in items if item is not None]
 
 
+def _trailer_key(data: dict) -> str | None:
+    """Best YouTube trailer from an `append_to_response=videos` payload."""
+    videos = [
+        v for v in (data.get("videos") or {}).get("results", [])
+        if v.get("site") == "YouTube" and v.get("key") and v.get("type") in ("Trailer", "Teaser")
+    ]
+    if not videos:
+        return None
+    videos.sort(
+        key=lambda v: (v["type"] == "Trailer", bool(v.get("official")), v.get("published_at") or ""),
+        reverse=True,
+    )
+    return videos[0]["key"]
+
+
 async def get_movie(tmdb_id: int) -> MovieDetail:
-    data = await _get(f"/movie/{tmdb_id}", ttl=DETAILS_CACHE_TTL)
+    data = await _get(f"/movie/{tmdb_id}", {"append_to_response": "videos", "include_video_language": "en,null"}, ttl=DETAILS_CACHE_TTL)
     release_date = data.get("release_date") or ""
     return MovieDetail(
         tmdb_id=data["id"],
@@ -326,11 +341,12 @@ async def get_movie(tmdb_id: int) -> MovieDetail:
         backdrop_path=data.get("backdrop_path"),
         rating=data.get("vote_average"),
         runtime_minutes=data.get("runtime"),
+        trailer_key=_trailer_key(data),
     )
 
 
 async def get_tv(tmdb_id: int) -> TVShowDetail:
-    data = await _get(f"/tv/{tmdb_id}", ttl=DETAILS_CACHE_TTL)
+    data = await _get(f"/tv/{tmdb_id}", {"append_to_response": "videos", "include_video_language": "en,null"}, ttl=DETAILS_CACHE_TTL)
     first_air_date = data.get("first_air_date") or ""
 
     seasons = [
@@ -354,6 +370,7 @@ async def get_tv(tmdb_id: int) -> TVShowDetail:
         backdrop_path=data.get("backdrop_path"),
         rating=data.get("vote_average"),
         seasons=seasons,
+        trailer_key=_trailer_key(data),
     )
 
 

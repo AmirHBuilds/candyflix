@@ -285,6 +285,14 @@ def _check_opensubtitles() -> schemas.ServiceCheck:
     return schemas.ServiceCheck(ok=False, detail="OPENSUBTITLES_API_KEY is not set (subtitles disabled)")
 
 
+def _check_omdb() -> schemas.ServiceCheck:
+    # Configuration only: OMDb's free plan is 1000 lookups a day, and ratings
+    # are fetched only when someone opens the ratings window.
+    if get_settings().omdb_api_key:
+        return schemas.ServiceCheck(ok=True, detail="API key configured (looked up only when ratings are opened)")
+    return schemas.ServiceCheck(ok=False, detail="OMDB_API_KEY is not set (IMDb, Rotten Tomatoes and Metacritic ratings are hidden)")
+
+
 def _storage(directory: str) -> schemas.StorageInfo:
     path = Path(directory)
     if not path.is_dir():
@@ -301,6 +309,7 @@ async def system_status(db: AsyncSession, app_version: str) -> schemas.SystemSta
         redis=redis_check,
         tmdb=tmdb,
         opensubtitles=_check_opensubtitles(),
+        omdb=_check_omdb(),
         subtitle_cache=_storage(settings.subtitle_cache_dir),
         avatars=_storage(settings.avatars_dir),
         app_version=app_version,

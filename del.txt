@@ -1,0 +1,4 @@
+DELETE these two files (removed in this phase):
+frontend/components/DetailRatings.tsx
+frontend/__tests__/detail-ratings.test.tsx
+Apply after candyflix-phase12-ratings-v1.zip.

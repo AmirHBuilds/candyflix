@@ -1,4 +1,5 @@
-import DetailRatings from "@/components/DetailRatings";
+import RatingsButton from "@/components/RatingsButton";
+import TrailerButton from "@/components/TrailerButton";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getMovie, getSimilarMovies, backdropUrl, posterUrl } from "@/lib/media";
@@ -56,13 +57,16 @@ export default async function MovieDetailPage({
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold">
               {movie.title}
             </h1>
-            <p className="mt-1 text-white/50">
-              {movie.year}
-              {movie.runtime_minutes ? ` · ${movie.runtime_minutes} min` : ""}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-white/50">
+              <span>
+                {movie.year}
+                {movie.runtime_minutes ? ` · ${movie.runtime_minutes} min` : ""}
+              </span>
+              <RatingsButton mediaType="movie" tmdbId={movie.tmdb_id} tmdbRating={movie.rating ?? null} />
+              {movie.trailer_key && <TrailerButton youtubeKey={movie.trailer_key} title={movie.title} />}
+            </div>
           </div>
 
-          <DetailRatings mediaType="movie" tmdbId={movie.tmdb_id} tmdbRating={movie.rating ?? null} />
 
           {movie.genres.length > 0 && (
             <div className="flex flex-wrap gap-2">

@@ -24,6 +24,7 @@ export type MovieDetail = {
   backdrop_path: string | null;
   rating: number | null;
   runtime_minutes: number | null;
+  trailer_key?: string | null;
 };
 
 export type SeasonSummary = {
@@ -43,6 +44,7 @@ export type TVShowDetail = {
   backdrop_path: string | null;
   rating: number | null;
   seasons: SeasonSummary[];
+  trailer_key?: string | null;
 };
 
 export type Episode = {

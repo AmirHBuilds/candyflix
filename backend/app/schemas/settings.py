@@ -26,15 +26,6 @@ class _Group(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
-class RatingSources(_Group):
-    """Which scores the detail pages show next to a title (not on the cards)."""
-
-    tmdb: bool = True
-    imdb: bool = True
-    rotten_tomatoes: bool = True
-    metacritic: bool = True
-
-
 class AppearanceSettings(_Group):
     theme: Theme = "candy-at-night"
     # "grid" = the classic wrapped grid; "rows" = one swipeable row per section.
@@ -54,7 +45,6 @@ class AppearanceSettings(_Group):
     show_ratings: bool = True
     show_years: bool = True
     # Detail pages: which rating sources to show.
-    rating_sources: RatingSources = RatingSources()
 
 
 class SkipButtons(_Group):

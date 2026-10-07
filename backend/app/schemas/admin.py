@@ -130,6 +130,7 @@ class SystemStatus(BaseModel):
     redis: ServiceCheck
     tmdb: ServiceCheck
     opensubtitles: ServiceCheck
+    omdb: ServiceCheck
     subtitle_cache: StorageInfo
     avatars: StorageInfo
     app_version: str

@@ -102,7 +102,7 @@ export default function SyncSubtitleControl({
         </span>
       ) : (
         <span className="text-[11px] leading-snug text-white/40">
-          Matches this subtitle to the video&apos;s audio. Takes a few seconds, and the result is kept for next time.
+          Fixes timing from the video&apos;s audio. Saved for next time.
         </span>
       )}
     </div>

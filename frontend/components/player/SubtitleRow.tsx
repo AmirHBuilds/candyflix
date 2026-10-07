@@ -6,6 +6,7 @@ import Flag from "@/components/player/Flag";
 export default function SubtitleRow({
   language,
   title,
+  fullTitle,
   detail,
   active,
   busy,
@@ -15,6 +16,8 @@ export default function SubtitleRow({
 }: {
   language: string;
   title: string;
+  // The untouched name, shown on hover when `title` is a summary of it.
+  fullTitle?: string;
   detail?: string | null;
   active?: boolean;
   busy?: boolean;
@@ -34,9 +37,10 @@ export default function SubtitleRow({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      title={fullTitle}
       aria-current={active ? "true" : undefined}
-      className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors disabled:cursor-default ${
-        active ? "bg-accent/15 ring-1 ring-inset ring-accent/50" : "bg-white/[0.04] enabled:hover:bg-white/[0.09]"
+      className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors disabled:cursor-default ${
+        active ? "bg-accent/15 ring-1 ring-inset ring-accent/50" : "enabled:hover:bg-white/[0.08]"
       }`}
     >
       <Flag language={language} />
