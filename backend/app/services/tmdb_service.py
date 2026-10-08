@@ -409,3 +409,30 @@ async def get_movie_imdb_id(tmdb_id: int) -> str | None:
 async def get_tv_imdb_id(tmdb_id: int) -> str | None:
     data = await _get(f"/tv/{tmdb_id}/external_ids", ttl=DETAILS_CACHE_TTL)
     return data.get("imdb_id") or None
+
+
+async def find_title(title: str, year: int | None, media_type: str) -> int | None:
+    """The TMDB id of the movie/show a (title, year) pair most likely means, or None.
+    Used to turn an AI's suggestions into real titles: the AI is only trusted for names."""
+    path = "/search/movie" if media_type == "movie" else "/search/tv"
+    data = await _get(path, params={"query": title, "include_adult": "false"}, ttl=DETAILS_CACHE_TTL)
+    wanted = _norm(title)
+    best: tuple | None = None
+    for r in data.get("results", [])[:8]:
+        name = r.get("title") if media_type == "movie" else r.get("name")
+        original = r.get("original_title") if media_type == "movie" else r.get("original_name")
+        date = (r.get("release_date") if media_type == "movie" else r.get("first_air_date")) or ""
+        r_year = int(date[:4]) if date[:4].isdigit() else None
+        if year and r_year and abs(r_year - year) > 1:
+            continue
+        exact = _norm(name or "") == wanted or _norm(original or "") == wanted
+        if not exact and _norm(wanted) not in _norm(name or ""):
+            continue
+        score = (2 if exact else 1, 1 if (year and r_year == year) else 0, r.get("popularity") or 0)
+        if best is None or score > best[0]:
+            best = (score, r["id"])
+    return best[1] if best else None
+
+
+def _norm(text: str) -> str:
+    return "".join(ch for ch in text.lower() if ch.isalnum())

@@ -56,6 +56,7 @@ export type Settings = {
     position: "bottom" | "top";
     align: "left" | "center" | "right";
   };
+  ai: { use_history: boolean };
 };
 
 /** A partial change. A `null` leaf means "back to the default". */

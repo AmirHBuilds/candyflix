@@ -86,6 +86,7 @@ export default function SystemTab() {
           <Check name="TMDB" check={status.tmdb} />
           <Check name="OpenSubtitles" check={status.opensubtitles} />
           <Check name="OMDb (ratings)" check={status.omdb} />
+          <Check name="Gemini (Ask AI)" check={status.gemini} />
         </ul>
       </div>
 

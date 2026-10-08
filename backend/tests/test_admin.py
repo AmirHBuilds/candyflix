@@ -403,6 +403,7 @@ class TestSystem:
         monkeypatch.setattr(settings, "tmdb_api_key", "k")
         monkeypatch.setattr(settings, "opensubtitles_api_key", "")
         monkeypatch.setattr(settings, "omdb_api_key", "")
+        monkeypatch.setattr(settings, "gemini_api_key", "")
         respx.get(f"{settings.tmdb_base_url}/configuration").mock(return_value=httpx.Response(200, json={}))
         admin = _name()
         try:
@@ -411,6 +412,7 @@ class TestSystem:
             assert body["database"]["ok"] and body["redis"]["ok"] and body["tmdb"]["ok"]
             assert body["opensubtitles"]["ok"] is False
             assert body["omdb"]["ok"] is False and "OMDB_API_KEY" in body["omdb"]["detail"]
+            assert body["gemini"]["ok"] is False and "GEMINI_API_KEY" in body["gemini"]["detail"]
             assert set(body["subtitle_cache"]) == {"files", "bytes"}
             assert body["app_version"] and body["python_version"]
             assert isinstance(body["auto_migrate"], bool)

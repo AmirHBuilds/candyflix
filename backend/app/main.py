@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
+    ai,
     announcements,
     account,
     admin,
@@ -129,6 +130,7 @@ app.include_router(playback.router, prefix="/api")
 app.include_router(subtitles.router, prefix="/api")
 app.include_router(subtitle_sync.router, prefix="/api")
 app.include_router(ratings.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
 app.include_router(watchlist.router, prefix="/api")
 app.include_router(continue_watching.router, prefix="/api")
 app.include_router(settings_routes.router, prefix="/api")

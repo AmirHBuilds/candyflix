@@ -31,6 +31,17 @@ class Settings(BaseSettings):
     omdb_api_key: str = ""
     omdb_base_url: str = "https://www.omdbapi.com/"
 
+    # Phase 14 — "Ask AI" search (Google Gemini). A free key from https://aistudio.google.com/apikey
+    # works (the free tier: Google may use what is sent to improve its products, so only
+    # titles and years are sent, never names). Without a key the feature stays hidden.
+    gemini_api_key: str = ""
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    gemini_model: str = "gemini-3.5-flash"
+    # Tried once when the main model is rate-limited or unavailable.
+    gemini_fallback_model: str = "gemini-3.5-flash-lite"
+    # AI searches per person per day; an admin can change it for one person, and admins have no limit.
+    ai_default_daily_limit: int = 5
+
     # Session / auth secret (used starting Phase 2)
     session_secret: str = "change-me-in-env"
 

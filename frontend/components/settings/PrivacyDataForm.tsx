@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SettingRow, SettingsCard } from "@/components/settings/controls";
+import { useSettings } from "@/components/SettingsProvider";
+import { SettingRow, SettingsCard, Toggle } from "@/components/settings/controls";
 import { clearVideoSettings, clearWatchHistory } from "@/lib/playback";
 import { showToast } from "@/lib/toast";
 
@@ -55,6 +56,7 @@ function TwoStepButton({
 }
 
 export default function PrivacyDataForm() {
+  const { settings, update } = useSettings();
   return (
     <SettingsCard title="Privacy & data" description="Things CandyFlix remembers about what you watch.">
       <SettingRow
@@ -62,6 +64,13 @@ export default function PrivacyDataForm() {
         description="Your activity on CandyFlix is visible to the server admin and is recorded to help with troubleshooting and keep things running smoothly."
       >
         <span className="text-sm text-white/40">Always on</span>
+      </SettingRow>
+      <SettingRow
+        label="Ask AI uses my taste"
+        htmlFor="ai-use-history"
+        description="Lets Ask AI look at the titles you watched and saved, so it can suggest things you'd like. Only titles and years are sent to Google's Gemini, never your name. Off: it answers from your request alone."
+      >
+        <Toggle id="ai-use-history" label="Ask AI uses my taste" checked={settings.ai.use_history} onChange={(use_history) => update({ ai: { use_history } })} />
       </SettingRow>
       <SettingRow
         label="Watch history"

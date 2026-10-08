@@ -96,6 +96,8 @@ async def update_user(
     db: AsyncSession, actor: User, target: User, changes: schemas.AdminUserUpdate
 ) -> schemas.AdminUser:
     data = changes.model_dump(exclude_unset=True, exclude_none=True)
+    if "ai_daily_limit" in changes.model_fields_set:
+        data["ai_daily_limit"] = changes.ai_daily_limit  # None is meaningful here: "use the default"
 
     if target.id == actor.id and data.get("is_disabled") is True:
         raise AdminError("You can't disable your own account.")
@@ -293,6 +295,14 @@ def _check_omdb() -> schemas.ServiceCheck:
     return schemas.ServiceCheck(ok=False, detail="OMDB_API_KEY is not set (IMDb, Rotten Tomatoes and Metacritic ratings are hidden)")
 
 
+def _check_gemini() -> schemas.ServiceCheck:
+    # Configuration only: the free tier has a small daily quota that people's AI searches should use.
+    settings = get_settings()
+    if settings.gemini_api_key:
+        return schemas.ServiceCheck(ok=True, detail=f"API key configured ({settings.gemini_model})")
+    return schemas.ServiceCheck(ok=False, detail="GEMINI_API_KEY is not set (Ask AI is hidden)")
+
+
 def _storage(directory: str) -> schemas.StorageInfo:
     path = Path(directory)
     if not path.is_dir():
@@ -310,6 +320,7 @@ async def system_status(db: AsyncSession, app_version: str) -> schemas.SystemSta
         tmdb=tmdb,
         opensubtitles=_check_opensubtitles(),
         omdb=_check_omdb(),
+        gemini=_check_gemini(),
         subtitle_cache=_storage(settings.subtitle_cache_dir),
         avatars=_storage(settings.avatars_dir),
         app_version=app_version,

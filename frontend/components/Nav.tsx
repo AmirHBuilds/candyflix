@@ -9,7 +9,10 @@ import LogoutButton from "@/components/LogoutButton";
 import UserMenu from "@/components/UserMenu";
 import NavSearch from "@/components/NavSearch";
 import { boxNameFor, DEFAULT_BOX_NAME } from "@/lib/box-name";
+import { useAIAvailable } from "@/lib/use-ai-available";
+import { SparkleIcon } from "@/components/NavSearch";
 
+const ASK_AI = { href: "/ask", label: "Ask AI" };
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/movies", label: "Movies" },
@@ -44,6 +47,17 @@ function SearchToggle({ open, onToggle }: { open: boolean; onToggle: () => void 
   );
 }
 
+function AskLabel() {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="text-accent">
+        <SparkleIcon />
+      </span>
+      Ask AI
+    </span>
+  );
+}
+
 export default function Nav() {
   const pathname = usePathname();
   const [user, setUser] = useState<UserPublic | null>(null);
@@ -66,7 +80,11 @@ export default function Nav() {
     return onUserChanged(load);
   }, []);
 
-  const links = LINKS.map((l) => (l.href === "/candy-box" ? { ...l, label: boxNameFor(user?.display_name) } : l));
+  // The logo is already the way home, so where Ask AI is available it takes Home's place in the list.
+  const aiAvailable = useAIAvailable();
+  const links = LINKS.map((l) => (l.href === "/candy-box" ? { ...l, label: boxNameFor(user?.display_name) } : l)).map((l) =>
+    l.href === "/" && aiAvailable ? ASK_AI : l
+  );
 
   // Close the mobile menu and the player's search box whenever the
   // route changes (e.g. after picking a search result).
@@ -91,7 +109,7 @@ export default function Nav() {
                 href={link.href}
                 className={active ? "text-white" : "text-white/50 hover:text-white/80"}
               >
-                {link.label}
+                {link.href === "/ask" ? <AskLabel /> : link.label}
               </Link>
             );
           })}
@@ -133,7 +151,7 @@ export default function Nav() {
                   active ? "text-white" : "text-white/60"
                 }`}
               >
-                {link.label}
+                {link.href === "/ask" ? <AskLabel /> : link.label}
               </Link>
             );
           })}

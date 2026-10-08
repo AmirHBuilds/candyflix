@@ -53,5 +53,8 @@
     "shadow": true,
     "position": "bottom",
     "align": "center"
+  },
+  "ai": {
+    "use_history": true
   }
 }

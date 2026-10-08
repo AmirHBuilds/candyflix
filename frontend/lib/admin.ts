@@ -12,6 +12,8 @@ export type AdminUser = {
   avatar_url: string | null;
   watchlist_count: number;
   watched_count: number;
+  /** AI searches a day; null = the site default, 0 = off. Admins are never limited. */
+  ai_daily_limit: number | null;
 };
 
 export type AdminStats = {
@@ -33,6 +35,7 @@ export type SystemStatus = {
   tmdb: ServiceCheck;
   opensubtitles: ServiceCheck;
   omdb: ServiceCheck;
+  gemini: ServiceCheck;
   subtitle_cache: { files: number; bytes: number };
   avatars: { files: number; bytes: number };
   app_version: string;
@@ -63,7 +66,7 @@ export const createAdminUser = (body: { username: string; display_name: string; 
   request<AdminUser>("/users", { method: "POST", body: JSON.stringify(body) }, "Couldn't create that user.");
 export const updateAdminUser = (
   id: string,
-  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean }>
+  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null }>
 ) => request<AdminUser>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }, "Couldn't save the changes.");
 export const resetAdminPassword = (id: string, newPassword: string) =>
   request<void>(`/users/${id}/password`, { method: "POST", body: JSON.stringify({ new_password: newPassword }) }, "Couldn't reset the password.");

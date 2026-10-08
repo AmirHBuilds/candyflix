@@ -39,6 +39,7 @@ class AdminUser(BaseModel):
     avatar_url: str | None = None
     watchlist_count: int = 0
     watched_count: int = 0
+    ai_daily_limit: int | None = None  # None = the site default
 
 
 class AdminUserCreate(BaseModel):
@@ -65,6 +66,8 @@ class AdminUserUpdate(BaseModel):
     display_name: str | None = Field(default=None, min_length=1, max_length=50)
     is_admin: bool | None = None
     is_disabled: bool | None = None
+    # Send null to go back to the site default; 0 switches AI search off for this person.
+    ai_daily_limit: int | None = Field(default=None, ge=0, le=1000)
 
     @field_validator("username")
     @classmethod
@@ -131,6 +134,7 @@ class SystemStatus(BaseModel):
     tmdb: ServiceCheck
     opensubtitles: ServiceCheck
     omdb: ServiceCheck
+    gemini: ServiceCheck
     subtitle_cache: StorageInfo
     avatars: StorageInfo
     app_version: str

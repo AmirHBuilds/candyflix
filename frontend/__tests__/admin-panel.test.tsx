@@ -43,6 +43,7 @@ const u = (over: Partial<admin.AdminUser>): admin.AdminUser => ({
   avatar_url: null,
   watchlist_count: 2,
   watched_count: 3,
+  ai_daily_limit: null,
   ...over,
 });
 const me = u({ id: "me", username: "root", display_name: "Root", is_admin: true });
@@ -67,6 +68,7 @@ const system: admin.SystemStatus = {
   tmdb: { ok: false, detail: "TMDB_API_KEY is not set", latency_ms: null },
   opensubtitles: ok("API key configured", null),
   omdb: ok("API key configured", null),
+  gemini: ok("API key configured", null),
   subtitle_cache: { files: 2, bytes: 2048 },
   avatars: { files: 1, bytes: 500 },
   app_version: "0.9.0",
@@ -243,7 +245,7 @@ describe("Admin panel", () => {
       render(<AdminPanel currentUserId="me" />);
       openTab("System");
       expect(await screen.findByText("TMDB_API_KEY is not set")).toBeInTheDocument();
-      expect(screen.getAllByRole("img", { name: "OK" })).toHaveLength(4);
+      expect(screen.getAllByRole("img", { name: "OK" })).toHaveLength(5);
       expect(screen.getAllByRole("img", { name: "Problem" })).toHaveLength(1);
       expect(screen.getByText(/2 files, 2.0 KB/)).toBeInTheDocument();
       expect(screen.getByText("3.12.1")).toBeInTheDocument();

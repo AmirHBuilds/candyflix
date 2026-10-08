@@ -6,6 +6,9 @@ import { useDebouncedSearch } from "@/lib/useDebouncedSearch";
 import MediaGrid from "@/components/MediaGrid";
 import EmptyState from "@/components/EmptyState";
 import ErrorState from "@/components/ErrorState";
+import AskAIButton from "@/components/AskAIButton";
+import { looksLikeRequest } from "@/lib/ai";
+import { useAIAvailable } from "@/lib/use-ai-available";
 import { LoadingRegion, MediaGridSkeleton } from "@/components/Skeleton";
 
 export default function SearchPageClient() {
@@ -39,6 +42,8 @@ export default function SearchPageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  const aiAvailable = useAIAvailable(query.trim().length >= 3);
+
   return (
     <div className="flex flex-col gap-6">
       <input
@@ -64,6 +69,13 @@ export default function SearchPageClient() {
           icon="search"
           title={`No matches for “${query.trim()}”`}
           message="Check the spelling, or try a different title."
+        />
+      )}
+      {!loading && !error && aiAvailable && query.trim().length >= 3 && (results.length === 0 || looksLikeRequest(query)) && (
+        <AskAIButton
+          query={query.trim()}
+          hint={results.length === 0 ? "find it for me" : "get suggestions"}
+          onClick={() => router.push(`/ask?q=${encodeURIComponent(query.trim())}`)}
         />
       )}
 

@@ -112,7 +112,14 @@ class SubtitleStyle(_Group):
     align: Literal["left", "center", "right"] = "center"
 
 
+class AISettings(_Group):
+    # Let "Ask AI" look at the titles this person watched and saved, to suggest things they'd like.
+    # Only titles and years are sent (to Google); never a name.
+    use_history: bool = True
+
+
 class UserSettings(_Group):
     appearance: AppearanceSettings = AppearanceSettings()
     playback: PlaybackSettings = PlaybackSettings()
     subtitles: SubtitleStyle = SubtitleStyle()
+    ai: AISettings = AISettings()

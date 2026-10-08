@@ -3,17 +3,20 @@
 import { useCallback, useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { NowWatchingRow, formatClock, whatLabel } from "@/components/admin/NowWatchingCard";
-import { quietButton } from "@/components/admin/Dialog";
+import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import {
   getUserDetail,
   getUserHistory,
   getUserWatchlist,
+  updateAdminUser,
+  type AdminUser,
   type HistoryItem,
   type UserDetail,
   type WatchlistEntry,
 } from "@/lib/admin";
 import { boxNameFor } from "@/lib/box-name";
 import { posterUrl } from "@/lib/media";
+import { showToast } from "@/lib/toast";
 
 const PAGE = 50;
 
@@ -124,6 +127,59 @@ function Box({ userId, name }: { userId: string; name: string }) {
   );
 }
 
+function AiLimitCard({ user, onSaved }: { user: AdminUser; onSaved: (user: AdminUser) => void }) {
+  const [value, setValue] = useState(user.ai_daily_limit == null ? "" : String(user.ai_daily_limit));
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setValue(user.ai_daily_limit == null ? "" : String(user.ai_daily_limit)), [user.ai_daily_limit]);
+
+  async function save(next: number | null) {
+    setSaving(true);
+    try {
+      onSaved(await updateAdminUser(user.id, { ai_daily_limit: next }));
+      showToast(next === null ? "Back to the usual number of AI searches." : `Saved: ${next} AI ${next === 1 ? "search" : "searches"} a day.`, "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't save that.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+      <h3 className="mb-1 text-sm font-semibold text-white">AI searches a day</h3>
+      {user.is_admin ? (
+        <p className="text-sm text-white/50">Admins have no limit.</p>
+      ) : (
+        <>
+          <p className="mb-3 text-sm text-white/50">
+            {user.ai_daily_limit == null ? "Using the usual number for everyone." : user.ai_daily_limit === 0 ? "Ask AI is switched off for this person." : `This person gets ${user.ai_daily_limit} a day.`}
+          </p>
+          <form
+            className="flex flex-wrap items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = Number(value);
+              if (value.trim() === "" || !Number.isInteger(n) || n < 0 || n > 1000) return showToast("Enter a whole number from 0 to 1000.");
+              void save(n);
+            }}
+          >
+            <input aria-label="AI searches a day" inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Usual" className={`${fieldClass} w-28`} />
+            <button type="submit" disabled={saving} className={primaryButton}>
+              Save
+            </button>
+            <button type="button" disabled={saving || user.ai_daily_limit == null} onClick={() => void save(null)} className={quietButton}>
+              Use the usual
+            </button>
+            <button type="button" disabled={saving || user.ai_daily_limit === 0} onClick={() => void save(0)} className={quietButton}>
+              Switch off
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+
 const SECTION_IDS = ["history", "box"] as const;
 
 // The second tab is that person's own box ("Eve Box"), not the viewer's.
@@ -177,6 +233,8 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
               </p>
             </div>
           </div>
+
+          <AiLimitCard user={detail.user} onSaved={(user) => setDetail({ ...detail, user })} />
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             <h3 className="mb-3 text-sm font-semibold text-white">Watching now</h3>

@@ -10,7 +10,7 @@ admin panel; everyone else just has their own library and settings.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, String, Uuid, false
+from sqlalchemy import Boolean, DateTime, Integer, String, Uuid, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -44,6 +44,10 @@ class User(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    # AI searches per day for this person. None = the site default; 0 = switched off.
+    # Admins are never limited, whatever this says.
+    ai_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     @property
     def avatar_url(self) -> str | None:
