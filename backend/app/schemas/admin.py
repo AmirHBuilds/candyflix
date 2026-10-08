@@ -40,6 +40,7 @@ class AdminUser(BaseModel):
     watchlist_count: int = 0
     watched_count: int = 0
     ai_daily_limit: int | None = None  # None = the site default
+    ai_use_history: bool = True  # their own Settings switch: Ask AI may use their watch history
 
 
 class AdminUserCreate(BaseModel):
@@ -277,3 +278,32 @@ class SignInEntry(BaseModel):
 class SignInPage(BaseModel):
     items: list[SignInEntry]
     total: int
+
+
+class AdminAIUser(BaseModel):
+    id: uuid.UUID
+    username: str
+    display_name: str
+    is_admin: bool
+    ai_daily_limit: int | None = None  # their own number; None = the usual
+    effective_limit: int | None = None  # what applies today; None = unlimited
+    used_today: int = 0
+    use_history: bool = True
+
+
+class AdminAIOverview(BaseModel):
+    key_configured: bool
+    model: str
+    enabled: bool
+    default_daily_limit: int
+    asks_today: int
+    users: list[AdminAIUser]
+
+
+class AdminAIConfigUpdate(BaseModel):
+    enabled: bool
+    default_daily_limit: int = Field(ge=0, le=1000)
+
+
+class AdminAIHistoryUpdate(BaseModel):
+    use_history: bool

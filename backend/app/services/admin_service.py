@@ -25,7 +25,9 @@ from app.models.user import User
 from app.models.watch_progress import WatchProgress
 from app.models.watchlist_item import WatchlistItem
 from app.schemas import admin as schemas
-from app.services import auth_service, avatar_service, tmdb_service
+from app.models.user_settings import UserSettings as UserSettingsRow
+from app.schemas.site import AIConfig
+from app.services import ai_service, auth_service, avatar_service, settings_service, site_service, tmdb_service
 
 
 class AdminError(Exception):
@@ -48,16 +50,29 @@ def _counts_query():
     return select(User, watchlist.label("wl"), watched.label("wp"))
 
 
-def _to_admin_user(user: User, wl: int, wp: int) -> schemas.AdminUser:
+def _to_admin_user(user: User, wl: int, wp: int, use_history: bool = True) -> schemas.AdminUser:
     result = schemas.AdminUser.model_validate(user)
     result.watchlist_count = wl
     result.watched_count = wp
+    result.ai_use_history = use_history
     return result
+
+
+async def _history_flags(db: AsyncSession, ids: list[uuid.UUID] | None = None) -> dict[uuid.UUID, bool]:
+    """Each person's own "Ask AI may use my watch history" switch (default on)."""
+    query = select(UserSettingsRow.user_id, UserSettingsRow.data)
+    if ids is not None:
+        query = query.where(UserSettingsRow.user_id.in_(ids))
+    flags: dict[uuid.UUID, bool] = {}
+    for user_id, data in (await db.execute(query)).all():
+        flags[user_id] = settings_service.resolve_leniently(data or {}).ai.use_history
+    return flags
 
 
 async def list_users(db: AsyncSession) -> list[schemas.AdminUser]:
     rows = (await db.execute(_counts_query().order_by(User.created_at))).all()
-    return [_to_admin_user(u, wl, wp) for u, wl, wp in rows]
+    flags = await _history_flags(db)
+    return [_to_admin_user(u, wl, wp, flags.get(u.id, True)) for u, wl, wp in rows]
 
 
 async def get_user(db: AsyncSession, user_id: uuid.UUID) -> User:
@@ -70,7 +85,8 @@ async def get_user(db: AsyncSession, user_id: uuid.UUID) -> User:
 async def _admin_view(db: AsyncSession, user_id: uuid.UUID) -> schemas.AdminUser:
     row = (await db.execute(_counts_query().where(User.id == user_id))).one()
     await db.refresh(row[0])
-    return _to_admin_user(*row)
+    flags = await _history_flags(db, [user_id])
+    return _to_admin_user(*row, flags.get(user_id, True))
 
 
 async def _other_active_admins(db: AsyncSession, excluding: uuid.UUID) -> int:
@@ -595,3 +611,43 @@ async def sign_ins(db: AsyncSession) -> list[schemas.LoginRow]:
         )
         for u in users
     ]
+
+
+# ---------- Ask AI ----------
+
+
+async def ai_overview(db: AsyncSession) -> schemas.AdminAIOverview:
+    settings = get_settings()
+    config = await site_service.get_ai_config(db)
+    users = (await db.execute(select(User).order_by(User.created_at))).scalars().all()
+    flags = await _history_flags(db)
+    used = await asyncio.gather(*(ai_service.used_today(u) for u in users))
+    rows = [
+        schemas.AdminAIUser(
+            id=u.id,
+            username=u.username,
+            display_name=u.display_name,
+            is_admin=u.is_admin,
+            ai_daily_limit=u.ai_daily_limit,
+            effective_limit=ai_service.daily_limit_for(u, config.default_daily_limit),
+            used_today=n,
+            use_history=flags.get(u.id, True),
+        )
+        for u, n in zip(users, used)
+    ]
+    return schemas.AdminAIOverview(
+        key_configured=bool(settings.gemini_api_key),
+        model=settings.gemini_model,
+        enabled=config.enabled,
+        default_daily_limit=config.default_daily_limit,
+        asks_today=sum(used),
+        users=rows,
+    )
+
+
+async def set_ai_config(db: AsyncSession, payload: schemas.AdminAIConfigUpdate) -> AIConfig:
+    return await site_service.set_ai_config(db, AIConfig(**payload.model_dump()))
+
+
+async def set_ai_history(db: AsyncSession, target: User, use_history: bool) -> None:
+    await settings_service.patch_settings(db, target.id, {"ai": {"use_history": use_history}})

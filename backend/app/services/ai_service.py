@@ -28,7 +28,7 @@ from app.models.user import User
 from app.models.watch_progress import WatchProgress
 from app.models.watchlist_item import WatchlistItem
 from app.schemas import ai as schemas
-from app.services import settings_service, tmdb_service
+from app.services import settings_service, site_service, tmdb_service
 
 logger = logging.getLogger("app.ai")
 
@@ -49,13 +49,13 @@ class AIError(Exception):
 # ---------------------------------------------------------------- allowance
 
 
-def daily_limit_for(user: User) -> int | None:
-    """None = unlimited (admins)."""
+def daily_limit_for(user: User, default: int) -> int | None:
+    """None = unlimited (admins). `default` is the site-wide number (admin setting)."""
     if user.is_admin:
         return None
     if user.ai_daily_limit is not None:
         return user.ai_daily_limit
-    return get_settings().ai_default_daily_limit
+    return default
 
 
 def _used_key(user: User) -> str:
@@ -67,11 +67,16 @@ async def _used_today(user: User) -> int:
     return int(raw) if raw else 0
 
 
-async def status(user: User) -> schemas.AIStatus:
-    limit = daily_limit_for(user)
+async def used_today(user: User) -> int:
+    return await _used_today(user)
+
+
+async def status(db: AsyncSession, user: User) -> schemas.AIStatus:
+    config = await site_service.get_ai_config(db)
+    limit = daily_limit_for(user, config.default_daily_limit)
     used = await _used_today(user)
     return schemas.AIStatus(
-        enabled=bool(get_settings().gemini_api_key),
+        enabled=bool(get_settings().gemini_api_key) and config.enabled,
         limit=limit,
         used=used,
         remaining=None if limit is None else max(0, limit - used),
@@ -303,7 +308,10 @@ async def ask(db: AsyncSession, user: User, prompt: str) -> schemas.AskResponse:
     settings = get_settings()
     if not settings.gemini_api_key:
         raise AIError(503, "Ask AI isn't set up on this server.")
-    limit = daily_limit_for(user)
+    config = await site_service.get_ai_config(db)
+    if not config.enabled:
+        raise AIError(503, "Ask AI is switched off right now.")
+    limit = daily_limit_for(user, config.default_daily_limit)
     if limit is not None and limit <= 0:
         raise AIError(403, "Ask AI is switched off for your account.")
 

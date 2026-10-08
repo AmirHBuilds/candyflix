@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DayView, SignInsView, TitleViewersView, TitlesView } from "@/components/admin/DrillViews";
+import AITab from "@/components/admin/AITab";
 import BannersTab from "@/components/admin/BannersTab";
 import FooterTab from "@/components/admin/FooterTab";
 import LogTab from "@/components/admin/LogTab";
@@ -16,6 +17,7 @@ const TABS = [
   { id: "users", label: "Users" },
   { id: "messages", label: "Messages" },
   { id: "log", label: "Log" },
+  { id: "ai", label: "AI" },
   { id: "banners", label: "Banners" },
   { id: "footer", label: "Footer" },
   { id: "system", label: "System" },
@@ -103,6 +105,7 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
             {tab === "users" && <UsersTab currentUserId={currentUserId} onView={toPerson} />}
             {tab === "messages" && <MessagesTab />}
             {tab === "log" && <LogTab />}
+            {tab === "ai" && <AITab onViewPerson={toPerson} />}
             {tab === "banners" && <BannersTab />}
             {tab === "footer" && <FooterTab />}
             {tab === "system" && <SystemTab />}

@@ -14,6 +14,8 @@ export type AdminUser = {
   watched_count: number;
   /** AI searches a day; null = the site default, 0 = off. Admins are never limited. */
   ai_daily_limit: number | null;
+  /** Their own Settings switch: Ask AI may use their watch history and box. */
+  ai_use_history: boolean;
 };
 
 export type AdminStats = {
@@ -217,3 +219,29 @@ export const getSignInLog = (offset = 0, limit = 50) =>
 export const getAdminBanners = () => request<import("@/lib/site").HomeBannersContent>("/banners", {}, "Couldn't load the banners.");
 export const saveAdminBanners = (body: import("@/lib/site").HomeBannersContent) =>
   request<import("@/lib/site").HomeBannersContent>("/banners", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the banners.");
+
+export type AdminAIUser = {
+  id: string;
+  username: string;
+  display_name: string;
+  is_admin: boolean;
+  ai_daily_limit: number | null;
+  /** What applies today; null = no limit. */
+  effective_limit: number | null;
+  used_today: number;
+  use_history: boolean;
+};
+export type AdminAIOverview = {
+  key_configured: boolean;
+  model: string;
+  enabled: boolean;
+  default_daily_limit: number;
+  asks_today: number;
+  users: AdminAIUser[];
+};
+
+export const getAdminAI = () => request<AdminAIOverview>("/ai", {}, "Couldn't load the AI settings.");
+export const saveAdminAIConfig = (body: { enabled: boolean; default_daily_limit: number }) =>
+  request<AdminAIOverview>("/ai/config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the AI settings.");
+export const setUserAIHistory = (id: string, use_history: boolean) =>
+  request<AdminUser>(`/users/${id}/ai-history`, { method: "PUT", body: JSON.stringify({ use_history }) }, "Couldn't save that.");

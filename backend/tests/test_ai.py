@@ -286,3 +286,46 @@ class TestAdminSetsTheLimit:
 
     async def test_a_regular_person_cannot_change_it(self, person):
         assert (await person.patch(f"/api/admin/users/{person.uid}", json={"ai_daily_limit": 99})).status_code == 403
+
+
+@pytest.fixture
+async def reset_ai_config():
+    yield
+    async with AsyncSessionLocal() as db:
+        from app.models.site_setting import SiteSetting
+
+        row = await db.get(SiteSetting, "ai_config")
+        if row:
+            await db.delete(row)
+            await db.commit()
+
+
+class TestAdminAI:
+    async def test_overview_lists_people_with_usage_limit_and_history(self, admin, person, reset_ai_config):
+        body = (await admin.get("/api/admin/ai")).json()
+        assert body["key_configured"] is True and body["enabled"] is True
+        assert body["default_daily_limit"] == 5
+        mine = next(u for u in body["users"] if u["id"] == str(person.uid))
+        assert mine["effective_limit"] == 5 and mine["used_today"] == 0 and mine["use_history"] is True
+        assert (await person.get("/api/admin/ai")).status_code == 403
+
+    async def test_site_wide_number_and_switch_apply_to_everyone_without_their_own_number(self, admin, person, reset_ai_config):
+        r = await admin.put("/api/admin/ai/config", json={"enabled": True, "default_daily_limit": 9})
+        assert r.status_code == 200 and r.json()["default_daily_limit"] == 9
+        assert (await person.get("/api/ai/status")).json()["limit"] == 9
+        await admin.put("/api/admin/ai/config", json={"enabled": False, "default_daily_limit": 9})
+        assert (await person.get("/api/ai/status")).json()["enabled"] is False
+        assert (await person.post("/api/ai/ask", json={"prompt": "something sad"})).status_code == 503
+        assert (await admin.put("/api/admin/ai/config", json={"enabled": True, "default_daily_limit": -1})).status_code == 422
+        assert (await person.put("/api/admin/ai/config", json={"enabled": True, "default_daily_limit": 1})).status_code == 403
+
+    async def test_admin_can_switch_a_persons_history_use_and_it_shows_in_the_user_views(self, admin, person):
+        url = f"/api/admin/users/{person.uid}/ai-history"
+        r = await admin.put(url, json={"use_history": False})
+        assert r.status_code == 200 and r.json()["ai_use_history"] is False
+        users = (await admin.get("/api/admin/users")).json()
+        assert next(u for u in users if u["id"] == str(person.uid))["ai_use_history"] is False
+        assert (await person.get("/api/settings")).json()["ai"]["use_history"] is False
+        assert (await admin.put(url, json={"use_history": True})).json()["ai_use_history"] is True
+        assert (await person.put(url, json={"use_history": False})).status_code == 403
+        assert (await admin.put(f"/api/admin/users/{uuid.uuid4()}/ai-history", json={"use_history": True})).status_code == 404

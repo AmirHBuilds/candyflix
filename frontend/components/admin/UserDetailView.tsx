@@ -8,6 +8,7 @@ import {
   getUserDetail,
   getUserHistory,
   getUserWatchlist,
+  setUserAIHistory,
   updateAdminUser,
   type AdminUser,
   type HistoryItem,
@@ -147,6 +148,30 @@ function AiLimitCard({ user, onSaved }: { user: AdminUser; onSaved: (user: Admin
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <h3 className="mb-1 text-sm font-semibold text-white">AI searches a day</h3>
+      <label className="mb-4 flex items-start gap-2 text-sm text-white/70">
+        <input
+          type="checkbox"
+          aria-label="Use watch history for AI"
+          checked={user.ai_use_history}
+          disabled={saving}
+          onChange={async (e) => {
+            setSaving(true);
+            try {
+              onSaved(await setUserAIHistory(user.id, e.target.checked));
+              showToast(e.target.checked ? "Ask AI may use their watch history again." : "Ask AI won't use their watch history.", "success");
+            } catch (err) {
+              showToast(err instanceof Error ? err.message : "Couldn't save that.");
+            } finally {
+              setSaving(false);
+            }
+          }}
+          className="mt-0.5 h-4 w-4 accent-accent"
+        />
+        <span>
+          Use their watch history and box for better picks
+          <span className="block text-xs text-white/40">Same switch they have in Settings. Only titles and years are sent, never their name.</span>
+        </span>
+      </label>
       {user.is_admin ? (
         <p className="text-sm text-white/50">Admins have no limit.</p>
       ) : (

@@ -44,6 +44,7 @@ const u = (over: Partial<admin.AdminUser>): admin.AdminUser => ({
   watchlist_count: 2,
   watched_count: 3,
   ai_daily_limit: null,
+  ai_use_history: true,
   ...over,
 });
 const me = u({ id: "me", username: "root", display_name: "Root", is_admin: true });

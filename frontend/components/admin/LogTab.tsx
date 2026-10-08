@@ -48,6 +48,10 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted the message ${q}`;
     case "banners.update":
       return `${who} edited the home banners`;
+    case "ai.config":
+      return `${who} changed the Ask AI settings${e.detail ? ` (${e.detail})` : ""}`;
+    case "ai.history":
+      return `${who} turned ${e.detail === "On" ? "on" : "off"} watch history for Ask AI for ${q}`;
     case "footer.update":
       return `${who} edited the footer`;
     case "cache.tmdb_clear":

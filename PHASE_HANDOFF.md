@@ -826,3 +826,11 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - `AskAIButton`: the Ask AI call to action is a filled accent button with an arrow ("Ask AI, get suggestions" / "Ask AI, find it for me"). Shown in the live dropdown and on `/search` for request-like text **and when nothing was found** (typos); the small ✨ in the box stays for everything else.
 - Header: **Ask AI replaces Home** in the nav (desktop and mobile menu) when `useAIAvailable()`; otherwise Home stays. The logo is the way home. `lib/use-ai-available.ts` shares one 30 s status lookup between the header, search box and search page.
 - `/ask`: one quiet line under the box: "Uses what you recently watched and what's in <Box> for better picks. Change" (or "Not using your watch history…" when switched off). The older hint inside results was removed.
+
+## 35. Ask AI admin controls + fixes (zip `candyflix-phase14-ask-ai-v3`, applies after `candyflix-phase14-ask-ai-v2`)
+- `AskAIButton` is now always full width of its container (was `sm:w-auto sm:min-w-80`). Nav links are `flex items-center`, so "Ask AI" (sparkle + text) sits level with the other items (checked by measuring: same top/height).
+- **Admin → new AI tab** (`AITab.tsx`): Gemini key/model status, today's total AI searches, site-wide switch "Ask AI is on" + usual searches a day (0–1000), and a People list (used today, effective limit, "(their own)" marker, "Uses history" switch, Open → person page). Stored in `site_settings` key `ai_config` (`AIConfig{enabled, default_daily_limit}`; until set, env `AI_DEFAULT_DAILY_LIMIT`). When switched off, `GET /api/ai/status` says `enabled:false` (UI hides Ask AI) and `POST /api/ai/ask` returns 503.
+- **Per-person history switch:** `AdminUser.ai_use_history` (their own `settings.ai.use_history`), editable by admin from the person page ("Use watch history for AI") and the AI tab: `PUT /api/admin/users/{id}/ai-history`. Audit actions `ai.config`, `ai.history` (labels in LogTab).
+- API: `GET /api/admin/ai`, `PUT /api/admin/ai/config`. `ai_service.status(db, user)` now takes the db; `daily_limit_for(user, default)`.
+- Tests: backend 432 pass, frontend 632 pass (`ask-ai.test.tsx` +3), tsc clean.
+- Banners: `HomeBanner.tsx` (picture left, text left for all three) is included again, in case phase13-v2 wasn't applied.

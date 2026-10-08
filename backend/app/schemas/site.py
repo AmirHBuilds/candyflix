@@ -92,3 +92,10 @@ class HomeBanners(BaseModel):
             if b.enabled and not (b.title and b.text):
                 raise ValueError("A banner that is switched on needs a title and some text")
         return v
+
+
+class AIConfig(BaseModel):
+    """Site-wide Ask AI controls (admin). The daily number is what people without their own number get."""
+
+    enabled: bool = True
+    default_daily_limit: int = Field(default=5, ge=0, le=1000)

@@ -50,7 +50,6 @@ const PICTURES: ReactNode[] = [
 ];
 
 export default function HomeBanner({ banner, slot }: { banner: BannerContent; slot: 0 | 1 | 2 }) {
-  const flip = slot === 1; // the middle one faces the other way, so a stack of three doesn't look stamped out
   return (
     <aside
       aria-label={banner.title}
@@ -59,7 +58,7 @@ export default function HomeBanner({ banner, slot }: { banner: BannerContent; sl
     >
       <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-secondary/10 blur-2xl" aria-hidden />
       <div className="pointer-events-none absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-accent/10 blur-2xl" aria-hidden />
-      <div className={`relative flex flex-col items-center gap-5 p-6 sm:gap-8 sm:p-8 ${flip ? "sm:flex-row-reverse" : "sm:flex-row"}`}>
+      <div className={`relative flex flex-col items-center gap-5 p-6 sm:gap-8 sm:p-8 sm:flex-row`}>
         <div className="h-28 w-40 shrink-0 motion-safe:animate-[bannerFloat_6s_ease-in-out_infinite] sm:h-32 sm:w-44">{PICTURES[slot]}</div>
         <div className="min-w-0 text-center sm:text-left">
           <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white sm:text-2xl">{banner.title}</h2>

@@ -6,6 +6,7 @@ import AskAIPage from "@/components/AskAIPage";
 import AskResultRow from "@/components/AskResultRow";
 import Nav from "@/components/Nav";
 import NavSearch from "@/components/NavSearch";
+import AITab from "@/components/admin/AITab";
 import UserDetailView from "@/components/admin/UserDetailView";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import * as admin from "@/lib/admin";
@@ -27,7 +28,7 @@ vi.mock("@/components/UserMenu", () => ({ default: () => null }));
 vi.mock("@/components/LogoutButton", () => ({ default: () => null }));
 vi.mock("@/lib/watchlist", () => ({ addToWatchlist: vi.fn(async () => {}), removeFromWatchlist: vi.fn(async () => {}) }));
 vi.mock("@/lib/toast", () => ({ showToast: vi.fn() }));
-vi.mock("@/lib/admin", async (orig) => ({ ...(await orig<typeof import("@/lib/admin")>()), getUserDetail: vi.fn(), updateAdminUser: vi.fn(), getUserHistory: vi.fn(async () => ({ items: [], has_more: false })), getUserWatchlist: vi.fn(async () => ({ items: [], has_more: false })) }));
+vi.mock("@/lib/admin", async (orig) => ({ ...(await orig<typeof import("@/lib/admin")>()), getUserDetail: vi.fn(), updateAdminUser: vi.fn(), setUserAIHistory: vi.fn(), getAdminAI: vi.fn(), saveAdminAIConfig: vi.fn(), getUserHistory: vi.fn(async () => ({ items: [], has_more: false })), getUserWatchlist: vi.fn(async () => ({ items: [], has_more: false })) }));
 
 const title = (over: Partial<ai.AskTitle> = {}): ai.AskTitle => ({
   tmdb_id: 153, media_type: "movie", title: "Lost in Translation", year: "2003", overview: "Two lonely people in Tokyo.", genres: ["Drama", "Romance"],
@@ -206,7 +207,7 @@ describe("AskResultRow", () => {
 
 describe("admin: AI searches a day", () => {
   const person = (over: Partial<admin.AdminUser> = {}): admin.UserDetail => ({
-    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ...over },
+    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ai_use_history: true, ...over },
     now_watching: null, active_sessions: 0, last_activity: null,
   });
 
@@ -232,5 +233,58 @@ describe("admin: AI searches a day", () => {
     render(<UserDetailView userId="u1" onBack={() => {}} />);
     expect(await screen.findByText("Admins have no limit.")).toBeInTheDocument();
     expect(screen.queryByLabelText("AI searches a day")).toBeNull();
+  });
+});
+
+describe("admin: AI history and the AI tab", () => {
+  const detail = (use: boolean): admin.UserDetail => ({
+    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ai_use_history: use },
+    now_watching: null, active_sessions: 0, last_activity: null,
+  });
+
+  it("a person's page has a watch-history switch that saves", async () => {
+    vi.mocked(admin.getUserDetail).mockResolvedValue(detail(true));
+    vi.mocked(admin.setUserAIHistory).mockResolvedValue(detail(false).user);
+    render(<UserDetailView userId="u1" onBack={() => {}} />);
+    const box = await screen.findByLabelText("Use watch history for AI");
+    expect(box).toBeChecked();
+    await userEvent.setup().click(box);
+    await waitFor(() => expect(admin.setUserAIHistory).toHaveBeenCalledWith("u1", false));
+    await waitFor(() => expect(screen.getByLabelText("Use watch history for AI")).not.toBeChecked());
+  });
+
+  const overview = (over: Partial<admin.AdminAIOverview> = {}): admin.AdminAIOverview => ({
+    key_configured: true, model: "gemini-3.5-flash", enabled: true, default_daily_limit: 5, asks_today: 7,
+    users: [
+      { id: "a", username: "root", display_name: "Root", is_admin: true, ai_daily_limit: null, effective_limit: null, used_today: 4, use_history: true },
+      { id: "b", username: "bob", display_name: "Bob", is_admin: false, ai_daily_limit: 2, effective_limit: 2, used_today: 2, use_history: true },
+    ], ...over,
+  });
+
+  it("shows the key, today's total and each person, and saves the site-wide settings", async () => {
+    vi.mocked(admin.getAdminAI).mockResolvedValue(overview());
+    vi.mocked(admin.saveAdminAIConfig).mockResolvedValue(overview({ default_daily_limit: 8, enabled: false }));
+    const user = userEvent.setup();
+    render(<AITab />);
+    expect(await screen.findByText("API key set · gemini-3.5-flash")).toBeInTheDocument();
+    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.getByText(/4 used today · No limit/)).toBeInTheDocument();
+    expect(screen.getByText(/2 used today · 2 a day \(their own\)/)).toBeInTheDocument();
+    const limit = screen.getByLabelText("Usual AI searches a day");
+    await user.clear(limit);
+    await user.type(limit, "8");
+    await user.click(screen.getByLabelText("Ask AI is on"));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(admin.saveAdminAIConfig).toHaveBeenCalledWith({ enabled: false, default_daily_limit: 8 }));
+  });
+
+  it("flips one person's history use from the list, and says when there is no key", async () => {
+    vi.mocked(admin.getAdminAI).mockResolvedValue(overview({ key_configured: false }));
+    vi.mocked(admin.setUserAIHistory).mockResolvedValue(detail(false).user);
+    render(<AITab />);
+    expect(await screen.findByText(/No API key/)).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByLabelText("Use watch history for Bob"));
+    await waitFor(() => expect(admin.setUserAIHistory).toHaveBeenCalledWith("b", false));
+    await waitFor(() => expect(screen.getByLabelText("Use watch history for Bob")).not.toBeChecked());
   });
 });

@@ -49,8 +49,8 @@ function SearchToggle({ open, onToggle }: { open: boolean; onToggle: () => void 
 
 function AskLabel() {
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-accent">
+    <span className="flex items-center gap-1.5">
+      <span className="flex text-accent">
         <SparkleIcon />
       </span>
       Ask AI
@@ -107,7 +107,7 @@ export default function Nav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={active ? "text-white" : "text-white/50 hover:text-white/80"}
+                className={`flex items-center ${active ? "text-white" : "text-white/50 hover:text-white/80"}`}
               >
                 {link.href === "/ask" ? <AskLabel /> : link.label}
               </Link>

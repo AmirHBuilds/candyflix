@@ -9,7 +9,7 @@ export default function AskAIButton({ query, onClick, hint }: { query: string; o
       type="button"
       onClick={onClick}
       aria-label={`Ask AI about ${query}`}
-      className="group flex w-full items-center gap-3 rounded-xl bg-accent px-4 py-3 text-left text-on-accent shadow-[0_6px_24px_-8px_color-mix(in_srgb,var(--color-accent)_70%,transparent)] transition-all hover:-translate-y-px hover:bg-accent-hover active:translate-y-0 sm:w-auto sm:min-w-80 sm:max-w-full"
+      className="group flex w-full min-w-0 items-center gap-3 rounded-xl bg-accent px-4 py-3 text-left text-on-accent shadow-[0_6px_24px_-8px_color-mix(in_srgb,var(--color-accent)_70%,transparent)] transition-all hover:-translate-y-px hover:bg-accent-hover active:translate-y-0"
     >
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-on-accent/15">
         <SparkleIcon />

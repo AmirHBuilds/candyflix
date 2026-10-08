@@ -337,3 +337,36 @@ async def sign_in_log(
     db: AsyncSession = Depends(get_db),
 ):
     return await audit_service.list_sign_ins(db, limit, offset, user_id)
+
+
+@router.get("/ai", response_model=schemas.AdminAIOverview)
+async def ai_overview(db: AsyncSession = Depends(get_db)):
+    return await admin_service.ai_overview(db)
+
+
+@router.put("/ai/config", response_model=schemas.AdminAIOverview)
+async def update_ai_config(
+    payload: schemas.AdminAIConfigUpdate, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
+    await admin_service.set_ai_config(db, payload)
+    detail = ("On" if payload.enabled else "Off") + f", {payload.default_daily_limit} a day"
+    await audit_service.record(db, actor, "ai.config", detail=detail)
+    return await admin_service.ai_overview(db)
+
+
+@router.put("/users/{user_id}/ai-history", response_model=schemas.AdminUser)
+async def update_ai_history(
+    user_id: uuid.UUID,
+    payload: schemas.AdminAIHistoryUpdate,
+    actor: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        target = await admin_service.get_user(db, user_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+    await admin_service.set_ai_history(db, target, payload.use_history)
+    await audit_service.record(
+        db, actor, "ai.history", target_name=target.display_name, detail="On" if payload.use_history else "Off"
+    )
+    return await admin_service._admin_view(db, target.id)
