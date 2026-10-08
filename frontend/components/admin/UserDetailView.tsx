@@ -6,11 +6,13 @@ import { NowWatchingRow, formatClock, whatLabel } from "@/components/admin/NowWa
 import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import {
   getUserDetail,
+  getUserAISearches,
   getUserHistory,
   getUserWatchlist,
   setUserAIHistory,
   updateAdminUser,
   type AdminUser,
+  type AISearchRow,
   type HistoryItem,
   type UserDetail,
   type WatchlistEntry,
@@ -87,6 +89,62 @@ function History({ userId }: { userId: string }) {
                 · {when(h.updated_at)}
               </p>
             </div>
+          </li>
+        ))}
+      </ul>
+      {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
+      {items.length < total && (
+        <button type="button" disabled={busy} onClick={() => more(items.length)} className={quietButton}>
+          {busy ? "Loading…" : `Load more (${total - items.length} left)`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AISearches({ userId }: { userId: string }) {
+  const [items, setItems] = useState<AISearchRow[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const more = useCallback(
+    async (offset: number) => {
+      setBusy(true);
+      try {
+        const page = await getUserAISearches(userId, offset, PAGE);
+        setItems((cur) => (offset === 0 ? page.items : [...cur, ...page.items]));
+        setTotal(page.total);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't load their AI searches.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [userId],
+  );
+
+  useEffect(() => {
+    more(0);
+  }, [more]);
+
+  if (error && items.length === 0) return <p role="alert" className="text-sm text-red-300">{error}</p>;
+  if (total === null) return <p className="text-sm text-white/50">Loading…</p>;
+  if (total === 0) return <p className="text-sm text-white/40">No AI searches yet.</p>;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-white/40">
+        {total} {total === 1 ? "search" : "searches"}, latest first. Repeats answered from memory aren&apos;t counted.
+      </p>
+      <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
+        {items.map((s, i) => (
+          <li key={`${s.created_at}-${i}`} className="px-4 py-3">
+            <p className="break-words text-sm text-white/90">“{s.prompt}”</p>
+            <p className="mt-0.5 text-xs text-white/40">
+              {when(s.created_at)} · {s.results} {s.results === 1 ? "title" : "titles"} · {s.used_history ? "used their history" : "no history"}
+            </p>
           </li>
         ))}
       </ul>
@@ -205,12 +263,13 @@ function AiLimitCard({ user, onSaved }: { user: AdminUser; onSaved: (user: Admin
   );
 }
 
-const SECTION_IDS = ["history", "box"] as const;
+const SECTION_IDS = ["history", "box", "ai"] as const;
 
 // The second tab is that person's own box ("Eve Box"), not the viewer's.
 const sectionsFor = (displayName: string) => [
   { id: "history" as const, label: "Watch history" },
   { id: "box" as const, label: boxNameFor(displayName) },
+  { id: "ai" as const, label: "AI searches" },
 ];
 
 export default function UserDetailView({ userId, onBack, backLabel = "All people" }: { userId: string; onBack: () => void; backLabel?: string }) {
@@ -286,7 +345,7 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
               </button>
             ))}
           </div>
-          {section === "history" ? <History userId={userId} /> : <Box userId={userId} name={detail.user.display_name} />}
+          {section === "history" ? <History userId={userId} /> : section === "box" ? <Box userId={userId} name={detail.user.display_name} /> : <AISearches userId={userId} />}
         </>
       )}
     </section>

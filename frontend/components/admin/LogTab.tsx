@@ -32,6 +32,8 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted ${t}`;
     case "history.view":
       return `${who} looked at ${t}'s watch history`;
+    case "ai.searches.view":
+      return `${who} looked at ${t}'s AI searches`;
     case "watchlist.view":
       return `${who} looked at ${e.target_name ? boxNameFor(e.target_name) : "someone's box"}`;
     case "announcement.create":

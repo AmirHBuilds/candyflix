@@ -370,3 +370,22 @@ async def update_ai_history(
         db, actor, "ai.history", target_name=target.display_name, detail="On" if payload.use_history else "Off"
     )
     return await admin_service._admin_view(db, target.id)
+
+
+@router.get("/users/{user_id}/ai-searches", response_model=schemas.AISearchPage)
+async def user_ai_searches(
+    user_id: uuid.UUID,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    actor: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        page = await admin_service.ai_searches(db, user_id, limit, offset)
+        if offset == 0:
+            await audit_service.record(
+                db, actor, "ai.searches.view", target=await admin_service.get_user(db, user_id), dedupe=audit_service.VIEW_DEDUPE
+            )
+        return page
+    except admin_service.AdminError as exc:
+        _raise(exc)

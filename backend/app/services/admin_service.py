@@ -25,6 +25,7 @@ from app.models.user import User
 from app.models.watch_progress import WatchProgress
 from app.models.watchlist_item import WatchlistItem
 from app.schemas import admin as schemas
+from app.models.ai_search import AISearch
 from app.models.user_settings import UserSettings as UserSettingsRow
 from app.schemas.site import AIConfig
 from app.services import ai_service, auth_service, avatar_service, settings_service, site_service, tmdb_service
@@ -651,3 +652,14 @@ async def set_ai_config(db: AsyncSession, payload: schemas.AdminAIConfigUpdate) 
 
 async def set_ai_history(db: AsyncSession, target: User, use_history: bool) -> None:
     await settings_service.patch_settings(db, target.id, {"ai": {"use_history": use_history}})
+
+
+async def ai_searches(db: AsyncSession, user_id: uuid.UUID, limit: int, offset: int) -> schemas.AISearchPage:
+    await get_user(db, user_id)
+    total = await db.scalar(select(func.count()).select_from(AISearch).where(AISearch.user_id == user_id)) or 0
+    rows = (
+        await db.execute(
+            select(AISearch).where(AISearch.user_id == user_id).order_by(AISearch.created_at.desc()).limit(limit).offset(offset)
+        )
+    ).scalars().all()
+    return schemas.AISearchPage(items=[schemas.AISearchRow.model_validate(r, from_attributes=True) for r in rows], total=total)

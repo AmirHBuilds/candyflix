@@ -834,3 +834,11 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - API: `GET /api/admin/ai`, `PUT /api/admin/ai/config`. `ai_service.status(db, user)` now takes the db; `daily_limit_for(user, default)`.
 - Tests: backend 432 pass, frontend 632 pass (`ask-ai.test.tsx` +3), tsc clean.
 - Banners: `HomeBanner.tsx` (picture left, text left for all three) is included again, in case phase13-v2 wasn't applied.
+
+## 36. Ask AI search log (zip `candyflix-phase14-ask-ai-v4`, applies after `-v3`)
+- **Needs migration `e6b0c3d8f125`** (table `ai_searches`: user_id → users ON DELETE CASCADE, prompt ≤400, results, used_history, created_at). `auto_migrate` runs it.
+- `ai_service.ask` saves a row after every real (Gemini-answered) search. Cached repeats, failures and refunded asks are not logged.
+- Admin → person → new **AI searches** tab (next to Watch history / Box): prompt, time, titles returned, whether their history was used; newest first, "Load more". `GET /api/admin/users/{id}/ai-searches?limit&offset`; viewing is audited (`ai.searches.view`, "looked at X's AI searches", deduped 10 min like history).
+- Gemini free limits: Google no longer publishes them (see AI Studio → rate limit). One third-party measurement (2026-09-02, new project): Flash models 5 RPM / 20 RPD, Flash-Lite 15 RPM / 500 RPD; per project, reset midnight Pacific. A Gemini 429 already falls back to `gemini_fallback_model` (flash-lite).
+- Known/accepted: the nav shows Home for a moment on reload, then switches to Ask AI (waiting for the status call).
+- Tests: backend 434, frontend 634, tsc clean.

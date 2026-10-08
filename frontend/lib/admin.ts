@@ -245,3 +245,8 @@ export const saveAdminAIConfig = (body: { enabled: boolean; default_daily_limit:
   request<AdminAIOverview>("/ai/config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the AI settings.");
 export const setUserAIHistory = (id: string, use_history: boolean) =>
   request<AdminUser>(`/users/${id}/ai-history`, { method: "PUT", body: JSON.stringify({ use_history }) }, "Couldn't save that.");
+
+export type AISearchRow = { prompt: string; results: number; used_history: boolean; created_at: string };
+export type AISearchPage = { items: AISearchRow[]; total: number };
+export const getUserAISearches = (id: string, offset = 0, limit = 50) =>
+  request<AISearchPage>(`/users/${id}/ai-searches?limit=${limit}&offset=${offset}`, {}, "Couldn't load their AI searches.");

@@ -329,3 +329,25 @@ class TestAdminAI:
         assert (await admin.put(url, json={"use_history": True})).json()["ai_use_history"] is True
         assert (await person.put(url, json={"use_history": False})).status_code == 403
         assert (await admin.put(f"/api/admin/users/{uuid.uuid4()}/ai-history", json={"use_history": True})).status_code == 404
+
+
+class TestSearchLog:
+    @respx.mock
+    async def test_admin_sees_what_a_person_asked_newest_first_and_cached_repeats_are_not_logged(self, person, admin):
+        respx.post(GEMINI).mock(side_effect=lambda r: gemini_reply(general=[s("Her", "2013")]))
+        await person.post("/api/ai/ask", json={"prompt": "a lonely robot love story"})
+        await person.post("/api/ai/ask", json={"prompt": "a lonely robot love story"})  # cached: not a new search
+        await person.post("/api/ai/ask", json={"prompt": "something quiet"})
+        page = (await admin.get(f"/api/admin/users/{person.uid}/ai-searches")).json()
+        assert page["total"] == 2
+        assert [i["prompt"] for i in page["items"]] == ["something quiet", "a lonely robot love story"]
+        assert page["items"][0]["results"] == 1
+        assert (await person.get(f"/api/admin/users/{person.uid}/ai-searches")).status_code == 403
+        assert (await admin.get(f"/api/admin/users/{uuid.uuid4()}/ai-searches")).status_code == 404
+
+    @respx.mock
+    async def test_a_failed_search_is_not_logged(self, person, admin):
+        respx.post(GEMINI).mock(return_value=httpx.Response(500))
+        respx.post(FALLBACK).mock(return_value=httpx.Response(500))
+        await person.post("/api/ai/ask", json={"prompt": "anything at all"})
+        assert (await admin.get(f"/api/admin/users/{person.uid}/ai-searches")).json()["total"] == 0

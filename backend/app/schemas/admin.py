@@ -307,3 +307,15 @@ class AdminAIConfigUpdate(BaseModel):
 
 class AdminAIHistoryUpdate(BaseModel):
     use_history: bool
+
+
+class AISearchRow(BaseModel):
+    prompt: str
+    results: int
+    used_history: bool
+    created_at: datetime
+
+
+class AISearchPage(BaseModel):
+    items: list[AISearchRow]
+    total: int

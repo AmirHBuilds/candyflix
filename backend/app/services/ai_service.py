@@ -23,6 +23,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.models.ai_search import AISearch
 from app.core.redis import get_redis
 from app.models.user import User
 from app.models.watch_progress import WatchProgress
@@ -353,6 +354,9 @@ async def ask(db: AsyncSession, user: User, prompt: str) -> schemas.AskResponse:
             used_history=use_history and bool(watched_ids or saved_ids),
         )
         await redis.set(cache_key, data.model_dump_json(), ex=ANSWER_CACHE_TTL)
+        # Remembered for the admin (a repeat served from the cache isn't a new search).
+        db.add(AISearch(user_id=user.id, prompt=prompt, results=len(for_you) + len(general), used_history=data.used_history))
+        await db.commit()
 
     used = await _used_today(user)
     data.limit = limit

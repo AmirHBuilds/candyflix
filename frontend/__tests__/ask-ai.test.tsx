@@ -28,7 +28,7 @@ vi.mock("@/components/UserMenu", () => ({ default: () => null }));
 vi.mock("@/components/LogoutButton", () => ({ default: () => null }));
 vi.mock("@/lib/watchlist", () => ({ addToWatchlist: vi.fn(async () => {}), removeFromWatchlist: vi.fn(async () => {}) }));
 vi.mock("@/lib/toast", () => ({ showToast: vi.fn() }));
-vi.mock("@/lib/admin", async (orig) => ({ ...(await orig<typeof import("@/lib/admin")>()), getUserDetail: vi.fn(), updateAdminUser: vi.fn(), setUserAIHistory: vi.fn(), getAdminAI: vi.fn(), saveAdminAIConfig: vi.fn(), getUserHistory: vi.fn(async () => ({ items: [], has_more: false })), getUserWatchlist: vi.fn(async () => ({ items: [], has_more: false })) }));
+vi.mock("@/lib/admin", async (orig) => ({ ...(await orig<typeof import("@/lib/admin")>()), getUserDetail: vi.fn(), updateAdminUser: vi.fn(), setUserAIHistory: vi.fn(), getAdminAI: vi.fn(), getUserAISearches: vi.fn(), saveAdminAIConfig: vi.fn(), getUserHistory: vi.fn(async () => ({ items: [], has_more: false })), getUserWatchlist: vi.fn(async () => ({ items: [], has_more: false })) }));
 
 const title = (over: Partial<ai.AskTitle> = {}): ai.AskTitle => ({
   tmdb_id: 153, media_type: "movie", title: "Lost in Translation", year: "2003", overview: "Two lonely people in Tokyo.", genres: ["Drama", "Romance"],
@@ -286,5 +286,34 @@ describe("admin: AI history and the AI tab", () => {
     await userEvent.setup().click(screen.getByLabelText("Use watch history for Bob"));
     await waitFor(() => expect(admin.setUserAIHistory).toHaveBeenCalledWith("b", false));
     await waitFor(() => expect(screen.getByLabelText("Use watch history for Bob")).not.toBeChecked());
+  });
+});
+
+describe("admin: a person's AI searches", () => {
+  it("lists what they asked, newest first, in its own section", async () => {
+    vi.mocked(admin.getUserDetail).mockResolvedValue({
+      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ai_use_history: true },
+      now_watching: null, active_sessions: 0, last_activity: null,
+    });
+    vi.mocked(admin.getUserHistory).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(admin.getUserAISearches).mockResolvedValue({
+      total: 2,
+      items: [
+        { prompt: "something quiet", results: 8, used_history: true, created_at: "2026-10-08T10:00:00Z" },
+        { prompt: "a lonely robot love story", results: 1, used_history: false, created_at: "2026-10-07T10:00:00Z" },
+      ],
+    });
+    render(<UserDetailView userId="u1" onBack={() => {}} />);
+    await userEvent.setup().click(await screen.findByRole("tab", { name: "AI searches" }));
+    expect(await screen.findByText("“something quiet”")).toBeInTheDocument();
+    expect(screen.getByText(/8 titles · used their history/)).toBeInTheDocument();
+    expect(screen.getByText(/1 title · no history/)).toBeInTheDocument();
+  });
+
+  it("says when there are none", async () => {
+    vi.mocked(admin.getUserAISearches).mockResolvedValue({ total: 0, items: [] });
+    render(<UserDetailView userId="u1" onBack={() => {}} />);
+    await userEvent.setup().click(await screen.findByRole("tab", { name: "AI searches" }));
+    expect(await screen.findByText("No AI searches yet.")).toBeInTheDocument();
   });
 });
