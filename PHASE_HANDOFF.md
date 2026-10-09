@@ -872,3 +872,15 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - Spoilers: static soft blur, hover clarifies, gentle fade on reveal (no pulse/glow).
 - Watch assistant: quick questions row uses ‹ › buttons (no drag); user bubble shows local clock time + "· video mm:ss".
 - Admin panel: "Update" button remounts the open view to refetch.
+
+## §40 Phase 16 v3 (applies after `candyflix-phase16-watch-assistant-v2`)
+- Admin panel: the Update button moved to the heading row (tab bar is full width again) and no longer renders a time in `title` (that caused a hydration mismatch: server vs browser clock).
+- Trailer dialog has a "Watch on YouTube" link (opens youtube.com in a new tab).
+- Next phase (not started): Telegram reporting bot, config in `.env`.
+
+## §41 Phase 17 — Telegram reports (applies after `candyflix-phase16-watch-assistant-v3`)
+- `backend/app/services/telegram_service.py`; config only from `.env` (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_TOPIC_<SIGN_INS|ACCOUNTS|ADMIN|AI|SECURITY|ERRORS|SYSTEM>`). No token → nothing happens. Empty topic id → posts to the group's main chat.
+- Fire-and-forget (`notify` creates a task; failures only log). Repeats of the same security/AI/error text within 60 s are sent once.
+- Hooks: `audit_service.record` (admin actions; account actions → `accounts` topic, everything else → `admin`; page views not reported), `record_sign_in` → `sign_ins`, refused logins → `security`, quota pause in `ai_service.pause_model` → `ai`, unhandled exceptions (handler in `main.py`) → `errors`, startup → `system`.
+- Nothing private is sent (no passwords, prompts or watch history). Tests: `tests/test_telegram.py`. Backend 472 passed.
+- Remember: `docker compose` needs `backend/.env` edited, then `docker compose up -d --build backend` (or restart).

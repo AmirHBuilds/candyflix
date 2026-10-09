@@ -30,7 +30,7 @@ from app.models.user import User
 from app.models.watch_progress import WatchProgress
 from app.models.watchlist_item import WatchlistItem
 from app.schemas import ai as schemas
-from app.services import settings_service, site_service, tmdb_service
+from app.services import settings_service, site_service, telegram_service, tmdb_service
 
 logger = logging.getLogger("app.ai")
 
@@ -292,6 +292,7 @@ def quota_pause_seconds(res: httpx.Response) -> int | None:
 async def pause_model(model: str, seconds: int) -> None:
     try:
         await get_redis().set(PAUSE_PREFIX + model, str(int(time.time()) + seconds), ex=seconds)
+        telegram_service.report_model_paused(model, seconds)
     except Exception:
         logger.warning("Couldn't record that %s is paused", model)
 

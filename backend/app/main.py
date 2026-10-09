@@ -22,7 +22,8 @@ enrich-at-read-time pattern as the watchlist.
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -51,6 +52,7 @@ from app.api.routes import (
 )
 from app.core.config import get_settings
 from app.core.migrate import run_migrations
+from app.services import telegram_service
 
 settings = get_settings()
 
@@ -89,6 +91,7 @@ class NoCacheStaticFiles(StaticFiles):
 async def lifespan(_app: FastAPI):
     if settings.auto_migrate:
         await run_migrations()
+    telegram_service.report_started()
     yield
 
 
@@ -98,6 +101,12 @@ app = FastAPI(
     description="Backend API for CandyFlix — a small, private movie & TV app.",
     version="0.1.0",
 )
+
+@app.exception_handler(Exception)
+async def report_unhandled(request: Request, exc: Exception):
+    telegram_service.report_error(request.method, request.url.path, exc)
+    return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
+
 
 app.add_middleware(
     CORSMiddleware,

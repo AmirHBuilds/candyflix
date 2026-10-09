@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.audit import AuditLog, SignInLog
 from app.models.user import User
 from app.schemas import admin as schemas
+from app.services import telegram_service
 
 VIEW_DEDUPE = timedelta(minutes=10)
 
@@ -46,6 +47,8 @@ async def record(
         query = query.where(AuditLog.target_user_id == target_id)
         if await db.scalar(query):
             return
+    if dedupe is None:  # merely looking at a page is not reported
+        telegram_service.report_admin_action(actor_name, action, name, detail)
     db.add(
         AuditLog(
             actor_id=actor_id,
@@ -86,8 +89,10 @@ async def list_audit(db: AsyncSession, limit: int, offset: int) -> schemas.Audit
 
 
 async def record_sign_in(db: AsyncSession, user: User, user_agent: str | None) -> None:
-    db.add(SignInLog(user_id=user.id, user_agent=(user_agent or None) and user_agent[:300]))
+    name, uid = user.display_name, user.id
+    db.add(SignInLog(user_id=uid, user_agent=(user_agent or None) and user_agent[:300]))
     await db.commit()
+    telegram_service.report_sign_in(name, device_label(user_agent))
 
 
 def device_label(user_agent: str | None) -> str:

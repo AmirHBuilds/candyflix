@@ -44,6 +44,21 @@ class Settings(BaseSettings):
     # Questions to the watch assistant (the player's side panel) per person per day. Counted separately from AI searches.
     watch_ai_default_daily_limit: int = 20
 
+    # Phase 17 — Telegram reports. Create a bot with @BotFather, add it to a group that has Topics
+    # turned on (make it an admin), and put the group's chat id here (it starts with -100).
+    # Each topic id is the number of the topic's first message / thread (see .env.example).
+    # Anything left empty is simply not reported; with no token nothing is sent at all.
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+    telegram_topic_sign_ins: str = ""
+    telegram_topic_accounts: str = ""
+    telegram_topic_admin: str = ""
+    telegram_topic_ai: str = ""
+    telegram_topic_security: str = ""
+    telegram_topic_errors: str = ""
+    telegram_topic_system: str = ""
+    telegram_base_url: str = "https://api.telegram.org"
+
     # Session / auth secret (used starting Phase 2)
     session_secret: str = "change-me-in-env"
 

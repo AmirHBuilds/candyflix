@@ -13,7 +13,7 @@ from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME, session_cookie_kwargs
 from app.models.user import User
 from app.schemas.auth import LoginRequest, ProfileEntry, UserPublic
-from app.services import auth_service
+from app.services import auth_service, telegram_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -36,7 +36,9 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     user = await auth_service.authenticate(db, payload.username, payload.password)
+    ip = request.client.host if request.client else None
     if user is None:
+        telegram_service.report_failed_sign_in(payload.username, ip, "wrong name or password")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -45,6 +47,7 @@ async def login(
     # Only said after the password was right, so guessing can't be used
     # to discover which accounts exist or are switched off.
     if user.is_disabled:
+        telegram_service.report_failed_sign_in(payload.username, ip, "account is switched off")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This account has been disabled. Please ask an admin.",
