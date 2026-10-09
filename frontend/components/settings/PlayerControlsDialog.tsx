@@ -11,6 +11,7 @@ import {
   GearIcon,
   NextIcon,
   PipIcon,
+  AssistantIcon,
   PlayIcon,
   PrevIcon,
   VolumeHighIcon,
@@ -23,8 +24,7 @@ export const PLAYER_PREVIEW_IMAGE = "/images/player-preview.png";
 /**
  * Choose which buttons the player shows. The mock-up bar sits on a
  * placeholder frame and mirrors the real bar's order: tap a button to
- * remove it; a removed one stays as a dotted ghost you can tap to bring
- * back. Play/Pause and Settings can't be removed.
+ * remove it; bring it back with its switch in the list below. Play/Pause and Settings can't be removed.
  */
 export default function PlayerControlsDialog({ onClose }: { onClose: () => void }) {
   const { settings, update } = useSettings();
@@ -36,19 +36,16 @@ export default function PlayerControlsDialog({ onClose }: { onClose: () => void 
   function Btn({ id, children, round = true }: { id: (typeof CONTROLS)[number]["id"]; children: ReactNode; round?: boolean }) {
     const info = CONTROLS.find((c) => c.id === id)!;
     const on = info.locked ? true : controls[id as ControlId];
+    if (!on) return null; // a switched-off button simply isn't in the preview; the list below brings it back
     return (
       <button
         type="button"
         disabled={info.locked}
-        onClick={() => set(id as ControlId, !on)}
-        aria-label={`${on ? "Remove" : "Add"} ${info.label} ${info.locked ? "(always shown)" : "button"}`}
-        title={info.locked ? `${info.label}: always shown` : `${on ? "Remove" : "Add"} ${info.label}`}
+        onClick={() => set(id as ControlId, false)}
+        aria-label={`Remove ${info.label} ${info.locked ? "(always shown)" : "button"}`}
+        title={info.locked ? `${info.label}: always shown` : `Remove ${info.label}`}
         className={`flex h-8 items-center justify-center text-white transition-all sm:h-9 ${round ? "w-8 rounded-full sm:w-9" : "rounded-full px-3 text-sm font-medium tabular-nums"} ${
-          on
-            ? info.locked
-              ? "opacity-100"
-              : "text-white/90 hover:bg-white/20"
-            : "border border-dashed border-white/50 opacity-50 hover:opacity-100"
+          info.locked ? "opacity-100" : "text-white/90 hover:bg-white/20"
         }`}
       >
         {children}
@@ -56,13 +53,13 @@ export default function PlayerControlsDialog({ onClose }: { onClose: () => void 
     );
   }
   const pill = "flex items-center gap-0.5 rounded-full bg-white/15 p-1";
-  const showPill = (id: ControlId) => controls[id];
+  const showPill = (...ids: ControlId[]) => ids.some((id) => controls[id]);
 
   return (
     <Dialog title="Customise player buttons" onClose={onClose} wide>
       <div className="space-y-5">
         <p className="text-sm text-white/60">
-          This is your player. Tap a button to remove it; a dotted one is hidden, tap it to bring it back. A removed button&apos;s keyboard shortcut stops working too.
+          This is your player. Tap a button to remove it; switch it back on in the list below. A removed button&apos;s keyboard shortcut stops working too.
         </p>
 
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black" data-testid="player-mockup">
@@ -79,27 +76,36 @@ export default function PlayerControlsDialog({ onClose }: { onClose: () => void 
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 sm:h-10 sm:w-10">
                 <Btn id="play"><PlayIcon /></Btn>
               </div>
-              <div className={pill}>
-                <Btn id="seek_back"><BackIcon /></Btn>
-                <Btn id="seek_forward"><ForwardIcon /></Btn>
-              </div>
-              <div className={pill}>
-                <Btn id="episodes" round={false}>
-                  <PrevIcon />
-                  <span className="w-1" />
-                  <NextIcon />
-                </Btn>
-              </div>
-              <div className={`${pill} pr-3`}>
-                <Btn id="volume"><VolumeHighIcon /></Btn>
-                <span className={`h-1 w-16 rounded-full bg-white/30 transition-opacity ${showPill("volume") ? "" : "opacity-30"}`}>
-                  <span className="block h-full w-2/3 rounded-full bg-accent" />
-                </span>
-              </div>
-              <div className={pill}>
-                <Btn id="time" round={false}>12:03 / 45:10</Btn>
-              </div>
+              {showPill("seek_back", "seek_forward") && (
+                <div className={pill}>
+                  <Btn id="seek_back"><BackIcon /></Btn>
+                  <Btn id="seek_forward"><ForwardIcon /></Btn>
+                </div>
+              )}
+              {showPill("episodes") && (
+                <div className={pill}>
+                  <Btn id="episodes" round={false}>
+                    <PrevIcon />
+                    <span className="w-1" />
+                    <NextIcon />
+                  </Btn>
+                </div>
+              )}
+              {showPill("volume") && (
+                <div className={`${pill} pr-3`}>
+                  <Btn id="volume"><VolumeHighIcon /></Btn>
+                  <span className="h-1 w-16 rounded-full bg-white/30">
+                    <span className="block h-full w-2/3 rounded-full bg-accent" />
+                  </span>
+                </div>
+              )}
+              {showPill("time") && (
+                <div className={pill}>
+                  <Btn id="time" round={false}>12:03 / 45:10</Btn>
+                </div>
+              )}
               <div className={`${pill} ml-auto`}>
+                <Btn id="assistant"><AssistantIcon /></Btn>
                 <Btn id="captions"><CCIcon active={false} /></Btn>
                 <Btn id="settings"><GearIcon /></Btn>
                 <Btn id="pip"><PipIcon /></Btn>

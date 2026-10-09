@@ -14,6 +14,8 @@ export type AdminUser = {
   watched_count: number;
   /** AI searches a day; null = the site default, 0 = off. Admins are never limited. */
   ai_daily_limit: number | null;
+  /** The same, for the watch assistant in the player. */
+  watch_ai_daily_limit: number | null;
   /** Their own Settings switch: Ask AI may use their watch history and box. */
   ai_use_history: boolean;
 };
@@ -68,7 +70,7 @@ export const createAdminUser = (body: { username: string; display_name: string; 
   request<AdminUser>("/users", { method: "POST", body: JSON.stringify(body) }, "Couldn't create that user.");
 export const updateAdminUser = (
   id: string,
-  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null }>
+  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null; watch_ai_daily_limit: number | null }>
 ) => request<AdminUser>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }, "Couldn't save the changes.");
 export const resetAdminPassword = (id: string, newPassword: string) =>
   request<void>(`/users/${id}/password`, { method: "POST", body: JSON.stringify({ new_password: newPassword }) }, "Couldn't reset the password.");
@@ -229,6 +231,9 @@ export type AdminAIUser = {
   /** What applies today; null = no limit. */
   effective_limit: number | null;
   used_today: number;
+  watch_ai_daily_limit: number | null;
+  watch_effective_limit: number | null;
+  watch_used_today: number;
   use_history: boolean;
 };
 export type AdminAIOverview = {
@@ -237,11 +242,14 @@ export type AdminAIOverview = {
   enabled: boolean;
   default_daily_limit: number;
   asks_today: number;
+  watch_enabled: boolean;
+  watch_daily_limit: number;
+  watch_asks_today: number;
   users: AdminAIUser[];
 };
 
 export const getAdminAI = () => request<AdminAIOverview>("/ai", {}, "Couldn't load the AI settings.");
-export const saveAdminAIConfig = (body: { enabled: boolean; default_daily_limit: number }) =>
+export const saveAdminAIConfig = (body: { enabled: boolean; default_daily_limit: number; watch_enabled: boolean; watch_daily_limit: number }) =>
   request<AdminAIOverview>("/ai/config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the AI settings.");
 export const setUserAIHistory = (id: string, use_history: boolean) =>
   request<AdminUser>(`/users/${id}/ai-history`, { method: "PUT", body: JSON.stringify({ use_history }) }, "Couldn't save that.");
@@ -250,3 +258,20 @@ export type AISearchRow = { prompt: string; results: number; used_history: boole
 export type AISearchPage = { items: AISearchRow[]; total: number };
 export const getUserAISearches = (id: string, offset = 0, limit = 50) =>
   request<AISearchPage>(`/users/${id}/ai-searches?limit=${limit}&offset=${offset}`, {}, "Couldn't load their AI searches.");
+
+// --- The crown on admins' profiles (login screen) ---
+export const getAdminBadge = () => request<import("@/lib/site").BadgeContent>("/badge", {}, "Couldn't load the badge.");
+export const saveAdminBadgePosition = (position: import("@/lib/site").BadgePosition) =>
+  request<import("@/lib/site").BadgeContent>("/badge", { method: "PUT", body: JSON.stringify({ position }) }, "Couldn't save that.");
+export const removeAdminBadgeImage = () =>
+  request<import("@/lib/site").BadgeContent>("/badge/image", { method: "DELETE" }, "Couldn't go back to the crown.");
+export async function uploadAdminBadgeImage(file: File): Promise<import("@/lib/site").BadgeContent> {
+  const form = new FormData(); // no JSON header: the browser sets the multipart one
+  form.append("file", file);
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/admin/badge/image`, { method: "PUT", credentials: "include", body: form }, 60_000);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't upload that picture.");
+  }
+  return res.json();
+}

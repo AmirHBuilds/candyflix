@@ -347,14 +347,15 @@ class TestRolesAndAuthShape:
         finally:
             await _cleanup(db, a, n)
 
-    async def test_the_public_profile_list_does_not_reveal_who_is_admin(self, client, db):
+    async def test_the_public_profile_list_marks_admins_for_the_crown_but_has_no_secrets(self, client, db):
         a = _name()
         try:
             await _login_as(client, db, a, is_admin=True)
             profiles = (await client.get("/api/auth/users")).json()
             mine = next(p for p in profiles if p["username"] == a)
-            assert "is_admin" not in mine
+            assert mine["is_admin"] is True  # the login screen draws the crown from this
             assert "password_hash" not in mine
+            assert "is_disabled" not in mine
         finally:
             await _cleanup(db, a)
 

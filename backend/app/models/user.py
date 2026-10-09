@@ -48,6 +48,8 @@ class User(Base):
     # AI searches per day for this person. None = the site default; 0 = switched off.
     # Admins are never limited, whatever this says.
     ai_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # The same, for questions to the watch assistant in the player.
+    watch_ai_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     @property
     def avatar_url(self) -> str | None:

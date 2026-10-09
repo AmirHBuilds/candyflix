@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     gemini_fallback_model: str = "gemini-3.5-flash-lite"
     # AI searches per person per day; an admin can change it for one person, and admins have no limit.
     ai_default_daily_limit: int = 5
+    # Questions to the watch assistant (the player's side panel) per person per day. Counted separately from AI searches.
+    watch_ai_default_daily_limit: int = 20
 
     # Session / auth secret (used starting Phase 2)
     session_secret: str = "change-me-in-env"

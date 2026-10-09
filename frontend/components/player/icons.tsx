@@ -161,3 +161,13 @@ export function BackChevronIcon() {
     </svg>
   );
 }
+
+/** "Ask about this": outlined sparkles, the same weight as the other control icons. */
+export function AssistantIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+      <path d="M10.5 4l1.7 4.8L17 10.5l-4.8 1.7L10.5 17l-1.7-4.8L4 10.5l4.8-1.7z" />
+      <path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" />
+    </svg>
+  );
+}

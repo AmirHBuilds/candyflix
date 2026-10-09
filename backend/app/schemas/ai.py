@@ -1,4 +1,6 @@
 """Ask AI: what the page sends and gets back."""
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -47,3 +49,28 @@ class AIStatus(BaseModel):
     limit: int | None = None  # None = unlimited
     used: int = 0
     remaining: int | None = None
+
+
+class WatchTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str = Field(min_length=1, max_length=3000)
+    # Where the video was when a user turn was sent (seconds).
+    position_seconds: float | None = Field(default=None, ge=0, le=86400)
+
+
+class WatchAskRequest(BaseModel):
+    media_type: Literal["movie", "tv"]
+    tmdb_id: int = Field(gt=0)
+    season_number: int | None = Field(default=None, ge=0, le=1000)
+    episode_number: int | None = Field(default=None, ge=0, le=10000)
+    question: str = Field(min_length=1, max_length=400)
+    position_seconds: float = Field(default=0, ge=0, le=86400)
+    intent: Literal["ask", "recap_all", "recap_so_far", "just_happened", "previously"] = "ask"
+    history: list[WatchTurn] = Field(default_factory=list, max_length=10)
+
+
+class WatchAskResponse(BaseModel):
+    answer: str
+    has_dialogue: bool = False  # False: answered from the title's description only
+    remaining: int | None = None
+    limit: int | None = None

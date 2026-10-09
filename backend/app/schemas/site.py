@@ -1,5 +1,6 @@
 """Footer content shown on every page; edited by admins."""
 import re
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -32,10 +33,10 @@ class FooterLink(BaseModel):
 class Footer(BaseModel):
     model_config = ConfigDict(extra="forbid")
     enabled: bool = True
-    tagline: str = Field(default="Your own private movie night.", max_length=160)
+    tagline: str = Field(default="Made with all my love, for Candy — the love of my life, and my favourite person to watch anything with. 💗", max_length=160)
     email: str = Field(default="", max_length=120)
     links: list[FooterLink] = Field(default_factory=list, max_length=8)
-    copyright: str = Field(default="CandyFlix", max_length=80)
+    copyright: str = Field(default="CandyFlix, made for Candy", max_length=80)
 
     @field_validator("email")
     @classmethod
@@ -99,3 +100,25 @@ class AIConfig(BaseModel):
 
     enabled: bool = True
     default_daily_limit: int = Field(default=5, ge=0, le=1000)
+    # The watch assistant (player side panel) has its own switch and number.
+    watch_enabled: bool = True
+    watch_daily_limit: int = Field(default=20, ge=0, le=1000)
+
+
+BadgePosition = Literal["top", "top-left", "top-right"]
+
+
+class AdminBadge(BaseModel):
+    """What admins' profiles wear on the login screen. `image` is a stored file name (None = the built-in crown)."""
+
+    position: BadgePosition = "top-left"
+    image: str | None = None
+
+
+class BadgePublic(BaseModel):
+    position: BadgePosition = "top-left"
+    image_url: str | None = None  # None = draw the built-in crown
+
+
+class BadgePositionUpdate(BaseModel):
+    position: BadgePosition

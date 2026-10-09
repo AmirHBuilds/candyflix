@@ -8,9 +8,10 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ProfileEntry(BaseModel):
-    """One tile on the public 'Who's watching?' screen. Deliberately
-    minimal — it is visible to anyone who can load the login page, so it
-    must not reveal roles or anything else about the account."""
+    """One tile on the public 'Who's watching?' screen. Minimal on purpose —
+    it is visible to anyone who can load the login page. It does say who is
+    an admin, because the picker shows admins with a crown (a private,
+    invite-only app, so that is a choice, not a leak)."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -19,12 +20,11 @@ class ProfileEntry(BaseModel):
     display_name: str
     created_at: datetime
     avatar_url: str | None = None
+    is_admin: bool = False
 
 
 class UserPublic(ProfileEntry):
     """The signed-in person's own account info — never includes password_hash."""
-
-    is_admin: bool = False
 
 
 class LoginRequest(BaseModel):

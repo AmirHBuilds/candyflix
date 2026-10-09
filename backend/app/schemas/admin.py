@@ -40,6 +40,7 @@ class AdminUser(BaseModel):
     watchlist_count: int = 0
     watched_count: int = 0
     ai_daily_limit: int | None = None  # None = the site default
+    watch_ai_daily_limit: int | None = None  # the same, for the watch assistant in the player
     ai_use_history: bool = True  # their own Settings switch: Ask AI may use their watch history
 
 
@@ -69,6 +70,7 @@ class AdminUserUpdate(BaseModel):
     is_disabled: bool | None = None
     # Send null to go back to the site default; 0 switches AI search off for this person.
     ai_daily_limit: int | None = Field(default=None, ge=0, le=1000)
+    watch_ai_daily_limit: int | None = Field(default=None, ge=0, le=1000)
 
     @field_validator("username")
     @classmethod
@@ -288,6 +290,9 @@ class AdminAIUser(BaseModel):
     ai_daily_limit: int | None = None  # their own number; None = the usual
     effective_limit: int | None = None  # what applies today; None = unlimited
     used_today: int = 0
+    watch_ai_daily_limit: int | None = None
+    watch_effective_limit: int | None = None
+    watch_used_today: int = 0
     use_history: bool = True
 
 
@@ -297,12 +302,17 @@ class AdminAIOverview(BaseModel):
     enabled: bool
     default_daily_limit: int
     asks_today: int
+    watch_enabled: bool = True
+    watch_daily_limit: int = 20
+    watch_asks_today: int = 0
     users: list[AdminAIUser]
 
 
 class AdminAIConfigUpdate(BaseModel):
     enabled: bool
     default_daily_limit: int = Field(ge=0, le=1000)
+    watch_enabled: bool = True
+    watch_daily_limit: int = Field(default=20, ge=0, le=1000)
 
 
 class AdminAIHistoryUpdate(BaseModel):

@@ -7,15 +7,15 @@ import uuid
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
 from app.core.db import get_db
 from app.models.user import User
 from app.schemas import admin as schemas
-from app.schemas.site import Footer, HomeBanners
-from app.services import admin_service, audit_service, site_service
+from app.schemas.site import BadgePositionUpdate, BadgePublic, Footer, HomeBanners
+from app.services import admin_service, audit_service, avatar_service, site_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -349,7 +349,10 @@ async def update_ai_config(
     payload: schemas.AdminAIConfigUpdate, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     await admin_service.set_ai_config(db, payload)
-    detail = ("On" if payload.enabled else "Off") + f", {payload.default_daily_limit} a day"
+    detail = (
+        f"Search {'on' if payload.enabled else 'off'}, {payload.default_daily_limit} a day; "
+        f"assistant {'on' if payload.watch_enabled else 'off'}, {payload.watch_daily_limit} a day"
+    )
     await audit_service.record(db, actor, "ai.config", detail=detail)
     return await admin_service.ai_overview(db)
 
@@ -389,3 +392,38 @@ async def user_ai_searches(
         return page
     except admin_service.AdminError as exc:
         _raise(exc)
+
+
+@router.get("/badge", response_model=BadgePublic)
+async def read_badge(db: AsyncSession = Depends(get_db)):
+    return await site_service.get_badge(db)
+
+
+@router.put("/badge", response_model=BadgePublic)
+async def update_badge_position(
+    payload: BadgePositionUpdate, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
+    saved = await site_service.set_badge_position(db, payload.position)
+    await audit_service.record(db, actor, "badge.update", detail=payload.position)
+    return saved
+
+
+@router.put("/badge/image", response_model=BadgePublic)
+async def upload_badge_image(
+    file: UploadFile = File(...), actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+):
+    data = await file.read(avatar_service.BADGE_MAX_BYTES + 1)
+    try:
+        png = avatar_service.process_badge(data)
+    except avatar_service.AvatarError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message)
+    saved = await site_service.set_badge_image(db, png)
+    await audit_service.record(db, actor, "badge.update", detail="New picture")
+    return saved
+
+
+@router.delete("/badge/image", response_model=BadgePublic)
+async def remove_badge_image(actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    saved = await site_service.clear_badge_image(db)
+    await audit_service.record(db, actor, "badge.update", detail="Back to the crown")
+    return saved

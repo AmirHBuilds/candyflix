@@ -82,3 +82,38 @@ def remove(filename: str | None) -> None:
     # Only ever delete inside the avatars dir, whatever the stored value says.
     path = avatars_dir() / Path(filename).name
     path.unlink(missing_ok=True)
+
+
+BADGE_MAX_SIDE = 512
+BADGE_MAX_BYTES = 2_000_000
+
+
+def process_badge(data: bytes) -> bytes:
+    """Validates the admin badge picture and returns it as a PNG (transparency kept, at most 512px a side)."""
+    if not data:
+        raise AvatarError("That file is empty.")
+    if len(data) > BADGE_MAX_BYTES:
+        raise AvatarError("That image is too large (max 2 MB).", status=413)
+    try:
+        with Image.open(io.BytesIO(data)) as probe:
+            if probe.format not in {"PNG", "WEBP"}:
+                raise AvatarError("Please upload a PNG (or WebP) picture, ideally with a transparent background.", status=415)
+            if probe.width * probe.height > MAX_PIXELS:
+                raise AvatarError("That image's dimensions are too large.", status=413)
+            image = probe.copy()
+            image.load()
+    except AvatarError:
+        raise
+    except (UnidentifiedImageError, OSError, SyntaxError, ValueError, Image.DecompressionBombError):
+        raise AvatarError("That file couldn't be read as an image.", status=415)
+    image = image.convert("RGBA")
+    image.thumbnail((BADGE_MAX_SIDE, BADGE_MAX_SIDE), Image.Resampling.LANCZOS)
+    out = io.BytesIO()
+    image.save(out, format="PNG", optimize=True)
+    return out.getvalue()
+
+
+def store_badge(png: bytes) -> str:
+    filename = f"badge-{secrets.token_hex(6)}.png"
+    (avatars_dir() / filename).write_bytes(png)
+    return filename

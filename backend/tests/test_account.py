@@ -249,14 +249,15 @@ class TestAvatar:
         finally:
             await _cleanup(db, name)
 
-    async def test_the_login_picker_shows_avatars_but_not_roles(self, client, db):
+    async def test_the_login_picker_shows_avatars_and_the_admin_flag_only(self, client, db):
         name = _name()
         try:
             await _login(client, db, name, is_admin=True)
             await client.put("/api/account/avatar", files={"file": ("a.png", png(), "image/png")})
             mine = next(p for p in (await client.get("/api/auth/users")).json() if p["username"] == name)
             assert mine["avatar_url"].startswith("/avatars/")
-            assert "is_admin" not in mine
+            assert mine["is_admin"] is True  # for the crown
+            assert "is_disabled" not in mine and "password_hash" not in mine
         finally:
             await _cleanup(db, name)
 

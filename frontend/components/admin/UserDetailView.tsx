@@ -187,40 +187,21 @@ function Box({ userId, name }: { userId: string; name: string }) {
 }
 
 function AiLimitCard({ user, onSaved }: { user: AdminUser; onSaved: (user: AdminUser) => void }) {
-  const [value, setValue] = useState(user.ai_daily_limit == null ? "" : String(user.ai_daily_limit));
-  const [saving, setSaving] = useState(false);
-  useEffect(() => setValue(user.ai_daily_limit == null ? "" : String(user.ai_daily_limit)), [user.ai_daily_limit]);
-
-  async function save(next: number | null) {
-    setSaving(true);
-    try {
-      onSaved(await updateAdminUser(user.id, { ai_daily_limit: next }));
-      showToast(next === null ? "Back to the usual number of AI searches." : `Saved: ${next} AI ${next === 1 ? "search" : "searches"} a day.`, "success");
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Couldn't save that.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-      <h3 className="mb-1 text-sm font-semibold text-white">AI searches a day</h3>
+      <h3 className="mb-1 text-sm font-semibold text-white">AI</h3>
       <label className="mb-4 flex items-start gap-2 text-sm text-white/70">
         <input
           type="checkbox"
           aria-label="Use watch history for AI"
           checked={user.ai_use_history}
-          disabled={saving}
           onChange={async (e) => {
-            setSaving(true);
+            const on = e.target.checked;
             try {
-              onSaved(await setUserAIHistory(user.id, e.target.checked));
-              showToast(e.target.checked ? "Ask AI may use their watch history again." : "Ask AI won't use their watch history.", "success");
+              onSaved(await setUserAIHistory(user.id, on));
+              showToast(on ? "Ask AI may use their watch history again." : "Ask AI won't use their watch history.", "success");
             } catch (err) {
               showToast(err instanceof Error ? err.message : "Couldn't save that.");
-            } finally {
-              setSaving(false);
             }
           }}
           className="mt-0.5 h-4 w-4 accent-accent"
@@ -233,32 +214,71 @@ function AiLimitCard({ user, onSaved }: { user: AdminUser; onSaved: (user: Admin
       {user.is_admin ? (
         <p className="text-sm text-white/50">Admins have no limit.</p>
       ) : (
-        <>
-          <p className="mb-3 text-sm text-white/50">
-            {user.ai_daily_limit == null ? "Using the usual number for everyone." : user.ai_daily_limit === 0 ? "Ask AI is switched off for this person." : `This person gets ${user.ai_daily_limit} a day.`}
-          </p>
-          <form
-            className="flex flex-wrap items-center gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const n = Number(value);
-              if (value.trim() === "" || !Number.isInteger(n) || n < 0 || n > 1000) return showToast("Enter a whole number from 0 to 1000.");
-              void save(n);
-            }}
-          >
-            <input aria-label="AI searches a day" inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Usual" className={`${fieldClass} w-28`} />
-            <button type="submit" disabled={saving} className={primaryButton}>
-              Save
-            </button>
-            <button type="button" disabled={saving || user.ai_daily_limit == null} onClick={() => void save(null)} className={quietButton}>
-              Use the usual
-            </button>
-            <button type="button" disabled={saving || user.ai_daily_limit === 0} onClick={() => void save(0)} className={quietButton}>
-              Switch off
-            </button>
-          </form>
-        </>
+        <div className="space-y-5">
+          <LimitRow user={user} field="ai_daily_limit" title="AI searches a day" unit="AI search" onSaved={onSaved} />
+          <LimitRow user={user} field="watch_ai_daily_limit" title="Player questions a day" unit="question" onSaved={onSaved} />
+        </div>
       )}
+    </div>
+  );
+}
+
+function LimitRow({
+  user,
+  field,
+  title,
+  unit,
+  onSaved,
+}: {
+  user: AdminUser;
+  field: "ai_daily_limit" | "watch_ai_daily_limit";
+  title: string;
+  unit: string;
+  onSaved: (user: AdminUser) => void;
+}) {
+  const current = user[field];
+  const [value, setValue] = useState(current == null ? "" : String(current));
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setValue(current == null ? "" : String(current)), [current]);
+
+  async function save(next: number | null) {
+    setSaving(true);
+    try {
+      onSaved(await updateAdminUser(user.id, { [field]: next }));
+      showToast(next === null ? `Back to the usual number of ${unit}s.` : `Saved: ${next} ${unit}${next === 1 ? "" : "s"} a day.`, "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't save that.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <h4 className="text-sm font-medium text-white/90">{title}</h4>
+      <p className="mb-2 text-sm text-white/50">
+        {current == null ? "Using the usual number for everyone." : current === 0 ? "Switched off for this person." : `This person gets ${current} a day.`}
+      </p>
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = Number(value);
+          if (value.trim() === "" || !Number.isInteger(n) || n < 0 || n > 1000) return showToast("Enter a whole number from 0 to 1000.");
+          void save(n);
+        }}
+      >
+        <input aria-label={title} inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Usual" className={`${fieldClass} w-28`} />
+        <button type="submit" disabled={saving} className={primaryButton}>
+          Save
+        </button>
+        <button type="button" disabled={saving || current == null} onClick={() => void save(null)} className={quietButton}>
+          Use the usual
+        </button>
+        <button type="button" disabled={saving || current === 0} onClick={() => void save(0)} className={quietButton}>
+          Switch off
+        </button>
+      </form>
     </div>
   );
 }

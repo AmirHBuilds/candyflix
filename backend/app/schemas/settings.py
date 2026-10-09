@@ -69,6 +69,7 @@ class PlayerControls(_Group):
     time: bool = True  # "12:03 / 45:10"
     captions: bool = True  # subtitles on/off (C)
     fullscreen: bool = True  # (F)
+    assistant: bool = True  # "Ask about this": recaps and questions in a side panel (when the server has AI)
     # Extras, off until chosen.
     seek_back: bool = False  # jump back by the seek time
     seek_forward: bool = False  # jump forward by the seek time

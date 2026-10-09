@@ -207,7 +207,7 @@ describe("AskResultRow", () => {
 
 describe("admin: AI searches a day", () => {
   const person = (over: Partial<admin.AdminUser> = {}): admin.UserDetail => ({
-    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ai_use_history: true, ...over },
+    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, ai_use_history: true, ...over },
     now_watching: null, active_sessions: 0, last_activity: null,
   });
 
@@ -218,13 +218,13 @@ describe("admin: AI searches a day", () => {
     render(<UserDetailView userId="u1" onBack={() => {}} />);
     const box = await screen.findByLabelText("AI searches a day");
     await user.type(box, "12");
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await user.click(screen.getAllByRole("button", { name: "Save" })[0]);
     await waitFor(() => expect(admin.updateAdminUser).toHaveBeenLastCalledWith("u1", { ai_daily_limit: 12 }));
     expect(await screen.findByText("This person gets 12 a day.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Switch off" }));
+    await user.click(screen.getAllByRole("button", { name: "Switch off" })[0]);
     await waitFor(() => expect(admin.updateAdminUser).toHaveBeenLastCalledWith("u1", { ai_daily_limit: 0 }));
-    expect(await screen.findByText("Ask AI is switched off for this person.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Use the usual" }));
+    expect(await screen.findByText("Switched off for this person.")).toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: "Use the usual" })[0]);
     await waitFor(() => expect(admin.updateAdminUser).toHaveBeenLastCalledWith("u1", { ai_daily_limit: null }));
   });
 
@@ -238,7 +238,7 @@ describe("admin: AI searches a day", () => {
 
 describe("admin: AI history and the AI tab", () => {
   const detail = (use: boolean): admin.UserDetail => ({
-    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ai_use_history: use },
+    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, ai_use_history: use },
     now_watching: null, active_sessions: 0, last_activity: null,
   });
 
@@ -254,10 +254,10 @@ describe("admin: AI history and the AI tab", () => {
   });
 
   const overview = (over: Partial<admin.AdminAIOverview> = {}): admin.AdminAIOverview => ({
-    key_configured: true, model: "gemini-3.5-flash", enabled: true, default_daily_limit: 5, asks_today: 7,
+    key_configured: true, model: "gemini-3.5-flash", enabled: true, default_daily_limit: 5, asks_today: 7, watch_enabled: true, watch_daily_limit: 20, watch_asks_today: 6,
     users: [
-      { id: "a", username: "root", display_name: "Root", is_admin: true, ai_daily_limit: null, effective_limit: null, used_today: 4, use_history: true },
-      { id: "b", username: "bob", display_name: "Bob", is_admin: false, ai_daily_limit: 2, effective_limit: 2, used_today: 2, use_history: true },
+      { id: "a", username: "root", display_name: "Root", is_admin: true, ai_daily_limit: null, effective_limit: null, used_today: 4, watch_ai_daily_limit: null, watch_effective_limit: null, watch_used_today: 6, use_history: true },
+      { id: "b", username: "bob", display_name: "Bob", is_admin: false, ai_daily_limit: 2, effective_limit: 2, used_today: 2, watch_ai_daily_limit: null, watch_effective_limit: 20, watch_used_today: 0, use_history: true },
     ], ...over,
   });
 
@@ -275,7 +275,7 @@ describe("admin: AI history and the AI tab", () => {
     await user.type(limit, "8");
     await user.click(screen.getByLabelText("Ask AI is on"));
     await user.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(admin.saveAdminAIConfig).toHaveBeenCalledWith({ enabled: false, default_daily_limit: 8 }));
+    await waitFor(() => expect(admin.saveAdminAIConfig).toHaveBeenCalledWith({ enabled: false, default_daily_limit: 8, watch_enabled: true, watch_daily_limit: 20 }));
   });
 
   it("flips one person's history use from the list, and says when there is no key", async () => {
@@ -292,7 +292,7 @@ describe("admin: AI history and the AI tab", () => {
 describe("admin: a person's AI searches", () => {
   it("lists what they asked, newest first, in its own section", async () => {
     vi.mocked(admin.getUserDetail).mockResolvedValue({
-      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, ai_use_history: true },
+      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, ai_use_history: true },
       now_watching: null, active_sessions: 0, last_activity: null,
     });
     vi.mocked(admin.getUserHistory).mockResolvedValue({ items: [], total: 0 });
@@ -315,5 +315,25 @@ describe("admin: a person's AI searches", () => {
     render(<UserDetailView userId="u1" onBack={() => {}} />);
     await userEvent.setup().click(await screen.findByRole("tab", { name: "AI searches" }));
     expect(await screen.findByText("No AI searches yet.")).toBeInTheDocument();
+  });
+});
+
+describe("admin: the player questions limit", () => {
+  it("sets and clears a person's own number of player questions, separately from searches", async () => {
+    const mk = (n: number | null) => ({
+      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: n, ai_use_history: true },
+      now_watching: null, active_sessions: 0, last_activity: null,
+    });
+    vi.mocked(admin.getUserDetail).mockResolvedValue(mk(null));
+    vi.mocked(admin.updateAdminUser).mockImplementation(async (_id, body) => mk(body.watch_ai_daily_limit ?? null).user);
+    const user = userEvent.setup();
+    render(<UserDetailView userId="u1" onBack={() => {}} />);
+    const box = await screen.findByLabelText("Player questions a day");
+    await user.type(box, "40");
+    await user.click(screen.getAllByRole("button", { name: "Save" })[1]);
+    await waitFor(() => expect(admin.updateAdminUser).toHaveBeenLastCalledWith("u1", { watch_ai_daily_limit: 40 }));
+    expect(await screen.findByText("This person gets 40 a day.")).toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: "Use the usual" })[1]);
+    await waitFor(() => expect(admin.updateAdminUser).toHaveBeenLastCalledWith("u1", { watch_ai_daily_limit: null }));
   });
 });

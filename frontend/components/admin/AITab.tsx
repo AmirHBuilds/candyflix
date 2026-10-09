@@ -14,12 +14,16 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
   const [loadError, setLoadError] = useState<string | null>(null);
   const [enabled, setEnabled] = useState(true);
   const [limit, setLimit] = useState("5");
+  const [watchEnabled, setWatchEnabled] = useState(true);
+  const [watchLimit, setWatchLimit] = useState("20");
   const [saving, setSaving] = useState(false);
 
   const apply = (d: AdminAIOverview) => {
     setData(d);
     setEnabled(d.enabled);
     setLimit(String(d.default_daily_limit));
+    setWatchEnabled(d.watch_enabled);
+    setWatchLimit(String(d.watch_daily_limit));
   };
 
   useEffect(() => {
@@ -32,10 +36,12 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const n = Number(limit);
-    if (limit.trim() === "" || !Number.isInteger(n) || n < 0 || n > 1000) return showToast("Enter a whole number from 0 to 1000.");
+    const w = Number(watchLimit);
+    const bad = (v: string, x: number) => v.trim() === "" || !Number.isInteger(x) || x < 0 || x > 1000;
+    if (bad(limit, n) || bad(watchLimit, w)) return showToast("Enter whole numbers from 0 to 1000.");
     setSaving(true);
     try {
-      apply(await saveAdminAIConfig({ enabled, default_daily_limit: n }));
+      apply(await saveAdminAIConfig({ enabled, default_daily_limit: n, watch_enabled: watchEnabled, watch_daily_limit: w }));
       showToast("AI settings saved.", "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Couldn't save the AI settings.");
@@ -53,7 +59,11 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
     }
   }
 
-  const changed = enabled !== data.enabled || limit !== String(data.default_daily_limit);
+  const changed =
+    enabled !== data.enabled ||
+    limit !== String(data.default_daily_limit) ||
+    watchEnabled !== data.watch_enabled ||
+    watchLimit !== String(data.watch_daily_limit);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -72,6 +82,8 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
         <div className="text-right">
           <p className="text-2xl font-semibold text-white">{data.asks_today}</p>
           <p className="text-xs text-white/40">AI searches today</p>
+          <p className="mt-1 text-sm font-medium text-white/80">{data.watch_asks_today}</p>
+          <p className="text-xs text-white/40">player questions today</p>
         </div>
       </div>
 
@@ -85,6 +97,16 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
           AI searches a day, per person
           <input aria-label="Usual AI searches a day" inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value)} className={`${fieldClass} w-28`} />
           <span className="text-xs text-white/40">People with their own number below keep it. Admins have no limit. Counts reset at midnight UTC.</span>
+        </label>
+        <h3 className="pt-2 text-sm font-semibold text-white">Ask about this (in the player)</h3>
+        <label className="flex items-center gap-2 text-sm text-white/70">
+          <input type="checkbox" checked={watchEnabled} onChange={(e) => setWatchEnabled(e.target.checked)} className="h-4 w-4 accent-accent" />
+          The player assistant is on
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm text-white/70">
+          Questions a day, per person
+          <input aria-label="Usual player questions a day" inputMode="numeric" value={watchLimit} onChange={(e) => setWatchLimit(e.target.value)} className={`${fieldClass} w-28`} />
+          <span className="text-xs text-white/40">Counted separately from AI searches. Each question and each recap button is one.</span>
         </label>
         <button type="submit" disabled={saving || !changed} className={primaryButton}>
           {saving ? "Saving…" : "Save"}
@@ -102,8 +124,12 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
                   {u.display_name} {u.is_admin && <span className="text-xs font-normal text-white/40">· admin</span>}
                 </p>
                 <p className="text-xs text-white/40">
-                  {u.used_today} used today · {limitText(u.effective_limit)}
+                  Searches: {u.used_today} used today · {limitText(u.effective_limit)}
                   {u.ai_daily_limit !== null && !u.is_admin && " (their own)"}
+                </p>
+                <p className="text-xs text-white/40">
+                  Player questions: {u.watch_used_today} used today · {limitText(u.watch_effective_limit)}
+                  {u.watch_ai_daily_limit !== null && !u.is_admin && " (their own)"}
                 </p>
               </div>
               <label className="flex items-center gap-2 text-xs text-white/60">

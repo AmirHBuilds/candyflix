@@ -12,10 +12,10 @@ export type FooterContent = {
 
 export const DEFAULT_FOOTER: FooterContent = {
   enabled: true,
-  tagline: "Your own private movie night.",
+  tagline: "Made with all my love, for Candy — the love of my life, and my favourite person to watch anything with. 💗",
   email: "",
   links: [],
-  copyright: "CandyFlix",
+  copyright: "CandyFlix, made for Candy",
 };
 
 /** Never throws: a footer is never worth breaking a page over. */
@@ -61,5 +61,20 @@ export async function getBannersServer(): Promise<HomeBannersContent> {
     return Array.isArray(body?.banners) && body.banners.length === 3 ? body : DEFAULT_BANNERS;
   } catch {
     return DEFAULT_BANNERS;
+  }
+}
+
+export type BadgePosition = "top" | "top-left" | "top-right";
+export type BadgeContent = { position: BadgePosition; image_url: string | null };
+export const DEFAULT_BADGE: BadgeContent = { position: "top-left", image_url: null };
+
+/** The crown settings, for the signed-out login screen. Never throws: a missing badge falls back to the default crown. */
+export async function getBadge(): Promise<BadgeContent> {
+  try {
+    const res = await fetchWithTimeout(`${getApiBaseUrl()}/site/badge`, { cache: "no-store" });
+    if (!res.ok) return DEFAULT_BADGE;
+    return { ...DEFAULT_BADGE, ...(await res.json()) };
+  } catch {
+    return DEFAULT_BADGE;
   }
 }

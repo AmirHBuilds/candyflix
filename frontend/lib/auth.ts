@@ -9,7 +9,7 @@
 import { getApiBaseUrl, fetchWithTimeout } from "@/lib/api-client";
 
 export type UserPublic = {
-  is_admin?: boolean; // only on the signed-in person's own record (/auth/me, login)
+  is_admin?: boolean; // the profile picker uses it to draw the crown
   id: string;
   username: string;
   display_name: string;

@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminBadge from "@/components/AdminBadge";
 import Avatar from "@/components/Avatar";
+import ProfilePicker from "@/components/ProfilePicker";
 import { getCurrentUser, listUsers, login, type UserPublic } from "@/lib/auth";
+import { DEFAULT_BADGE, getBadge, type BadgeContent } from "@/lib/site";
 
 // Deterministic, non-hardcoded accent per profile — cycles through the
 // Candy at Night palette by position, so any number of real users
@@ -15,6 +18,7 @@ export default function LoginPage() {
 
   const [users, setUsers] = useState<UserPublic[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [badge, setBadge] = useState<BadgeContent>(DEFAULT_BADGE);
 
   const [selectedUser, setSelectedUser] = useState<UserPublic | null>(null);
   const [password, setPassword] = useState("");
@@ -36,6 +40,10 @@ export default function LoginPage() {
     listUsers()
       .then(setUsers)
       .catch(() => setLoadError("Couldn't load profiles. Is the backend running?"));
+  }, []);
+
+  useEffect(() => {
+    getBadge().then(setBadge);
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -62,7 +70,7 @@ export default function LoginPage() {
       </div>
 
       {!selectedUser && (
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex w-full flex-col items-center gap-8">
           <h2 className="text-lg text-white/70">Who&apos;s watching?</h2>
 
           {loadError && <p className="text-sm text-accent">{loadError}</p>}
@@ -79,27 +87,15 @@ export default function LoginPage() {
           )}
 
           {users && users.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-6">
-              {users.map((user, i) => (
-                <button
-                  key={user.id}
-                  onClick={() => {
-                    setSelectedUser(user);
-                    setAuthError(null);
-                  }}
-                  className="group flex flex-col items-center gap-3"
-                >
-                  <Avatar
-                    name={user.display_name}
-                    src={user.avatar_url}
-                    size={80}
-                    color={PROFILE_COLORS[i % PROFILE_COLORS.length]}
-                    className="transition-transform duration-150 group-hover:scale-105"
-                  />
-                  <span className="text-sm text-white/80">{user.display_name}</span>
-                </button>
-              ))}
-            </div>
+            <ProfilePicker
+              users={users}
+              badge={badge}
+              colors={PROFILE_COLORS}
+              onPick={(user) => {
+                setSelectedUser(user);
+                setAuthError(null);
+              }}
+            />
           )}
         </div>
       )}
@@ -109,12 +105,15 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="flex w-full max-w-xs flex-col items-center gap-5"
         >
-          <Avatar
-            name={selectedUser.display_name}
-            src={selectedUser.avatar_url}
-            size={64}
-            color={PROFILE_COLORS[Math.max(0, (users ?? []).findIndex((u) => u.id === selectedUser.id)) % PROFILE_COLORS.length]}
-          />
+          <span className="relative mt-6 block" style={{ width: 64, height: 64 }}>
+            <Avatar
+              name={selectedUser.display_name}
+              src={selectedUser.avatar_url}
+              size={64}
+              color={PROFILE_COLORS[Math.max(0, (users ?? []).findIndex((u) => u.id === selectedUser.id)) % PROFILE_COLORS.length]}
+            />
+            {selectedUser.is_admin && <AdminBadge badge={badge} size={64} />}
+          </span>
           <p className="text-white/80">{selectedUser.display_name}</p>
 
           <input

@@ -50,6 +50,8 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted the message ${q}`;
     case "banners.update":
       return `${who} edited the home banners`;
+    case "badge.update":
+      return `${who} changed the admin badge${e.detail ? ` (${e.detail})` : ""}`;
     case "ai.config":
       return `${who} changed the Ask AI settings${e.detail ? ` (${e.detail})` : ""}`;
     case "ai.history":

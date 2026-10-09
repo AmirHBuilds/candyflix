@@ -38,6 +38,7 @@ export type Settings = {
       time: boolean;
       captions: boolean;
       fullscreen: boolean;
+      assistant: boolean;
       seek_back: boolean;
       seek_forward: boolean;
       pip: boolean;

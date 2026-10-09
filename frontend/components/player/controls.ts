@@ -8,7 +8,7 @@
  * switchable. A switched-off control also loses its keyboard shortcut.
  * Seeking with the arrow keys / J / L is always available.
  */
-export type ControlId = "episodes" | "volume" | "time" | "captions" | "fullscreen" | "seek_back" | "seek_forward" | "pip";
+export type ControlId = "episodes" | "volume" | "time" | "captions" | "fullscreen" | "assistant" | "seek_back" | "seek_forward" | "pip";
 
 export type ControlInfo = {
   id: ControlId | "play" | "settings";
@@ -25,6 +25,7 @@ export const CONTROLS: ControlInfo[] = [
   { id: "episodes", label: "Previous / next episode", description: "Only appears on series.", shortcuts: ["Shift+P", "Shift+N"] },
   { id: "volume", label: "Volume", description: "The speaker button and the slider.", shortcuts: ["M", "↑", "↓"] },
   { id: "time", label: "Time", description: "Where you are in the video.", shortcuts: [] },
+  { id: "assistant", label: "Ask AI about this", description: "Recaps and questions about what you're watching. Only where the server has AI.", shortcuts: [] },
   { id: "captions", label: "Subtitles button", description: "Turns subtitles on and off.", shortcuts: ["C"] },
   { id: "settings", label: "Settings", description: "Always shown.", shortcuts: ["S"], locked: true },
   { id: "fullscreen", label: "Fullscreen", description: "", shortcuts: ["F"] },

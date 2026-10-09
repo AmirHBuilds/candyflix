@@ -21,6 +21,8 @@ import { activeSkip, autoSkipTarget, SKIP_LABELS, type SegmentsData } from "@/co
 import SubtitleOverlay from "@/components/player/SubtitleOverlay";
 import Flag from "@/components/player/Flag";
 import SubtitleSettingsPanel from "@/components/player/SubtitleSettingsPanel";
+import WatchAssistantPanel from "@/components/player/WatchAssistantPanel";
+import { assistantAvailable, useWatchAIStatus } from "@/lib/use-watch-ai";
 import PlayerTooltip from "@/components/player/PlayerTooltip";
 import HoldSpeedIndicator from "@/components/player/HoldSpeedIndicator";
 import { useHoldSpeed } from "@/components/player/useHoldSpeed";
@@ -42,6 +44,7 @@ import {
   CCIcon,
   GearIcon,
   PipIcon,
+  AssistantIcon,
   BackChevronIcon,
 } from "@/components/player/icons";
 
@@ -224,6 +227,10 @@ export default function VideoPlayer({
   // made in another tab/page applies without reloading the player.
   const seekSeconds = playbackSettings.seek_seconds;
   const controls = playbackSettings.controls;
+  // "Ask about this": a side panel for recaps and questions. Only where the server has AI and the person may use it.
+  const watchStatus = useWatchAIStatus(controls.assistant);
+  const assistantOn = controls.assistant && assistantAvailable(watchStatus);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   // Picture-in-picture only where the browser can do it.
   const [pipSupported, setPipSupported] = useState(false);
   useEffect(() => {
@@ -1540,6 +1547,18 @@ export default function VideoPlayer({
           )}
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
+            {assistantOn && (
+              <PlayerTooltip label="Ask AI about this" align="end">
+                <button
+                  aria-label="Ask AI about this"
+                  aria-pressed={assistantOpen}
+                  onClick={() => setAssistantOpen((v) => !v)}
+                  className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                >
+                  <AssistantIcon />
+                </button>
+              </PlayerTooltip>
+            )}
             {controls.captions && (
             <PlayerTooltip
               label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
@@ -1753,6 +1772,21 @@ export default function VideoPlayer({
           </div>
         </div>
       </div>
+
+      {assistantOn && (
+        <WatchAssistantPanel
+          key={`${identity.mediaType}-${identity.tmdbId}-${identity.seasonNumber ?? "m"}-${identity.episodeNumber ?? "m"}`}
+          open={assistantOpen}
+          onClose={() => setAssistantOpen(false)}
+          title={title}
+          mediaType={identity.mediaType}
+          tmdbId={identity.tmdbId}
+          seasonNumber={identity.seasonNumber}
+          episodeNumber={identity.episodeNumber}
+          getPosition={() => videoRef.current?.currentTime ?? 0}
+          remaining={watchStatus?.remaining ?? null}
+        />
+      )}
     </div>
   );
 }

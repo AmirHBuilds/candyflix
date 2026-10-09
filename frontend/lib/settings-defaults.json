@@ -36,6 +36,7 @@
       "time": true,
       "captions": true,
       "fullscreen": true,
+      "assistant": true,
       "seek_back": false,
       "seek_forward": false,
       "pip": false

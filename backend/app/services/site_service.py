@@ -2,7 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.site_setting import SiteSetting
 from app.core.config import get_settings
-from app.schemas.site import AIConfig, Footer, HomeBanners
+from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners
+from app.services import avatar_service
 
 FOOTER_KEY = "footer"
 
@@ -63,7 +64,8 @@ async def get_ai_config(db: AsyncSession) -> AIConfig:
             return AIConfig.model_validate(row.value)
         except Exception:
             pass  # a bad stored value must never break Ask AI
-    return AIConfig(default_daily_limit=get_settings().ai_default_daily_limit)
+    env = get_settings()
+    return AIConfig(default_daily_limit=env.ai_default_daily_limit, watch_daily_limit=env.watch_ai_default_daily_limit)
 
 
 async def set_ai_config(db: AsyncSession, config: AIConfig) -> AIConfig:
@@ -75,3 +77,58 @@ async def set_ai_config(db: AsyncSession, config: AIConfig) -> AIConfig:
         row.value = data
     await db.commit()
     return config
+
+
+BADGE_KEY = "admin_badge"
+
+
+async def _get_badge(db: AsyncSession) -> AdminBadge:
+    row = await db.get(SiteSetting, BADGE_KEY)
+    if row is not None:
+        try:
+            return AdminBadge.model_validate(row.value)
+        except Exception:
+            pass  # a bad stored value must never break the login screen
+    return AdminBadge()
+
+
+async def _save_badge(db: AsyncSession, badge: AdminBadge) -> None:
+    row = await db.get(SiteSetting, BADGE_KEY)
+    if row is None:
+        db.add(SiteSetting(key=BADGE_KEY, value=badge.model_dump()))
+    else:
+        row.value = badge.model_dump()
+    await db.commit()
+
+
+def _public(badge: AdminBadge) -> BadgePublic:
+    return BadgePublic(position=badge.position, image_url=f"/avatars/{badge.image}" if badge.image else None)
+
+
+async def get_badge(db: AsyncSession) -> BadgePublic:
+    return _public(await _get_badge(db))
+
+
+async def set_badge_position(db: AsyncSession, position: str) -> BadgePublic:
+    badge = await _get_badge(db)
+    badge.position = position  # type: ignore[assignment]
+    await _save_badge(db, badge)
+    return _public(badge)
+
+
+async def set_badge_image(db: AsyncSession, png: bytes) -> BadgePublic:
+    badge = await _get_badge(db)
+    previous = badge.image
+    badge.image = avatar_service.store_badge(png)
+    await _save_badge(db, badge)
+    avatar_service.remove(previous)
+    return _public(badge)
+
+
+async def clear_badge_image(db: AsyncSession) -> BadgePublic:
+    badge = await _get_badge(db)
+    previous = badge.image
+    badge.image = None
+    await _save_badge(db, badge)
+    avatar_service.remove(previous)
+    return _public(badge)

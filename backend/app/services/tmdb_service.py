@@ -436,3 +436,17 @@ async def find_title(title: str, year: int | None, media_type: str) -> int | Non
 
 def _norm(text: str) -> str:
     return "".join(ch for ch in text.lower() if ch.isalnum())
+
+
+async def get_cast(media_type: str, tmdb_id: int, limit: int = 12) -> list[tuple[str, str]]:
+    """(actor, character) for the top-billed cast; [] if TMDB has none. Cached like other details."""
+    path = f"/movie/{tmdb_id}/credits" if media_type == "movie" else f"/tv/{tmdb_id}/aggregate_credits"
+    data = await _get(path, ttl=DETAILS_CACHE_TTL)
+    out: list[tuple[str, str]] = []
+    for c in data.get("cast", [])[:limit]:
+        character = c.get("character")
+        if not character and c.get("roles"):
+            character = c["roles"][0].get("character")
+        if c.get("name") and character:
+            out.append((c["name"], character))
+    return out

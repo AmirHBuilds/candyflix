@@ -84,12 +84,42 @@ async def status(db: AsyncSession, user: User) -> schemas.AIStatus:
     )
 
 
-async def _spend(user: User, limit: int | None) -> bool:
+def watch_limit_for(user: User, default: int) -> int | None:
+    """The same for the watch assistant: None = unlimited (admins)."""
+    if user.is_admin:
+        return None
+    if user.watch_ai_daily_limit is not None:
+        return user.watch_ai_daily_limit
+    return default
+
+
+def watch_used_key(user: User) -> str:
+    return f"ai:watch:{user.id}:{datetime.now(timezone.utc):%Y-%m-%d}"
+
+
+async def watch_used_today(user: User) -> int:
+    raw = await get_redis().get(watch_used_key(user))
+    return int(raw) if raw else 0
+
+
+async def watch_status(db: AsyncSession, user: User) -> schemas.AIStatus:
+    config = await site_service.get_ai_config(db)
+    limit = watch_limit_for(user, config.watch_daily_limit)
+    used = await watch_used_today(user)
+    return schemas.AIStatus(
+        enabled=bool(get_settings().gemini_api_key) and config.watch_enabled,
+        limit=limit,
+        used=used,
+        remaining=None if limit is None else max(0, limit - used),
+    )
+
+
+async def _spend(user: User, limit: int | None, key: str | None = None) -> bool:
     """Takes one from today's allowance; False (and nothing taken) if there is none left."""
     if limit is None:
         return True
     redis = get_redis()
-    key = _used_key(user)
+    key = key or _used_key(user)
     count = await redis.incr(key)
     await redis.expire(key, 2 * 24 * 3600)
     if count > limit:
@@ -98,9 +128,9 @@ async def _spend(user: User, limit: int | None) -> bool:
     return True
 
 
-async def _refund(user: User, limit: int | None) -> None:
+async def _refund(user: User, limit: int | None, key: str | None = None) -> None:
     if limit is not None:
-        await get_redis().decr(_used_key(user))
+        await get_redis().decr(key or _used_key(user))
 
 
 # ---------------------------------------------------------------- what the person likes
@@ -205,18 +235,9 @@ def _prompt_text(prompt: str, watched: list[tuple[str, int, str]], saved: list[t
     return "\n".join(parts)
 
 
-async def _call_gemini(model: str, text: str) -> _Answer:
+async def _post_gemini(model: str, body: dict) -> dict:
+    """One generateContent call; turns every failure into an AIError (retryable ones say so)."""
     settings = get_settings()
-    body = {
-        "systemInstruction": {"parts": [{"text": SYSTEM}]},
-        "contents": [{"role": "user", "parts": [{"text": text}]}],
-        "generationConfig": {
-            "responseMimeType": "application/json",
-            "responseSchema": RESPONSE_SCHEMA,
-            "temperature": 0.8,
-            "maxOutputTokens": 4096,
-        },
-    }
     try:
         async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT) as client:
             res = await client.post(
@@ -234,12 +255,62 @@ async def _call_gemini(model: str, text: str) -> _Answer:
     if res.status_code != 200:
         raise AIError(502, "The AI couldn't answer. Please try again.")
     try:
-        parts = res.json()["candidates"][0]["content"]["parts"]
-        raw = "".join(p.get("text", "") for p in parts if not p.get("thought"))
-        return _Answer.model_validate(json.loads(raw))
-    except (KeyError, IndexError, ValueError, ValidationError):
-        logger.warning("Gemini answered in an unexpected shape: %s", res.text[:300])
+        return res.json()
+    except ValueError:
         raise AIError(502, "The AI's answer couldn't be read. Please try again.", retry_other_model=True)
+
+
+def _answer_text(data: dict) -> str:
+    parts = data["candidates"][0]["content"]["parts"]
+    return "".join(p.get("text", "") for p in parts if not p.get("thought"))
+
+
+async def _call_gemini(model: str, text: str) -> _Answer:
+    body = {
+        "systemInstruction": {"parts": [{"text": SYSTEM}]},
+        "contents": [{"role": "user", "parts": [{"text": text}]}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": RESPONSE_SCHEMA,
+            "temperature": 0.8,
+            "maxOutputTokens": 4096,
+        },
+    }
+    data = await _post_gemini(model, body)
+    try:
+        return _Answer.model_validate(json.loads(_answer_text(data)))
+    except (KeyError, IndexError, ValueError, ValidationError):
+        logger.warning("Gemini answered in an unexpected shape: %s", str(data)[:300])
+        raise AIError(502, "The AI's answer couldn't be read. Please try again.", retry_other_model=True)
+
+
+async def generate_text(system: str, contents: list[dict], max_tokens: int = 1500, temperature: float = 0.5) -> str:
+    """A plain-text answer (used by the watch assistant). Same model, same one retry on the lighter model."""
+    settings = get_settings()
+    body = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": contents,
+        "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens},
+    }
+
+    async def once(model: str) -> str:
+        data = await _post_gemini(model, body)
+        try:
+            text = _answer_text(data).strip()
+        except (KeyError, IndexError):
+            text = ""
+        if not text:
+            logger.warning("Gemini sent no text: %s", str(data)[:300])
+            raise AIError(502, "The AI didn't have an answer. Please try again.", retry_other_model=True)
+        return text
+
+    try:
+        return await once(settings.gemini_model)
+    except AIError as e:
+        if not e.retry_other_model or not settings.gemini_fallback_model or settings.gemini_fallback_model == settings.gemini_model:
+            raise
+        logger.info("Gemini model %s failed (%s); trying %s", settings.gemini_model, e.message, settings.gemini_fallback_model)
+        return await once(settings.gemini_fallback_model)
 
 
 async def _ask_gemini(text: str) -> _Answer:

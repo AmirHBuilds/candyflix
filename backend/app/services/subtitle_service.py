@@ -22,6 +22,26 @@ from app.services.tmdb_service import TMDBError
 logger = logging.getLogger("app.subtitle_service")
 
 
+async def default_english_path(
+    media_type: str,
+    tmdb_id: int,
+    season_number: int | None,
+    episode_number: int | None,
+):
+    """The cached file of the most-downloaded English subtitle, or None. Can raise TMDBError/OpenSubtitlesError."""
+    imdb_id = (
+        await tmdb_service.get_movie_imdb_id(tmdb_id) if media_type == "movie" else await tmdb_service.get_tv_imdb_id(tmdb_id)
+    )
+    if not imdb_id:
+        return None
+    page = await opensubtitles_service.search(imdb_id, season_number, episode_number, language="en")
+    if not page.results:
+        return None
+    best = page.results[0]
+    cache_key = opensubtitles_service.build_cache_key(media_type, tmdb_id, season_number, episode_number, "en", best.file_id)
+    return await opensubtitles_service.download(best.file_id, cache_key)
+
+
 async def get_default_english_track(
     media_type: str,
     tmdb_id: int,

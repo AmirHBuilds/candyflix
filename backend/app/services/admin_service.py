@@ -113,8 +113,9 @@ async def update_user(
     db: AsyncSession, actor: User, target: User, changes: schemas.AdminUserUpdate
 ) -> schemas.AdminUser:
     data = changes.model_dump(exclude_unset=True, exclude_none=True)
-    if "ai_daily_limit" in changes.model_fields_set:
-        data["ai_daily_limit"] = changes.ai_daily_limit  # None is meaningful here: "use the default"
+    for field in ("ai_daily_limit", "watch_ai_daily_limit"):
+        if field in changes.model_fields_set:
+            data[field] = getattr(changes, field)  # None is meaningful here: "use the default"
 
     if target.id == actor.id and data.get("is_disabled") is True:
         raise AdminError("You can't disable your own account.")
@@ -623,6 +624,7 @@ async def ai_overview(db: AsyncSession) -> schemas.AdminAIOverview:
     users = (await db.execute(select(User).order_by(User.created_at))).scalars().all()
     flags = await _history_flags(db)
     used = await asyncio.gather(*(ai_service.used_today(u) for u in users))
+    watch_used = await asyncio.gather(*(ai_service.watch_used_today(u) for u in users))
     rows = [
         schemas.AdminAIUser(
             id=u.id,
@@ -632,9 +634,12 @@ async def ai_overview(db: AsyncSession) -> schemas.AdminAIOverview:
             ai_daily_limit=u.ai_daily_limit,
             effective_limit=ai_service.daily_limit_for(u, config.default_daily_limit),
             used_today=n,
+            watch_ai_daily_limit=u.watch_ai_daily_limit,
+            watch_effective_limit=ai_service.watch_limit_for(u, config.watch_daily_limit),
+            watch_used_today=w,
             use_history=flags.get(u.id, True),
         )
-        for u, n in zip(users, used)
+        for u, n, w in zip(users, used, watch_used)
     ]
     return schemas.AdminAIOverview(
         key_configured=bool(settings.gemini_api_key),
@@ -642,6 +647,9 @@ async def ai_overview(db: AsyncSession) -> schemas.AdminAIOverview:
         enabled=config.enabled,
         default_daily_limit=config.default_daily_limit,
         asks_today=sum(used),
+        watch_enabled=config.watch_enabled,
+        watch_daily_limit=config.watch_daily_limit,
+        watch_asks_today=sum(watch_used),
         users=rows,
     )
 
