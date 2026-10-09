@@ -255,3 +255,9 @@ summary {
   0%, 100% { transform: translateY(0) rotate(-1deg); }
   50% { transform: translateY(-6px) rotate(1deg); }
 }
+
+/* A spoiler fading into view once tapped: gentle, no flashing. */
+@keyframes spoilerReveal {
+  from { opacity: 0.2; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0); }
+}

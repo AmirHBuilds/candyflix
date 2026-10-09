@@ -862,3 +862,13 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - **UI:** a white outlined-sparkles button (`AssistantIcon`) in the player's right-hand button group, before subtitles; opens `WatchAssistantPanel` on the right (inside the player container, so it works in fullscreen; on phones it covers the player, on wide screens it leaves the control bar free). Each question is sent with `video.currentTime`; user bubbles show "at 12:34". The conversation survives closing/reopening the panel (not a page change). Esc closes. On by default: `settings.playback.controls.assistant` (Settings → Playback → Customise buttons: "Ask AI about this"; `settings-defaults.json` regenerated). The button only shows when the server has AI, the site switch is on and the person's number isn't 0.
 - Not logged for admins (unlike AI searches, §36): the questions aren't stored anywhere.
 - Tests: backend 457 (`test_watch_ai.py`, 18), frontend 656 (`watch-assistant.test.tsx`, 13 + 1 in ask-ai), tsc clean.
+
+## §39 Phase 16 v2 (applies after `candyflix-phase16-watch-assistant-v1`)
+- Gemini protection: a model that returns a *daily/per-minute quota* 429 is paused in Redis (`ai:paused:<model>`, TTL from `retryDelay`, else Pacific midnight, else 60 s); the other model is used meanwhile. Other errors never pause. Admin → AI shows each model ("Ready" / "resting 20h 6m") with "Try again now" (`DELETE /admin/ai/pauses`).
+- One question = one request: in-flight lock on the server (`ai:inflight:*`), shared in-flight promise in `lib/ai.ts askAI` (StrictMode double effect), larger `maxOutputTokens`, per-call logging.
+- Admin AI use is now counted (still unlimited).
+- Login: crown tiers 104/92/80 px. `LOVE_NOTE` ("Made with all my love, for Candy 💗") is hard-coded in `lib/site.ts`; shown in the main footer (even if the footer is disabled) and at the bottom of the login page. Footer defaults reverted to "Your own private movie night." / "CandyFlix".
+- `RouteProgress` top bar (accent→secondary→highlight): link clicks + `startProgress()` before `router.push`; shows after 150 ms, finishes when the URL changes, 20 s safety.
+- Spoilers: static soft blur, hover clarifies, gentle fade on reveal (no pulse/glow).
+- Watch assistant: quick questions row uses ‹ › buttons (no drag); user bubble shows local clock time + "· video mm:ss".
+- Admin panel: "Update" button remounts the open view to refetch.

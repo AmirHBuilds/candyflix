@@ -46,7 +46,19 @@ export async function getAIStatus(): Promise<AIStatus | null> {
   }
 }
 
-export async function askAI(prompt: string): Promise<AskResponse> {
+const inflight = new Map<string, Promise<AskResponse>>();
+
+/** Asking the same thing twice at once (a re-mounted page, a double click) shares one request. */
+export function askAI(prompt: string): Promise<AskResponse> {
+  const key = prompt.trim();
+  const existing = inflight.get(key);
+  if (existing) return existing;
+  const p = askAIOnce(prompt).finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}
+
+async function askAIOnce(prompt: string): Promise<AskResponse> {
   const res = await fetch(`${getApiBaseUrl()}/ai/ask`, {
     method: "POST",
     credentials: "include",

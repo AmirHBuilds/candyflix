@@ -99,6 +99,15 @@ describe("Admin panel", () => {
     expect(screen.queryByText("Big Movie")).toBeNull();
   });
 
+  it("Update fetches fresh numbers without reloading the page", async () => {
+    render(<AdminPanel currentUserId="me" />);
+    await screen.findByText("Big Movie");
+    const before = vi.mocked(admin.getAdminStats).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    await waitFor(() => expect(vi.mocked(admin.getAdminStats).mock.calls.length).toBeGreaterThan(before));
+    expect(await screen.findByText("Big Movie")).toBeInTheDocument();
+  });
+
   it("shows an error when the dashboard can't load", async () => {
     vi.mocked(admin.getAdminStats).mockRejectedValue(new Error("boom"));
     render(<AdminPanel currentUserId="me" />);

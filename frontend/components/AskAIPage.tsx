@@ -9,6 +9,7 @@ import { useSettings } from "@/components/SettingsProvider";
 import { SparkleIcon } from "@/components/NavSearch";
 import { LoadingRegion, Skeleton } from "@/components/Skeleton";
 import { askAI, getAIStatus, type AIStatus, type AskResponse } from "@/lib/ai";
+import { startProgress } from "@/components/RouteProgress";
 
 type View = { state: "idle" } | { state: "loading" } | { state: "error"; message: string } | { state: "done"; data: AskResponse };
 type Tab = "for_you" | "general";
@@ -52,6 +53,7 @@ export default function AskAIPage() {
     e.preventDefault();
     const t = text.trim();
     if (t.length < 3) return;
+    startProgress();
     router.push(`/ask?q=${encodeURIComponent(t)}`);
   }
 

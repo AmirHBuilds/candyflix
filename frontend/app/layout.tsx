@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { fraunces, inter } from "./fonts";
+import { Suspense } from "react";
+import RouteProgress from "@/components/RouteProgress";
 import Toaster from "@/components/Toaster";
 import { appearanceAttributes, themeCanvas } from "@/lib/appearance";
 import { getServerSettings } from "@/lib/settings-server";
@@ -26,6 +28,9 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="bg-canvas text-white antialiased min-h-dvh">
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
         {children}
         <Toaster />
       </body>

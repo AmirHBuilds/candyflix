@@ -1,8 +1,19 @@
 import Link from "next/link";
-import { getFooterServer, type FooterContent } from "@/lib/site";
+import { getFooterServer, LOVE_NOTE, type FooterContent } from "@/lib/site";
+
+/** The one line that is always there, whatever the admin does with the rest of the footer. */
+function LoveNote({ className = "" }: { className?: string }) {
+  return <p className={`text-center text-sm text-white/60 ${className}`}>{LOVE_NOTE}</p>;
+}
 
 export function FooterView({ footer, year }: { footer: FooterContent; year: number }) {
-  if (!footer.enabled) return null;
+  if (!footer.enabled) {
+    return (
+      <footer className="mt-12 border-t border-white/10 px-6 py-6 sm:px-10">
+        <LoveNote />
+      </footer>
+    );
+  }
   const external = (url: string) => /^(https?:|mailto:)/i.test(url);
   return (
     <footer className="mt-12 border-t border-white/10 px-6 py-8 text-sm text-white/50 sm:px-10">
@@ -39,6 +50,7 @@ export function FooterView({ footer, year }: { footer: FooterContent; year: numb
           © {year} {footer.copyright}
         </p>
       )}
+      <LoveNote className="mt-5" />
     </footer>
   );
 }

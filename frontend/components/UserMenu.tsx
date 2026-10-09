@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { logout, type UserPublic } from "@/lib/auth";
+import { startProgress } from "@/components/RouteProgress";
 
 /**
  * The name in the header, as a button that opens a small menu:
@@ -72,6 +73,7 @@ export default function UserMenu({ user }: { user: UserPublic }) {
   async function handleLogout() {
     setLoggingOut(true);
     await logout();
+    startProgress();
     router.push("/login");
     router.refresh();
   }

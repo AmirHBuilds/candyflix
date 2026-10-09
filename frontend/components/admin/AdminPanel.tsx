@@ -49,6 +49,9 @@ function labelOf(d: Drill | undefined, base: string): string {
 export default function AdminPanel({ currentUserId }: { currentUserId: string }) {
   const [tab, setTab] = useState<TabId>("overview");
   // Drill-downs stack on top of the tab; "back" pops one level.
+  // Bumping this remounts the open view, so it fetches fresh data without reloading the page.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [updatedAt, setUpdatedAt] = useState(() => new Date());
   const [stack, setStack] = useState<Drill[]>([]);
   const push = (d: Drill) => setStack((s) => [...s, d]);
   const pop = () => setStack((s) => s.slice(0, -1));
@@ -77,7 +80,8 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-white">Admin panel</h1>
-      <div role="tablist" aria-label="Admin sections" className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
+      <div className="flex items-center gap-3">
+      <div role="tablist" aria-label="Admin sections" className="flex min-w-0 flex-1 gap-2 overflow-x-auto [scrollbar-width:none]">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -98,7 +102,23 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`admin-panel-${tab}`} aria-labelledby={`admin-tab-${tab}`}>
+      <button
+        type="button"
+        onClick={() => {
+          setRefreshKey((k) => k + 1);
+          setUpdatedAt(new Date());
+        }}
+        title={`Updated ${updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white/10 px-3.5 py-2.5 text-sm font-medium text-white hover:bg-white/15"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 4v5h-5" />
+        </svg>
+        Update
+      </button>
+      </div>
+      <div key={refreshKey} role="tabpanel" id={`admin-panel-${tab}`} aria-labelledby={`admin-tab-${tab}`}>
         {current ? (
           renderDrill(current)
         ) : (

@@ -104,7 +104,7 @@ describe("WatchAssistantPanel", () => {
       media_type: "tv", tmdb_id: 99, season_number: 1, episode_number: 2, position_seconds: 754, intent: "recap_all", history: [],
     });
     expect(await screen.findByText(/Anna came home/)).toBeInTheDocument();
-    expect(screen.getByText("at 12:34")).toBeInTheDocument();
+    expect(screen.getByText(/· video 12:34/)).toBeInTheDocument();
     expect(document.querySelectorAll('[data-spoiler="hidden"]')).toHaveLength(1);
     expect(screen.getByText("19 questions left today")).toBeInTheDocument();
   });
@@ -124,7 +124,7 @@ describe("WatchAssistantPanel", () => {
       { role: "user", text: "Who is Anna?", position_seconds: 754 },
       { role: "assistant", text: "Anna came home. ||She leaves later.||" },
     ]);
-    expect(screen.getByText("at 25:00")).toBeInTheDocument();
+    expect(screen.getByText(/· video 25:00/)).toBeInTheDocument();
   });
 
   it("shows an error with a way to try again, and doesn't keep the failed question", async () => {

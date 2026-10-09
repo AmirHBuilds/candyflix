@@ -6,7 +6,8 @@ import AdminBadge from "@/components/AdminBadge";
 import Avatar from "@/components/Avatar";
 import ProfilePicker from "@/components/ProfilePicker";
 import { getCurrentUser, listUsers, login, type UserPublic } from "@/lib/auth";
-import { DEFAULT_BADGE, getBadge, type BadgeContent } from "@/lib/site";
+import { DEFAULT_BADGE, getBadge, LOVE_NOTE, type BadgeContent } from "@/lib/site";
+import { startProgress } from "@/components/RouteProgress";
 
 // Deterministic, non-hardcoded accent per profile — cycles through the
 // Candy at Night palette by position, so any number of real users
@@ -53,6 +54,7 @@ export default function LoginPage() {
     setAuthError(null);
     try {
       await login(selectedUser.username, password);
+      startProgress();
       router.push("/");
     } catch {
       setAuthError("Incorrect password. Try again.");
@@ -63,7 +65,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 text-center">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-10 px-6 pb-14 text-center">
       <div className="flex flex-col items-center gap-2">
         <div className="text-4xl">🍬</div>
         <h1 className="text-2xl font-semibold tracking-tight">CandyFlix</h1>
@@ -148,6 +150,7 @@ export default function LoginPage() {
           </button>
         </form>
       )}
+      <footer className="absolute inset-x-0 bottom-5 px-6 text-center text-xs text-white/45">{LOVE_NOTE}</footer>
     </main>
   );
 }

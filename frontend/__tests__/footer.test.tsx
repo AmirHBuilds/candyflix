@@ -20,9 +20,10 @@ describe("FooterView", () => {
     expect(screen.getByRole("link", { name: "About" }).getAttribute("href")).toBe("/about");
     expect(screen.getByText(/© 2026 CandyFlix/)).toBeTruthy();
   });
-  it("renders nothing when disabled, and hides empty parts", () => {
+  it("when disabled only the fixed love note remains, and empty parts are hidden", () => {
     const { container, rerender } = render(<FooterView footer={{ ...footer, enabled: false }} year={2026} />);
-    expect(container.firstChild).toBeNull();
+    expect(container.textContent).toBe("Made with all my love, for Candy 💗");
+    expect(screen.queryByRole("link")).toBeNull();
     rerender(<FooterView footer={{ ...DEFAULT_FOOTER, email: "" }} year={2026} />);
     expect(screen.queryByRole("link")).toBeNull();
   });

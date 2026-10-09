@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { logout } from "@/lib/auth";
+import { startProgress } from "@/components/RouteProgress";
 
 export default function LogoutButton({ className }: { className?: string }) {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function LogoutButton({ className }: { className?: string }) {
   async function handleLogout() {
     setLoggingOut(true);
     await logout();
+    startProgress();
     router.push("/login");
     router.refresh();
   }

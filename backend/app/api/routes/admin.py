@@ -15,7 +15,7 @@ from app.core.db import get_db
 from app.models.user import User
 from app.schemas import admin as schemas
 from app.schemas.site import BadgePositionUpdate, BadgePublic, Footer, HomeBanners
-from app.services import admin_service, audit_service, avatar_service, site_service
+from app.services import admin_service, ai_service, audit_service, avatar_service, site_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -427,3 +427,11 @@ async def remove_badge_image(actor: User = Depends(require_admin), db: AsyncSess
     saved = await site_service.clear_badge_image(db)
     await audit_service.record(db, actor, "badge.update", detail="Back to the crown")
     return saved
+
+
+@router.delete("/ai/pauses", response_model=schemas.AdminAIOverview)
+async def clear_ai_pauses(actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    """Ask Google again right away (e.g. after raising the quota), instead of waiting out a model's pause."""
+    cleared = await ai_service.clear_pauses()
+    await audit_service.record(db, actor, "ai.config", detail=f"Cleared {cleared} model pause{'s' if cleared != 1 else ''}")
+    return await admin_service.ai_overview(db)

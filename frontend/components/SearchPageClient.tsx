@@ -10,6 +10,7 @@ import AskAIButton from "@/components/AskAIButton";
 import { looksLikeRequest } from "@/lib/ai";
 import { useAIAvailable } from "@/lib/use-ai-available";
 import { LoadingRegion, MediaGridSkeleton } from "@/components/Skeleton";
+import { startProgress } from "@/components/RouteProgress";
 
 export default function SearchPageClient() {
   const router = useRouter();
@@ -75,7 +76,10 @@ export default function SearchPageClient() {
         <AskAIButton
           query={query.trim()}
           hint={results.length === 0 ? "find it for me" : "get suggestions"}
-          onClick={() => router.push(`/ask?q=${encodeURIComponent(query.trim())}`)}
+          onClick={() => {
+            startProgress();
+            router.push(`/ask?q=${encodeURIComponent(query.trim())}`);
+          }}
         />
       )}
 

@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
-import { getAdminAI, saveAdminAIConfig, setUserAIHistory, type AdminAIOverview } from "@/lib/admin";
+import { clearAIPauses, getAdminAI, saveAdminAIConfig, setUserAIHistory, type AdminAIOverview } from "@/lib/admin";
 import { showToast } from "@/lib/toast";
 
 function limitText(limit: number | null) {
   return limit === null ? "No limit" : limit === 0 ? "Off" : `${limit} a day`;
+}
+
+function restFor(sec: number) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.ceil((sec % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${Math.max(1, m)}m`;
 }
 
 export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) => void }) {
@@ -87,6 +93,39 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
         </div>
       </div>
 
+      {data.models.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-white">Models</h3>
+            {data.models.some((m) => m.paused_seconds > 0) && (
+              <button
+                type="button"
+                className={quietButton}
+                onClick={async () => {
+                  try {
+                    await clearAIPauses();
+                    setData(await getAdminAI());
+                  } catch (err) {
+                    showToast(err instanceof Error ? err.message : "Couldn't do that.");
+                  }
+                }}
+              >
+                Try again now
+              </button>
+            )}
+          </div>
+          {data.models.map((m) => (
+            <p key={m.model} className="flex items-center justify-between text-sm text-white/70">
+              <span>{m.model}</span>
+              <span className={m.paused_seconds > 0 ? "text-amber-300" : "text-emerald-300"}>
+                {m.paused_seconds > 0 ? `Daily limit reached · resting ${restFor(m.paused_seconds)}` : "Ready"}
+              </span>
+            </p>
+          ))}
+          <p className="text-xs text-white/40">When a model runs out of its free requests, CandyFlix stops asking it and uses the next one until it resets.</p>
+        </div>
+      )}
+
       <form onSubmit={save} aria-label="AI settings" className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
         <h3 className="text-sm font-semibold text-white">For everyone</h3>
         <label className="flex items-center gap-2 text-sm text-white/70">
@@ -96,7 +135,7 @@ export default function AITab({ onViewPerson }: { onViewPerson?: (id: string) =>
         <label className="flex flex-col gap-1.5 text-sm text-white/70">
           AI searches a day, per person
           <input aria-label="Usual AI searches a day" inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value)} className={`${fieldClass} w-28`} />
-          <span className="text-xs text-white/40">People with their own number below keep it. Admins have no limit. Counts reset at midnight UTC.</span>
+          <span className="text-xs text-white/40">People with their own number below keep it. Admins have no limit, but their questions are counted. Counts reset at midnight UTC.</span>
         </label>
         <h3 className="pt-2 text-sm font-semibold text-white">Ask about this (in the player)</h3>
         <label className="flex items-center gap-2 text-sm text-white/70">

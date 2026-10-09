@@ -245,12 +245,14 @@ export type AdminAIOverview = {
   watch_enabled: boolean;
   watch_daily_limit: number;
   watch_asks_today: number;
+  models: { model: string; paused_seconds: number }[];
   users: AdminAIUser[];
 };
 
 export const getAdminAI = () => request<AdminAIOverview>("/ai", {}, "Couldn't load the AI settings.");
 export const saveAdminAIConfig = (body: { enabled: boolean; default_daily_limit: number; watch_enabled: boolean; watch_daily_limit: number }) =>
   request<AdminAIOverview>("/ai/config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the AI settings.");
+export const clearAIPauses = () => request<{ ok: boolean }>("/ai/pauses", { method: "DELETE" }, "Couldn't do that.");
 export const setUserAIHistory = (id: string, use_history: boolean) =>
   request<AdminUser>(`/users/${id}/ai-history`, { method: "PUT", body: JSON.stringify({ use_history }) }, "Couldn't save that.");
 

@@ -650,6 +650,7 @@ async def ai_overview(db: AsyncSession) -> schemas.AdminAIOverview:
         watch_enabled=config.watch_enabled,
         watch_daily_limit=config.watch_daily_limit,
         watch_asks_today=sum(watch_used),
+        models=[schemas.AdminAIModel(model=m, paused_seconds=await ai_service.paused_for(m)) for m in ai_service._models()],
         users=rows,
     )
 

@@ -296,6 +296,11 @@ class AdminAIUser(BaseModel):
     use_history: bool = True
 
 
+class AdminAIModel(BaseModel):
+    model: str
+    paused_seconds: int = 0  # > 0: out of quota, not being asked until then
+
+
 class AdminAIOverview(BaseModel):
     key_configured: bool
     model: str
@@ -305,6 +310,7 @@ class AdminAIOverview(BaseModel):
     watch_enabled: bool = True
     watch_daily_limit: int = 20
     watch_asks_today: int = 0
+    models: list[AdminAIModel] = []
     users: list[AdminAIUser]
 
 

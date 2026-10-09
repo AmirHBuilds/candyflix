@@ -4,7 +4,7 @@ export type Tier = "king" | "admin" | "member";
 export type Slot = { kind: "profile"; user: UserPublic; tier: Tier; index: number } | { kind: "spacer" };
 
 /** How big each tier's picture is on the login screen. */
-export const TIER_SIZE: Record<Tier, number> = { king: 128, admin: 104, member: 80 };
+export const TIER_SIZE: Record<Tier, number> = { king: 104, admin: 92, member: 80 };
 
 /**
  * Lays the "Who's watching?" row out left to right.

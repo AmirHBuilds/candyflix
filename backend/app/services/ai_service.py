@@ -15,7 +15,8 @@ import asyncio
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from pydantic import BaseModel, Field, ValidationError
@@ -115,22 +116,20 @@ async def watch_status(db: AsyncSession, user: User) -> schemas.AIStatus:
 
 
 async def _spend(user: User, limit: int | None, key: str | None = None) -> bool:
-    """Takes one from today's allowance; False (and nothing taken) if there is none left."""
-    if limit is None:
-        return True
+    """Takes one from today's allowance; False (and nothing taken) if there is none left.
+    With no limit (admins) it still counts, so "used today" is true for everyone."""
     redis = get_redis()
     key = key or _used_key(user)
     count = await redis.incr(key)
     await redis.expire(key, 2 * 24 * 3600)
-    if count > limit:
+    if limit is not None and count > limit:
         await redis.decr(key)
         return False
     return True
 
 
 async def _refund(user: User, limit: int | None, key: str | None = None) -> None:
-    if limit is not None:
-        await get_redis().decr(key or _used_key(user))
+    await get_redis().decr(key or _used_key(user))
 
 
 # ---------------------------------------------------------------- what the person likes
@@ -235,9 +234,110 @@ def _prompt_text(prompt: str, watched: list[tuple[str, int, str]], saved: list[t
     return "\n".join(parts)
 
 
+# ---------------------------------------------------------------- pausing a model that is out of quota
+#
+# Google answers 429 RESOURCE_EXHAUSTED when a model's free quota (per minute or per day) is used up, and
+# says how long to wait ("retryDelay"). Sending more requests only to be refused is pointless, and the
+# refused ones still show on Google's usage page. So the model is paused for that long and skipped.
+# Only this kind of 429 pauses a model: a 500/503 or a bad answer is a hiccup, not a limit.
+
+PAUSE_PREFIX = "ai:paused:"
+MAX_PAUSE_SECONDS = 26 * 3600
+DEFAULT_MINUTE_PAUSE = 60
+
+
+def _models() -> list[str]:
+    settings = get_settings()
+    models = [settings.gemini_model]
+    if settings.gemini_fallback_model and settings.gemini_fallback_model != settings.gemini_model:
+        models.append(settings.gemini_fallback_model)
+    return models
+
+
+def _seconds_until_pacific_midnight() -> int:
+    from zoneinfo import ZoneInfo
+
+    now = datetime.now(ZoneInfo("America/Los_Angeles"))
+    tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=5, microsecond=0)
+    return max(60, int((tomorrow - now).total_seconds()))
+
+
+def quota_pause_seconds(res: httpx.Response) -> int | None:
+    """How long to leave the model alone if this response is a quota 429; None if it isn't one."""
+    if res.status_code != 429:
+        return None
+    try:
+        error = res.json().get("error", {})
+    except ValueError:
+        return DEFAULT_MINUTE_PAUSE
+    if error.get("status") != "RESOURCE_EXHAUSTED":
+        return DEFAULT_MINUTE_PAUSE
+    daily = False
+    delay: float | None = None
+    for detail in error.get("details", []):
+        if detail.get("@type", "").endswith("RetryInfo"):
+            raw = str(detail.get("retryDelay", "")).rstrip("s")
+            try:
+                delay = float(raw)
+            except ValueError:
+                delay = None
+        for v in detail.get("violations", []) or []:
+            if "PerDay" in str(v.get("quotaId", "")):
+                daily = True
+    if delay is None:
+        delay = _seconds_until_pacific_midnight() if daily else DEFAULT_MINUTE_PAUSE
+    return int(min(max(delay, 5), MAX_PAUSE_SECONDS)) + 1
+
+
+async def pause_model(model: str, seconds: int) -> None:
+    try:
+        await get_redis().set(PAUSE_PREFIX + model, str(int(time.time()) + seconds), ex=seconds)
+    except Exception:
+        logger.warning("Couldn't record that %s is paused", model)
+
+
+async def paused_for(model: str) -> int:
+    """Seconds left on a model's pause, 0 if it can be used."""
+    try:
+        ttl = await get_redis().ttl(PAUSE_PREFIX + model)
+    except Exception:
+        return 0
+    return max(0, ttl)
+
+
+async def clear_pauses() -> int:
+    redis = get_redis()
+    cleared = 0
+    for model in _models():
+        cleared += await redis.delete(PAUSE_PREFIX + model)
+    return cleared
+
+
+async def _run_on_models(call):
+    """Runs `call(model)` on the main model, then (once) on the lighter one, skipping any that are paused
+    for quota. If every model is resting, no request is sent at all."""
+    last: AIError | None = None
+    tried = 0
+    for model in _models():
+        if await paused_for(model):
+            continue
+        tried += 1
+        try:
+            return await call(model)
+        except AIError as e:
+            last = e
+            if not e.retry_other_model:
+                raise
+            logger.info("Gemini model %s failed (%s)", model, e.message)
+    if last is not None and tried:
+        raise last
+    raise AIError(503, "The AI has used up its free limit for now. It comes back later today.")
+
+
 async def _post_gemini(model: str, body: dict) -> dict:
     """One generateContent call; turns every failure into an AIError (retryable ones say so)."""
     settings = get_settings()
+    logger.info("Gemini request: model=%s", model)
     try:
         async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT) as client:
             res = await client.post(
@@ -247,7 +347,13 @@ async def _post_gemini(model: str, body: dict) -> dict:
             )
     except httpx.RequestError as e:
         raise AIError(502, "Couldn't reach the AI right now. Please try again.", retry_other_model=True) from e
-    if res.status_code in (429, 500, 502, 503, 404):
+    logger.info("Gemini answer: model=%s status=%s", model, res.status_code)
+    pause = quota_pause_seconds(res)
+    if pause is not None:
+        await pause_model(model, pause)
+        logger.warning("Gemini model %s is out of quota; pausing it for %ss", model, pause)
+        raise AIError(503, "The AI is busy right now. Please try again in a moment.", retry_other_model=True)
+    if res.status_code in (500, 502, 503, 404):
         raise AIError(503, "The AI is busy right now. Please try again in a moment.", retry_other_model=True)
     if res.status_code in (400, 401, 403):
         logger.error("Gemini rejected the request (%s): %s", res.status_code, res.text[:300])
@@ -273,7 +379,7 @@ async def _call_gemini(model: str, text: str) -> _Answer:
             "responseMimeType": "application/json",
             "responseSchema": RESPONSE_SCHEMA,
             "temperature": 0.8,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": 8192,  # room for the model's own thinking as well as the JSON
         },
     }
     data = await _post_gemini(model, body)
@@ -284,9 +390,8 @@ async def _call_gemini(model: str, text: str) -> _Answer:
         raise AIError(502, "The AI's answer couldn't be read. Please try again.", retry_other_model=True)
 
 
-async def generate_text(system: str, contents: list[dict], max_tokens: int = 1500, temperature: float = 0.5) -> str:
-    """A plain-text answer (used by the watch assistant). Same model, same one retry on the lighter model."""
-    settings = get_settings()
+async def generate_text(system: str, contents: list[dict], max_tokens: int = 4096, temperature: float = 0.5) -> str:
+    """A plain-text answer (used by the watch assistant). Same model order, same pauses."""
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": contents,
@@ -304,27 +409,11 @@ async def generate_text(system: str, contents: list[dict], max_tokens: int = 150
             raise AIError(502, "The AI didn't have an answer. Please try again.", retry_other_model=True)
         return text
 
-    try:
-        return await once(settings.gemini_model)
-    except AIError as e:
-        if not e.retry_other_model or not settings.gemini_fallback_model or settings.gemini_fallback_model == settings.gemini_model:
-            raise
-        logger.info("Gemini model %s failed (%s); trying %s", settings.gemini_model, e.message, settings.gemini_fallback_model)
-        return await once(settings.gemini_fallback_model)
+    return await _run_on_models(once)
 
 
 async def _ask_gemini(text: str) -> _Answer:
-    settings = get_settings()
-    try:
-        return await _call_gemini(settings.gemini_model, text)
-    except AIError as e:
-        # Busy / unavailable / unreadable: one more go on the lighter model, then give up.
-        if not e.retry_other_model or not settings.gemini_fallback_model:
-            raise
-        if settings.gemini_fallback_model == settings.gemini_model:
-            raise
-        logger.info("Gemini model %s failed (%s); trying %s", settings.gemini_model, e.message, settings.gemini_fallback_model)
-        return await _call_gemini(settings.gemini_fallback_model, text)
+    return await _run_on_models(lambda model: _call_gemini(model, text))
 
 
 # ---------------------------------------------------------------- real titles
@@ -399,6 +488,32 @@ async def ask(db: AsyncSession, user: User, prompt: str) -> schemas.AskResponse:
     cache_key = f"ai:answer:{user.id}:{fingerprint}"
     redis = get_redis()
     cached = await redis.get(cache_key)
+    # The very same question arriving while it is still being answered (a double click, a page that asks
+    # twice) waits for that answer instead of paying for another one.
+    lock_key = f"ai:inflight:{user.id}:{fingerprint}"
+    owns_lock = False
+    if not cached:
+        owns_lock = bool(await redis.set(lock_key, "1", nx=True, ex=90))
+        if not owns_lock:
+            for _ in range(160):
+                await asyncio.sleep(0.5)
+                cached = await redis.get(cache_key)
+                if cached or not await redis.exists(lock_key):
+                    break
+    try:
+        data = await _answer_or_cached(db, user, prompt, limit, use_history, watched_ids, saved_ids, skip, cache_key, cached)
+    finally:
+        if owns_lock:
+            await redis.delete(lock_key)
+
+    used = await _used_today(user)
+    data.limit = limit
+    data.remaining = None if limit is None else max(0, limit - used)
+    return data
+
+
+async def _answer_or_cached(db, user, prompt, limit, use_history, watched_ids, saved_ids, skip, cache_key, cached) -> schemas.AskResponse:
+    redis = get_redis()
     if cached:
         data = schemas.AskResponse.model_validate_json(cached)
     else:
@@ -429,7 +544,4 @@ async def ask(db: AsyncSession, user: User, prompt: str) -> schemas.AskResponse:
         db.add(AISearch(user_id=user.id, prompt=prompt, results=len(for_you) + len(general), used_history=data.used_history))
         await db.commit()
 
-    used = await _used_today(user)
-    data.limit = limit
-    data.remaining = None if limit is None else max(0, limit - used)
     return data

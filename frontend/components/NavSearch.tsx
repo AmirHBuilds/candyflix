@@ -8,6 +8,7 @@ import { LoadingRegion, MediaGridSkeleton } from "@/components/Skeleton";
 import AskAIButton from "@/components/AskAIButton";
 import { looksLikeRequest } from "@/lib/ai";
 import { useAIAvailable } from "@/lib/use-ai-available";
+import { startProgress } from "@/components/RouteProgress";
 
 const MAX_LIVE_RESULTS = 12;
 
@@ -47,12 +48,14 @@ export default function NavSearch({ autoFocus = false }: { autoFocus?: boolean }
   function goToFullSearch() {
     if (trimmed.length === 0) return;
     setOpen(false);
+    startProgress();
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
 
   function goToAsk() {
     if (trimmed.length < 3) return;
     setOpen(false);
+    startProgress();
     router.push(`/ask?q=${encodeURIComponent(trimmed)}`);
   }
   const noMatches = !loading && !error && visible.length === 0 && trimmed.length >= 3;

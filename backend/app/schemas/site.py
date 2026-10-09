@@ -33,10 +33,10 @@ class FooterLink(BaseModel):
 class Footer(BaseModel):
     model_config = ConfigDict(extra="forbid")
     enabled: bool = True
-    tagline: str = Field(default="Made with all my love, for Candy — the love of my life, and my favourite person to watch anything with. 💗", max_length=160)
+    tagline: str = Field(default="Your own private movie night.", max_length=160)
     email: str = Field(default="", max_length=120)
     links: list[FooterLink] = Field(default_factory=list, max_length=8)
-    copyright: str = Field(default="CandyFlix, made for Candy", max_length=80)
+    copyright: str = Field(default="CandyFlix", max_length=80)
 
     @field_validator("email")
     @classmethod

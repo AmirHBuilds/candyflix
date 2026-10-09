@@ -9,14 +9,14 @@ import { Fragment, useState, type ReactNode } from "react";
  */
 function Spoiler({ children }: { children: ReactNode }) {
   const [shown, setShown] = useState(false);
-  if (shown) return <span className="rounded bg-white/10 px-0.5">{children}</span>;
+  if (shown) return <span className="animate-[spoilerReveal_0.35s_ease-out] rounded bg-white/10 px-0.5">{children}</span>;
   return (
     <button
       type="button"
       data-spoiler="hidden"
       aria-label="Spoiler. Tap to reveal."
       onClick={() => setShown(true)}
-      className="mx-px cursor-pointer select-none rounded bg-white/15 px-1 align-baseline text-inherit [text-shadow:0_0_9px_rgba(255,255,255,0.85)] blur-[5px] transition hover:bg-white/25 motion-safe:animate-pulse"
+      className="mx-px cursor-pointer select-none rounded bg-white/10 px-1 align-baseline text-inherit opacity-70 blur-[6px] transition-[filter,opacity] duration-300 hover:opacity-100 hover:blur-[4px] focus-visible:opacity-100 focus-visible:outline-none"
     >
       <span aria-hidden="true">{children}</span>
     </button>

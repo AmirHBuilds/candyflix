@@ -5,7 +5,56 @@ import RichAnswer from "@/components/RichAnswer";
 import { AssistantIcon } from "@/components/player/icons";
 import { askWatchAI, clock, type WatchIntent, type WatchTurn } from "@/lib/watch-ai";
 
-type Message = { id: number; role: "user" | "assistant"; text: string; position?: number; pending?: boolean; error?: boolean; retry?: () => void };
+type Message = { id: number; role: "user" | "assistant"; text: string; position?: number; sentAt?: number; pending?: boolean; error?: boolean; retry?: () => void };
+
+/** The viewer's own wall-clock time (their device's clock and locale), e.g. "21:05". */
+function localTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+/** The quick questions in one row that moves with < and > buttons (no dragging). */
+function QuickRow({ children }: { children: React.ReactNode }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+  const measure = () => {
+    const el = row.current;
+    if (!el) return;
+    const left = el.scrollLeft > 4;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    setEdge((e) => (e.left === left && e.right === right ? e : { left, right }));
+  };
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  });
+  const go = (dir: -1 | 1) => {
+    const el = row.current;
+    if (!el) return;
+    const by = dir * Math.max(120, el.clientWidth * 0.7);
+    if (typeof el.scrollBy === "function") el.scrollBy({ left: by, behavior: "smooth" });
+    else el.scrollLeft += by;
+    setTimeout(measure, 350);
+  };
+  const arrow = "grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20";
+  return (
+    <div className="flex items-center gap-1.5">
+      {edge.left && (
+        <button type="button" aria-label="Previous questions" onClick={() => go(-1)} className={arrow}>
+          &lsaquo;
+        </button>
+      )}
+      <div ref={row} onScroll={measure} className="flex min-w-0 flex-1 gap-1.5 overflow-hidden">
+        {children}
+      </div>
+      {edge.right && (
+        <button type="button" aria-label="More questions" onClick={() => go(1)} className={arrow}>
+          &rsaquo;
+        </button>
+      )}
+    </div>
+  );
+}
 
 type Quick = { intent: WatchIntent; label: string; question: string };
 
@@ -86,7 +135,7 @@ export default function WatchAssistantPanel({
       .map((m) => ({ role: m.role, text: m.text, ...(m.role === "user" && m.position !== undefined ? { position_seconds: m.position } : {}) }));
     const userId = nextId.current++;
     const replyId = nextId.current++;
-    setMessages((cur) => [...cur.filter((m) => !m.error), { id: userId, role: "user", text: q, position }, { id: replyId, role: "assistant", text: "", pending: true }]);
+    setMessages((cur) => [...cur.filter((m) => !m.error), { id: userId, role: "user", text: q, position, sentAt: Date.now() }, { id: replyId, role: "assistant", text: "", pending: true }]);
     setText("");
     setBusy(true);
     try {
@@ -163,7 +212,12 @@ export default function WatchAssistantPanel({
             m.role === "user" ? (
               <div key={m.id} className="flex flex-col items-end gap-1">
                 <p className="max-w-[85%] rounded-2xl rounded-br-md bg-white/15 px-3.5 py-2 text-sm text-white">{m.text}</p>
-                {m.position !== undefined && <span className="text-[11px] text-white/35">at {clock(m.position)}</span>}
+                {m.sentAt !== undefined && (
+                  <span className="text-[11px] text-white/35">
+                    {localTime(m.sentAt)}
+                    {m.position !== undefined && ` · video ${clock(m.position)}`}
+                  </span>
+                )}
               </div>
             ) : (
               <div key={m.id} className="flex gap-2.5">
@@ -194,7 +248,7 @@ export default function WatchAssistantPanel({
 
       <footer className="space-y-2 border-t border-white/10 px-4 py-3">
         {messages.length > 0 && (
-          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <QuickRow>
             {quick.map((q) => (
               <button
                 key={q.intent}
@@ -206,7 +260,7 @@ export default function WatchAssistantPanel({
                 {q.label}
               </button>
             ))}
-          </div>
+          </QuickRow>
         )}
         {outOfQuestions ? (
           <p className="text-xs text-white/50">You&apos;ve used today&apos;s questions. They come back tomorrow.</p>

@@ -28,7 +28,7 @@ vi.mock("@/components/UserMenu", () => ({ default: () => null }));
 vi.mock("@/components/LogoutButton", () => ({ default: () => null }));
 vi.mock("@/lib/watchlist", () => ({ addToWatchlist: vi.fn(async () => {}), removeFromWatchlist: vi.fn(async () => {}) }));
 vi.mock("@/lib/toast", () => ({ showToast: vi.fn() }));
-vi.mock("@/lib/admin", async (orig) => ({ ...(await orig<typeof import("@/lib/admin")>()), getUserDetail: vi.fn(), updateAdminUser: vi.fn(), setUserAIHistory: vi.fn(), getAdminAI: vi.fn(), getUserAISearches: vi.fn(), saveAdminAIConfig: vi.fn(), getUserHistory: vi.fn(async () => ({ items: [], has_more: false })), getUserWatchlist: vi.fn(async () => ({ items: [], has_more: false })) }));
+vi.mock("@/lib/admin", async (orig) => ({ ...(await orig<typeof import("@/lib/admin")>()), getUserDetail: vi.fn(), updateAdminUser: vi.fn(), setUserAIHistory: vi.fn(), getAdminAI: vi.fn(), clearAIPauses: vi.fn(), getUserAISearches: vi.fn(), saveAdminAIConfig: vi.fn(), getUserHistory: vi.fn(async () => ({ items: [], has_more: false })), getUserWatchlist: vi.fn(async () => ({ items: [], has_more: false })) }));
 
 const title = (over: Partial<ai.AskTitle> = {}): ai.AskTitle => ({
   tmdb_id: 153, media_type: "movie", title: "Lost in Translation", year: "2003", overview: "Two lonely people in Tokyo.", genres: ["Drama", "Romance"],
@@ -254,7 +254,7 @@ describe("admin: AI history and the AI tab", () => {
   });
 
   const overview = (over: Partial<admin.AdminAIOverview> = {}): admin.AdminAIOverview => ({
-    key_configured: true, model: "gemini-3.5-flash", enabled: true, default_daily_limit: 5, asks_today: 7, watch_enabled: true, watch_daily_limit: 20, watch_asks_today: 6,
+    key_configured: true, model: "gemini-3.5-flash", enabled: true, default_daily_limit: 5, asks_today: 7, watch_enabled: true, watch_daily_limit: 20, watch_asks_today: 6, models: [],
     users: [
       { id: "a", username: "root", display_name: "Root", is_admin: true, ai_daily_limit: null, effective_limit: null, used_today: 4, watch_ai_daily_limit: null, watch_effective_limit: null, watch_used_today: 6, use_history: true },
       { id: "b", username: "bob", display_name: "Bob", is_admin: false, ai_daily_limit: 2, effective_limit: 2, used_today: 2, watch_ai_daily_limit: null, watch_effective_limit: 20, watch_used_today: 0, use_history: true },
@@ -335,5 +335,20 @@ describe("admin: the player questions limit", () => {
     expect(await screen.findByText("This person gets 40 a day.")).toBeInTheDocument();
     await user.click(screen.getAllByRole("button", { name: "Use the usual" })[1]);
     await waitFor(() => expect(admin.updateAdminUser).toHaveBeenLastCalledWith("u1", { watch_ai_daily_limit: null }));
+  });
+});
+
+describe("admin: resting models", () => {
+  it("shows a model that hit its daily limit and lets the admin try again", async () => {
+    const base = { key_configured: true, model: "gemini-3.8-flash", enabled: true, default_daily_limit: 5, asks_today: 0, watch_enabled: true, watch_daily_limit: 20, watch_asks_today: 0, users: [] };
+    vi.mocked(admin.getAdminAI)
+      .mockResolvedValueOnce({ ...base, models: [{ model: "gemini-3.8-flash", paused_seconds: 72355 }, { model: "gemini-3.5-flash-lite", paused_seconds: 0 }] })
+      .mockResolvedValue({ ...base, models: [{ model: "gemini-3.8-flash", paused_seconds: 0 }, { model: "gemini-3.5-flash-lite", paused_seconds: 0 }] });
+    vi.mocked(admin.clearAIPauses).mockResolvedValue({ ok: true });
+    render(<AITab />);
+    expect(await screen.findByText(/resting 20h 6m/)).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Try again now" }));
+    await waitFor(() => expect(admin.clearAIPauses).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByText(/resting/)).not.toBeInTheDocument());
   });
 });

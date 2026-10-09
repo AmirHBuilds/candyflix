@@ -10,12 +10,15 @@ export type FooterContent = {
   copyright: string;
 };
 
+/** Written into the app on purpose: not an admin setting, always shown (footer and login screen). */
+export const LOVE_NOTE = "Made with all my love, for Candy 💗";
+
 export const DEFAULT_FOOTER: FooterContent = {
   enabled: true,
-  tagline: "Made with all my love, for Candy — the love of my life, and my favourite person to watch anything with. 💗",
+  tagline: "Your own private movie night.",
   email: "",
   links: [],
-  copyright: "CandyFlix, made for Candy",
+  copyright: "CandyFlix",
 };
 
 /** Never throws: a footer is never worth breaking a page over. */

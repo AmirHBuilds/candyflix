@@ -351,3 +351,109 @@ class TestSearchLog:
         respx.post(FALLBACK).mock(return_value=httpx.Response(500))
         await person.post("/api/ai/ask", json={"prompt": "anything at all"})
         assert (await admin.get(f"/api/admin/users/{person.uid}/ai-searches")).json()["total"] == 0
+
+
+QUOTA_429 = {
+    "error": {
+        "code": 429,
+        "message": "You exceeded your current quota",
+        "status": "RESOURCE_EXHAUSTED",
+        "details": [
+            {
+                "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                "violations": [{"quotaMetric": "generate_content_free_tier_requests", "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier", "quotaValue": "20"}],
+            },
+            {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "72355s"},
+        ],
+    }
+}
+
+
+class TestModelPauses:
+    @respx.mock
+    async def test_a_model_out_of_daily_quota_is_not_asked_again(self, person, admin):
+        main = respx.post(GEMINI).mock(return_value=httpx.Response(429, json=QUOTA_429))
+        lite = respx.post(FALLBACK).mock(side_effect=lambda r: gemini_reply(general=[s("Her", "2013")]))
+        assert (await person.post("/api/ai/ask", json={"prompt": "a lonely robot love story"})).status_code == 200
+        assert main.call_count == 1 and lite.call_count == 1  # tried once, then the lighter model answered
+        # a different question: the main model is left alone, so it's faster and Google isn't asked to refuse again
+        assert (await person.post("/api/ai/ask", json={"prompt": "something quiet and sad"})).status_code == 200
+        assert main.call_count == 1 and lite.call_count == 2
+        overview = (await admin.get("/api/admin/ai")).json()
+        main_row = next(m for m in overview["models"] if m["model"] == settings.gemini_model)
+        assert 72000 < main_row["paused_seconds"] <= 72360
+        assert next(m for m in overview["models"] if m["model"] == settings.gemini_fallback_model)["paused_seconds"] == 0
+        # clearing the pause (e.g. after raising the quota) asks it again
+        cleared = (await admin.delete("/api/admin/ai/pauses")).json()
+        assert all(m["paused_seconds"] == 0 for m in cleared["models"])
+        await person.post("/api/ai/ask", json={"prompt": "yet another different thing"})
+        assert main.call_count == 2
+
+    @respx.mock
+    async def test_other_failures_do_not_pause_anything(self, person):
+        main = respx.post(GEMINI).mock(return_value=httpx.Response(503))
+        respx.post(FALLBACK).mock(side_effect=lambda r: gemini_reply(general=[s("Her", "2013")]))
+        await person.post("/api/ai/ask", json={"prompt": "something about lonely robots"})
+        await person.post("/api/ai/ask", json={"prompt": "something about quiet people"})
+        assert main.call_count == 2  # a hiccup is retried next time
+        assert await ai_service.paused_for(settings.gemini_model) == 0
+
+    @respx.mock
+    async def test_a_per_minute_limit_pauses_only_for_the_wait_google_names(self, person):
+        body = {"error": {"status": "RESOURCE_EXHAUSTED", "details": [{"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "20.5s"}]}}
+        respx.post(GEMINI).mock(return_value=httpx.Response(429, json=body))
+        respx.post(FALLBACK).mock(side_effect=lambda r: gemini_reply(general=[s("Her", "2013")]))
+        await person.post("/api/ai/ask", json={"prompt": "something about lonely robots"})
+        assert 20 <= await ai_service.paused_for(settings.gemini_model) <= 22
+
+    async def test_a_daily_limit_without_a_wait_pauses_until_pacific_midnight(self):
+        res = httpx.Response(429, json={"error": {"status": "RESOURCE_EXHAUSTED", "details": [{"@type": "x.QuotaFailure", "violations": [{"quotaId": "RequestsPerDay-FreeTier"}]}]}})
+        assert 60 < ai_service.quota_pause_seconds(res) <= 24 * 3600 + 10
+        assert ai_service.quota_pause_seconds(httpx.Response(503)) is None
+        assert ai_service.quota_pause_seconds(httpx.Response(200)) is None
+
+    @respx.mock
+    async def test_when_every_model_is_resting_nothing_is_sent_and_the_allowance_is_kept(self, person):
+        main = respx.post(GEMINI).mock(return_value=httpx.Response(200))
+        lite = respx.post(FALLBACK).mock(return_value=httpx.Response(200))
+        await ai_service.pause_model(settings.gemini_model, 600)
+        await ai_service.pause_model(settings.gemini_fallback_model, 600)
+        r = await person.post("/api/ai/ask", json={"prompt": "something about lonely robots"})
+        assert r.status_code == 503 and "free limit" in r.json()["detail"]
+        assert main.call_count == 0 and lite.call_count == 0
+        assert (await person.get("/api/ai/status")).json()["used"] == 0
+
+
+class TestCounting:
+    @respx.mock
+    async def test_an_admins_searches_are_counted_even_though_they_have_no_limit(self, admin):
+        respx.post(GEMINI).mock(side_effect=lambda r: gemini_reply(general=[s("Her", "2013")]))
+        await admin.post("/api/ai/ask", json={"prompt": "something about lonely robots"})
+        status = (await admin.get("/api/ai/status")).json()
+        assert status["used"] == 1 and status["limit"] is None and status["remaining"] is None
+        overview = (await admin.get("/api/admin/ai")).json()
+        assert overview["asks_today"] == 1
+
+    @respx.mock
+    async def test_a_failed_admin_search_is_not_counted(self, admin):
+        respx.post(GEMINI).mock(return_value=httpx.Response(500))
+        respx.post(FALLBACK).mock(return_value=httpx.Response(500))
+        await admin.post("/api/ai/ask", json={"prompt": "something about lonely robots"})
+        assert (await admin.get("/api/ai/status")).json()["used"] == 0
+
+    @respx.mock
+    async def test_the_same_question_asked_twice_at_once_costs_one_request(self, person):
+        import asyncio
+
+        async def slow(request):
+            await asyncio.sleep(0.4)
+            return gemini_reply(general=[s("Her", "2013")])
+
+        route = respx.post(GEMINI).mock(side_effect=slow)
+        a, b = await asyncio.gather(
+            person.post("/api/ai/ask", json={"prompt": "a lonely robot love story"}),
+            person.post("/api/ai/ask", json={"prompt": "a lonely robot love story"}),
+        )
+        assert a.status_code == 200 and b.status_code == 200
+        assert route.call_count == 1
+        assert (await person.get("/api/ai/status")).json()["used"] == 1
