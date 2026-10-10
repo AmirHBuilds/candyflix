@@ -113,7 +113,7 @@ async def delete_session(token: str) -> None:
 
 
 async def create_user(
-    db: AsyncSession, username: str, display_name: str, password: str, is_admin: bool = False
+    db: AsyncSession, username: str, display_name: str, password: str, is_admin: bool = False, age_limit: str | None = None
 ) -> User:
     """Used by the CLI and the admin panel — there is no public signup."""
     user = User(
@@ -121,6 +121,7 @@ async def create_user(
         display_name=display_name,
         password_hash=hash_password(password),
         is_admin=is_admin,
+        age_limit=age_limit,
     )
     db.add(user)
     await db.commit()

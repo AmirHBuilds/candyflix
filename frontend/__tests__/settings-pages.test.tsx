@@ -42,7 +42,7 @@ describe("SettingsBar", () => {
   it("lists every section as a button, in order", () => {
     render(<SettingsBar />);
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(SETTINGS_SECTIONS.map((s) => s.label));
-    expect(SETTINGS_SECTIONS.map((s) => s.label)).toEqual(["Appearance", "Playback", "Subtitles", "Account", "Privacy & data", "About"]);
+    expect(SETTINGS_SECTIONS.map((s) => s.label)).toEqual(["Appearance", "Playback", "Subtitles", "Account", "Community", "Privacy & data", "About"]);
   });
 
   it("scrolls to the section and marks only it as current", () => {

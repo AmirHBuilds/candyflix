@@ -46,7 +46,7 @@ const u = (over: Partial<admin.AdminUser>): admin.AdminUser => ({
   watched_count: 3,
   ai_daily_limit: null,
   watch_ai_daily_limit: null,
-  two_factor_enabled: false,
+  two_factor_enabled: false, age_limit: null,
   ai_use_history: true,
   ...over,
 });
@@ -146,7 +146,7 @@ describe("Admin panel", () => {
       expect(within(dialog).queryByRole("checkbox")).toBeNull(); // admin is not a checkbox any more
       fireEvent.click(submit);
       await waitFor(() =>
-        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: false })
+        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: false, age_limit: null })
       );
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       expect(showToast).toHaveBeenCalledWith("New was added.", "success");
@@ -169,9 +169,57 @@ describe("Admin panel", () => {
       fireEvent.click(yes);
       fireEvent.click(within(dialog).getByRole("button", { name: "Add admin" }));
       await waitFor(() =>
-        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: true })
+        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: true, age_limit: null })
       );
       expect(showToast).toHaveBeenCalledWith("New was added as an admin.", "success");
+    });
+
+    it("can give a new account an age limit, shown as a tag on the list", async () => {
+      vi.mocked(admin.createAdminUser).mockResolvedValue(u({ id: "k", username: "kid", display_name: "Kid", age_limit: "PG-13" }));
+      await openUsers();
+      fireEvent.click(screen.getByRole("button", { name: "Add user" }));
+      const dialog = screen.getByRole("dialog");
+      fireEvent.change(within(dialog).getByLabelText(/^Username/), { target: { value: "kid" } });
+      fireEvent.change(within(dialog).getByLabelText("Display name"), { target: { value: "Kid" } });
+      fireEvent.change(within(dialog).getByLabelText(/^Password/), { target: { value: "password123" } });
+      fireEvent.change(within(dialog).getByLabelText("Age limit"), { target: { value: "PG-13" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Add user" }));
+      await waitFor(() =>
+        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "kid", display_name: "Kid", password: "password123", is_admin: false, age_limit: "PG-13" })
+      );
+    });
+
+    it("an admin has no age limit: choosing admin clears and hides the limit", async () => {
+      vi.mocked(admin.createAdminUser).mockResolvedValue(u({ id: "n", username: "new", display_name: "New", is_admin: true }));
+      await openUsers();
+      fireEvent.click(screen.getByRole("button", { name: "Add user" }));
+      const dialog = screen.getByRole("dialog");
+      fireEvent.change(within(dialog).getByLabelText(/^Username/), { target: { value: "new" } });
+      fireEvent.change(within(dialog).getByLabelText("Display name"), { target: { value: "New" } });
+      fireEvent.change(within(dialog).getByLabelText(/^Password/), { target: { value: "password123" } });
+      fireEvent.change(within(dialog).getByLabelText("Age limit"), { target: { value: "G" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: /Create as an admin instead/ }));
+      fireEvent.change(within(dialog).getByLabelText("Type admin to confirm"), { target: { value: "admin" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Yes, make them an admin" }));
+      expect(within(dialog).queryByLabelText("Age limit")).toBeNull();
+      fireEvent.click(within(dialog).getByRole("button", { name: "Add admin" }));
+      await waitFor(() =>
+        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: true, age_limit: null })
+      );
+    });
+
+    it("shows an account's age limit and lets it be changed or removed", async () => {
+      vi.mocked(admin.listAdminUsers).mockResolvedValue([me, u({ age_limit: "PG" })]);
+      vi.mocked(admin.updateAdminUser).mockResolvedValue(u({ age_limit: null }));
+      await openUsers();
+      expect(screen.getByText("PG")).toBeInTheDocument();
+      fireEvent.click(menuItem("Edit Bob"));
+      const dialog = screen.getByRole("dialog");
+      const select = within(dialog).getByLabelText("Age limit") as HTMLSelectElement;
+      expect(select.value).toBe("PG");
+      fireEvent.change(select, { target: { value: "" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+      await waitFor(() => expect(admin.updateAdminUser).toHaveBeenCalledWith("u1", { age_limit: null }));
     });
 
     it("backing out of the admin question goes back to a normal user", async () => {

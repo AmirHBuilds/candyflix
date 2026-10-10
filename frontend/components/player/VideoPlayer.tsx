@@ -251,7 +251,7 @@ export default function VideoPlayer({
       return;
     }
     let cancelled = false;
-    fetch(`${getStaticOrigin()}${track.url}`)
+    fetch(`${getStaticOrigin()}${track.url}`, { credentials: "include" })
       .then((res) => res.text())
       .then((text) => {
         if (!cancelled) setCues(parseSubtitles(text));

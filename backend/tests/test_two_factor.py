@@ -21,6 +21,7 @@ def bot(monkeypatch):
     monkeypatch.setattr(s, "telegram_bot_token", "T0KEN")
     monkeypatch.setattr(s, "telegram_chat_id", "-1001")
     monkeypatch.setattr(tf, "_bot_username", "CandyBot")
+    monkeypatch.setattr(tf.telegram_service, "notify", lambda *a, **k: None)  # reports are not what these tests are about
 
 
 def sent_codes(route):

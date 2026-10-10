@@ -37,6 +37,7 @@ from app.api.routes import (
     continue_watching,
     health,
     movies,
+    opinions,
     playback,
     presence,
     ratings,
@@ -53,6 +54,8 @@ from app.api.routes import (
 )
 from app.core.config import get_settings
 from app.core.migrate import run_migrations
+from app.core.security import SESSION_COOKIE_NAME
+from app.services import auth_service
 from app.services import telegram_service, two_factor_service
 
 settings = get_settings()
@@ -88,6 +91,30 @@ class NoCacheStaticFiles(StaticFiles):
         return response
 
 
+class SignedInOnlyFiles:
+    """Videos and subtitle files are only served to someone with a valid session (profile pictures stay open:
+    the sign-in screen shows them)."""
+
+    PROTECTED = ("/mock-videos", "/subtitle-cache")
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith(self.PROTECTED) and scope["method"] != "OPTIONS":
+            cookies = {}
+            for name, value in scope.get("headers", []):
+                if name == b"cookie":
+                    for part in value.decode("latin-1").split(";"):
+                        k, _, v = part.strip().partition("=")
+                        cookies[k] = v
+            token = cookies.get(SESSION_COOKIE_NAME)
+            if not token or await auth_service.get_session_user_id(token) is None:
+                await JSONResponse({"detail": "Not authenticated"}, status_code=401)(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     if settings.auto_migrate:
@@ -103,6 +130,10 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
+    # The interactive API docs describe every route to anyone who asks, so they only exist in development.
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
     title=settings.app_name,
     description="Backend API for CandyFlix — a small, private movie & TV app.",
     version="0.1.0",
@@ -114,6 +145,7 @@ async def report_unhandled(request: Request, exc: Exception):
     return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
 
 
+app.add_middleware(SignedInOnlyFiles)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
@@ -156,6 +188,7 @@ app.include_router(site.router, prefix="/api")
 app.include_router(segments.router, prefix="/api")
 app.include_router(presence.router, prefix="/api")
 app.include_router(announcements.router, prefix="/api")
+app.include_router(opinions.router, prefix="/api")
 
 
 @app.get("/api")

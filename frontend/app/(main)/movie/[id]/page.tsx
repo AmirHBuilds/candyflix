@@ -2,10 +2,13 @@ import RatingsButton from "@/components/RatingsButton";
 import TrailerButton from "@/components/TrailerButton";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getMovie, getSimilarMovies, backdropUrl, posterUrl } from "@/lib/media";
+import { getMovie, getSimilarMovies, backdropUrl, posterUrl, NotAllowedError } from "@/lib/media";
+import { authInit } from "@/lib/media-server";
+import ErrorState from "@/components/ErrorState";
 import Overview from "@/components/Overview";
 import DetailActions from "@/components/DetailActions";
 import MediaGrid from "@/components/MediaGrid";
+import OpinionsSection from "@/components/opinions/OpinionsSection";
 
 export default async function MovieDetailPage({
   params,
@@ -18,12 +21,21 @@ export default async function MovieDetailPage({
   // movie's own response, so awaiting them one after the other just added
   // their latencies together. (Caught here, so it can't surface as an
   // unhandled rejection if the movie turns out not to exist.)
-  const similarPromise = getSimilarMovies(id).catch(() => []);
+  const auth = await authInit();
+  const similarPromise = getSimilarMovies(id, auth).catch(() => []);
 
   let movie;
   try {
-    movie = await getMovie(id);
-  } catch {
+    movie = await getMovie(id, auth);
+  } catch (e) {
+    if (e instanceof NotAllowedError) {
+      void similarPromise;
+      return (
+        <div className="flex min-h-[60dvh] items-center justify-center">
+          <ErrorState title="Not available" message={e.message} secondary={{ label: "Back home", href: "/" }} />
+        </div>
+      );
+    }
     notFound();
   }
 
@@ -86,6 +98,8 @@ export default async function MovieDetailPage({
           <DetailActions tmdbId={movie.tmdb_id} mediaType="movie" />
         </div>
       </div>
+
+      <OpinionsSection mediaType="movie" tmdbId={movie.tmdb_id} />
 
       {similar.length > 0 && (
         <section>

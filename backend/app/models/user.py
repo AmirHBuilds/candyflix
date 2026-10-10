@@ -55,6 +55,13 @@ class User(Base):
     # a code is sent to that chat. Cleared by the person (Settings) or by an admin (lost phone).
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
 
+    # Highest age rating this person may watch: "G", "PG", "PG-13" or "R". None = no limit.
+    # See services/content_rating_service.py. Admins can't have one.
+    age_limit: Mapped[str | None] = mapped_column(String(8), nullable=True)
+
+    # An admin can stop someone from posting opinions (they can still read them).
+    opinions_blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+
     @property
     def two_factor_enabled(self) -> bool:
         return self.telegram_chat_id is not None

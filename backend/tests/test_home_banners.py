@@ -75,8 +75,13 @@ def _three(**first):
     return {"banners": base}
 
 
-async def test_public_read_gives_three_default_banners_without_login(client):
-    body = (await client.get("/api/site/banners")).json()
+async def test_reading_needs_a_sign_in_and_gives_three_default_banners(client):
+    assert (await client.get("/api/site/banners")).status_code == 401
+    name = await _login(client, False)
+    try:
+        body = (await client.get("/api/site/banners")).json()
+    finally:
+        await _cleanup(name)
     assert len(body["banners"]) == 3
     assert all(b["enabled"] and b["title"] and b["text"] for b in body["banners"])
 
@@ -86,10 +91,9 @@ async def test_admin_can_edit_switch_off_and_everyone_sees_it(client):
     try:
         res = await client.put("/api/admin/banners", json=_three(enabled=False, title="  Hello  "))
         assert res.status_code == 200
+        first = (await client.get("/api/site/banners")).json()["banners"][0]
     finally:
         await _cleanup(name)
-    client.cookies.clear()
-    first = (await client.get("/api/site/banners")).json()["banners"][0]
     assert first["enabled"] is False and first["title"] == "Hello"
 
 

@@ -13,6 +13,7 @@ import {
   updateAdminUser,
   type AdminUser,
 } from "@/lib/admin";
+import { AGE_LIMITS, type AgeLimit } from "@/lib/age-limit";
 import { boxNameFor } from "@/lib/box-name";
 import { showToast } from "@/lib/toast";
 
@@ -144,6 +145,7 @@ export default function UsersTab({
                     <span className="truncate">{user.display_name}</span>
                     {isMe && <span className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/60">You</span>}
                     {user.is_admin && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-xs text-accent">Admin</span>}
+                    {user.age_limit && <span title={`Can watch up to ${user.age_limit}`} className="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-300">{user.age_limit}</span>}
                     {user.two_factor_enabled && <span title="Two-step sign-in is on" className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-xs text-emerald-300">2-step</span>}
                     {user.is_disabled && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-xs text-red-300">Disabled</span>}
                   </p>
@@ -179,6 +181,19 @@ export default function UsersTab({
       {modal?.kind === "password" && <PasswordDialog user={modal.user} onClose={() => setModal(null)} onDone={done} />}
       {modal?.kind === "delete" && <DeleteDialog user={modal.user} onClose={() => setModal(null)} onDone={done} />}
     </section>
+  );
+}
+
+function AgeSelect({ value, onChange, disabled = false }: { value: AgeLimit | ""; onChange: (v: AgeLimit | "") => void; disabled?: boolean }) {
+  return (
+    <select aria-label="Age limit" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value as AgeLimit | "")} className={fieldClass}>
+      <option value="">No limit</option>
+      {AGE_LIMITS.map((l) => (
+        <option key={l.value} value={l.value}>
+          {l.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -237,9 +252,10 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
   // Admin is deliberately a detour: not a checkbox, and it has to be confirmed by typing a word.
   const [adminStep, setAdminStep] = useState<"off" | "confirm" | "on">("off");
   const [typed, setTyped] = useState("");
+  const [ageLimit, setAgeLimit] = useState<AgeLimit | "">("");
   const isAdmin = adminStep === "on";
   const { busy, error, submit } = useSubmit(async () => {
-    const created = await createAdminUser({ username, display_name: displayName.trim(), password, is_admin: isAdmin });
+    const created = await createAdminUser({ username, display_name: displayName.trim(), password, is_admin: isAdmin, age_limit: isAdmin || !ageLimit ? null : ageLimit });
     onDone(`${created.display_name} was added${created.is_admin ? " as an admin" : ""}.`);
   });
   return (
@@ -254,6 +270,12 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
         <Field label="Password" hint="At least 8 characters. They can change it later in Settings.">
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={fieldClass} />
         </Field>
+
+        {adminStep !== "on" && (
+          <Field label="Age limit" hint="Hides anything rated above it, and anything with no known rating, everywhere on the site: lists, search, Ask AI and playback.">
+            <AgeSelect value={ageLimit} onChange={setAgeLimit} />
+          </Field>
+        )}
 
         {adminStep === "off" && (
           <button type="button" onClick={() => setAdminStep("confirm")} className="block text-xs text-white/30 underline-offset-2 hover:text-white/60 hover:underline">
@@ -271,7 +293,10 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
               <button
                 type="button"
                 disabled={typed.trim().toLowerCase() !== "admin"}
-                onClick={() => setAdminStep("on")}
+                onClick={() => {
+                  setAdminStep("on");
+                  setAgeLimit(""); // an admin has no age limit
+                }}
                 className="h-9 rounded-lg bg-red-500/80 px-3 text-sm font-medium text-white disabled:opacity-40"
               >
                 Yes, make them an admin
@@ -302,8 +327,10 @@ function EditDialog({ user, isMe, onClose, onDone }: { user: AdminUser; isMe: bo
   const [username, setUsername] = useState(user.username);
   const [displayName, setDisplayName] = useState(user.display_name);
   const [isAdmin, setIsAdmin] = useState(user.is_admin);
+  const [ageLimit, setAgeLimit] = useState<AgeLimit | "">(user.age_limit ?? "");
   const { busy, error, submit } = useSubmit(async () => {
     const changes: Parameters<typeof updateAdminUser>[1] = {};
+    if ((ageLimit || null) !== user.age_limit) changes.age_limit = ageLimit || null;
     if (username.trim() !== user.username) changes.username = username.trim();
     if (displayName.trim() !== user.display_name) changes.display_name = displayName.trim();
     if (isAdmin !== user.is_admin) changes.is_admin = isAdmin;
@@ -320,8 +347,11 @@ function EditDialog({ user, isMe, onClose, onDone }: { user: AdminUser; isMe: bo
         <Field label="Display name">
           <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={50} className={fieldClass} />
         </Field>
+        <Field label="Age limit" hint={isAdmin ? "An admin can't have an age limit." : "Hides anything rated above it, and anything with no known rating."}>
+          <AgeSelect value={isAdmin ? "" : ageLimit} onChange={setAgeLimit} disabled={isAdmin} />
+        </Field>
         <label className="flex items-center gap-2 text-sm text-white/70">
-          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} className="h-4 w-4 accent-accent" />
+          <input type="checkbox" checked={isAdmin} onChange={(e) => { setIsAdmin(e.target.checked); if (e.target.checked) setAgeLimit(""); }} className="h-4 w-4 accent-accent" />
           Admin{isMe && <span className="text-xs text-white/40"> (the server needs at least one active admin)</span>}
         </label>
         <ErrorLine message={error} />

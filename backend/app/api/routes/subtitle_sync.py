@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.schemas.subtitle_sync import SyncRequest, SyncStatus
-from app.services import subtitle_sync_service as sync
+from app.services import content_rating_service, subtitle_sync_service as sync
 from app.services.subtitle_sync_service import SyncError
 
 router = APIRouter(tags=["subtitle-sync"])
@@ -27,6 +27,7 @@ async def sync_status(
 ):
     if media_type not in ("movie", "tv"):
         raise HTTPException(status_code=400, detail="media_type must be 'movie' or 'tv'.")
+    await content_rating_service.ensure(current_user, media_type, tmdb_id)
     try:
         name = sync.subtitle_name_from_url(subtitle_url)
     except SyncError:
@@ -36,6 +37,7 @@ async def sync_status(
 
 @router.post("/subtitle-sync", response_model=SyncStatus)
 async def start_sync(payload: SyncRequest, current_user: User = Depends(get_current_user)):
+    await content_rating_service.ensure(current_user, payload.media_type, payload.tmdb_id)
     try:
         name = sync.subtitle_name_from_url(payload.subtitle_url)
         vkey = sync.video_key(payload.media_type, payload.tmdb_id, payload.season_number, payload.episode_number)

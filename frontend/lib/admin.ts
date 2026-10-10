@@ -1,6 +1,8 @@
 /** Client for /api/admin (admins only). */
 import { fetchWithTimeout, getApiBaseUrl } from "@/lib/api-client";
 
+import type { AgeLimit } from "@/lib/age-limit";
+
 export type AdminUser = {
   id: string;
   username: string;
@@ -16,6 +18,8 @@ export type AdminUser = {
   ai_daily_limit: number | null;
   /** The same, for the watch assistant in the player. */
   watch_ai_daily_limit: number | null;
+  /** Highest age rating they may watch; null = no limit. */
+  age_limit: AgeLimit | null;
   /** Two-step sign-in (a code from the Telegram bot) is on for them. */
   two_factor_enabled: boolean;
   /** Their own Settings switch: Ask AI may use their watch history and box. */
@@ -68,11 +72,11 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = "Some
 }
 
 export const listAdminUsers = () => request<AdminUser[]>("/users", {}, "Couldn't load users.");
-export const createAdminUser = (body: { username: string; display_name: string; password: string; is_admin: boolean }) =>
+export const createAdminUser = (body: { username: string; display_name: string; password: string; is_admin: boolean; age_limit?: AgeLimit | null }) =>
   request<AdminUser>("/users", { method: "POST", body: JSON.stringify(body) }, "Couldn't create that user.");
 export const updateAdminUser = (
   id: string,
-  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null; watch_ai_daily_limit: number | null }>
+  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null; watch_ai_daily_limit: number | null; age_limit: AgeLimit | null }>
 ) => request<AdminUser>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }, "Couldn't save the changes.");
 export const resetAdminPassword = (id: string, newPassword: string) =>
   request<void>(`/users/${id}/password`, { method: "POST", body: JSON.stringify({ new_password: newPassword }) }, "Couldn't reset the password.");

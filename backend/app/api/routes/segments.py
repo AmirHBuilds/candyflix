@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.schemas.segments import SegmentsOut
-from app.services import segment_service, tmdb_service
+from app.services import content_rating_service, segment_service, tmdb_service
 from app.services.tmdb_service import TMDBError
 
 router = APIRouter(tags=["segments"])
@@ -26,6 +26,7 @@ async def get_segments(
 ):
     if media_type not in ("movie", "tv"):
         raise HTTPException(status_code=400, detail="media_type must be 'movie' or 'tv'.")
+    await content_rating_service.ensure(current_user, media_type, tmdb_id)
     if media_type == "tv" and (season_number is None or episode_number is None):
         raise HTTPException(status_code=422, detail="A TV episode needs season_number and episode_number.")
 

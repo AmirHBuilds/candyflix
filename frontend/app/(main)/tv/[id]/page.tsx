@@ -2,12 +2,15 @@ import RatingsButton from "@/components/RatingsButton";
 import TrailerButton from "@/components/TrailerButton";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getTVShow, getSimilarTV, backdropUrl, posterUrl } from "@/lib/media";
+import { getTVShow, getSimilarTV, backdropUrl, posterUrl, NotAllowedError } from "@/lib/media";
+import { authInit } from "@/lib/media-server";
+import ErrorState from "@/components/ErrorState";
 import { getLatestTVWatchProgressServer } from "@/lib/playback-server";
 import { mergeResumeWithHint, parseResumeHintFromSearchParams } from "@/lib/playback";
 import Overview from "@/components/Overview";
 import DetailActions from "@/components/DetailActions";
 import SeasonBrowser from "@/components/SeasonBrowser";
+import OpinionsSection from "@/components/opinions/OpinionsSection";
 import MediaGrid from "@/components/MediaGrid";
 import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
 
@@ -24,13 +27,22 @@ export default async function TVDetailPage({
   // depend on each other's responses, so all three start together instead
   // of waiting in a line. Both side requests are caught on the spot, so
   // neither can become an unhandled rejection if the show doesn't exist.
-  const similarPromise = getSimilarTV(id).catch(() => []);
+  const auth = await authInit();
+  const similarPromise = getSimilarTV(id, auth).catch(() => []);
   const progressPromise = getLatestTVWatchProgressServer(Number(id)).catch(() => null);
 
   let show;
   try {
-    show = await getTVShow(id);
-  } catch {
+    show = await getTVShow(id, auth);
+  } catch (e) {
+    if (e instanceof NotAllowedError) {
+      void similarPromise;
+      return (
+        <div className="flex min-h-[60dvh] items-center justify-center">
+          <ErrorState title="Not available" message={e.message} secondary={{ label: "Back home", href: "/" }} />
+        </div>
+      );
+    }
     notFound();
   }
 
@@ -111,6 +123,8 @@ export default async function TVDetailPage({
         resumeEpisode={watchProgress}
         recentVisit={hint}
       />
+
+      <OpinionsSection mediaType="tv" tmdbId={show.tmdb_id} />
 
       {similar.length > 0 && (
         <section>

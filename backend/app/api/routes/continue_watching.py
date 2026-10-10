@@ -18,7 +18,7 @@ from app.core.db import get_db
 from app.models.user import User
 from app.models.watch_progress import WatchProgress
 from app.schemas.continue_watching import ContinueWatchingItemOut, ContinueWatchingListOut
-from app.services import tmdb_service, watch_progress_service
+from app.services import content_rating_service, tmdb_service, watch_progress_service
 from app.services.tmdb_service import TMDBError
 
 logger = logging.getLogger("app.continue_watching")
@@ -78,5 +78,5 @@ async def get_continue_watching(
     rows = rows[:limit]
 
     enriched = await asyncio.gather(*(_enrich(row) for row in rows))
-    items = [e for e in enriched if e is not None]
+    items = await content_rating_service.filter_items(current_user, [e for e in enriched if e is not None])
     return ContinueWatchingListOut(items=items, has_more=has_more)

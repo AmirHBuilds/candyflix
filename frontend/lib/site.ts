@@ -22,9 +22,9 @@ export const DEFAULT_FOOTER: FooterContent = {
 };
 
 /** Never throws: a footer is never worth breaking a page over. */
-export async function getFooterServer(): Promise<FooterContent> {
+export async function getFooterServer(init?: RequestInit): Promise<FooterContent> {
   try {
-    const res = await fetchWithTimeout(`${getApiBaseUrl()}/site/footer`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${getApiBaseUrl()}/site/footer`, { cache: "no-store", ...init });
     if (!res.ok) return DEFAULT_FOOTER;
     return { ...DEFAULT_FOOTER, ...(await res.json()) };
   } catch {
@@ -56,9 +56,9 @@ export const DEFAULT_BANNERS: HomeBannersContent = {
 };
 
 /** Never throws: the banners are never worth breaking the home page over. */
-export async function getBannersServer(): Promise<HomeBannersContent> {
+export async function getBannersServer(init?: RequestInit): Promise<HomeBannersContent> {
   try {
-    const res = await fetchWithTimeout(`${getApiBaseUrl()}/site/banners`, { cache: "no-store" });
+    const res = await fetchWithTimeout(`${getApiBaseUrl()}/site/banners`, { cache: "no-store", ...init });
     if (!res.ok) return DEFAULT_BANNERS;
     const body = await res.json();
     return Array.isArray(body?.banners) && body.banners.length === 3 ? body : DEFAULT_BANNERS;

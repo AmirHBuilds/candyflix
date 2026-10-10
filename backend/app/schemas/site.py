@@ -105,6 +105,15 @@ class AIConfig(BaseModel):
     watch_daily_limit: int = Field(default=20, ge=0, le=1000)
 
 
+class SocialConfig(BaseModel):
+    """Site-wide switches for opinions and likes (admin)."""
+
+    enabled: bool = True
+    allow_anonymous: bool = True
+    allow_replies: bool = True
+    home_section: bool = True
+
+
 BadgePosition = Literal["top", "top-left", "top-right"]
 
 

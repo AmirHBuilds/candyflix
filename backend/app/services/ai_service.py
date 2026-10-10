@@ -30,7 +30,7 @@ from app.models.user import User
 from app.models.watch_progress import WatchProgress
 from app.models.watchlist_item import WatchlistItem
 from app.schemas import ai as schemas
-from app.services import settings_service, site_service, telegram_service, tmdb_service
+from app.services import content_rating_service, settings_service, site_service, telegram_service, tmdb_service
 
 logger = logging.getLogger("app.ai")
 
@@ -222,11 +222,13 @@ SYSTEM = (
 )
 
 
-def _prompt_text(prompt: str, watched: list[tuple[str, int, str]], saved: list[tuple[str, int, str]]) -> str:
+def _prompt_text(prompt: str, watched: list[tuple[str, int, str]], saved: list[tuple[str, int, str]], age_limit: str | None = None) -> str:
     def lines(items):
         return "\n".join(f"- {t} ({y}) [{ty}]" for t, y, ty in items) or "(none)"
 
     parts = [f"REQUEST: {prompt}"]
+    if age_limit:
+        parts.append(f"AUDIENCE: a young viewer. Only suggest titles rated {age_limit} or milder (shows: the equivalent TV rating). Nothing above it.")
     if watched or saved:
         parts += ["", "WATCHED, most recent first:", lines(watched), "", "SAVED FOR LATER:", lines(saved)]
     else:
@@ -420,7 +422,7 @@ async def _ask_gemini(text: str) -> _Answer:
 # ---------------------------------------------------------------- real titles
 
 
-async def _resolve(suggestions: list[_Suggestion], skip: set[tuple[int, str]], seen: set[tuple[int, str]]) -> list[schemas.AskTitle]:
+async def _resolve(user: User, suggestions: list[_Suggestion], skip: set[tuple[int, str]], seen: set[tuple[int, str]]) -> list[schemas.AskTitle]:
     sem = asyncio.Semaphore(8)
 
     async def one(s: _Suggestion) -> schemas.AskTitle | None:
@@ -430,6 +432,8 @@ async def _resolve(suggestions: list[_Suggestion], skip: set[tuple[int, str]], s
                 tmdb_id = await tmdb_service.find_title(s.title, s.year, media_type)
                 if tmdb_id is None:
                     return None
+                if not await content_rating_service.allowed(user, media_type, tmdb_id):
+                    return None  # above this person's age limit
                 d = await (tmdb_service.get_movie(tmdb_id) if media_type == "movie" else tmdb_service.get_tv(tmdb_id))
             except Exception:
                 return None
@@ -522,11 +526,11 @@ async def _answer_or_cached(db, user, prompt, limit, use_history, watched_ids, s
             raise AIError(429, f"You've used your {limit} AI searches for today. They come back tomorrow.")
         try:
             watched, saved = await asyncio.gather(_titles(watched_ids), _titles(saved_ids))
-            answer = await _ask_gemini(_prompt_text(prompt, watched, saved))
+            answer = await _ask_gemini(_prompt_text(prompt, watched, saved, user.age_limit))
             seen: set[tuple[int, str]] = set()
             for_you, general = await asyncio.gather(
-                _resolve(answer.for_you if use_history else [], skip, seen),
-                _resolve(answer.general, skip, set()),
+                _resolve(user, answer.for_you if use_history else [], skip, seen),
+                _resolve(user, answer.general, skip, set()),
             )
         except Exception:
             await _refund(user, limit)

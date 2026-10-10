@@ -79,10 +79,15 @@ GOOD = {
 }
 
 
-async def test_public_read_returns_defaults_without_login(client):
-    res = await client.get("/api/site/footer")
-    assert res.status_code == 200
-    assert res.json()["enabled"] is True
+async def test_reading_needs_a_sign_in_and_returns_defaults(client):
+    assert (await client.get("/api/site/footer")).status_code == 401
+    name = await _login(client, False)
+    try:
+        res = await client.get("/api/site/footer")
+        assert res.status_code == 200
+        assert res.json()["enabled"] is True
+    finally:
+        await _cleanup(name)
 
 
 async def test_admin_can_edit_and_everyone_sees_it(client):
@@ -90,10 +95,9 @@ async def test_admin_can_edit_and_everyone_sees_it(client):
     try:
         res = await client.put("/api/admin/footer", json=GOOD)
         assert res.status_code == 200
+        got = (await client.get("/api/site/footer")).json()
     finally:
         await _cleanup(name)
-    client.cookies.clear()
-    got = (await client.get("/api/site/footer")).json()
     assert got["email"] == "hi@example.com"
     assert got["links"][0]["label"] == "Help"
 

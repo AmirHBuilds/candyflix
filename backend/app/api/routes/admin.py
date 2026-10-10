@@ -15,7 +15,9 @@ from app.core.db import get_db
 from app.models.user import User
 from app.schemas import admin as schemas
 from app.schemas.site import BadgePositionUpdate, BadgePublic, Footer, HomeBanners
-from app.services import admin_service, ai_service, audit_service, avatar_service, site_service, two_factor_service
+from app.schemas import opinions as opinion_schemas
+from app.schemas.site import SocialConfig
+from app.services import opinions_service, admin_service, ai_service, audit_service, avatar_service, site_service, two_factor_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -38,16 +40,18 @@ async def create_user(
     except admin_service.AdminError as exc:
         _raise(exc)
     await audit_service.record(
-        db, actor, "user.create", target_name=created.display_name, detail="Admin account" if created.is_admin else None
+        db, actor, "user.create", target_name=created.display_name, detail="Admin account" if created.is_admin else (f"Age limit {created.age_limit}" if created.age_limit else None)
     )
     return created
 
 
 async def _audit_user_update(db: AsyncSession, actor: User, after: schemas.AdminUser, before: tuple) -> None:
-    username, display_name, is_admin, is_disabled = before
+    username, display_name, is_admin, is_disabled, age_limit = before
     plain = [label for label, old, new in (("username", username, after.username), ("display name", display_name, after.display_name)) if old != new]
     if plain:
         await audit_service.record(db, actor, "user.update", target_name=after.display_name, target=None, detail="Changed " + " and ".join(plain))
+    if age_limit != after.age_limit:
+        await audit_service.record(db, actor, "user.update", target_name=after.display_name, target=None, detail=f"Age limit: {after.age_limit or 'none'}")
     if is_disabled != after.is_disabled:
         await audit_service.record(db, actor, "user.disable" if after.is_disabled else "user.enable", target_name=after.display_name)
     if is_admin != after.is_admin:
@@ -63,7 +67,7 @@ async def update_user(
 ):
     try:
         target = await admin_service.get_user(db, user_id)
-        before = (target.username, target.display_name, target.is_admin, target.is_disabled)
+        before = (target.username, target.display_name, target.is_admin, target.is_disabled, target.age_limit)
         result = await admin_service.update_user(db, actor, target, payload)
     except admin_service.AdminError as exc:
         _raise(exc)
@@ -119,6 +123,46 @@ async def switch_off_two_factor(
     await two_factor_service.turn_off(db, target, by=actor.display_name)
     await audit_service.record(db, actor, "user.2fa_off", target=target)
     return await admin_service._admin_view(db, user_id)
+
+
+@router.get("/opinions", response_model=opinion_schemas.AdminOpinionPage)
+async def list_opinions(
+    offset: int = Query(0, ge=0), limit: int = Query(30, ge=1, le=100), hidden: bool = False, db: AsyncSession = Depends(get_db)
+):
+    return await opinions_service.admin_list(db, offset, limit, only_hidden=hidden)
+
+
+@router.post("/opinions/{opinion_id}/hide", status_code=status.HTTP_204_NO_CONTENT)
+async def hide_opinion(opinion_id: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    await opinions_service.admin_set_hidden(db, opinion_id, True)
+    await audit_service.record(db, actor, "opinion.hide")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/opinions/{opinion_id}/unhide", status_code=status.HTTP_204_NO_CONTENT)
+async def unhide_opinion(opinion_id: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    await opinions_service.admin_set_hidden(db, opinion_id, False)
+    await audit_service.record(db, actor, "opinion.unhide")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/opinions/{opinion_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_opinion(opinion_id: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    await opinions_service.delete_opinion(db, actor, opinion_id)
+    await audit_service.record(db, actor, "opinion.delete")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/social", response_model=SocialConfig)
+async def read_social_config(db: AsyncSession = Depends(get_db)):
+    return await site_service.get_social_config(db)
+
+
+@router.put("/social", response_model=SocialConfig)
+async def update_social_config(payload: SocialConfig, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    saved = await site_service.set_social_config(db, payload)
+    await audit_service.record(db, actor, "social.config")
+    return saved
 
 
 @router.get("/stats", response_model=schemas.AdminStats)

@@ -8,6 +8,7 @@ import * as admin from "@/lib/admin";
 import { DEFAULT_BANNERS, type HomeBannersContent } from "@/lib/site";
 
 vi.mock("@/lib/admin", () => ({ getAdminBanners: vi.fn(), saveAdminBanners: vi.fn() }));
+vi.mock("@/lib/media-server", () => ({ authInit: vi.fn(async () => ({})) }));
 vi.mock("@/lib/toast", () => ({ showToast: vi.fn() }));
 vi.mock("@/lib/media", async (orig) => {
   const items = (n: string) => [{ tmdb_id: 1, media_type: "movie", title: `${n} item`, year: "2026", poster_path: "/p.jpg", backdrop_path: null, rating: 7 }];
@@ -36,9 +37,19 @@ describe("home page banners", () => {
     return Array.from(container.querySelectorAll("section, aside")).map((n) => (n.tagName === "ASIDE" ? `banner${n.getAttribute("data-banner")}` : n.querySelector("h2")?.textContent));
   }
 
-  it("puts a banner after each of the first three rows (Continue Watching is empty here, so Trending Today is the first row)", async () => {
+  it("puts the banners after Trending Today, Trending This Week and Popular Movies", async () => {
     vi.mocked(getBannersServer).mockResolvedValue(DEFAULT_BANNERS);
     expect(await order()).toEqual(["Trending Today", "banner0", "Trending This Week", "banner1", "Popular Movies", "banner2", "Popular TV Shows"]);
+  });
+
+  it("keeps them in the same place when Continue Watching is showing above", async () => {
+    vi.mocked(getBannersServer).mockResolvedValue(DEFAULT_BANNERS);
+    const cw = await import("@/lib/continue-watching-server");
+    vi.mocked(cw.getContinueWatchingServer).mockResolvedValueOnce({
+      items: [{ tmdb_id: 9, media_type: "movie", title: "Resume me", year: "2026", poster_path: "/p.jpg", backdrop_path: null, rating: 7, position_seconds: 5, duration_seconds: 10 } as never],
+      hasMore: false,
+    });
+    expect(await order()).toEqual(["Continue Watching", "Trending Today", "banner0", "Trending This Week", "banner1", "Popular Movies", "banner2", "Popular TV Shows"]);
   });
 
   it("leaves out a banner the admin switched off", async () => {

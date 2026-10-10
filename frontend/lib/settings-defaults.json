@@ -57,5 +57,11 @@
   },
   "ai": {
     "use_history": true
+  },
+  "social": {
+    "enabled": true,
+    "share_likes": true,
+    "anonymous_by_default": false,
+    "show_on_home": true
   }
 }

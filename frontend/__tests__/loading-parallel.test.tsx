@@ -92,7 +92,7 @@ describe("detail pages don't wait in a line", () => {
     const page = MovieDetailPage({ params: Promise.resolve({ id: "603" }) });
     await flush();
 
-    expect(media.getSimilarMovies).toHaveBeenCalledWith("603");
+    expect(media.getSimilarMovies).toHaveBeenCalledWith("603", expect.anything());
     movie.reject(new Error("404"));
     await expect(page).rejects.toThrow("NEXT_NOT_FOUND"); // unknown id still 404s
   });
@@ -106,7 +106,7 @@ describe("detail pages don't wait in a line", () => {
     const page = TVDetailPage({ params: Promise.resolve({ id: "1396" }), searchParams: Promise.resolve({}) });
     await flush();
 
-    expect(media.getSimilarTV).toHaveBeenCalledWith("1396");
+    expect(media.getSimilarTV).toHaveBeenCalledWith("1396", expect.anything());
     expect(playbackServer.getLatestTVWatchProgressServer).toHaveBeenCalledWith(1396);
     show.reject(new Error("404"));
     await expect(page).rejects.toThrow("NEXT_NOT_FOUND");

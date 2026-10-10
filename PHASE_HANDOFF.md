@@ -893,3 +893,33 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - Only one backend process may poll the bot (getUpdates conflicts otherwise); the bot must not have a webhook set.
 - Add user dialog: no admin checkbox; a small "Create as an admin instead…" link opens a red warning where you type `admin` and confirm; the button then says "Add admin". (Edit dialog unchanged.)
 - Tests: backend 479 passed; frontend 666 + `two-step-signin.test.tsx` (3, excluded from the sandbox glob only because of the `login*` pattern).
+
+## §43 Phase 19 — age limits (applies after `candyflix-phase18-two-step-v1`)
+- Migration `b9e3f6a1c428` (users.age_limit: null | "G" | "PG" | "PG-13" | "R"). Admins pick it when adding a person (Age limit select) or in Edit; list shows an amber tag. An admin can't have a limit (create/update refuse, UI clears it).
+- `services/content_rating_service.py`: rating from TMDB US certification (`tmdb_service.get_certification`, cached 30 days): movies G/PG/PG-13/R/NC-17, shows TV-Y/Y7/G=G, TV-PG=PG, TV-14=PG-13, TV-MA=R. Unknown/unrated → hidden; TMDB `adult` flag → hidden; NC-17 always hidden for limited accounts. Accounts with no limit cost no extra calls.
+- Enforced on the backend everywhere: trending, search, popular/discover lists (filtered, `has_more` unchanged so pages can be short), detail/similar/season (403 "This title isn't available for your account."), playback, watch-progress writes/visits, segments, subtitles search/download, subtitle-sync, ratings, watchlist add + list, continue-watching, Ask AI (suggestions dropped + audience line in the prompt), watch assistant.
+- The media routes (trending/search/movies/tv) now REQUIRE sign-in (they were open). Frontend: `lib/media.ts` sends cookies (`credentials: "include"`) and takes an optional `init`; Server Components pass `await authInit()` (`lib/media-server.ts`). A 403 throws `NotAllowedError`; detail pages show "Not available".
+- Tests: backend 487 passed (`tests/test_age_limit.py`), frontend 674 passed.
+
+## §44 Phase 19 v2 — everything behind sign-in (applies after `candyflix-phase19-age-limits-v1`)
+- Now needing a session: genres, `/site/footer`, `/site/banners`, the video and subtitle files (`/mock-videos`, `/subtitle-cache` via the `SignedInOnlyFiles` middleware in `main.py`), and `/docs`, `/redoc`, `/openapi.json` (only exist when `DEBUG` is on).
+- Still open on purpose: health checks, `/auth/users` + login routes, `/site/badge` (crown), `/avatars` (the sign-in screen shows them).
+- `tests/test_everything_needs_sign_in.py` fails if a new route is added without auth (update its OPEN list deliberately).
+- Frontend: footer and banners fetched with the session cookie (`getFooterServer(init)`, `getBannersServer(init)`); subtitle fetch sends credentials.
+- Backend 489 passed, frontend 674 passed.
+
+## §45 Phase 20 — Opinions (comments, replies, anonymous, likes)
+
+**What it is.** People write short opinions (1–500 chars) on a movie/show, reply one level deep, post anonymously, and heart titles and opinions. Everyone sees "Candy liked this" / "Candy, Mom, Dad + 4 others liked this".
+
+**Data** (migration `c1f4a7d2e539`): `opinions` (scope = media_type, tmdb_id, season_number, episode_number; -1 = whole title; `parent_id` for replies; `is_anonymous`; `is_hidden`), `opinion_likes`, `title_likes` (scoped likewise, so episodes work already), `users.opinions_blocked`.
+
+**Rules** (`services/opinions_service.py`): three switches — site (`SocialConfig`: enabled, allow_anonymous, allow_replies, home_section), person (`UserSettings.social`: enabled, share_likes, anonymous_by_default, show_on_home), admin mute (`opinions_blocked`; can read, can't write). Anonymous authors show as "Someone"; admins also get `real_author`. A person with `share_likes` off can still like but is neither shown nor counted for others. 20 posts/hour (429). Age limits enforced on every title-scoped call and on the feed. Replies never notify anyone.
+
+**API**: `GET /api/opinions/title`, `POST /api/opinions`, `DELETE /api/opinions/{id}` (author or admin), `PUT /api/opinions/{id}/like?liked=`, `PUT /api/opinions/likes/title`, `GET /api/opinions/feed`; admin: `GET /api/admin/opinions[?hidden=true]`, `POST …/{id}/hide|unhide`, `DELETE …/{id}`, `GET/PUT /api/admin/social`, `opinions_blocked` via user PATCH.
+
+**Frontend**: `lib/opinions.ts`, `components/opinions/{OpinionsSection,OpinionsStrip,HeartButton}.tsx`; section on movie and TV pages, "From the family" strip under the home hero, Settings → Community. Animations are CSS (heartPop, driftIn) so Reduce motion calms them. `UserSettings` gained `social` (settings-defaults.json regenerated).
+
+**Not yet (Phase 21)**: admin moderation tab in the UI (API exists), per-episode UI (the server and `OpinionsSection` props `seasonNumber/episodeNumber` already support it).
+
+**Tests**: `backend/tests/test_opinions.py` (22), `frontend/__tests__/opinions.test.tsx` (11). Never tried against live TMDB in a browser.

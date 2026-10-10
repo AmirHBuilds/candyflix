@@ -20,9 +20,45 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import get_settings
+from app.core.db import AsyncSessionLocal, engine
+from app.core.redis import get_redis
+import app.core.redis as redis_module
+from app.core.security import SESSION_COOKIE_NAME
 from app.main import app
+from app.services import auth_service
 
 pytestmark = pytest.mark.asyncio
+
+
+@pytest.fixture(autouse=True)
+async def redis_and_pool():
+    redis_module._redis_client = None
+    redis_module.get_redis()
+    yield
+    await redis_module.get_redis().aclose()
+    redis_module._redis_client = None
+    await engine.dispose()
+
+
+async def signed_in_cookie() -> dict:
+    """A session cookie for a throwaway person: videos and subtitles are only served to signed-in people."""
+    import uuid
+
+    name = f"st_{uuid.uuid4().hex[:8]}"
+    async with AsyncSessionLocal() as db:
+        user = await auth_service.create_user(db, name, name.title(), "password123")
+        uid = user.id
+    return {SESSION_COOKIE_NAME: await auth_service.create_session(uid)}
+
+
+async def test_files_are_refused_without_signing_in():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        assert (await client.get("/mock-videos/anything.mp4")).status_code == 401
+        assert (await client.get("/subtitle-cache/anything.srt")).status_code == 401
+        client.cookies.set(SESSION_COOKIE_NAME, "not-a-real-session")
+        assert (await client.get("/mock-videos/anything.mp4")).status_code == 401
+        # profile pictures stay open: the sign-in screen shows them
+        assert (await client.get("/avatars/none.webp")).status_code == 404
 
 
 async def test_mock_video_file_is_served_with_real_bytes():
@@ -31,7 +67,7 @@ async def test_mock_video_file_is_served_with_real_bytes():
     test_file.write_bytes(b"fake mp4 bytes for real")
     try:
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with AsyncClient(transport=transport, base_url="http://test", cookies=await signed_in_cookie()) as client:
             resp = await client.get("/mock-videos/_static_mount_test.mp4")
 
         assert resp.status_code == 200
@@ -42,7 +78,7 @@ async def test_mock_video_file_is_served_with_real_bytes():
 
 async def test_nonexistent_mock_file_returns_404():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://test", cookies=await signed_in_cookie()) as client:
         resp = await client.get("/mock-videos/definitely-does-not-exist.mp4")
 
     assert resp.status_code == 404
@@ -65,7 +101,7 @@ async def test_mock_video_range_response_is_never_browser_cached():
     test_file.write_bytes(b"0123456789" * 5)
     try:
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with AsyncClient(transport=transport, base_url="http://test", cookies=await signed_in_cookie()) as client:
             resp = await client.get(
                 "/mock-videos/_static_mount_cache_test.mp4", headers={"Range": "bytes=0-4"}
             )
@@ -83,7 +119,7 @@ async def test_subtitle_cache_file_is_served_with_real_bytes():
     test_file.write_text(srt_content)
     try:
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with AsyncClient(transport=transport, base_url="http://test", cookies=await signed_in_cookie()) as client:
             resp = await client.get("/subtitle-cache/_static_mount_test.srt")
 
         assert resp.status_code == 200

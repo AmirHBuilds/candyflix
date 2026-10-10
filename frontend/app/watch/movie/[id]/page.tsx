@@ -1,4 +1,5 @@
 import { getMovie, type MovieDetail } from "@/lib/media";
+import { authInit } from "@/lib/media-server";
 import { getMoviePlaybackSourceServer } from "@/lib/playback-server";
 import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
@@ -16,7 +17,7 @@ export default async function WatchMoviePage({
   let source: PlaybackSource | undefined;
   let error: string | null = null;
   try {
-    [movie, source] = await Promise.all([getMovie(id), getMoviePlaybackSourceServer(id)]);
+    [movie, source] = await Promise.all([getMovie(id, await authInit()), getMoviePlaybackSourceServer(id)]);
   } catch (e) {
     error = e instanceof Error ? e.message : "Couldn't load this video.";
   }

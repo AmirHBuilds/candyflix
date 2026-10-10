@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTrending, getPopularMovies, getPopularTV, type MediaItem } from "@/lib/media";
+import { authInit } from "@/lib/media-server";
 import { getContinueWatchingServer, type ContinueWatchingItem } from "@/lib/continue-watching-server";
 import HeroCarousel from "@/components/HeroCarousel";
 import MediaGrid from "@/components/MediaGrid";
@@ -8,6 +9,7 @@ import HomeBanner from "@/components/HomeBanner";
 import { getBannersServer } from "@/lib/site";
 import { getServerSettings } from "@/lib/settings-server";
 import ErrorState from "@/components/ErrorState";
+import OpinionsStrip from "@/components/opinions/OpinionsStrip";
 
 // Generic over T (not hardcoded to MediaItem) so a caller passing a
 // loader for a richer shape — e.g. ContinueWatchingItem, which extends
@@ -104,6 +106,8 @@ export function toContinueWatchingItems(items: ContinueWatchingItem[]): GridItem
   }));
 }
 
+const BANNER_AFTER = ["today", "week", "movies"];
+
 export default async function Home() {
   // All five requests start together. Continue Watching used to be
   // awaited *after* the other four, so its (sometimes multi-second,
@@ -115,14 +119,15 @@ export default async function Home() {
   // through with its own small catch. Not logged-in / nothing in
   // progress both surface as an empty list, and Section already renders
   // nothing for that case, same as every other row.
+  const auth = await authInit();
   const [today, week, movies, tv, continueWatching, settings, banners] = await Promise.all([
-    safeLoad(() => getTrending("day")),
-    safeLoad(() => getTrending("week")),
-    safeLoad(() => getPopularMovies()),
-    safeLoad(() => getPopularTV()),
+    safeLoad(() => getTrending("day", auth)),
+    safeLoad(() => getTrending("week", auth)),
+    safeLoad(() => getPopularMovies(auth)),
+    safeLoad(() => getPopularTV(auth)),
     getContinueWatchingServer().catch(() => ({ items: [] as ContinueWatchingItem[], hasMore: false })),
     getServerSettings(),
-    getBannersServer(),
+    getBannersServer(auth),
   ]);
   const { home_layout: layout, items_per_section: max } = settings.appearance;
 
@@ -136,8 +141,10 @@ export default async function Home() {
 
       <HeroCarousel items={today.items.length > 0 ? today.items : week.items} />
 
-      {/* The sections that actually have something to show, with a feature banner after each of the
-          first three (a banner the admin switched off just leaves its gap out). */}
+      <OpinionsStrip />
+
+      {/* The sections that actually have something to show, with a feature banner after Trending Today,
+          Trending This Week and Popular Movies (a banner the admin switched off just leaves its gap out). */}
       {[
         { key: "continue", title: "Continue Watching", items: toContinueWatchingItems(continueWatching.items), error: null as string | null, viewAllHref: continueWatching.hasMore || continueWatching.items.length > max ? "/continue-watching" : undefined },
         { key: "today", title: "Trending Today", items: today.items, error: today.error },
@@ -146,8 +153,11 @@ export default async function Home() {
         { key: "tv", title: "Popular TV Shows", items: tv.items, error: tv.error },
       ]
         .filter((s) => !s.error && s.items.length > 0)
-        .flatMap((s, index) => {
-          const banner = index < 3 ? banners.banners[index] : undefined;
+        .flatMap((s) => {
+          // Anchored to the rows themselves, not their position: after Trending Today, Trending This
+          // Week and Popular Movies, whether or not Continue Watching is showing above them.
+          const index = BANNER_AFTER.indexOf(s.key);
+          const banner = index >= 0 ? banners.banners[index] : undefined;
           return [
             <Section key={s.key} title={s.title} items={s.items} error={null} viewAllHref={s.viewAllHref} max={max} layout={layout} />,
             ...(banner?.enabled ? [<HomeBanner key={`banner-${index}`} banner={banner} slot={index as 0 | 1 | 2} />] : []),

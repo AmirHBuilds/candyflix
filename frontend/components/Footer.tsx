@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { authInit } from "@/lib/media-server";
 import { getFooterServer, LOVE_NOTE, type FooterContent } from "@/lib/site";
 
 /** The one line that is always there, whatever the admin does with the rest of the footer. */
@@ -56,6 +57,6 @@ export function FooterView({ footer, year }: { footer: FooterContent; year: numb
 }
 
 export default async function Footer() {
-  const footer = await getFooterServer();
+  const footer = await getFooterServer(await authInit());
   return <FooterView footer={footer} year={new Date().getFullYear()} />;
 }

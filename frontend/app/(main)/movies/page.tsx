@@ -1,4 +1,5 @@
 import { getMovieGenres, getPopularMoviesPage, type Genre, type MediaItem } from "@/lib/media";
+import { authInit } from "@/lib/media-server";
 import MediaBrowser from "@/components/MediaBrowser";
 import ErrorState from "@/components/ErrorState";
 
@@ -9,7 +10,8 @@ export default async function MoviesPage() {
   let error: string | null = null;
 
   try {
-    const [page, genreList] = await Promise.all([getPopularMoviesPage(1), getMovieGenres()]);
+    const auth = await authInit();
+    const [page, genreList] = await Promise.all([getPopularMoviesPage(1, auth), getMovieGenres(auth)]);
     items = page.items;
     hasMore = page.hasMore;
     genres = genreList;

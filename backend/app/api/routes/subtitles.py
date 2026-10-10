@@ -14,7 +14,7 @@ from app.schemas.subtitles import (
     OnlineSubtitleDownloadRequest,
     OnlineSubtitleSearchResponse,
 )
-from app.services import opensubtitles_service, tmdb_service
+from app.services import content_rating_service, opensubtitles_service, tmdb_service
 from app.services.opensubtitles_service import OpenSubtitlesError
 from app.services.tmdb_service import TMDBError
 
@@ -34,6 +34,7 @@ async def search_online_subtitles(
 ):
     if media_type not in ("movie", "tv"):
         raise HTTPException(status_code=400, detail="media_type must be 'movie' or 'tv'.")
+    await content_rating_service.ensure(current_user, media_type, tmdb_id)
 
     try:
         imdb_id = (
@@ -65,6 +66,7 @@ async def download_online_subtitle(
     payload: OnlineSubtitleDownloadRequest,
     current_user: User = Depends(get_current_user),
 ):
+    await content_rating_service.ensure(current_user, payload.media_type, payload.tmdb_id)
     cache_key = opensubtitles_service.build_cache_key(
         payload.media_type,
         payload.tmdb_id,

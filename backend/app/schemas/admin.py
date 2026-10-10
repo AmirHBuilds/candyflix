@@ -1,5 +1,6 @@
 import re
 import uuid
+from typing import Literal
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -41,6 +42,8 @@ class AdminUser(BaseModel):
     watched_count: int = 0
     ai_daily_limit: int | None = None  # None = the site default
     watch_ai_daily_limit: int | None = None  # the same, for the watch assistant in the player
+    opinions_blocked: bool = False  # may not post opinions
+    age_limit: str | None = None  # highest age rating they may watch (G, PG, PG-13, R); None = no limit
     two_factor_enabled: bool = False  # two-step sign-in (Telegram) is on for this person
     ai_use_history: bool = True  # their own Settings switch: Ask AI may use their watch history
 
@@ -50,6 +53,7 @@ class AdminUserCreate(BaseModel):
     display_name: str = Field(min_length=1, max_length=50)
     password: str = Field(min_length=8, max_length=128)
     is_admin: bool = False
+    age_limit: Literal["G", "PG", "PG-13", "R"] | None = None
 
     @field_validator("username")
     @classmethod
@@ -72,6 +76,9 @@ class AdminUserUpdate(BaseModel):
     # Send null to go back to the site default; 0 switches AI search off for this person.
     ai_daily_limit: int | None = Field(default=None, ge=0, le=1000)
     watch_ai_daily_limit: int | None = Field(default=None, ge=0, le=1000)
+    opinions_blocked: bool | None = None
+    # Send null to remove the age limit.
+    age_limit: Literal["G", "PG", "PG-13", "R"] | None = None
 
     @field_validator("username")
     @classmethod

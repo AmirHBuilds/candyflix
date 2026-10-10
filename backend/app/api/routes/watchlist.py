@@ -12,7 +12,7 @@ from app.core.db import get_db
 from app.models.user import User
 from app.models.watchlist_item import WatchlistItem
 from app.schemas.watchlist import WatchlistAddRequest, WatchlistItemOut, WatchlistStatusOut
-from app.services import tmdb_service, watchlist_service
+from app.services import content_rating_service, tmdb_service, watchlist_service
 from app.services.tmdb_service import TMDBError
 
 logger = logging.getLogger("app.watchlist")
@@ -56,7 +56,7 @@ async def get_watchlist(
 ):
     items = await watchlist_service.list_items(db, current_user.id)
     enriched = await asyncio.gather(*(_enrich(item) for item in items))
-    return [e for e in enriched if e is not None]
+    return await content_rating_service.filter_items(current_user, [e for e in enriched if e is not None])
 
 
 @router.post("/watchlist", status_code=204)
@@ -65,6 +65,7 @@ async def add_to_watchlist(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await content_rating_service.ensure(current_user, payload.media_type, payload.tmdb_id)
     await watchlist_service.add_item(db, current_user.id, payload.tmdb_id, payload.media_type)
 
 

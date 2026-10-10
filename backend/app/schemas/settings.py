@@ -119,8 +119,22 @@ class AISettings(_Group):
     use_history: bool = True
 
 
+class SocialSettings(_Group):
+    """Opinions and likes: what this person sees and shares."""
+
+    # Off hides every opinion, like and comment box from this person, and their own likes from others.
+    enabled: bool = True
+    # Other people can see which titles this person liked (and that they did).
+    share_likes: bool = True
+    # The comment box starts with "Anonymous" ticked.
+    anonymous_by_default: bool = False
+    # The "From the family" strip on the home page.
+    show_on_home: bool = True
+
+
 class UserSettings(_Group):
     appearance: AppearanceSettings = AppearanceSettings()
     playback: PlaybackSettings = PlaybackSettings()
     subtitles: SubtitleStyle = SubtitleStyle()
     ai: AISettings = AISettings()
+    social: SocialSettings = SocialSettings()

@@ -14,7 +14,7 @@ from app.providers import mock_provider
 from app.providers.mock_provider import MockVideoNotConfigured
 from app.schemas.playback import EpisodeVisitIn, MovieVisitIn, PlaybackSource, WatchProgressIn, WatchProgressOut
 from app.schemas.video_settings import ClearedResult
-from app.services import subtitle_service, subtitle_sync_service, video_settings_service, watch_progress_service
+from app.services import content_rating_service, subtitle_service, subtitle_sync_service, video_settings_service, watch_progress_service
 
 router = APIRouter(tags=["playback"])
 
@@ -36,6 +36,7 @@ async def playback_movie(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await content_rating_service.ensure(current_user, "movie", tmdb_id)
     try:
         url = mock_provider.get_mock_video_url()
     except MockVideoNotConfigured as e:
@@ -63,6 +64,7 @@ async def playback_episode(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await content_rating_service.ensure(current_user, "tv", tmdb_id)
     try:
         url = mock_provider.get_mock_video_url()
     except MockVideoNotConfigured as e:
@@ -92,6 +94,7 @@ async def save_watch_progress(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await content_rating_service.ensure(current_user, payload.media_type, payload.tmdb_id)
     row = await watch_progress_service.save_progress(
         db,
         current_user.id,
@@ -117,6 +120,7 @@ async def record_episode_visit(
     click that's closed within a second could leave no real save at all,
     and the NEXT visit would show the previous episode as last watched.
     """
+    await content_rating_service.ensure(current_user, "tv", payload.tmdb_id)
     await watch_progress_service.mark_episode_visited(
         db, current_user.id, payload.tmdb_id, payload.season_number, payload.episode_number
     )
@@ -130,6 +134,7 @@ async def record_movie_visit(
 ):
     """The movie twin of /watch-progress/tv/visit — keeps a movie in
     Continue Watching even when position saving is switched off."""
+    await content_rating_service.ensure(current_user, "movie", payload.tmdb_id)
     await watch_progress_service.mark_movie_visited(db, current_user.id, payload.tmdb_id)
 
 

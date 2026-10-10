@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.site_setting import SiteSetting
 from app.core.config import get_settings
-from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners
+from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners, SocialConfig
 from app.services import avatar_service
 
 FOOTER_KEY = "footer"
@@ -75,6 +75,29 @@ async def set_ai_config(db: AsyncSession, config: AIConfig) -> AIConfig:
         db.add(SiteSetting(key=AI_KEY, value=data))
     else:
         row.value = data
+    await db.commit()
+    return config
+
+
+SOCIAL_KEY = "social_config"
+
+
+async def get_social_config(db: AsyncSession) -> SocialConfig:
+    row = await db.get(SiteSetting, SOCIAL_KEY)
+    if row is not None:
+        try:
+            return SocialConfig.model_validate(row.value)
+        except Exception:
+            pass
+    return SocialConfig()
+
+
+async def set_social_config(db: AsyncSession, config: SocialConfig) -> SocialConfig:
+    row = await db.get(SiteSetting, SOCIAL_KEY)
+    if row is None:
+        db.add(SiteSetting(key=SOCIAL_KEY, value=config.model_dump()))
+    else:
+        row.value = config.model_dump()
     await db.commit()
     return config
 

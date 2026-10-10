@@ -450,3 +450,38 @@ async def get_cast(media_type: str, tmdb_id: int, limit: int = 12) -> list[tuple
         if c.get("name") and character:
             out.append((c["name"], character))
     return out
+
+
+CERTIFICATION_CACHE_TTL = 60 * 60 * 24 * 30  # age ratings almost never change
+
+
+async def get_certification(media_type: str, tmdb_id: int) -> str | None:
+    """The US age rating of a title ("PG-13", "TV-MA", ...) or None when TMDB has none.
+
+    Movies: the first certification among the US release dates (theatrical first).
+    Shows: the US content rating. Both are plain TMDB endpoints, cached for a month.
+    """
+    if media_type == "movie":
+        data = await _get(f"/movie/{tmdb_id}/release_dates", ttl=CERTIFICATION_CACHE_TTL)
+        for country in data.get("results", []):
+            if country.get("iso_3166_1") != "US":
+                continue
+            releases = sorted(country.get("release_dates", []), key=lambda r: 0 if r.get("type") == 3 else 1)
+            for r in releases:
+                cert = (r.get("certification") or "").strip()
+                if cert:
+                    return cert
+        return None
+    data = await _get(f"/tv/{tmdb_id}/content_ratings", ttl=CERTIFICATION_CACHE_TTL)
+    for r in data.get("results", []):
+        if r.get("iso_3166_1") == "US" and (r.get("rating") or "").strip():
+            return r["rating"].strip()
+    return None
+
+
+async def is_adult_flagged(media_type: str, tmdb_id: int) -> bool:
+    """TMDB's own "adult" flag (movies only; shows have none)."""
+    if media_type != "movie":
+        return False
+    data = await _get(f"/movie/{tmdb_id}", ttl=DETAILS_CACHE_TTL)
+    return bool(data.get("adult"))

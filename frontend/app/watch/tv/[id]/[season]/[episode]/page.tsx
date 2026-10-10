@@ -1,4 +1,5 @@
 import { getTVShow, getSeason, type TVShowDetail, type SeasonDetail } from "@/lib/media";
+import { authInit } from "@/lib/media-server";
 import { getEpisodePlaybackSourceServer, getLatestTVWatchProgressServer } from "@/lib/playback-server";
 import { mergeResumeWithHint, parseResumeHintFromSearchParams, type PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
@@ -23,10 +24,11 @@ export default async function WatchEpisodePage({
   let seasonDetail: SeasonDetail | undefined;
   let source: PlaybackSource | undefined;
   let error: string | null = null;
+  const auth = await authInit();
   try {
     [show, seasonDetail, source] = await Promise.all([
-      getTVShow(id),
-      getSeason(id, seasonNum),
+      getTVShow(id, auth),
+      getSeason(id, seasonNum, auth),
       getEpisodePlaybackSourceServer(id, seasonNum, episodeNum),
     ]);
   } catch (e) {
@@ -73,7 +75,7 @@ export default async function WatchEpisodePage({
     seasonNumber: seasonNum,
     episodes,
     episodeNumber: episodeNum,
-    loadSeason: (n) => getSeason(id, n),
+    loadSeason: (n) => getSeason(id, n, auth),
   }).catch(() => ({ prev: null, next: null }));
   const prevEp = prev?.episode ?? null;
   const prevSeasonNum = prev?.season ?? seasonNum;

@@ -21,7 +21,7 @@ from app.core.config import get_settings
 from app.core.redis import get_redis
 from app.models.user import User
 from app.schemas import ai as schemas
-from app.services import ai_service, site_service, subtitle_service, tmdb_service
+from app.services import ai_service, content_rating_service, site_service, subtitle_service, tmdb_service
 from app.services.ai_service import AIError
 
 logger = logging.getLogger("app.watch_ai")
@@ -191,6 +191,7 @@ def _turn(role: str, text: str, position: float | None = None) -> dict:
 
 
 async def ask(db: AsyncSession, user: User, req: schemas.WatchAskRequest) -> schemas.WatchAskResponse:
+    await content_rating_service.ensure(user, req.media_type, req.tmdb_id)
     settings = get_settings()
     if not settings.gemini_api_key:
         raise AIError(503, "The assistant isn't set up on this server.")

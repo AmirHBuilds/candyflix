@@ -256,6 +256,24 @@ summary {
   50% { transform: translateY(-6px) rotate(1deg); }
 }
 
+/* Opinions: a heart that pops when you like something, and a card that drifts in. */
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.animate-heart-pop {
+  animation: heartPop 0.4s ease-out both;
+}
+@keyframes driftIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-drift-in {
+  animation: driftIn 0.5s ease-out both;
+}
+
 /* A spoiler fading into view once tapped: gentle, no flashing. */
 @keyframes spoilerReveal {
   from { opacity: 0.2; filter: blur(4px); }

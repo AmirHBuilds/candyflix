@@ -58,6 +58,7 @@ export type Settings = {
     align: "left" | "center" | "right";
   };
   ai: { use_history: boolean };
+  social: { enabled: boolean; share_likes: boolean; anonymous_by_default: boolean; show_on_home: boolean };
 };
 
 /** A partial change. A `null` leaf means "back to the default". */

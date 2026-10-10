@@ -103,8 +103,10 @@ async def _other_active_admins(db: AsyncSession, excluding: uuid.UUID) -> int:
 async def create_user(db: AsyncSession, payload: schemas.AdminUserCreate) -> schemas.AdminUser:
     if await auth_service.get_user_by_username(db, payload.username) is not None:
         raise AdminError(f"The username '{payload.username}' is already taken.", status=409)
+    if payload.is_admin and payload.age_limit:
+        raise AdminError("An admin can't have an age limit.")
     user = await auth_service.create_user(
-        db, payload.username, payload.display_name, payload.password, is_admin=payload.is_admin
+        db, payload.username, payload.display_name, payload.password, is_admin=payload.is_admin, age_limit=payload.age_limit
     )
     return await _admin_view(db, user.id)
 
@@ -113,9 +115,12 @@ async def update_user(
     db: AsyncSession, actor: User, target: User, changes: schemas.AdminUserUpdate
 ) -> schemas.AdminUser:
     data = changes.model_dump(exclude_unset=True, exclude_none=True)
-    for field in ("ai_daily_limit", "watch_ai_daily_limit"):
+    for field in ("ai_daily_limit", "watch_ai_daily_limit", "age_limit"):
         if field in changes.model_fields_set:
             data[field] = getattr(changes, field)  # None is meaningful here: "use the default"
+
+    if data.get("is_admin", target.is_admin) and data.get("age_limit", target.age_limit):
+        raise AdminError("An admin can't have an age limit. Remove the limit first, or don't make them an admin.")
 
     if target.id == actor.id and data.get("is_disabled") is True:
         raise AdminError("You can't disable your own account.")
