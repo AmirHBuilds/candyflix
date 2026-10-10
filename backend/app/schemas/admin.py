@@ -41,6 +41,7 @@ class AdminUser(BaseModel):
     watched_count: int = 0
     ai_daily_limit: int | None = None  # None = the site default
     watch_ai_daily_limit: int | None = None  # the same, for the watch assistant in the player
+    two_factor_enabled: bool = False  # two-step sign-in (Telegram) is on for this person
     ai_use_history: bool = True  # their own Settings switch: Ask AI may use their watch history
 
 

@@ -12,9 +12,10 @@ from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME
 from app.models.user import User
-from app.schemas.account import PasswordChange, ProfileUpdate
+from app.schemas.account import PasswordChange, ProfileUpdate, TwoFactorLink, TwoFactorOff, TwoFactorStart, TwoFactorStatus
 from app.schemas.auth import UserPublic
-from app.services import account_service
+from app.core.security import verify_password
+from app.services import account_service, telegram_service, two_factor_service
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -70,3 +71,27 @@ async def remove_avatar(
     db: AsyncSession = Depends(get_db),
 ):
     return await account_service.clear_avatar(db, current_user)
+
+
+@router.get("/2fa", response_model=TwoFactorStatus)
+async def two_factor_status(current_user: User = Depends(get_current_user)):
+    return TwoFactorStatus(available=telegram_service.enabled(), enabled=current_user.two_factor_enabled)
+
+
+@router.post("/2fa/start", response_model=TwoFactorLink)
+async def two_factor_start(payload: TwoFactorStart, current_user: User = Depends(get_current_user)):
+    """A link to the bot that connects this account's Telegram. Needs the password again."""
+    if not verify_password(payload.password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Your password is incorrect.")
+    try:
+        return TwoFactorLink(url=await two_factor_service.start_link(current_user))
+    except two_factor_service.TwoFactorError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message)
+
+
+@router.post("/2fa/off", status_code=status.HTTP_204_NO_CONTENT)
+async def two_factor_off(payload: TwoFactorOff, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not verify_password(payload.password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Your password is incorrect.")
+    await two_factor_service.turn_off(db, current_user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

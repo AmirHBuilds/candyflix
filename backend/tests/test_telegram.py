@@ -20,7 +20,9 @@ def configured(monkeypatch):
 
 
 async def _drain():
-    await asyncio.gather(*list(tg._tasks), return_exceptions=True)
+    loop = asyncio.get_running_loop()
+    mine = [t for t in list(tg._tasks) if t.get_loop() is loop]
+    await asyncio.gather(*mine, return_exceptions=True)
 
 
 @pytest.mark.asyncio

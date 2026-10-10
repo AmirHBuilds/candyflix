@@ -39,18 +39,44 @@ export async function listUsers(): Promise<UserPublic[]> {
   return res.json();
 }
 
-export async function login(username: string, password: string): Promise<UserPublic> {
+/** What /auth/login says: the person, or (two-step sign-in on) a challenge to answer with the code. */
+export type LoginResult = { kind: "signed_in"; user: UserPublic } | { kind: "code"; challenge: string };
+
+async function loginFail(res: Response, fallback: string): Promise<never> {
+  const body = await res.json().catch(() => ({}));
+  throw new Error(typeof body.detail === "string" ? body.detail : fallback);
+}
+
+export async function login(username: string, password: string): Promise<LoginResult> {
   const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/login`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail ?? "Login failed");
-  }
+  if (!res.ok) await loginFail(res, "Login failed");
+  const body = await res.json();
+  return body.two_factor_required ? { kind: "code", challenge: body.challenge } : { kind: "signed_in", user: body };
+}
+
+export async function verifyLoginCode(challenge: string, code: string): Promise<UserPublic> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/login/verify`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ challenge, code }),
+  });
+  if (!res.ok) await loginFail(res, "That code isn't right.");
   return res.json();
+}
+
+export async function resendLoginCode(challenge: string): Promise<void> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/auth/login/resend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ challenge }),
+  });
+  if (!res.ok) await loginFail(res, "Couldn't send another code.");
 }
 
 export async function logout(): Promise<void> {

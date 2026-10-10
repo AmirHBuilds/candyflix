@@ -10,7 +10,7 @@ admin panel; everyone else just has their own library and settings.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Uuid, false
+from sqlalchemy import BigInteger, Boolean, DateTime, Integer, String, Uuid, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -50,6 +50,14 @@ class User(Base):
     ai_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # The same, for questions to the watch assistant in the player.
     watch_ai_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # The Telegram chat this account is linked to. Set = two-step sign-in is on: after the password,
+    # a code is sent to that chat. Cleared by the person (Settings) or by an admin (lost phone).
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
+
+    @property
+    def two_factor_enabled(self) -> bool:
+        return self.telegram_chat_id is not None
 
     @property
     def avatar_url(self) -> str | None:

@@ -28,6 +28,8 @@ export function describe(e: AuditEntry): string {
       return `${who} removed ${t} as an admin`;
     case "user.password_reset":
       return `${who} reset ${t}'s password`;
+    case "user.2fa_off":
+      return `${who} switched off two-step sign-in for ${t}`;
     case "user.delete":
       return `${who} deleted ${t}`;
     case "history.view":

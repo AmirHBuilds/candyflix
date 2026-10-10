@@ -9,6 +9,7 @@ import {
   deleteAdminUser,
   listAdminUsers,
   resetAdminPassword,
+  switchOffTwoFactor,
   updateAdminUser,
   type AdminUser,
 } from "@/lib/admin";
@@ -81,6 +82,16 @@ export default function UsersTab({
     }
   }
 
+  async function twoFactorOff(user: AdminUser) {
+    try {
+      await switchOffTwoFactor(user.id);
+      showToast(`Two-step sign-in is off for ${user.display_name}. They can turn it on again in Settings.`, "success");
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't switch that off.");
+    }
+  }
+
   const done = (message: string) => {
     setModal(null);
     showToast(message, "success");
@@ -133,6 +144,7 @@ export default function UsersTab({
                     <span className="truncate">{user.display_name}</span>
                     {isMe && <span className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/60">You</span>}
                     {user.is_admin && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-xs text-accent">Admin</span>}
+                    {user.two_factor_enabled && <span title="Two-step sign-in is on" className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-xs text-emerald-300">2-step</span>}
                     {user.is_disabled && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-xs text-red-300">Disabled</span>}
                   </p>
                   <p className="truncate text-xs text-white/40">
@@ -149,6 +161,9 @@ export default function UsersTab({
                     ? []
                     : [
                         { label: "Reset password", ariaLabel: `Reset password for ${user.display_name}`, onSelect: () => setModal({ kind: "password", user }) },
+                        ...(user.two_factor_enabled
+                          ? [{ label: "Switch off 2-step", ariaLabel: `Switch off two-step sign-in for ${user.display_name}`, onSelect: () => twoFactorOff(user) }]
+                          : []),
                         { label: user.is_disabled ? "Enable" : "Disable", ariaLabel: `${user.is_disabled ? "Enable" : "Disable"} ${user.display_name}`, onSelect: () => toggleDisabled(user) },
                         { label: "Delete", ariaLabel: `Delete ${user.display_name}`, onSelect: () => setModal({ kind: "delete", user }), danger: true },
                       ]),
@@ -219,10 +234,13 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Admin is deliberately a detour: not a checkbox, and it has to be confirmed by typing a word.
+  const [adminStep, setAdminStep] = useState<"off" | "confirm" | "on">("off");
+  const [typed, setTyped] = useState("");
+  const isAdmin = adminStep === "on";
   const { busy, error, submit } = useSubmit(async () => {
     const created = await createAdminUser({ username, display_name: displayName.trim(), password, is_admin: isAdmin });
-    onDone(`${created.display_name} was added.`);
+    onDone(`${created.display_name} was added${created.is_admin ? " as an admin" : ""}.`);
   });
   return (
     <Dialog title="Add user" onClose={onClose}>
@@ -236,12 +254,45 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
         <Field label="Password" hint="At least 8 characters. They can change it later in Settings.">
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={fieldClass} />
         </Field>
-        <label className="flex items-center gap-2 text-sm text-white/70">
-          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} className="h-4 w-4 accent-accent" />
-          Make this person an admin
-        </label>
+
+        {adminStep === "off" && (
+          <button type="button" onClick={() => setAdminStep("confirm")} className="block text-xs text-white/30 underline-offset-2 hover:text-white/60 hover:underline">
+            Create as an admin instead…
+          </button>
+        )}
+        {adminStep === "confirm" && (
+          <div role="group" aria-label="Confirm admin" className="space-y-3 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm">
+            <p className="font-medium text-red-200">Admins can see everyone&apos;s activity, change anything on the site and remove people.</p>
+            <label className="flex flex-col gap-1.5 text-white/70">
+              Type <span className="font-mono text-white">admin</span> to confirm
+              <input aria-label="Type admin to confirm" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="none" className={fieldClass} />
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={typed.trim().toLowerCase() !== "admin"}
+                onClick={() => setAdminStep("on")}
+                className="h-9 rounded-lg bg-red-500/80 px-3 text-sm font-medium text-white disabled:opacity-40"
+              >
+                Yes, make them an admin
+              </button>
+              <button type="button" onClick={() => { setAdminStep("off"); setTyped(""); }} className={quietButton}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        {adminStep === "on" && (
+          <p className="flex items-center justify-between gap-3 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <span>This person will be an admin.</span>
+            <button type="button" onClick={() => { setAdminStep("off"); setTyped(""); }} className="text-xs underline">
+              Undo
+            </button>
+          </p>
+        )}
+
         <ErrorLine message={error} />
-        <Actions onClose={onClose} busy={busy} submitLabel="Add user" disabled={!username.trim() || !displayName.trim() || password.length < 8} />
+        <Actions onClose={onClose} busy={busy} submitLabel={isAdmin ? "Add admin" : "Add user"} disabled={!username.trim() || !displayName.trim() || password.length < 8 || adminStep === "confirm"} />
       </form>
     </Dialog>
   );

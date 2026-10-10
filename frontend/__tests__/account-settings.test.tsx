@@ -7,6 +7,9 @@ vi.mock("@/lib/account", () => ({
   changePassword: vi.fn(),
   uploadAvatar: vi.fn(),
   removeAvatar: vi.fn(),
+  getTwoFactor: vi.fn(),
+  startTwoFactor: vi.fn(),
+  stopTwoFactor: vi.fn(),
 }));
 vi.mock("@/lib/toast", () => ({ showToast: vi.fn() }));
 
@@ -16,7 +19,10 @@ import { showToast } from "@/lib/toast";
 
 const user = { id: "1", username: "candy", display_name: "Candy", avatar_url: null, created_at: "2026-01-01T00:00:00Z" };
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(account.getTwoFactor).mockResolvedValue({ available: true, enabled: false });
+});
 
 describe("Account settings", () => {
   it("shows the username read-only", () => {
@@ -109,9 +115,35 @@ describe("Account settings", () => {
     });
   });
 
-  it("shows two-factor as a disabled 'coming soon' switch", () => {
-    render(<AccountSettingsForm user={user} />);
-    expect(screen.getByRole("switch", { name: "Two-factor sign-in" })).toBeDisabled();
-    expect(screen.getByText(/Telegram/)).toBeInTheDocument();
+  describe("two-step sign-in", () => {
+    it("is disabled when the server has no Telegram bot", async () => {
+      vi.mocked(account.getTwoFactor).mockResolvedValue({ available: false, enabled: false });
+      render(<AccountSettingsForm user={user} />);
+      expect(await screen.findByText(/no Telegram bot/)).toBeInTheDocument();
+      expect(screen.getByRole("switch", { name: "Two-step sign-in" })).toBeDisabled();
+    });
+
+    it("asks for the password, then shows the bot link and notices the connection", async () => {
+      vi.mocked(account.getTwoFactor).mockResolvedValue({ available: true, enabled: false });
+      vi.mocked(account.startTwoFactor).mockResolvedValue("https://t.me/CandyBot?start=abc");
+      render(<AccountSettingsForm user={user} />);
+      fireEvent.click(await screen.findByRole("switch", { name: "Two-step sign-in" }));
+      fireEvent.change(screen.getByLabelText("Your password"), { target: { value: "secret123" } });
+      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      const link = await screen.findByRole("link", { name: "Open Telegram" });
+      expect(link).toHaveAttribute("href", "https://t.me/CandyBot?start=abc");
+      expect(account.startTwoFactor).toHaveBeenCalledWith("secret123");
+    });
+
+    it("turning it off needs the password too", async () => {
+      vi.mocked(account.getTwoFactor).mockResolvedValue({ available: true, enabled: true });
+      vi.mocked(account.stopTwoFactor).mockResolvedValue();
+      render(<AccountSettingsForm user={user} />);
+      fireEvent.click(await screen.findByRole("switch", { name: "Two-step sign-in" }));
+      fireEvent.change(screen.getByLabelText("Your password"), { target: { value: "secret123" } });
+      fireEvent.click(screen.getByRole("button", { name: "Turn off" }));
+      await waitFor(() => expect(account.stopTwoFactor).toHaveBeenCalledWith("secret123"));
+      await waitFor(() => expect(showToast).toHaveBeenCalledWith("Two-step sign-in is off.", "success"));
+    });
   });
 });

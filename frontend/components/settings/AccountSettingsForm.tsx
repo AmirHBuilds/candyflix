@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { SettingRow, SettingsCard, Toggle } from "@/components/settings/controls";
-import { changePassword, removeAvatar, updateDisplayName, uploadAvatar } from "@/lib/account";
+import { changePassword, getTwoFactor, removeAvatar, startTwoFactor, stopTwoFactor, updateDisplayName, uploadAvatar, type TwoFactorStatus } from "@/lib/account";
 import type { UserPublic } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 
@@ -189,14 +189,128 @@ function PasswordCard() {
 }
 
 function SecurityCard() {
+  const [status, setStatus] = useState<TwoFactorStatus | null>(null);
+  const [step, setStep] = useState<"idle" | "password" | "link">("idle");
+  const [off, setOff] = useState(false);
+  const [password, setPassword] = useState("");
+  const [link, setLink] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTwoFactor().then(setStatus).catch(() => setStatus({ available: false, enabled: false }));
+  }, []);
+
+  // While the link is open, notice when they have pressed Start in Telegram.
+  useEffect(() => {
+    if (step !== "link") return;
+    const t = setInterval(() => {
+      getTwoFactor()
+        .then((s) => {
+          if (s.enabled) {
+            setStatus(s);
+            setStep("idle");
+            setLink(null);
+            showToast("Two-step sign-in is on.", "success");
+          }
+        })
+        .catch(() => {});
+    }, 3000);
+    return () => clearInterval(t);
+  }, [step]);
+
+  function reset() {
+    setStep("idle");
+    setOff(false);
+    setPassword("");
+    setLink(null);
+    setError(null);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (off) {
+        await stopTwoFactor(password);
+        setStatus((s) => s && { ...s, enabled: false });
+        showToast("Two-step sign-in is off.", "success");
+        reset();
+      } else {
+        setLink(await startTwoFactor(password));
+        setPassword("");
+        setStep("link");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const description = !status
+    ? "Checking…"
+    : !status.available
+      ? "Not available: this server has no Telegram bot set up."
+      : status.enabled
+        ? "On. After your password you also type a code the CandyFlix bot sends to your Telegram."
+        : "After your password you also type a code the CandyFlix bot sends to your Telegram.";
+
   return (
     <SettingsCard title="Security">
-      <SettingRow
-        label="Two-factor sign-in"
-        description="Coming soon — it will work through a Telegram bot."
-      >
-        <Toggle checked={false} onChange={() => {}} label="Two-factor sign-in" disabled />
+      <SettingRow label="Two-step sign-in" description={description}>
+        {status?.available && step === "idle" && (
+          <Toggle
+            checked={status.enabled}
+            label="Two-step sign-in"
+            onChange={() => {
+              setOff(status.enabled);
+              setStep("password");
+            }}
+          />
+        )}
+        {status && !status.available && <Toggle checked={false} onChange={() => {}} label="Two-step sign-in" disabled />}
       </SettingRow>
+
+      {step === "password" && (
+        <form onSubmit={submit} className="space-y-3 px-5 py-4">
+          <p className="text-sm text-white/60">{off ? "Enter your password to turn it off." : "Enter your password to continue."}</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="password"
+              autoFocus
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-label="Your password"
+              autoComplete="current-password"
+              className={inputClass}
+            />
+            <button type="submit" disabled={!password || busy} className={buttonClass}>
+              {busy ? "Checking…" : off ? "Turn off" : "Continue"}
+            </button>
+            <button type="button" onClick={reset} className={quietButtonClass}>
+              Cancel
+            </button>
+          </div>
+          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+        </form>
+      )}
+
+      {step === "link" && link && (
+        <div className="space-y-3 px-5 py-4">
+          <p className="text-sm text-white/70">
+            Open the bot in Telegram and press <b>Start</b>. This page notices by itself. The link works once, for 10 minutes.
+          </p>
+          <a href={link} target="_blank" rel="noopener noreferrer" className={`${buttonClass} inline-flex items-center`}>
+            Open Telegram
+          </a>
+          <button type="button" onClick={reset} className={`${quietButtonClass} ml-2`}>
+            Cancel
+          </button>
+        </div>
+      )}
     </SettingsCard>
   );
 }

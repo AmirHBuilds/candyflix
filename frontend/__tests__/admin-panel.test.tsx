@@ -11,6 +11,7 @@ vi.mock("@/lib/admin", () => ({
   getAdminStats: vi.fn(),
   getNowWatching: vi.fn().mockResolvedValue([]),
   getUserDetail: vi.fn(),
+  switchOffTwoFactor: vi.fn(),
   getUserHistory: vi.fn(),
   getUserWatchlist: vi.fn(),
   getSystemStatus: vi.fn(),
@@ -45,6 +46,7 @@ const u = (over: Partial<admin.AdminUser>): admin.AdminUser => ({
   watched_count: 3,
   ai_daily_limit: null,
   watch_ai_daily_limit: null,
+  two_factor_enabled: false,
   ai_use_history: true,
   ...over,
 });
@@ -141,13 +143,53 @@ describe("Admin panel", () => {
       fireEvent.change(within(dialog).getByLabelText(/^Username/), { target: { value: "new" } });
       fireEvent.change(within(dialog).getByLabelText("Display name"), { target: { value: "New" } });
       fireEvent.change(within(dialog).getByLabelText(/^Password/), { target: { value: "password123" } });
-      fireEvent.click(within(dialog).getByLabelText(/Make this person an admin/));
+      expect(within(dialog).queryByRole("checkbox")).toBeNull(); // admin is not a checkbox any more
       fireEvent.click(submit);
       await waitFor(() =>
-        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: true })
+        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: false })
       );
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       expect(showToast).toHaveBeenCalledWith("New was added.", "success");
+    });
+
+    it("making someone an admin needs a typed confirmation", async () => {
+      vi.mocked(admin.createAdminUser).mockResolvedValue(u({ id: "n", username: "new", display_name: "New", is_admin: true }));
+      await openUsers();
+      fireEvent.click(screen.getByRole("button", { name: "Add user" }));
+      const dialog = screen.getByRole("dialog");
+      fireEvent.change(within(dialog).getByLabelText(/^Username/), { target: { value: "new" } });
+      fireEvent.change(within(dialog).getByLabelText("Display name"), { target: { value: "New" } });
+      fireEvent.change(within(dialog).getByLabelText(/^Password/), { target: { value: "password123" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: /Create as an admin instead/ }));
+      // can't be submitted while the question is open, and "yes" stays off until the word is typed
+      expect(within(dialog).getByRole("button", { name: "Add user" })).toBeDisabled();
+      const yes = within(dialog).getByRole("button", { name: "Yes, make them an admin" });
+      expect(yes).toBeDisabled();
+      fireEvent.change(within(dialog).getByLabelText("Type admin to confirm"), { target: { value: "admin" } });
+      fireEvent.click(yes);
+      fireEvent.click(within(dialog).getByRole("button", { name: "Add admin" }));
+      await waitFor(() =>
+        expect(admin.createAdminUser).toHaveBeenCalledWith({ username: "new", display_name: "New", password: "password123", is_admin: true })
+      );
+      expect(showToast).toHaveBeenCalledWith("New was added as an admin.", "success");
+    });
+
+    it("backing out of the admin question goes back to a normal user", async () => {
+      await openUsers();
+      fireEvent.click(screen.getByRole("button", { name: "Add user" }));
+      const dialog = screen.getByRole("dialog");
+      fireEvent.click(within(dialog).getByRole("button", { name: /Create as an admin instead/ }));
+      fireEvent.click(within(within(dialog).getByRole("group", { name: "Confirm admin" })).getByRole("button", { name: "Cancel" }));
+      expect(within(dialog).queryByLabelText("Type admin to confirm")).toBeNull();
+    });
+
+    it("shows who has two-step sign-in and lets an admin switch it off", async () => {
+      vi.mocked(admin.listAdminUsers).mockResolvedValue([me, u({ two_factor_enabled: true })]);
+      vi.mocked(admin.switchOffTwoFactor).mockResolvedValue(u({ two_factor_enabled: false }));
+      await openUsers();
+      expect(screen.getByText("2-step")).toBeInTheDocument();
+      fireEvent.click(menuItem("Switch off two-step sign-in for Bob"));
+      await waitFor(() => expect(admin.switchOffTwoFactor).toHaveBeenCalledWith("u1"));
     });
 
     it("keeps the dialog open and shows the server's reason on failure", async () => {

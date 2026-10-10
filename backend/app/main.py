@@ -19,6 +19,7 @@ in-progress-series section) built entirely from a query over the
 existing WatchProgress table; no new modeling work, same
 enrich-at-read-time pattern as the watchlist.
 """
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -52,7 +53,7 @@ from app.api.routes import (
 )
 from app.core.config import get_settings
 from app.core.migrate import run_migrations
-from app.services import telegram_service
+from app.services import telegram_service, two_factor_service
 
 settings = get_settings()
 
@@ -92,7 +93,12 @@ async def lifespan(_app: FastAPI):
     if settings.auto_migrate:
         await run_migrations()
     telegram_service.report_started()
-    yield
+    poller = asyncio.create_task(two_factor_service.poll_forever()) if telegram_service.enabled() else None
+    try:
+        yield
+    finally:
+        if poller:
+            poller.cancel()
 
 
 app = FastAPI(

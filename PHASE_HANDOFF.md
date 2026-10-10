@@ -884,3 +884,12 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - Hooks: `audit_service.record` (admin actions; account actions → `accounts` topic, everything else → `admin`; page views not reported), `record_sign_in` → `sign_ins`, refused logins → `security`, quota pause in `ai_service.pause_model` → `ai`, unhandled exceptions (handler in `main.py`) → `errors`, startup → `system`.
 - Nothing private is sent (no passwords, prompts or watch history). Tests: `tests/test_telegram.py`. Backend 472 passed.
 - Remember: `docker compose` needs `backend/.env` edited, then `docker compose up -d --build backend` (or restart).
+
+## §42 Phase 18 — two-step sign-in via Telegram + safer "add admin" (applies after `candyflix-phase17-telegram-v1`)
+- Migration `a8d2e5f0b317` (users.telegram_chat_id, unique). **Run `alembic upgrade head`** (auto-migrate does it on start). Enabled ⇔ `telegram_chat_id` is set.
+- Turning on (Settings → Security): password again → `POST /account/2fa/start` returns `https://t.me/<bot>?start=<token>` (token in Redis 10 min, single use) → the person presses Start → the backend's long-polling task (`two_factor_service.poll_forever`, started in lifespan when `TELEGRAM_BOT_TOKEN` is set) links the chat. The page polls `GET /account/2fa` until enabled. Off: `POST /account/2fa/off` (password).
+- Sign-in: right password + 2FA on → `/auth/login` answers `{two_factor_required, challenge}` (no cookie), sends a 6-digit code to their chat (5 min, 5 wrong tries, resend after 30 s, code hashed in Redis) → `/auth/login/verify` → session. If Telegram can't deliver: 503, nobody is signed in (admin can switch it off).
+- Admin: Users list shows a "2-step" tag and "Switch off 2-step" in the ⋯ menu (`POST /admin/users/{id}/2fa-off`, audit `user.2fa_off`). Admins can switch off but not on (only the person can link their own Telegram).
+- Only one backend process may poll the bot (getUpdates conflicts otherwise); the bot must not have a webhook set.
+- Add user dialog: no admin checkbox; a small "Create as an admin instead…" link opens a red warning where you type `admin` and confirm; the button then says "Add admin". (Edit dialog unchanged.)
+- Tests: backend 479 passed; frontend 666 + `two-step-signin.test.tsx` (3, excluded from the sandbox glob only because of the `login*` pattern).

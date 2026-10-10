@@ -56,3 +56,33 @@ export async function removeAvatar(): Promise<UserPublic> {
   notifyUserChanged();
   return res.json();
 }
+
+export type TwoFactorStatus = { available: boolean; enabled: boolean };
+
+export async function getTwoFactor(): Promise<TwoFactorStatus> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/2fa`, { credentials: "include" });
+  if (!res.ok) await fail(res, "Couldn't check two-step sign-in.");
+  return res.json();
+}
+
+/** A link to the Telegram bot that connects this account (needs the password again). */
+export async function startTwoFactor(password: string): Promise<string> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/2fa/start`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) await fail(res, "Couldn't start that.");
+  return (await res.json()).url;
+}
+
+export async function stopTwoFactor(password: string): Promise<void> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/2fa/off`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) await fail(res, "Couldn't turn that off.");
+}

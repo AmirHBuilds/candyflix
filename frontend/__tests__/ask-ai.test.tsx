@@ -207,7 +207,7 @@ describe("AskResultRow", () => {
 
 describe("admin: AI searches a day", () => {
   const person = (over: Partial<admin.AdminUser> = {}): admin.UserDetail => ({
-    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, ai_use_history: true, ...over },
+    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, two_factor_enabled: false, ai_use_history: true, ...over },
     now_watching: null, active_sessions: 0, last_activity: null,
   });
 
@@ -238,7 +238,7 @@ describe("admin: AI searches a day", () => {
 
 describe("admin: AI history and the AI tab", () => {
   const detail = (use: boolean): admin.UserDetail => ({
-    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, ai_use_history: use },
+    user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, two_factor_enabled: false, ai_use_history: use },
     now_watching: null, active_sessions: 0, last_activity: null,
   });
 
@@ -292,7 +292,7 @@ describe("admin: AI history and the AI tab", () => {
 describe("admin: a person's AI searches", () => {
   it("lists what they asked, newest first, in its own section", async () => {
     vi.mocked(admin.getUserDetail).mockResolvedValue({
-      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, ai_use_history: true },
+      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: null, two_factor_enabled: false, ai_use_history: true },
       now_watching: null, active_sessions: 0, last_activity: null,
     });
     vi.mocked(admin.getUserHistory).mockResolvedValue({ items: [], total: 0 });
@@ -321,7 +321,7 @@ describe("admin: a person's AI searches", () => {
 describe("admin: the player questions limit", () => {
   it("sets and clears a person's own number of player questions, separately from searches", async () => {
     const mk = (n: number | null) => ({
-      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: n, ai_use_history: true },
+      user: { id: "u1", username: "bob", display_name: "Bob", is_admin: false, is_disabled: false, created_at: "2026-01-01T00:00:00Z", last_login_at: null, avatar_url: null, watchlist_count: 0, watched_count: 0, ai_daily_limit: null, watch_ai_daily_limit: n, two_factor_enabled: false, ai_use_history: true },
       now_watching: null, active_sessions: 0, last_activity: null,
     });
     vi.mocked(admin.getUserDetail).mockResolvedValue(mk(null));

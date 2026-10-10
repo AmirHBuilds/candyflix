@@ -16,6 +16,8 @@ export type AdminUser = {
   ai_daily_limit: number | null;
   /** The same, for the watch assistant in the player. */
   watch_ai_daily_limit: number | null;
+  /** Two-step sign-in (a code from the Telegram bot) is on for them. */
+  two_factor_enabled: boolean;
   /** Their own Settings switch: Ask AI may use their watch history and box. */
   ai_use_history: boolean;
 };
@@ -74,6 +76,8 @@ export const updateAdminUser = (
 ) => request<AdminUser>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }, "Couldn't save the changes.");
 export const resetAdminPassword = (id: string, newPassword: string) =>
   request<void>(`/users/${id}/password`, { method: "POST", body: JSON.stringify({ new_password: newPassword }) }, "Couldn't reset the password.");
+export const switchOffTwoFactor = (id: string) =>
+  request<AdminUser>(`/users/${id}/2fa-off`, { method: "POST" }, "Couldn't switch that off.");
 export const deleteAdminUser = (id: string) => request<void>(`/users/${id}`, { method: "DELETE" }, "Couldn't delete that user.");
 export const getAdminStats = () => request<AdminStats>("/stats", {}, "Couldn't load the dashboard.");
 export const getSystemStatus = () => request<SystemStatus>("/system", {}, "Couldn't check the system.");

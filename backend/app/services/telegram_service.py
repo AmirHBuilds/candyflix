@@ -69,6 +69,26 @@ async def send(topic: str, text: str) -> bool:
         return False
 
 
+async def call(method: str, body: dict, timeout: float = 8) -> dict | None:
+    """One Bot API call. Returns the `result`, or None if it failed."""
+    s = get_settings()
+    if not s.telegram_bot_token:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            res = await client.post(f"{s.telegram_base_url}/bot{s.telegram_bot_token}/{method}", json=body)
+        data = res.json()
+        return data.get("result") if res.status_code == 200 and data.get("ok") else None
+    except Exception:
+        logger.warning("Telegram call %s failed", method)
+        return None
+
+
+async def send_to_chat(chat_id: int, text: str) -> bool:
+    """A private message to one person's chat (used for sign-in codes). Awaited, unlike reports."""
+    return await call("sendMessage", {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}) is not None
+
+
 def notify(topic: str, text: str, *, dedupe: bool = False) -> None:
     """Queue a report and return at once. Safe to call anywhere, with or without a running loop."""
     if not enabled():
@@ -98,6 +118,8 @@ ADMIN_ACTIONS = {
 
 
 def report_admin_action(actor_name: str, action: str, target: str | None, detail: str | None) -> None:
+    if action == "user.2fa_off":  # already reported, with who did it, by two_factor_service.turn_off
+        return
     topic, title = ADMIN_ACTIONS.get(action, ("admin", f"🛠 {action}"))
     lines = [f"<b>{esc(title)}</b>", f"By {esc(actor_name)}"]
     if target:

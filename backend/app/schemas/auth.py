@@ -4,7 +4,7 @@ Pydantic schemas for authentication endpoints.
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProfileEntry(BaseModel):
@@ -30,3 +30,19 @@ class UserPublic(ProfileEntry):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class TwoFactorChallenge(BaseModel):
+    """Said instead of signing in when the password was right but the account has two-step sign-in on."""
+
+    two_factor_required: bool = True
+    challenge: str
+
+
+class TwoFactorVerify(BaseModel):
+    challenge: str = Field(min_length=10, max_length=100)
+    code: str = Field(min_length=4, max_length=10)
+
+
+class TwoFactorResend(BaseModel):
+    challenge: str = Field(min_length=10, max_length=100)
