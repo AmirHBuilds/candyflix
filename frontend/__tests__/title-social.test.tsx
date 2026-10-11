@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import DiscussionButton from "@/components/opinions/DiscussionButton";
 import HeroSocial from "@/components/opinions/HeroSocial";
+import PlayerSocial from "@/components/opinions/PlayerSocial";
 import LikedByLine from "@/components/opinions/LikedByLine";
 import TitleLikeButton from "@/components/opinions/TitleLikeButton";
 import { EXPAND_TTL_MS, rememberExpanded, wasExpanded } from "@/lib/episode-expand";
@@ -118,6 +119,19 @@ describe("small details", () => {
     const panel = await screen.findByRole("dialog");
     expect(container.contains(panel)).toBe(false);
     expect(document.body.contains(panel)).toBe(true);
+  });
+});
+
+describe("player block", () => {
+  it("is the same joined heart | comment block as the detail page, with no 'Like' word", async () => {
+    const s = scope();
+    vi.mocked(lib.getTitleOpinions).mockResolvedValue(data({ likes: { count: 4, you_liked: false, people: [], more: 0 }, comment_count: 2 }));
+    render(<PlayerSocial scope={s} title="Show · S1E2" />);
+    const like = await screen.findByRole("button", { name: "Like" });
+    const talk = screen.getByRole("button", { name: "Discussion, 2 comments" });
+    expect(like.parentElement).toBe(talk.parentElement);
+    expect(like.querySelector(".sr-only")).not.toBeNull(); // the word is there for screen readers only
+    expect(like).toHaveTextContent("4");
   });
 });
 
