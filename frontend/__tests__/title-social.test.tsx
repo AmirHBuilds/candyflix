@@ -91,11 +91,33 @@ describe("counts and the banner", () => {
       likes: { count: 25, you_liked: false, people: [person("Amir")], more: 24 },
     };
     const { container, rerender } = render(<HeroSocial social={t} />);
-    expect(screen.getByText("Amir + 24 others liked it")).toBeInTheDocument();
+    expect(screen.getAllByText("Amir + 24 others liked it").length).toBeGreaterThan(0); // the card (and the small-screen line)
     expect(screen.getByText(/Watch it!/)).toBeInTheDocument();
     expect(screen.getByText(/Mom · \+2 more/)).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument(); // the comment count on the small-screen line
     rerender(<HeroSocial social={undefined} />);
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("small details", () => {
+  it("the player's heart is just the icon and the number: no 'Like' word", async () => {
+    const s = scope();
+    vi.mocked(lib.getTitleOpinions).mockResolvedValue(data({ likes: { count: 12, you_liked: false, people: [], more: 0 } }));
+    render(<TitleLikeButton scope={s} variant="pill" />);
+    const btn = await screen.findByRole("button", { name: "Like" });
+    expect(btn).toHaveTextContent("12");
+    expect(btn.textContent).not.toMatch(/Like/);
+  });
+
+  it("the discussion panel is drawn in <body>, clear of the header and any container around the button", async () => {
+    const s = scope();
+    vi.mocked(lib.getTitleOpinions).mockResolvedValue(data());
+    const { container } = render(<DiscussionButton scope={s} title="X" />);
+    fireEvent.click(await screen.findByRole("button", { name: /Discussion/ }));
+    const panel = await screen.findByRole("dialog");
+    expect(container.contains(panel)).toBe(false);
+    expect(document.body.contains(panel)).toBe(true);
   });
 });
 

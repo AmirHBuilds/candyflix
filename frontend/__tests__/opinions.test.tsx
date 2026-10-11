@@ -182,6 +182,8 @@ describe("OpinionsStrip (the home row)", () => {
     expect(screen.getByText(/Mom · \+3 more comments/)).toBeInTheDocument();
     expect(screen.getByText("Amir + 24 others liked it")).toBeInTheDocument();
     expect(screen.getByText("Candy liked it")).toBeInTheDocument();
+    // faces belong to the commenter (beside their name), not to the likers
+    expect(screen.getByText(/Mom · \+3 more comments/).previousElementSibling).not.toBeNull();
     expect(screen.getAllByRole("link")).toHaveLength(2); // a title appears once, however much happened on it
   });
 

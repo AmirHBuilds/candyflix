@@ -29,6 +29,8 @@ describe("DetailActions — heart and discussion", () => {
     expect(await screen.findByRole("button", { name: "Like" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Discussion, 9 comments" })).toBeInTheDocument();
     expect(screen.getByText("Candy + 2 others liked this")).toBeInTheDocument();
+    // one joined block: the heart and the discussion icon share a parent
+    expect(screen.getByRole("button", { name: "Like" }).parentElement).toBe(screen.getByRole("button", { name: "Discussion, 9 comments" }).parentElement);
   });
 
   it("the home banner's buttons stay Watch Now and Add to box: no heart, no request", async () => {

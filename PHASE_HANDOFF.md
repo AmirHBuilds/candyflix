@@ -956,3 +956,12 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - **Banner**: the like/discussion buttons no longer appear in the home banner (they were loading there by mistake: `DetailActions` only shows them when given a `title`). Banner slides now show `HeroSocial`: who liked it + the newest comment, drifting in per slide.
 - **Home row**: renamed "Family favorites", follows Settings → Home layout (grid or swipe), sits right after Continue Watching (first if nothing to continue). `OpinionsStrip` cards = poster (comment-count chip) + title + clipped newest comment ("Mom · Season 2 · Episode 3 · +3 more comments") + faces and "Amir + 24 others liked it".
 - Frontend 711 passed, backend 516 passed.
+
+## §50 Phase 21 v5 — small round
+- Discussion panel is rendered through a portal into `<body>`: the `@container` around the buttons trapped the fixed panel behind the header/search.
+- Home row cards: the commenter's picture sits beside their name (before "· +N more comments"); the likers' faces are gone (heart + text only).
+- Player: heart pill is icon + number only (no "Like" word).
+- Banner: `HeroSocial` is now a frosted card at the banner's bottom-right on large screens (commenter picture, quote, who liked it), and one quiet line (♥ names · 💬 count) on smaller ones.
+- Detail page: the heart and the discussion icon are one joined block (`variant="segment"`).
+- Admin: person page → new **Comments** tab (`OpinionList userId`), `GET /api/admin/opinions?user_id=` (logged as `opinions.view`, deduped), plus log wording for the opinion actions.
+- Backend 517 passed, frontend 715 passed.

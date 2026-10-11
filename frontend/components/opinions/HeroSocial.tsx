@@ -4,9 +4,20 @@ import Avatar from "@/components/Avatar";
 import { HeartIcon } from "@/components/opinions/TitleLikeButton";
 import { likeSentence, whereLabel, type FeedTitle } from "@/lib/opinions";
 
+function CommentIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+    </svg>
+  );
+}
+
 /**
- * Under the banner's title: who liked it, and the newest thing someone said about it, drifting in each time the
- * slide changes (`key` = the slide). Draws nothing for a title nobody has touched.
+ * What the family did on a banner title. Two shapes of the same facts:
+ * - big screens: a small frosted card in the banner's bottom-right corner (the newest comment with its author's picture,
+ *   and who liked it underneath), drifting in whenever the slide changes;
+ * - smaller screens: one quiet line under the title ("♥ Amir + 24 others · 💬 3").
+ * Draws nothing for a title nobody has touched. Render it inside the slide (the card is positioned against the banner).
  */
 export default function HeroSocial({ social }: { social: FeedTitle | undefined }) {
   if (!social) return null;
@@ -15,32 +26,51 @@ export default function HeroSocial({ social }: { social: FeedTitle | undefined }
   if (!liked && !latest) return null;
   const who = latest?.author?.name ?? "Someone";
   const where = latest ? whereLabel(latest) : null;
+  const more = social.comment_count - 1;
+
   return (
-    <div className="mb-4 flex max-w-xl flex-col items-start gap-2">
-      {liked && (
-        <p className="animate-drift-in flex items-center gap-2 rounded-full bg-black/35 py-1 pl-1.5 pr-3 text-sm text-white/85 backdrop-blur">
-          <span className="flex -space-x-1.5">
-            {social.likes.people.map((p) => (
-              <Avatar key={p.id} name={p.name} src={p.avatar_url} size={22} className="ring-2 ring-black/40" />
-            ))}
+    <>
+      {/* Small screens: one line. */}
+      <p className="animate-drift-in mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/80 lg:hidden">
+        {liked && (
+          <span className="flex items-center gap-1.5">
+            <HeartIcon filled className="h-3.5 w-3.5 text-accent" />
+            {liked}
           </span>
-          <HeartIcon filled className="h-3.5 w-3.5 shrink-0 text-accent" />
-          <span>{liked}</span>
-        </p>
-      )}
-      {latest && (
-        <p
-          className="animate-drift-in rounded-2xl rounded-bl-md bg-black/35 px-3.5 py-2 text-sm text-white/90 backdrop-blur"
-          style={{ animationDelay: "0.25s" }}
-        >
-          <span className="line-clamp-2 break-words italic">“{latest.body}”</span>
-          <span className="mt-0.5 block text-xs text-white/55">
-            {who}
-            {where ? ` · ${where}` : ""}
-            {social.comment_count > 1 ? ` · +${social.comment_count - 1} more` : ""}
+        )}
+        {social.comment_count > 0 && (
+          <span className="flex items-center gap-1.5">
+            <CommentIcon className="h-3.5 w-3.5" />
+            {social.comment_count}
           </span>
-        </p>
-      )}
-    </div>
+        )}
+      </p>
+
+      {/* Large screens: the card. */}
+      <aside
+        aria-label="What your people said"
+        className="animate-drift-in absolute bottom-16 right-12 hidden w-72 flex-col gap-3 rounded-2xl border border-white/10 bg-canvas/55 p-4 text-left shadow-2xl backdrop-blur-md lg:flex"
+      >
+        {latest && (
+          <div className="flex gap-3">
+            {latest.author ? <Avatar name={who} src={latest.author.avatar_url} size={32} /> : <span className="h-8 w-8 shrink-0 rounded-full bg-white/10" aria-hidden="true" />}
+            <div className="min-w-0">
+              <p className="line-clamp-3 break-words text-sm italic leading-snug text-white/90">“{latest.body}”</p>
+              <p className="mt-1 truncate text-xs text-white/50">
+                {who}
+                {where ? ` · ${where}` : ""}
+                {more > 0 ? ` · +${more} more` : ""}
+              </p>
+            </div>
+          </div>
+        )}
+        {liked && (
+          <p className={`flex items-center gap-2 text-xs text-white/70 ${latest ? "border-t border-white/10 pt-3" : ""}`}>
+            <HeartIcon filled className="h-3.5 w-3.5 shrink-0 text-accent" />
+            <span className="truncate">{liked}</span>
+          </p>
+        )}
+      </aside>
+    </>
   );
 }

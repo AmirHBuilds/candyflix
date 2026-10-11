@@ -195,9 +195,10 @@ export default function DetailActions({
           {inCandyBox ? `✓ In ${boxName}` : `Add to ${boxName}`}
         </button>
         {title !== undefined && (
-          <div className="flex gap-3">
-            <TitleLikeButton scope={scope} className={`flex-1 px-[var(--pad)] ${HEART_ROW_FLEX[labelSize]}`} labelClass={HEART_ROW_LABEL[labelSize]} />
-            <DiscussionButton scope={scope} title={title} variant="action" />
+          // The heart and the discussion icon are one block, split by a thin line.
+          <div className="flex h-12 divide-x divide-white/15 overflow-hidden rounded-xl border border-white/15">
+            <TitleLikeButton scope={scope} variant="segment" className={`flex-1 px-[var(--pad)] ${HEART_ROW_FLEX[labelSize]}`} labelClass={HEART_ROW_LABEL[labelSize]} />
+            <DiscussionButton scope={scope} title={title} variant="segment" />
           </div>
         )}
       </div>

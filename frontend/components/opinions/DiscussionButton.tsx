@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import OpinionsSection from "@/components/opinions/OpinionsSection";
 import { setCommentCount, useTitleLikes } from "@/lib/title-likes";
 import type { Scope } from "@/lib/opinions";
@@ -26,7 +27,7 @@ export default function DiscussionButton({
   scope: Scope;
   title: string;
   /** "action": icon + count, tall like Watch Now. "pill": icon + count, small. "plain": bring your own classes. */
-  variant?: "action" | "pill" | "plain";
+  variant?: "action" | "pill" | "segment" | "plain";
   className?: string;
 }) {
   const { enabled, comments } = useTitleLikes(scope);
@@ -55,7 +56,9 @@ export default function DiscussionButton({
         className={
           (variant === "pill"
             ? "inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-3.5 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white "
-            : variant === "action"
+            : variant === "segment"
+              ? "flex h-full min-w-12 items-center justify-center gap-1.5 whitespace-nowrap px-3 font-semibold text-white/80 transition-colors hover:bg-white/5 hover:text-white "
+              : variant === "action"
               ? "flex h-12 min-w-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-white/15 px-3 font-semibold text-white/80 transition-colors hover:border-white/30 hover:text-white "
               : "") + className
         }
@@ -63,7 +66,8 @@ export default function DiscussionButton({
         <ChatIcon />
         {comments > 0 && <span className="tabular-nums">{comments}</span>}
       </button>
-      {open && (
+      {/* In <body>, not here: the button sits inside a container-query box, which would trap a fixed panel inside it (behind the header). */}
+      {open && createPortal(
         <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={`Discussion: ${title}`}>
           <button type="button" aria-label="Close discussion" tabIndex={-1} onClick={() => setOpen(false)} className="animate-fade-in absolute inset-0 cursor-default bg-black/60" />
           <div className="animate-sheet absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-3xl border border-white/10 bg-canvas shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[28rem] sm:rounded-l-3xl sm:rounded-tr-none">
@@ -90,7 +94,7 @@ export default function DiscussionButton({
             </div>
           </div>
         </div>
-      )}
+        , document.body)}
     </>
   );
 }

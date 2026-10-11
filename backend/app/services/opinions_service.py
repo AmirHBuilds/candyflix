@@ -370,8 +370,12 @@ async def banner_social(db: AsyncSession, user: User, keys: list[tuple[str, int]
 # ---------------------------------------------------------------- admin
 
 
-async def admin_list(db: AsyncSession, offset: int, limit: int, only_hidden: bool = False) -> s.AdminOpinionPage:
+async def admin_list(
+    db: AsyncSession, offset: int, limit: int, only_hidden: bool = False, user_id: uuid.UUID | None = None
+) -> s.AdminOpinionPage:
     where = [Opinion.is_hidden.is_(True)] if only_hidden else []
+    if user_id is not None:
+        where.append(Opinion.user_id == user_id)
     total = await db.scalar(select(func.count()).select_from(Opinion).where(*where)) or 0
     rows = (await db.execute(select(Opinion, User).join(User, User.id == Opinion.user_id).where(*where).order_by(Opinion.created_at.desc()).offset(offset).limit(limit))).all()
     counts = {}

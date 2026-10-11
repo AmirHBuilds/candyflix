@@ -312,8 +312,8 @@ export type AdminOpinionPage = { items: AdminOpinion[]; total: number };
 export const getSocialConfig = () => request<SocialConfig>("/social", {}, "Couldn't load the switches.");
 export const saveSocialConfig = (body: SocialConfig) =>
   request<SocialConfig>("/social", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the switches.");
-export const listAdminOpinions = (offset = 0, hidden = false, limit = 30) =>
-  request<AdminOpinionPage>(`/opinions?offset=${offset}&limit=${limit}&hidden=${hidden}`, {}, "Couldn't load opinions.");
+export const listAdminOpinions = (offset = 0, hidden = false, limit = 30, userId?: string) =>
+  request<AdminOpinionPage>(`/opinions?offset=${offset}&limit=${limit}&hidden=${hidden}${userId ? `&user_id=${userId}` : ""}`, {}, "Couldn't load opinions.");
 export const hideAdminOpinion = (id: string, hide: boolean) =>
   request<void>(`/opinions/${id}/${hide ? "hide" : "unhide"}`, { method: "POST" }, "Couldn't change that.");
 export const deleteAdminOpinion = (id: string) => request<void>(`/opinions/${id}`, { method: "DELETE" }, "Couldn't delete that.");

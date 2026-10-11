@@ -380,3 +380,18 @@ async def test_everything_needs_a_session():
         assert (await anon.get("/api/opinions/feed")).status_code == 401
         assert (await anon.get("/api/opinions/title", params=Q)).status_code == 401
         assert (await anon.post("/api/opinions", json=body())).status_code == 401
+
+
+async def test_admin_can_list_one_persons_opinions_including_anonymous_ones_and_it_is_logged():
+    uid = await make()
+    a, other, admin = await client_for(uid), await client_for(await make()), await client_for(await make(is_admin=True))
+    await a.post("/api/opinions", json=body("mine", anonymous=True))
+    await other.post("/api/opinions", json=body("not theirs"))
+    got = (await admin.get("/api/admin/opinions", params={"user_id": str(uid)})).json()
+    assert [i["body"] for i in got["items"]] == ["mine"] and got["total"] == 1
+    assert got["items"][0]["is_anonymous"] is True and got["items"][0]["author_id"] == str(uid)
+    log = (await admin.get("/api/admin/audit")).json()
+    assert any(e["action"] == "opinions.view" for e in (log["items"] if isinstance(log, dict) else log))
+    assert (await other.get("/api/admin/opinions", params={"user_id": str(uid)})).status_code == 403
+    for c in (a, other, admin):
+        await c.aclose()

@@ -34,6 +34,16 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted ${t}`;
     case "history.view":
       return `${who} looked at ${t}'s watch history`;
+    case "opinions.view":
+      return `${who} looked at ${t}'s comments`;
+    case "opinion.hide":
+      return `${who} hid a comment`;
+    case "opinion.unhide":
+      return `${who} showed a hidden comment again`;
+    case "opinion.delete":
+      return `${who} deleted a comment`;
+    case "social.config":
+      return `${who} changed the comments and likes switches`;
     case "ai.searches.view":
       return `${who} looked at ${t}'s AI searches`;
     case "watchlist.view":

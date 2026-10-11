@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
+import { OpinionList } from "@/components/admin/OpinionsTab";
 import { NowWatchingRow, formatClock, whatLabel } from "@/components/admin/NowWatchingCard";
 import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import {
@@ -283,13 +284,14 @@ function LimitRow({
   );
 }
 
-const SECTION_IDS = ["history", "box", "ai"] as const;
+const SECTION_IDS = ["history", "box", "ai", "comments"] as const;
 
 // The second tab is that person's own box ("Eve Box"), not the viewer's.
 const sectionsFor = (displayName: string) => [
   { id: "history" as const, label: "Watch history" },
   { id: "box" as const, label: boxNameFor(displayName) },
   { id: "ai" as const, label: "AI searches" },
+  { id: "comments" as const, label: "Comments" },
 ];
 
 export default function UserDetailView({ userId, onBack, backLabel = "All people" }: { userId: string; onBack: () => void; backLabel?: string }) {
@@ -365,7 +367,7 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
               </button>
             ))}
           </div>
-          {section === "history" ? <History userId={userId} /> : section === "box" ? <Box userId={userId} name={detail.user.display_name} /> : <AISearches userId={userId} />}
+          {section === "history" ? <History userId={userId} /> : section === "box" ? <Box userId={userId} name={detail.user.display_name} /> : section === "comments" ? <OpinionList userId={userId} /> : <AISearches userId={userId} />}
         </>
       )}
     </section>

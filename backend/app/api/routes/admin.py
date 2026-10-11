@@ -127,9 +127,22 @@ async def switch_off_two_factor(
 
 @router.get("/opinions", response_model=opinion_schemas.AdminOpinionPage)
 async def list_opinions(
-    offset: int = Query(0, ge=0), limit: int = Query(30, ge=1, le=100), hidden: bool = False, db: AsyncSession = Depends(get_db)
+    offset: int = Query(0, ge=0),
+    limit: int = Query(30, ge=1, le=100),
+    hidden: bool = False,
+    user_id: uuid.UUID | None = None,
+    actor: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
 ):
-    return await opinions_service.admin_list(db, offset, limit, only_hidden=hidden)
+    page = await opinions_service.admin_list(db, offset, limit, only_hidden=hidden, user_id=user_id)
+    if user_id is not None and offset == 0:
+        try:
+            await audit_service.record(
+                db, actor, "opinions.view", target=await admin_service.get_user(db, user_id), dedupe=audit_service.VIEW_DEDUPE
+            )
+        except admin_service.AdminError as exc:
+            _raise(exc)
+    return page
 
 
 @router.post("/opinions/{opinion_id}/hide", status_code=status.HTTP_204_NO_CONTENT)

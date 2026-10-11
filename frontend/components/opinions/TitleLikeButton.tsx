@@ -32,7 +32,7 @@ export default function TitleLikeButton({
   labelClass = "",
 }: {
   scope: Scope;
-  variant?: "action" | "pill";
+  variant?: "action" | "pill" | "segment";
   className?: string;
   /** Extra classes for the visible "Like" text (the detail page hides it once the buttons sit in a row). */
   labelClass?: string;
@@ -41,13 +41,21 @@ export default function TitleLikeButton({
   const [pop, setPop] = useState(0);
   if (!enabled) return null;
   const liked = likes.you_liked;
+  // "segment": one half of a joined block (the wrapper draws the border), same height as the action buttons.
   const base =
-    variant === "action"
+    variant === "segment"
+      ? "flex h-full items-center justify-center gap-2 whitespace-nowrap font-semibold transition-colors"
+      : variant === "action"
       ? "flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-xl border font-semibold transition-colors"
       : "inline-flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors";
-  const tone = liked
-    ? "border-accent bg-accent/10 text-accent hover:bg-accent/20"
-    : "border-white/15 text-white/80 hover:border-white/30 hover:text-white";
+  const tone =
+    variant === "segment"
+      ? liked
+        ? "bg-accent/10 text-accent hover:bg-accent/20"
+        : "text-white/80 hover:bg-white/5 hover:text-white"
+      : liked
+        ? "border-accent bg-accent/10 text-accent hover:bg-accent/20"
+        : "border-white/15 text-white/80 hover:border-white/30 hover:text-white";
   return (
     <button
       type="button"
@@ -60,7 +68,7 @@ export default function TitleLikeButton({
       className={`${base} ${tone} ${className}`}
     >
       <HeartIcon key={pop} filled={liked} className={`h-[1.2em] w-[1.2em] shrink-0 ${pop > 0 && liked ? "animate-heart-pop" : ""}`} />
-      <span className={labelClass}>{liked ? "Liked" : "Like"}</span>
+      {variant !== "pill" && <span className={labelClass}>{liked ? "Liked" : "Like"}</span>}
       {likes.count > 0 && <span className="tabular-nums">{likes.count}</span>}
     </button>
   );

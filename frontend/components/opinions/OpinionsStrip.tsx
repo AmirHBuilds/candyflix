@@ -45,20 +45,18 @@ function FamilyCard({ t }: { t: FeedTitle }) {
       {latest && (
         <div className="mt-1">
           <p className="line-clamp-2 break-words text-xs italic leading-snug text-white/65">“{latest.body}”</p>
-          <p className="mt-0.5 truncate text-[11px] text-white/40">
-            {who}
-            {where ? ` · ${where}` : ""}
-            {others > 0 ? ` · +${others} more ${others === 1 ? "comment" : "comments"}` : ""}
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-white/40">
+            {latest.author && <Avatar name={who} src={latest.author.avatar_url} size={18} />}
+            <span className="truncate">
+              {who}
+              {where ? ` · ${where}` : ""}
+              {others > 0 ? ` · +${others} more ${others === 1 ? "comment" : "comments"}` : ""}
+            </span>
           </p>
         </div>
       )}
       {t.likes.count > 0 && (
         <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/50">
-          <span className="flex -space-x-1.5">
-            {t.likes.people.map((p) => (
-              <Avatar key={p.id} name={p.name} src={p.avatar_url} size={16} className="ring-2 ring-canvas" />
-            ))}
-          </span>
           <HeartIcon filled className="h-3 w-3 shrink-0 text-accent" />
           <span className="truncate">{liked}</span>
         </p>

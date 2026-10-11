@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-import OpinionsTab from "@/components/admin/OpinionsTab";
+import OpinionsTab, { OpinionList } from "@/components/admin/OpinionsTab";
 import * as admin from "@/lib/admin";
 import * as lib from "@/lib/opinions";
 
@@ -67,6 +67,25 @@ describe("Admin → Opinions", () => {
     render(<OpinionsTab />);
     await screen.findByText("rude comment");
     fireEvent.click(screen.getByLabelText("Only hidden"));
-    await waitFor(() => expect(admin.listAdminOpinions).toHaveBeenLastCalledWith(0, true));
+    await waitFor(() => expect(admin.listAdminOpinions).toHaveBeenLastCalledWith(0, true, 30, undefined));
+  });
+});
+
+describe("Admin → a person's Comments tab", () => {
+  it("lists only that person's opinions (with the real author of anonymous ones) and can hide them", async () => {
+    vi.mocked(admin.listAdminOpinions).mockResolvedValue({ items: [row()], total: 1 });
+    vi.mocked(admin.hideAdminOpinion).mockResolvedValue();
+    render(<OpinionList userId="u1" />);
+    expect(await screen.findByText("rude comment")).toBeInTheDocument();
+    expect(admin.listAdminOpinions).toHaveBeenCalledWith(0, false, 30, "u1");
+    expect(screen.getByText("Their opinions")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Hide" }));
+    await waitFor(() => expect(admin.hideAdminOpinion).toHaveBeenCalledWith("o1", true));
+  });
+
+  it("says so when they haven't written any", async () => {
+    vi.mocked(admin.listAdminOpinions).mockResolvedValue({ items: [], total: 0 });
+    render(<OpinionList userId="u1" />);
+    expect(await screen.findByText("No comments yet.")).toBeInTheDocument();
   });
 });
