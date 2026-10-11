@@ -43,16 +43,16 @@ function FamilyCard({ t }: { t: FeedTitle }) {
       </div>
       <p className="mt-2 truncate text-sm text-white/80">{t.title}</p>
       {latest && (
-        <div className="mt-1">
-          <p className="line-clamp-2 break-words text-xs italic leading-snug text-white/65">“{latest.body}”</p>
-          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-white/40">
-            {latest.author && <Avatar name={who} src={latest.author.avatar_url} size={18} />}
-            <span className="truncate">
+        <div className="mt-1.5 flex gap-2">
+          {latest.author ? <Avatar name={who} src={latest.author.avatar_url} size={26} className="mt-0.5" /> : <span className="mt-0.5 h-[26px] w-[26px] shrink-0 rounded-full bg-white/10" aria-hidden="true" />}
+          <div className="min-w-0">
+            <p className="line-clamp-2 break-words text-xs italic leading-snug text-white/65">“{latest.body}”</p>
+            <p className="mt-0.5 truncate text-[11px] text-white/40">
               {who}
               {where ? ` · ${where}` : ""}
               {others > 0 ? ` · +${others} more ${others === 1 ? "comment" : "comments"}` : ""}
-            </span>
-          </p>
+            </p>
+          </div>
         </div>
       )}
       {t.likes.count > 0 && (
