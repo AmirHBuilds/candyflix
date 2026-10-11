@@ -37,7 +37,7 @@ function FamilyCard({ t }: { t: FeedTitle }) {
           <span className="absolute right-2 top-2 flex divide-x divide-white/20 overflow-hidden rounded-full bg-black/65 text-[11px] font-medium text-white/90 backdrop-blur-sm">
             {t.likes.count > 0 && (
               <span className="flex items-center gap-1 px-2 py-0.5" aria-label={`${t.likes.count} likes`}>
-                <HeartIcon filled className="h-3 w-3 text-accent" />
+                <HeartIcon filled={false} className="h-3 w-3" />
                 {t.likes.count}
               </span>
             )}
