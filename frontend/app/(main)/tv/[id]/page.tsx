@@ -10,7 +10,6 @@ import { mergeResumeWithHint, parseResumeHintFromSearchParams } from "@/lib/play
 import Overview from "@/components/Overview";
 import DetailActions from "@/components/DetailActions";
 import SeasonBrowser from "@/components/SeasonBrowser";
-import OpinionsSection from "@/components/opinions/OpinionsSection";
 import MediaGrid from "@/components/MediaGrid";
 import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
 
@@ -113,7 +112,7 @@ export default async function TVDetailPage({
 
           <Overview text={show.overview} className="max-w-2xl text-white/70" />
 
-          <DetailActions tmdbId={show.tmdb_id} mediaType="tv" tvProgress={watchProgress} />
+          <DetailActions tmdbId={show.tmdb_id} mediaType="tv" title={show.title} tvProgress={watchProgress} />
         </div>
       </div>
 
@@ -123,8 +122,6 @@ export default async function TVDetailPage({
         resumeEpisode={watchProgress}
         recentVisit={hint}
       />
-
-      <OpinionsSection mediaType="tv" tmdbId={show.tmdb_id} />
 
       {similar.length > 0 && (
         <section>

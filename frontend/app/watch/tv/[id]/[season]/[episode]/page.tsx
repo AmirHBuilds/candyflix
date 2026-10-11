@@ -4,6 +4,7 @@ import { getEpisodePlaybackSourceServer, getLatestTVWatchProgressServer } from "
 import { mergeResumeWithHint, parseResumeHintFromSearchParams, type PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
 import SeasonBrowser from "@/components/SeasonBrowser";
+import PlayerSocial from "@/components/opinions/PlayerSocial";
 import BackToDetailsLink from "@/components/player/BackToDetailsLink";
 import StripResumeHintFromUrl from "@/components/player/StripResumeHintFromUrl";
 import ErrorState from "@/components/ErrorState";
@@ -112,20 +113,26 @@ export default async function WatchEpisodePage({
             : null
         }
       />
-      <div className="p-6">
-        <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">
-          {show.title}
-        </h1>
-        <p className="text-white/60">
-          S{seasonNum}E{episodeNum} · {currentEpisode?.name}
-        </p>
-        <BackToDetailsLink
-          identity={{ tmdbId: show.tmdb_id, mediaType: "tv", seasonNumber: seasonNum, episodeNumber: episodeNum }}
-          href={`/tv/${show.tmdb_id}`}
-          className="text-sm text-white/50 hover:text-white/80"
-        >
-          ← Back to details
-        </BackToDetailsLink>
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 p-6">
+        <div className="min-w-0">
+          <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">
+            {show.title}
+          </h1>
+          <p className="text-white/60">
+            S{seasonNum}E{episodeNum} · {currentEpisode?.name}
+          </p>
+          <BackToDetailsLink
+            identity={{ tmdbId: show.tmdb_id, mediaType: "tv", seasonNumber: seasonNum, episodeNumber: episodeNum }}
+            href={`/tv/${show.tmdb_id}`}
+            className="text-sm text-white/50 hover:text-white/80"
+          >
+            ← Back to details
+          </BackToDetailsLink>
+        </div>
+        <PlayerSocial
+          scope={{ media_type: "tv", tmdb_id: show.tmdb_id, season_number: seasonNum, episode_number: episodeNum }}
+          title={`${show.title} · S${seasonNum}E${episodeNum}${currentEpisode?.name ? ` · ${currentEpisode.name}` : ""}`}
+        />
       </div>
       <div className="px-6 pb-10">
         <h2 className="mb-4 font-[family-name:var(--font-display)] text-lg font-semibold text-white">

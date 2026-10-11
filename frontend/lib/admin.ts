@@ -24,6 +24,8 @@ export type AdminUser = {
   two_factor_enabled: boolean;
   /** Their own Settings switch: Ask AI may use their watch history and box. */
   ai_use_history: boolean;
+  /** An admin muted them: they can read opinions but not write any. */
+  opinions_blocked?: boolean;
 };
 
 export type AdminStats = {
@@ -76,7 +78,7 @@ export const createAdminUser = (body: { username: string; display_name: string; 
   request<AdminUser>("/users", { method: "POST", body: JSON.stringify(body) }, "Couldn't create that user.");
 export const updateAdminUser = (
   id: string,
-  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null; watch_ai_daily_limit: number | null; age_limit: AgeLimit | null }>
+  body: Partial<{ username: string; display_name: string; is_admin: boolean; is_disabled: boolean; ai_daily_limit: number | null; watch_ai_daily_limit: number | null; age_limit: AgeLimit | null; opinions_blocked: boolean }>
 ) => request<AdminUser>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }, "Couldn't save the changes.");
 export const resetAdminPassword = (id: string, newPassword: string) =>
   request<void>(`/users/${id}/password`, { method: "POST", body: JSON.stringify({ new_password: newPassword }) }, "Couldn't reset the password.");
@@ -285,3 +287,33 @@ export async function uploadAdminBadgeImage(file: File): Promise<import("@/lib/s
   }
   return res.json();
 }
+
+// --- Phase 21: opinions moderation ---
+
+export type SocialConfig = { enabled: boolean; allow_anonymous: boolean; allow_replies: boolean; home_section: boolean };
+export type AdminOpinion = {
+  id: string;
+  body: string;
+  created_at: string;
+  author_id: string;
+  author_name: string;
+  is_anonymous: boolean;
+  hidden: boolean;
+  is_reply: boolean;
+  media_type: "movie" | "tv";
+  tmdb_id: number;
+  season_number: number;
+  episode_number: number;
+  title: string | null;
+  likes: number;
+};
+export type AdminOpinionPage = { items: AdminOpinion[]; total: number };
+
+export const getSocialConfig = () => request<SocialConfig>("/social", {}, "Couldn't load the switches.");
+export const saveSocialConfig = (body: SocialConfig) =>
+  request<SocialConfig>("/social", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the switches.");
+export const listAdminOpinions = (offset = 0, hidden = false, limit = 30) =>
+  request<AdminOpinionPage>(`/opinions?offset=${offset}&limit=${limit}&hidden=${hidden}`, {}, "Couldn't load opinions.");
+export const hideAdminOpinion = (id: string, hide: boolean) =>
+  request<void>(`/opinions/${id}/${hide ? "hide" : "unhide"}`, { method: "POST" }, "Couldn't change that.");
+export const deleteAdminOpinion = (id: string) => request<void>(`/opinions/${id}`, { method: "DELETE" }, "Couldn't delete that.");

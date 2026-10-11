@@ -93,6 +93,16 @@ export default function UsersTab({
     }
   }
 
+  async function toggleMute(user: AdminUser) {
+    try {
+      await updateAdminUser(user.id, { opinions_blocked: !user.opinions_blocked });
+      showToast(user.opinions_blocked ? `${user.display_name} can write opinions again.` : `${user.display_name} can no longer write opinions.`, "success");
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't update that user.");
+    }
+  }
+
   const done = (message: string) => {
     setModal(null);
     showToast(message, "success");
@@ -145,8 +155,9 @@ export default function UsersTab({
                     <span className="truncate">{user.display_name}</span>
                     {isMe && <span className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/60">You</span>}
                     {user.is_admin && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-xs text-accent">Admin</span>}
-                    {user.age_limit && <span title={`Can watch up to ${user.age_limit}`} className="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-300">{user.age_limit}</span>}
+                    {user.age_limit && <span title={`Can watch up to ${AGE_LIMITS.find((l) => l.value === user.age_limit)?.label ?? user.age_limit}`} className="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-300">{user.age_limit}</span>}
                     {user.two_factor_enabled && <span title="Two-step sign-in is on" className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-xs text-emerald-300">2-step</span>}
+                    {user.opinions_blocked && <span title="Can read opinions but not write them" className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/60">Muted</span>}
                     {user.is_disabled && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-xs text-red-300">Disabled</span>}
                   </p>
                   <p className="truncate text-xs text-white/40">
@@ -166,6 +177,7 @@ export default function UsersTab({
                         ...(user.two_factor_enabled
                           ? [{ label: "Switch off 2-step", ariaLabel: `Switch off two-step sign-in for ${user.display_name}`, onSelect: () => twoFactorOff(user) }]
                           : []),
+                        { label: user.opinions_blocked ? "Allow opinions" : "Mute opinions", ariaLabel: `${user.opinions_blocked ? "Allow opinions for" : "Mute opinions for"} ${user.display_name}`, onSelect: () => toggleMute(user) },
                         { label: user.is_disabled ? "Enable" : "Disable", ariaLabel: `${user.is_disabled ? "Enable" : "Disable"} ${user.display_name}`, onSelect: () => toggleDisabled(user) },
                         { label: "Delete", ariaLabel: `Delete ${user.display_name}`, onSelect: () => setModal({ kind: "delete", user }), danger: true },
                       ]),
@@ -245,6 +257,68 @@ function useSubmit(action: () => Promise<void>) {
   return { busy, error, submit };
 }
 
+function AdminStep({
+  step, typed, setTyped, setStep, startLabel, onLabel, undoLabel = "Undo", note, onConfirmed,
+}: {
+  step: "off" | "confirm" | "on";
+  typed: string;
+  setTyped: (v: string) => void;
+  setStep: (s: "off" | "confirm" | "on") => void;
+  startLabel: string;
+  onLabel: string;
+  undoLabel?: string;
+  note?: string;
+  onConfirmed: () => void;
+}) {
+  const reset = () => {
+    setStep("off");
+    setTyped("");
+  };
+  if (step === "off")
+    return (
+      <button type="button" onClick={() => setStep("confirm")} className="block text-xs text-white/30 underline-offset-2 hover:text-white/60 hover:underline">
+        {startLabel}
+      </button>
+    );
+  if (step === "confirm")
+    return (
+      <div role="group" aria-label="Confirm admin" className="space-y-3 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm">
+        <p className="font-medium text-red-200">Admins can see everyone&apos;s activity, change anything on the site and remove people.</p>
+        <label className="flex flex-col gap-1.5 text-white/70">
+          Type <span className="font-mono text-white">admin</span> to confirm
+          <input aria-label="Type admin to confirm" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="none" className={fieldClass} />
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={typed.trim().toLowerCase() !== "admin"}
+            onClick={() => {
+              setStep("on");
+              onConfirmed();
+            }}
+            className="h-9 rounded-lg bg-red-500/80 px-3 text-sm font-medium text-white disabled:opacity-40"
+          >
+            Yes, make them an admin
+          </button>
+          <button type="button" onClick={reset} className={quietButton}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  return (
+    <p className="flex items-center justify-between gap-3 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+      <span>
+        {onLabel}
+        {note && <span className="block text-xs text-red-200/70">{note}</span>}
+      </span>
+      <button type="button" onClick={reset} className="shrink-0 text-xs underline">
+        {undoLabel}
+      </button>
+    </p>
+  );
+}
+
 function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: string) => void }) {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -277,44 +351,15 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
           </Field>
         )}
 
-        {adminStep === "off" && (
-          <button type="button" onClick={() => setAdminStep("confirm")} className="block text-xs text-white/30 underline-offset-2 hover:text-white/60 hover:underline">
-            Create as an admin instead…
-          </button>
-        )}
-        {adminStep === "confirm" && (
-          <div role="group" aria-label="Confirm admin" className="space-y-3 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm">
-            <p className="font-medium text-red-200">Admins can see everyone&apos;s activity, change anything on the site and remove people.</p>
-            <label className="flex flex-col gap-1.5 text-white/70">
-              Type <span className="font-mono text-white">admin</span> to confirm
-              <input aria-label="Type admin to confirm" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="none" className={fieldClass} />
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={typed.trim().toLowerCase() !== "admin"}
-                onClick={() => {
-                  setAdminStep("on");
-                  setAgeLimit(""); // an admin has no age limit
-                }}
-                className="h-9 rounded-lg bg-red-500/80 px-3 text-sm font-medium text-white disabled:opacity-40"
-              >
-                Yes, make them an admin
-              </button>
-              <button type="button" onClick={() => { setAdminStep("off"); setTyped(""); }} className={quietButton}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-        {adminStep === "on" && (
-          <p className="flex items-center justify-between gap-3 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            <span>This person will be an admin.</span>
-            <button type="button" onClick={() => { setAdminStep("off"); setTyped(""); }} className="text-xs underline">
-              Undo
-            </button>
-          </p>
-        )}
+        <AdminStep
+          step={adminStep}
+          typed={typed}
+          setTyped={setTyped}
+          setStep={setAdminStep}
+          startLabel="Create as an admin instead…"
+          onLabel="This person will be an admin."
+          onConfirmed={() => setAgeLimit("")}
+        />
 
         <ErrorLine message={error} />
         <Actions onClose={onClose} busy={busy} submitLabel={isAdmin ? "Add admin" : "Add user"} disabled={!username.trim() || !displayName.trim() || password.length < 8 || adminStep === "confirm"} />
@@ -326,7 +371,10 @@ function CreateDialog({ onClose, onDone }: { onClose: () => void; onDone: (m: st
 function EditDialog({ user, isMe, onClose, onDone }: { user: AdminUser; isMe: boolean; onClose: () => void; onDone: (m: string) => void }) {
   const [username, setUsername] = useState(user.username);
   const [displayName, setDisplayName] = useState(user.display_name);
-  const [isAdmin, setIsAdmin] = useState(user.is_admin);
+  // Same detour as when creating one: no checkbox, and a word has to be typed. Taking admin away is one click.
+  const [adminStep, setAdminStep] = useState<"off" | "confirm" | "on">(user.is_admin ? "on" : "off");
+  const [typed, setTyped] = useState("");
+  const isAdmin = adminStep === "on";
   const [ageLimit, setAgeLimit] = useState<AgeLimit | "">(user.age_limit ?? "");
   const { busy, error, submit } = useSubmit(async () => {
     const changes: Parameters<typeof updateAdminUser>[1] = {};
@@ -350,12 +398,19 @@ function EditDialog({ user, isMe, onClose, onDone }: { user: AdminUser; isMe: bo
         <Field label="Age limit" hint={isAdmin ? "An admin can't have an age limit." : "Hides anything rated above it, and anything with no known rating."}>
           <AgeSelect value={isAdmin ? "" : ageLimit} onChange={setAgeLimit} disabled={isAdmin} />
         </Field>
-        <label className="flex items-center gap-2 text-sm text-white/70">
-          <input type="checkbox" checked={isAdmin} onChange={(e) => { setIsAdmin(e.target.checked); if (e.target.checked) setAgeLimit(""); }} className="h-4 w-4 accent-accent" />
-          Admin{isMe && <span className="text-xs text-white/40"> (the server needs at least one active admin)</span>}
-        </label>
+        <AdminStep
+          step={adminStep}
+          typed={typed}
+          setTyped={setTyped}
+          setStep={setAdminStep}
+          startLabel="Make an admin instead…"
+          onLabel={user.is_admin ? "This person is an admin." : "This person will become an admin."}
+          undoLabel={user.is_admin ? "Remove admin rights" : "Undo"}
+          note={isMe && user.is_admin ? "The server needs at least one active admin." : undefined}
+          onConfirmed={() => setAgeLimit("")}
+        />
         <ErrorLine message={error} />
-        <Actions onClose={onClose} busy={busy} submitLabel="Save" disabled={!username.trim() || !displayName.trim()} />
+        <Actions onClose={onClose} busy={busy} submitLabel="Save" disabled={!username.trim() || !displayName.trim() || adminStep === "confirm"} />
       </form>
     </Dialog>
   );

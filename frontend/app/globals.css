@@ -111,7 +111,7 @@ select option {
   color: #ffffff;
 }
 /* Hide scrollbar on the horizontal trending row while keeping it scrollable */
-.overflow-x-auto {
+.overflow-x-auto:not([class*="scrollbar-width:none"]) {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
@@ -272,6 +272,24 @@ summary {
 }
 .animate-drift-in {
   animation: driftIn 0.5s ease-out both;
+}
+
+/* The discussion panel: slides in from the side (a sheet from below on phones). */
+@keyframes sheetIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes sheetUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-sheet {
+  animation: sheetUp 0.3s ease-out both;
+}
+@media (min-width: 640px) {
+  .animate-sheet {
+    animation-name: sheetIn;
+  }
 }
 
 /* A spoiler fading into view once tapped: gentle, no flashing. */

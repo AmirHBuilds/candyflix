@@ -141,8 +141,6 @@ export default async function Home() {
 
       <HeroCarousel items={today.items.length > 0 ? today.items : week.items} />
 
-      <OpinionsStrip />
-
       {/* The sections that actually have something to show, with a feature banner after Trending Today,
           Trending This Week and Popular Movies (a banner the admin switched off just leaves its gap out). */}
       {[
@@ -161,6 +159,8 @@ export default async function Home() {
           return [
             <Section key={s.key} title={s.title} items={s.items} error={null} viewAllHref={s.viewAllHref} max={max} layout={layout} />,
             ...(banner?.enabled ? [<HomeBanner key={`banner-${index}`} banner={banner} slot={index as 0 | 1 | 2} />] : []),
+            // What people are saying sits right after Trending Today: a row like the others, not a block above them.
+            ...(s.key === "today" ? [<OpinionsStrip key="opinions" />] : []),
           ];
         })}
     </div>

@@ -222,6 +222,34 @@ describe("Admin panel", () => {
       await waitFor(() => expect(admin.updateAdminUser).toHaveBeenCalledWith("u1", { age_limit: null }));
     });
 
+    it("editing: no admin checkbox, making someone an admin needs the typed word, and taking it away is one click", async () => {
+      vi.mocked(admin.updateAdminUser).mockResolvedValue(u({ is_admin: true }));
+      await openUsers();
+      fireEvent.click(menuItem("Edit Bob"));
+      let dialog = screen.getByRole("dialog");
+      expect(within(dialog).queryByRole("checkbox")).toBeNull();
+      fireEvent.click(within(dialog).getByRole("button", { name: /Make an admin instead/ }));
+      expect(within(dialog).getByRole("button", { name: "Save" })).toBeDisabled(); // can't save mid-question
+      const yes = within(dialog).getByRole("button", { name: "Yes, make them an admin" });
+      expect(yes).toBeDisabled();
+      fireEvent.change(within(dialog).getByLabelText("Type admin to confirm"), { target: { value: "admin" } });
+      fireEvent.click(yes);
+      fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+      await waitFor(() => expect(admin.updateAdminUser).toHaveBeenCalledWith("u1", { is_admin: true }));
+    });
+
+    it("editing an admin shows they are one, and 'Remove admin rights' undoes it", async () => {
+      vi.mocked(admin.listAdminUsers).mockResolvedValue([me, bob, u({ id: "a2", username: "amy", display_name: "Amy", is_admin: true })]);
+      vi.mocked(admin.updateAdminUser).mockResolvedValue(u({ id: "a2" }));
+      await openUsers();
+      fireEvent.click(menuItem("Edit Amy"));
+      const dialog = screen.getByRole("dialog");
+      expect(within(dialog).getByText("This person is an admin.")).toBeInTheDocument();
+      fireEvent.click(within(dialog).getByRole("button", { name: "Remove admin rights" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+      await waitFor(() => expect(admin.updateAdminUser).toHaveBeenCalledWith("a2", { is_admin: false }));
+    });
+
     it("backing out of the admin question goes back to a normal user", async () => {
       await openUsers();
       fireEvent.click(screen.getByRole("button", { name: "Add user" }));
@@ -269,16 +297,6 @@ describe("Admin panel", () => {
       fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Save" }));
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       expect(admin.updateAdminUser).not.toHaveBeenCalled();
-    });
-
-    it("promotes to admin from the edit dialog", async () => {
-      vi.mocked(admin.updateAdminUser).mockResolvedValue(bob);
-      await openUsers();
-      fireEvent.click(menuItem("Edit Bob"));
-      const dialog = screen.getByRole("dialog");
-      fireEvent.click(within(dialog).getByLabelText(/^Admin/));
-      fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-      await waitFor(() => expect(admin.updateAdminUser).toHaveBeenCalledWith("u1", { is_admin: true }));
     });
 
     it("disables and re-enables with one click", async () => {

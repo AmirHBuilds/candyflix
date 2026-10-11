@@ -22,6 +22,9 @@ export default function LoginPage() {
   const [badge, setBadge] = useState<BadgeContent>(DEFAULT_BADGE);
 
   const [selectedUser, setSelectedUser] = useState<UserPublic | null>(null);
+  // "Sign in with a username": for anyone whose picture isn't on the screen (or who just prefers typing).
+  const [manual, setManual] = useState(false);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -53,11 +56,12 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedUser) return;
+    const name = manual ? username.trim() : selectedUser?.username;
+    if (!name) return;
     setSubmitting(true);
     setAuthError(null);
     try {
-      const result = await login(selectedUser.username, password);
+      const result = await login(name, password);
       if (result.kind === "code") {
         setChallenge(result.challenge);
         setCode("");
@@ -69,7 +73,13 @@ export default function LoginPage() {
     } catch (err) {
       // 401 is the only "wrong password"; anything else (like Telegram being down) says what happened.
       const message = err instanceof Error ? err.message : "";
-      setAuthError(message && message !== "Incorrect username or password" ? message : "Incorrect password. Try again.");
+      setAuthError(
+        message && message !== "Incorrect username or password"
+          ? message
+          : manual
+            ? "That username and password don't match. Try again."
+            : "Incorrect password. Try again."
+      );
       setPassword("");
     } finally {
       setSubmitting(false);
@@ -107,6 +117,8 @@ export default function LoginPage() {
 
   function backToProfiles() {
     setSelectedUser(null);
+    setManual(false);
+    setUsername("");
     setPassword("");
     setChallenge(null);
     setCode("");
@@ -121,7 +133,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-semibold tracking-tight">CandyFlix</h1>
       </div>
 
-      {!selectedUser && (
+      {!selectedUser && !manual && (
         <div className="flex w-full flex-col items-center gap-8">
           <h2 className="text-lg text-white/70">Who&apos;s watching?</h2>
 
@@ -149,10 +161,25 @@ export default function LoginPage() {
               }}
             />
           )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setManual(true);
+              setAuthError(null);
+            }}
+            className="group flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/60 transition-colors hover:border-white/25 hover:bg-white/[0.07] hover:text-white"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+            </svg>
+            Sign in with a username
+          </button>
         </div>
       )}
 
-      {selectedUser && challenge && (
+      {(selectedUser || manual) && challenge && (
         <form onSubmit={handleCode} className="flex w-full max-w-xs flex-col items-center gap-5">
           <span className="relative mt-6 block text-4xl" aria-hidden="true">
             🔐
@@ -183,6 +210,42 @@ export default function LoginPage() {
           </button>
           <button type="button" onClick={backToProfiles} className="text-sm text-white/40 hover:text-white/70">
             ← Back
+          </button>
+        </form>
+      )}
+
+      {manual && !challenge && (
+        <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col items-center gap-4">
+          <h2 className="mt-2 text-lg text-white/70">Sign in with your username</h2>
+          <input
+            autoFocus
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoCapitalize="none"
+            autoComplete="username"
+            aria-label="Username"
+            placeholder="Username"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-white placeholder-white/30 outline-none focus:border-accent/60"
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            aria-label="Password"
+            placeholder="Password"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-white placeholder-white/30 outline-none focus:border-accent/60"
+          />
+          {authError && <p role="alert" className="text-sm text-accent">{authError}</p>}
+          <button
+            type="submit"
+            disabled={submitting || !username.trim() || password.length === 0}
+            className="w-full rounded-xl bg-accent py-3 font-medium text-on-accent transition-opacity disabled:opacity-40"
+          >
+            {submitting ? "Checking…" : "Continue"}
+          </button>
+          <button type="button" onClick={backToProfiles} className="text-sm text-white/40 hover:text-white/70">
+            ← Back to profiles
           </button>
         </form>
       )}

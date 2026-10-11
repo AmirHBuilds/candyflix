@@ -923,3 +923,28 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 **Not yet (Phase 21)**: admin moderation tab in the UI (API exists), per-episode UI (the server and `OpinionsSection` props `seasonNumber/episodeNumber` already support it).
 
 **Tests**: `backend/tests/test_opinions.py` (22), `frontend/__tests__/opinions.test.tsx` (11). Never tried against live TMDB in a browser.
+
+## §46 Phase 21 — Opinions moderation and episodes
+
+- **Admin → Opinions tab** (`components/admin/OpinionsTab.tsx`): the four site switches (opinions, anonymous, replies, Home card), latest opinions with the real author of anonymous ones, where they were written (S/E), Hide / Show again, two-click Delete, "Only hidden" filter, Show more.
+- **Mute**: Users tab → "Mute opinions" / "Allow opinions" (`opinions_blocked`), "Muted" tag on the row.
+- **Episodes**: a "💬 Thoughts" button under each episode (detail page and player page) opens that episode's opinions and hearts in place (loaded only when opened); the player page also shows "What everyone thought of this episode" under the video info. Same component and API as titles (`seasonNumber`/`episodeNumber`).
+- Backend unchanged from Phase 20 (already supported all of this). Frontend: `__tests__/opinions-admin.test.tsx` (6). `nav-user-area.test` can fail once under full-suite load but passes alone.
+
+## §47 Phase 21 v2 — feedback round (opinions UI, admin edit, long episode lists)
+
+- **Edit user**: the Admin checkbox is gone. `AdminStep` (shared with Add user): "Make an admin instead…" → type `admin` → confirm; Save is disabled mid-question. For an existing admin: "This person is an admin." + "Remove admin rights" (one click).
+- **Heart on detail pages**: `DetailActions` (when given `title`; the home hero doesn't) adds a heart as a third button (icon only once the three sit in a row, "Like" label when stacked on a phone; container-query thresholds are +60px for that case). Under the buttons: `LikedByLine` ("Candy and Mom liked this" + faces) on the left, a **Discussion** button on the right.
+- **Discussion** (`DiscussionButton`): opens `OpinionsSection` in a side panel (bottom sheet on phones; Esc/backdrop closes). The opinions are no longer on the page itself (detail or player). `OpinionsSection heading={null}` = just composer + thread.
+- **Player** (`PlayerSocial`): heart pill + Discussion beside the episode/movie title, liked-by line under them; per-episode scope. The "💬 Thoughts" button under episodes was removed.
+- **Shared likes**: `lib/title-likes.ts` (`useTitleLikes`) keeps the heart and the liked-by line in step and shares one request.
+- **Home**: the "From the family" block is replaced by one quiet row, "What people are saying" (poster cards in the usual size: quote + author + hearts, and "Candy liked this" cards), placed right after Trending Today. The old `OpinionsStrip` rotating card is gone.
+- **Episode list** (list view only): first 10 shown + "Show all N episodes"; remembered per show for 24 h in localStorage (`lib/episode-expand.ts`); never hides the playing or resume episode; blocks view unchanged.
+- Tests: `title-social.test.tsx`, additions to `admin-panel`, `season-browser-states`, `opinions`. Frontend 698 passed.
+
+## §48 Phase 21 v3 — small fixes
+- **Swipe-row scrollbar**: the global `.overflow-x-auto { scrollbar-width: thin }` (unlayered CSS) was beating the rows' `[scrollbar-width:none]`; it now skips elements that hide theirs.
+- **Login**: "Sign in with a username" pill under the profiles → username + password form (same 2-step Telegram code afterwards). Test file `username-signin.test.tsx`.
+- **Profile hover**: the whole picture + crown wrapper scales, so the badge grows with the picture.
+- **Age limits**: PG now reads "about 8 and up"; the age tag's tooltip shows the full label.
+- Frontend 703 passed (`login.test.tsx` needs the real backend and is excluded as before).

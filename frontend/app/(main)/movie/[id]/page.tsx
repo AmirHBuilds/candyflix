@@ -8,7 +8,6 @@ import ErrorState from "@/components/ErrorState";
 import Overview from "@/components/Overview";
 import DetailActions from "@/components/DetailActions";
 import MediaGrid from "@/components/MediaGrid";
-import OpinionsSection from "@/components/opinions/OpinionsSection";
 
 export default async function MovieDetailPage({
   params,
@@ -95,11 +94,9 @@ export default async function MovieDetailPage({
 
           <Overview text={movie.overview} className="max-w-2xl text-white/70" />
 
-          <DetailActions tmdbId={movie.tmdb_id} mediaType="movie" />
+          <DetailActions tmdbId={movie.tmdb_id} mediaType="movie" title={movie.title} />
         </div>
       </div>
-
-      <OpinionsSection mediaType="movie" tmdbId={movie.tmdb_id} />
 
       {similar.length > 0 && (
         <section>

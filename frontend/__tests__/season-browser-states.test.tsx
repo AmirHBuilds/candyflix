@@ -51,3 +51,39 @@ describe("SeasonBrowser — loading & error states", () => {
     expect(media.getSeason).toHaveBeenLastCalledWith(1396, 1);
   });
 });
+
+describe("SeasonBrowser — long lists", () => {
+  const many = {
+    ...season,
+    episodes: Array.from({ length: 14 }, (_, i) => ({ episode_number: i + 1, name: `Ep ${i + 1}`, overview: "", still_path: null, air_date: null, runtime_minutes: null })),
+  };
+  beforeEach(() => window.localStorage.clear());
+
+  it("shows ten, 'Show all' reveals the rest and remembers it for that show only", async () => {
+    vi.mocked(media.getSeason).mockResolvedValue(many);
+    const { unmount } = render(<SeasonBrowser tvId={1396} seasons={[{ ...seasons[0], episode_count: 14 }]} />);
+    expect(await screen.findByText(/Ep 10/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ep 11/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Show all 14 episodes" }));
+    expect(screen.getByText(/Ep 14/)).toBeInTheDocument();
+    unmount();
+
+    render(<SeasonBrowser tvId={1396} seasons={[{ ...seasons[0], episode_count: 14 }]} />);
+    expect(await screen.findByText(/Ep 14/)).toBeInTheDocument(); // remembered
+    expect(screen.queryByRole("button", { name: /Show all/ })).toBeNull();
+  });
+
+  it("another show is still collapsed", async () => {
+    window.localStorage.setItem("candyflix:episodes-expanded:1396", String(Date.now()));
+    vi.mocked(media.getSeason).mockResolvedValue(many);
+    render(<SeasonBrowser tvId={555} seasons={[{ ...seasons[0], episode_count: 14 }]} />);
+    expect(await screen.findByText(/Ep 10/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ep 11/)).toBeNull();
+  });
+
+  it("never hides the episode that is playing", async () => {
+    vi.mocked(media.getSeason).mockResolvedValue(many);
+    render(<SeasonBrowser tvId={1396} seasons={[{ ...seasons[0], episode_count: 14 }]} initialSeason={1} currentEpisode={13} />);
+    expect(await screen.findByText(/Ep 13/)).toBeInTheDocument();
+  });
+});

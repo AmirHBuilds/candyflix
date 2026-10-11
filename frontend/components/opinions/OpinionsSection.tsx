@@ -199,7 +199,8 @@ export default function OpinionsSection({
   tmdbId: number;
   seasonNumber?: number;
   episodeNumber?: number;
-  heading?: string;
+  /** null: no heading and no heart row (the caller already shows them, e.g. the discussion panel). */
+  heading?: string | null;
 }) {
   const scope: Scope = { media_type: mediaType, tmdb_id: tmdbId, season_number: seasonNumber, episode_number: episodeNumber };
   const [data, setData] = useState<TitleOpinions | null>(null);
@@ -234,6 +235,7 @@ export default function OpinionsSection({
 
   return (
     <section aria-labelledby="opinions-heading" className="animate-fade-up flex flex-col gap-4">
+      {heading !== null && (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="opinions-heading" className="text-lg font-medium text-white/90">
           {heading}
@@ -250,6 +252,7 @@ export default function OpinionsSection({
           <HeartButton liked={data.likes.you_liked} onToggle={toggleTitle} label={data.likes.you_liked ? "Unlike this" : "Like this"} size={22} />
         </div>
       </div>
+      )}
 
       {data.can_comment ? (
         <Composer

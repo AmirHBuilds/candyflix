@@ -6,6 +6,10 @@ import { getLatestTVWatchProgress, type WatchProgress } from "@/lib/playback";
 import { showToast } from "@/lib/toast";
 import type { MediaType } from "@/lib/media";
 import { useBoxName } from "@/components/BoxNameProvider";
+import TitleLikeButton from "@/components/opinions/TitleLikeButton";
+import LikedByLine from "@/components/opinions/LikedByLine";
+import DiscussionButton from "@/components/opinions/DiscussionButton";
+import { useTitleLikes } from "@/lib/title-likes";
 
 // Sizing tiers, driven by the width of the space the buttons actually
 // get (a container query, not the viewport) — the TV detail page's
@@ -22,11 +26,32 @@ import { useBoxName } from "@/components/BoxNameProvider";
 // px of safety, and depend on how wide the resume chip makes Watch Now
 // ("S1:E8" vs "S10:E12"), so they come in three sets. Tailwind needs the
 // full class strings literally, hence the repetition.
+// Three columns when the heart is shown: Watch Now and Add to box share the space, the heart is just wide enough
+// for its icon once the buttons sit in a row (stacked on a narrow phone it spans the full width, with its label).
 const GRID_BY_LABEL = {
   none: "grid gap-3 text-base [--pad:1.25rem] @[324px]:w-fit @[324px]:grid-flow-col @[324px]:auto-cols-fr @[324px]:text-sm @[324px]:[--pad:0.75rem] @[358px]:text-[15px] @[358px]:[--pad:1rem] @[392px]:text-base @[392px]:[--pad:1.25rem]",
   short:
     "grid gap-3 text-base [--pad:1.25rem] @[360px]:w-fit @[360px]:grid-flow-col @[360px]:auto-cols-fr @[360px]:text-sm @[360px]:[--pad:0.75rem] @[408px]:text-[15px] @[408px]:[--pad:1rem] @[452px]:text-base @[452px]:[--pad:1.25rem]",
   long: "grid gap-3 text-base [--pad:1.25rem] @[388px]:w-fit @[388px]:grid-flow-col @[388px]:auto-cols-fr @[388px]:text-sm @[388px]:[--pad:0.75rem] @[438px]:text-[15px] @[438px]:[--pad:1rem] @[484px]:text-base @[484px]:[--pad:1.25rem]",
+} as const;
+
+// With a heart the container needs 60px more before the buttons can share a row, and the heart's column is "auto".
+const GRID_WITH_HEART_BY_LABEL = {
+  none: "grid gap-3 text-base [--pad:1.25rem] @[384px]:w-fit @[384px]:grid-flow-col @[384px]:[grid-template-columns:1fr_1fr_auto] @[384px]:text-sm @[384px]:[--pad:0.75rem] @[418px]:text-[15px] @[418px]:[--pad:1rem] @[452px]:text-base @[452px]:[--pad:1.25rem]",
+  short:
+    "grid gap-3 text-base [--pad:1.25rem] @[420px]:w-fit @[420px]:grid-flow-col @[420px]:[grid-template-columns:1fr_1fr_auto] @[420px]:text-sm @[420px]:[--pad:0.75rem] @[468px]:text-[15px] @[468px]:[--pad:1rem] @[512px]:text-base @[512px]:[--pad:1.25rem]",
+  long: "grid gap-3 text-base [--pad:1.25rem] @[448px]:w-fit @[448px]:grid-flow-col @[448px]:[grid-template-columns:1fr_1fr_auto] @[448px]:text-sm @[448px]:[--pad:0.75rem] @[498px]:text-[15px] @[498px]:[--pad:1rem] @[544px]:text-base @[544px]:[--pad:1.25rem]",
+} as const;
+// The point (per label size) at which the grid above becomes a row, where the heart drops its text.
+const HEART_ROW_LABEL = {
+  none: "@[384px]:sr-only",
+  short: "@[420px]:sr-only",
+  long: "@[448px]:sr-only",
+} as const;
+const HEART_ROW_WIDTH = {
+  none: "@[384px]:w-12 @[384px]:px-0",
+  short: "@[420px]:w-12 @[420px]:px-0",
+  long: "@[448px]:w-12 @[448px]:px-0",
 } as const;
 
 const BUTTON_BASE =
@@ -36,9 +61,13 @@ export default function DetailActions({
   tmdbId,
   mediaType,
   tvProgress,
+  title,
 }: {
   tmdbId: number;
   mediaType: MediaType;
+  // Detail pages pass the title: that turns on the heart, "<people> liked this" and the Discussion button
+  // (the home hero doesn't, so it stays as it was).
+  title?: string;
   // TV only: the show's latest saved progress. The TV detail page
   // resolves it server-side and passes it in (a value, or null for
   // "never started"), so there's no loading flash and no duplicate
@@ -46,6 +75,9 @@ export default function DetailActions({
   // has no such page around it) the component looks it up itself.
   tvProgress?: WatchProgress | null;
 }) {
+  const scope = { media_type: mediaType, tmdb_id: tmdbId } as const;
+  const { enabled: socialLoaded } = useTitleLikes(scope, title !== undefined);
+  const socialOn = title !== undefined && socialLoaded;
   const [fetchedProgress, setFetchedProgress] = useState<WatchProgress | null | undefined>(undefined);
   useEffect(() => {
     if (mediaType !== "tv" || tvProgress !== undefined) return;
@@ -128,7 +160,7 @@ export default function DetailActions({
     // The outer block is the size-measuring container; the grid inside
     // is what actually resizes (a container can't restyle itself).
     <div className="@container w-full">
-      <div className={GRID_BY_LABEL[labelSize]}>
+      <div className={(socialOn ? GRID_WITH_HEART_BY_LABEL : GRID_BY_LABEL)[labelSize]}>
         <a
           href={watchHref}
           className={`${BUTTON_BASE} bg-accent text-on-accent hover:bg-accent/90 ${
@@ -162,7 +194,14 @@ export default function DetailActions({
         >
           {inCandyBox ? `✓ In ${boxName}` : `Add to ${boxName}`}
         </button>
+        <TitleLikeButton scope={scope} className={`w-full px-[var(--pad)] ${HEART_ROW_WIDTH[labelSize]}`} labelClass={HEART_ROW_LABEL[labelSize]} />
       </div>
+      {socialOn && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <LikedByLine scope={scope} />
+          <DiscussionButton scope={scope} title={title ?? ""} className="ml-auto" />
+        </div>
+      )}
     </div>
   );
 }

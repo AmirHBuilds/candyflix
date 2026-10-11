@@ -84,13 +84,13 @@ export default function ProfilePicker({
           ) : (
             <div key={slot.user.id} ref={slot.tier === "king" ? kingRef : undefined} data-tier={slot.tier} className="shrink-0">
               <button type="button" onClick={() => onPick(slot.user)} className="group flex flex-col items-center gap-3" draggable={false}>
-                <span className="relative block" style={{ width: TIER_SIZE[slot.tier], height: TIER_SIZE[slot.tier] }}>
+                <span className="relative block transition-transform duration-150 group-hover:scale-105" style={{ width: TIER_SIZE[slot.tier], height: TIER_SIZE[slot.tier] }}>
                   <Avatar
                     name={slot.user.display_name}
                     src={slot.user.avatar_url}
                     size={TIER_SIZE[slot.tier]}
                     color={colors[slot.index % colors.length]}
-                    className="pointer-events-none transition-transform duration-150 group-hover:scale-105"
+                    className="pointer-events-none"
                   />
                   {slot.user.is_admin && <AdminBadge badge={badge} size={TIER_SIZE[slot.tier]} />}
                 </span>

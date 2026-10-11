@@ -142,17 +142,16 @@ describe("OpinionsStrip", () => {
     season_number: -1, episode_number: -1, title: "Spirited Away", poster_path: null, backdrop_path: null, likes: 3,
   });
 
-  it("shows one quote and like chips", async () => {
+  it("shows a quiet row of cards: quotes with their author, and who liked what", async () => {
     vi.mocked(lib.getFeed).mockResolvedValue({
       enabled: true, opinions: [feedOp("a", "So lovely"), feedOp("b", "Cried")],
-      likes: [{ media_type: "movie", tmdb_id: 1, season_number: -1, episode_number: -1, title: "Spirited Away", poster_path: null, people: [person("Candy")], more: 0 }],
+      likes: [{ media_type: "movie", tmdb_id: 2, season_number: -1, episode_number: -1, title: "Up", poster_path: null, people: [person("Candy")], more: 0 }],
     });
     render(<OpinionsStrip />);
     expect(await screen.findByText(/So lovely/)).toBeInTheDocument();
-    expect(screen.queryByText(/Cried/)).toBeNull();
-    expect(screen.getByText("Candy liked Spirited Away")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Opinion 2" }));
-    expect(await screen.findByText(/Cried/)).toBeInTheDocument();
+    expect(screen.getByText(/Cried/)).toBeInTheDocument();
+    expect(screen.getByText("Candy liked this")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What people are saying" })).toBeInTheDocument();
   });
 
   it("renders nothing when off or empty", async () => {

@@ -6,6 +6,7 @@ import { getSeason, stillUrl, type SeasonSummary, type Episode } from "@/lib/med
 import { getSeasonWatchProgress, navigateWithResumeHint, type WatchProgress } from "@/lib/playback";
 import { useSettings } from "@/components/SettingsProvider";
 import ErrorState from "@/components/ErrorState";
+import { EPISODES_SHOWN_BY_DEFAULT, rememberExpanded, wasExpanded } from "@/lib/episode-expand";
 import { EpisodeListSkeleton } from "@/components/Skeleton";
 
 // Mirrors NEAR_COMPLETE_FRACTION in the backend's watch_progress_service.py:
@@ -203,6 +204,21 @@ export default function SeasonBrowser({
     );
   }
 
+  // The list view shows the first few episodes and a "Show all" button; the choice is remembered for this show for a day.
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => {
+    if (wasExpanded(tvId)) setShowAll(true);
+  }, [tvId]);
+  const collapsible = episodeView !== "blocks" && episodes.length > EPISODES_SHOWN_BY_DEFAULT;
+  // Never hide the episode that's playing or the one to resume.
+  const mustShow = episodes.some(
+    (e, i) =>
+      i >= EPISODES_SHOWN_BY_DEFAULT &&
+      ((selected === initialSeason && e.episode_number === currentEpisode) ||
+        (resumeEpisode?.season_number === selected && resumeEpisode?.episode_number === e.episode_number))
+  );
+  const visibleEpisodes = collapsible && !showAll && !mustShow ? episodes.slice(0, EPISODES_SHOWN_BY_DEFAULT) : episodes;
+
   if (seasons.length === 0) return null;
 
   return (
@@ -238,7 +254,7 @@ export default function SeasonBrowser({
               : "flex flex-col divide-y divide-white/10"
           }
         >
-          {episodes.map((episode) => {
+          {visibleEpisodes.map((episode) => {
             const still = stillUrl(episode.still_path);
             const isNowPlaying = selected === initialSeason && episode.episode_number === currentEpisode;
             const isResumePoint =
@@ -361,6 +377,18 @@ export default function SeasonBrowser({
             );
           })}
         </ul>
+      )}
+      {!loading && !error && collapsible && !showAll && !mustShow && (
+        <button
+          type="button"
+          onClick={() => {
+            setShowAll(true);
+            rememberExpanded(tvId);
+          }}
+          className="self-start rounded-full border border-white/15 px-4 py-1.5 text-sm text-white/70 transition-colors hover:border-white/30 hover:text-white"
+        >
+          Show all {episodes.length} episodes
+        </button>
       )}
     </div>
   );
