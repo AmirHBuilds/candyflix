@@ -113,8 +113,9 @@ class FeedTitle(BaseModel):
     poster_path: str | None = None
     backdrop_path: str | None = None
     latest: Latest | None = None
-    comment_count: int = 0  # opinions and replies by other people
-    likes: LikeSummary = LikeSummary()
+    comment_count: int = 0  # every opinion and reply, yours included
+    other_comment_count: int = 0  # the ones by other people (the card never features yours)
+    likes: LikeSummary = LikeSummary()  # count includes your own like; people/more are other people only
 
 
 class Feed(BaseModel):

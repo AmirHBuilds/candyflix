@@ -53,8 +53,9 @@ export type FeedTitle = {
   poster_path: string | null;
   backdrop_path: string | null;
   latest: Latest | null;
-  comment_count: number;
-  likes: LikeSummary;
+  comment_count: number; // all of them, yours included
+  other_comment_count: number; // by other people: the card names those, never you
+  likes: LikeSummary; // count includes your own like; people/more are other people only
 };
 
 export type Feed = { enabled: boolean; items: FeedTitle[] };

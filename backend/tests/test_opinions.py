@@ -268,7 +268,8 @@ async def test_feed_is_one_card_per_title_with_the_newest_opinion_comment_count_
     card = feed["items"][0]
     assert card["title"] == "Movie 1" and card["tmdb_id"] == 1
     assert card["latest"]["body"] == "Please watch" and card["latest"]["author"]["name"]
-    assert card["comment_count"] == 2  # other people's, not mine
+    assert card["comment_count"] == 3 and card["other_comment_count"] == 2  # mine counts, but is never the one shown
+    assert card["latest"]["body"] == "Please watch"
     assert card["likes"]["count"] == 2 and len(card["likes"]["people"]) == 2
     for c in (me, other, third):
         await c.aclose()
@@ -395,3 +396,27 @@ async def test_admin_can_list_one_persons_opinions_including_anonymous_ones_and_
     assert (await other.get("/api/admin/opinions", params={"user_id": str(uid)})).status_code == 403
     for c in (a, other, admin):
         await c.aclose()
+
+
+async def test_your_own_like_and_comment_count_but_are_never_featured():
+    me, other = await client_for(await make()), await client_for(await make())
+    await other.put("/api/opinions/likes/title", json={**Q, "liked": True})
+    await other.post("/api/opinions", json=body("Theirs"))
+    await me.put("/api/opinions/likes/title", json={**Q, "liked": True})
+    await me.post("/api/opinions", json=body("Mine, and newer"))
+    card = (await me.get("/api/opinions/feed")).json()["items"][0]
+    assert card["likes"]["count"] == 2 and card["comment_count"] == 2  # both of us
+    assert len(card["likes"]["people"]) == 1 and card["likes"]["people"][0]["name"] != "You"
+    assert card["latest"]["body"] == "Theirs" and card["other_comment_count"] == 1
+    banner = (await me.get("/api/opinions/banner", params={"items": "movie:1"})).json()["items"][0]
+    assert banner["likes"]["count"] == 2 and banner["latest"]["body"] == "Theirs"
+    await me.aclose(); await other.aclose()
+
+
+async def test_a_title_only_you_touched_is_not_in_your_feed():
+    me = await client_for(await make())
+    await me.put("/api/opinions/likes/title", json={**Q, "liked": True})
+    await me.post("/api/opinions", json=body("just me"))
+    assert (await me.get("/api/opinions/feed")).json()["items"] == []
+    assert (await me.get("/api/opinions/banner", params={"items": "movie:1"})).json()["items"] == []
+    await me.aclose()

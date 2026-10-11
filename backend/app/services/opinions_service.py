@@ -268,9 +268,9 @@ async def summaries(db: AsyncSession, user: User, keys: list[tuple[str, int]], *
         for o in (
             await db.execute(
                 select(Opinion)
-                .where(Opinion.media_type.in_(media), Opinion.tmdb_id.in_(ids), Opinion.is_hidden.is_(False), Opinion.user_id != user.id)
+                .where(Opinion.media_type.in_(media), Opinion.tmdb_id.in_(ids), Opinion.is_hidden.is_(False))
                 .order_by(Opinion.created_at.desc())
-                .limit(600)
+                .limit(900)
             )
         ).scalars()
         if (o.media_type, o.tmdb_id) in wanted
@@ -281,25 +281,28 @@ async def summaries(db: AsyncSession, user: User, keys: list[tuple[str, int]], *
             await db.execute(
                 select(TitleLike).where(
                     TitleLike.media_type.in_(media), TitleLike.tmdb_id.in_(ids), TitleLike.season_number == WHOLE,
-                    TitleLike.episode_number == WHOLE, TitleLike.user_id != user.id,
+                    TitleLike.episode_number == WHOLE,
                 ).order_by(TitleLike.created_at.desc())
             )
         ).scalars()
         if (r.media_type, r.tmdb_id) in wanted
     ]
     lflags = await flags_for(db, list({r.user_id for r in likes}))
-    likes = [r for r in likes if lflags[r.user_id].share_likes and lflags[r.user_id].enabled]
+    # Other people's likes only count if they share them; your own always count for you.
+    likes = [r for r in likes if r.user_id == user.id or (lflags[r.user_id].share_likes and lflags[r.user_id].enabled)]
 
-    user_ids = {o.user_id for o in ops if o.parent_id is None} | {r.user_id for r in likes}
+    user_ids = {o.user_id for o in ops if o.parent_id is None and o.user_id != user.id} | {r.user_id for r in likes if r.user_id != user.id}
     people = {u.id: u for u in (await db.execute(select(User).where(User.id.in_(user_ids)))).scalars()} if user_ids else {}
 
     out: list[s.FeedTitle] = []
     for key in dict.fromkeys(keys):
-        mine = [o for o in ops if (o.media_type, o.tmdb_id) == key]
+        here = [o for o in ops if (o.media_type, o.tmdb_id) == key]
+        theirs = [o for o in here if o.user_id != user.id]
         liked = [r for r in likes if (r.media_type, r.tmdb_id) == key]
-        if not mine and not liked:
-            continue
-        top = next((o for o in mine if o.parent_id is None), None)
+        liked_by_others = [r for r in liked if r.user_id != user.id]
+        if not theirs and not liked_by_others:
+            continue  # only you did anything here: it isn't news to you
+        top = next((o for o in theirs if o.parent_id is None), None)
         latest = None
         if top is not None:
             a = people.get(top.user_id)
@@ -307,11 +310,13 @@ async def summaries(db: AsyncSession, user: User, keys: list[tuple[str, int]], *
                 id=top.id, body=top.body, created_at=top.created_at, season_number=top.season_number, episode_number=top.episode_number,
                 author=None if top.is_anonymous or a is None else _person(a),
             )
-        lp = [_person(people[r.user_id]) for r in liked[:PEOPLE_SHOWN] if r.user_id in people]
+        lp = [_person(people[r.user_id]) for r in liked_by_others[:PEOPLE_SHOWN] if r.user_id in people]
         out.append(
             s.FeedTitle(
-                media_type=key[0], tmdb_id=key[1], latest=latest, comment_count=len(mine),
-                likes=s.LikeSummary(count=len(liked), people=lp, more=max(0, len(liked) - PEOPLE_SHOWN)),
+                media_type=key[0], tmdb_id=key[1], latest=latest, comment_count=len(here), other_comment_count=len(theirs),
+                likes=s.LikeSummary(
+                    count=len(liked), you_liked=False, people=lp, more=max(0, len(liked_by_others) - PEOPLE_SHOWN)
+                ),
             )
         )
 

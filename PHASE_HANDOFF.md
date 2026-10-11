@@ -965,3 +965,6 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - Detail page: the heart and the discussion icon are one joined block (`variant="segment"`).
 - Admin: person page → new **Comments** tab (`OpinionList userId`), `GET /api/admin/opinions?user_id=` (logged as `opinions.view`, deduped), plus log wording for the opinion actions.
 - Backend 517 passed, frontend 715 passed.
+
+## §51 Phase 21 v6 — your own activity counts but isn't featured
+Feed/banner cards: `comment_count` and `likes.count` now include the viewer's own comments and like; `other_comment_count`, `latest` and `likes.people/more` stay other-people-only (so never "You liked it" / your comment as the quote). A title only the viewer touched stays out of the feed/banner. Also this round (v5b–v5e): picture left of the comment on cards, player uses the joined heart|comment block, poster chip is heart|comment in plain white outline icons.

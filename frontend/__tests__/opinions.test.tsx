@@ -164,7 +164,7 @@ describe("OpinionsSection — episodes in a show's thread", () => {
 
 describe("OpinionsStrip (the home row)", () => {
   const card = (over: Partial<lib.FeedTitle> = {}): lib.FeedTitle => ({
-    media_type: "movie", tmdb_id: 1, title: "Spirited Away", poster_path: null, backdrop_path: null, comment_count: 1,
+    media_type: "movie", tmdb_id: 1, title: "Spirited Away", poster_path: null, backdrop_path: null, comment_count: 1, other_comment_count: 1,
     latest: { id: "a", body: "So lovely", created_at: new Date().toISOString(), author: person("Mom"), season_number: -1, episode_number: -1 },
     likes: { count: 0, you_liked: false, people: [], more: 0 }, ...over,
   });
@@ -173,7 +173,7 @@ describe("OpinionsStrip (the home row)", () => {
     vi.mocked(lib.getFeed).mockResolvedValue({
       enabled: true,
       items: [
-        card({ comment_count: 4, likes: { count: 25, you_liked: false, people: [person("Amir")], more: 24 } }),
+        card({ comment_count: 5, other_comment_count: 4, likes: { count: 25, you_liked: false, people: [person("Amir")], more: 24 } }),
         card({ tmdb_id: 2, title: "Up", latest: null, comment_count: 0, likes: { count: 1, you_liked: false, people: [person("Candy")], more: 0 } }),
       ],
     });
@@ -188,7 +188,7 @@ describe("OpinionsStrip (the home row)", () => {
     expect(quote.parentElement!.previousElementSibling).not.toBeNull();
     // the poster's corner chip is one block: hearts | comments
     const hearts = screen.getByLabelText("25 likes");
-    expect(hearts.parentElement).toBe(screen.getByLabelText("4 comments").parentElement);
+    expect(hearts.parentElement).toBe(screen.getByLabelText("5 comments").parentElement);
     expect(screen.getByLabelText("1 likes")).toBeInTheDocument();
     expect(screen.queryByLabelText(/^0 /)).toBeNull();
     expect(screen.getAllByRole("link")).toHaveLength(2); // a title appears once, however much happened on it

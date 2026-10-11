@@ -26,7 +26,7 @@ export default function HeroSocial({ social }: { social: FeedTitle | undefined }
   if (!liked && !latest) return null;
   const who = latest?.author?.name ?? "Someone";
   const where = latest ? whereLabel(latest) : null;
-  const more = social.comment_count - 1;
+  const more = social.other_comment_count - 1;
 
   return (
     <>

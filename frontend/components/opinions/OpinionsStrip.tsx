@@ -22,7 +22,7 @@ function FamilyCard({ t }: { t: FeedTitle }) {
   const latest = t.latest;
   const who = latest?.author?.name ?? "Someone";
   const where = latest ? whereLabel(latest) : null;
-  const others = t.comment_count - 1;
+  const others = t.other_comment_count - 1;
   const liked = likeSentence({ ...t.likes, you_liked: false }).replace(/ liked this$/, " liked it");
   return (
     <Link href={href(t)} className="group block w-full min-w-0">

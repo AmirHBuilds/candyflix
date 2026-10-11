@@ -87,7 +87,7 @@ describe("counts and the banner", () => {
 
   it("the home banner shows who liked the title and the newest comment, and nothing for an untouched one", () => {
     const t: lib.FeedTitle = {
-      media_type: "movie", tmdb_id: 1, title: "", poster_path: null, backdrop_path: null, comment_count: 3,
+      media_type: "movie", tmdb_id: 1, title: "", poster_path: null, backdrop_path: null, comment_count: 4, other_comment_count: 3,
       latest: { id: "a", body: "Watch it!", created_at: new Date().toISOString(), author: person("Mom"), season_number: -1, episode_number: -1 },
       likes: { count: 25, you_liked: false, people: [person("Amir")], more: 24 },
     };
@@ -95,7 +95,7 @@ describe("counts and the banner", () => {
     expect(screen.getAllByText("Amir + 24 others liked it").length).toBeGreaterThan(0); // the card (and the small-screen line)
     expect(screen.getByText(/Watch it!/)).toBeInTheDocument();
     expect(screen.getByText(/Mom · \+2 more/)).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument(); // the comment count on the small-screen line
+    expect(screen.getByText("4")).toBeInTheDocument(); // the comment count (yours included) on the small-screen line
     rerender(<HeroSocial social={undefined} />);
     expect(container).toBeEmptyDOMElement();
   });
