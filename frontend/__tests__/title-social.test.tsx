@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import DiscussionButton from "@/components/opinions/DiscussionButton";
+import HeroSocial from "@/components/opinions/HeroSocial";
 import LikedByLine from "@/components/opinions/LikedByLine";
 import TitleLikeButton from "@/components/opinions/TitleLikeButton";
 import { EXPAND_TTL_MS, rememberExpanded, wasExpanded } from "@/lib/episode-expand";
@@ -16,7 +17,7 @@ vi.mock("@/lib/opinions", async () => {
 const person = (name: string) => ({ id: name, name, avatar_url: null });
 const data = (over: Partial<lib.TitleOpinions> = {}): lib.TitleOpinions => ({
   enabled: true, moderator: false, can_comment: true, why_not: null, allow_anonymous: true, allow_replies: true, anonymous_default: false,
-  likes: { count: 1, you_liked: false, people: [person("Candy")], more: 0 }, opinions: [], ...over,
+  likes: { count: 1, you_liked: false, people: [person("Candy")], more: 0 }, comment_count: 7, opinions: [], ...over,
 });
 let n = 100;
 const scope = () => ({ media_type: "movie" as const, tmdb_id: ++n }); // a fresh title per test: the likes are shared per title
@@ -60,12 +61,41 @@ describe("heart, liked-by line and discussion", () => {
     const s = scope();
     vi.mocked(lib.getTitleOpinions).mockResolvedValue(data());
     render(<DiscussionButton scope={s} title="Spirited Away" />);
-    fireEvent.click(await screen.findByRole("button", { name: "Discussion" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Discussion, 7 comments" }));
     const panel = await screen.findByRole("dialog", { name: "Discussion: Spirited Away" });
     expect(panel).toBeInTheDocument();
     expect(await screen.findByLabelText("Share what you thought…")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+});
+
+describe("counts and the banner", () => {
+  it("the heart and the discussion icon show their counts, Instagram style", async () => {
+    const s = scope();
+    vi.mocked(lib.getTitleOpinions).mockResolvedValue(data({ likes: { count: 24, you_liked: false, people: [], more: 0 }, comment_count: 5 }));
+    render(
+      <>
+        <TitleLikeButton scope={s} />
+        <DiscussionButton scope={s} title="X" variant="action" />
+      </>
+    );
+    expect(await screen.findByText("24")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Discussion, 5 comments" })).toHaveTextContent("5");
+  });
+
+  it("the home banner shows who liked the title and the newest comment, and nothing for an untouched one", () => {
+    const t: lib.FeedTitle = {
+      media_type: "movie", tmdb_id: 1, title: "", poster_path: null, backdrop_path: null, comment_count: 3,
+      latest: { id: "a", body: "Watch it!", created_at: new Date().toISOString(), author: person("Mom"), season_number: -1, episode_number: -1 },
+      likes: { count: 25, you_liked: false, people: [person("Amir")], more: 24 },
+    };
+    const { container, rerender } = render(<HeroSocial social={t} />);
+    expect(screen.getByText("Amir + 24 others liked it")).toBeInTheDocument();
+    expect(screen.getByText(/Watch it!/)).toBeInTheDocument();
+    expect(screen.getByText(/Mom · \+2 more/)).toBeInTheDocument();
+    rerender(<HeroSocial social={undefined} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });
 

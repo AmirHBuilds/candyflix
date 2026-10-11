@@ -19,6 +19,17 @@ async def feed(user: User = Depends(get_current_user), db: AsyncSession = Depend
     return await svc.feed(db, user)
 
 
+@router.get("/banner", response_model=s.Feed)
+async def banner(items: str = Query("", max_length=400), user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """`items=movie:12,tv:34` — who liked/said what about the titles in the home banner."""
+    keys: list[tuple[str, int]] = []
+    for part in items.split(","):
+        kind, _, num = part.partition(":")
+        if kind in ("movie", "tv") and num.isdigit() and int(num) > 0:
+            keys.append((kind, int(num)))
+    return await svc.banner_social(db, user, keys)
+
+
 @router.get("/title", response_model=s.TitleOpinions)
 async def title_opinions(
     media_type: Literal["movie", "tv"],

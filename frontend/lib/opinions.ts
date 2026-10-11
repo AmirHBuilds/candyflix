@@ -14,6 +14,8 @@ export type Opinion = {
   mine: boolean;
   likes: number;
   liked_by_me: boolean;
+  season_number: number; // -1 = about the whole title
+  episode_number: number;
   real_author: string | null; // admins only
   hidden: boolean; // admins only
   replies: Opinion[];
@@ -30,36 +32,32 @@ export type TitleOpinions = {
   allow_replies: boolean;
   anonymous_default: boolean;
   likes: LikeSummary;
+  comment_count: number;
   opinions: Opinion[];
 };
 
-export type FeedOpinion = {
+export type Latest = {
   id: string;
   body: string;
   created_at: string;
   author: Person | null;
-  media_type: MediaType;
-  tmdb_id: number;
   season_number: number;
   episode_number: number;
+};
+
+/** One title and everything the family did on it. */
+export type FeedTitle = {
+  media_type: MediaType;
+  tmdb_id: number;
   title: string;
   poster_path: string | null;
   backdrop_path: string | null;
-  likes: number;
+  latest: Latest | null;
+  comment_count: number;
+  likes: LikeSummary;
 };
 
-export type FeedLike = {
-  media_type: MediaType;
-  tmdb_id: number;
-  season_number: number;
-  episode_number: number;
-  title: string;
-  poster_path: string | null;
-  people: Person[];
-  more: number;
-};
-
-export type Feed = { enabled: boolean; opinions: FeedOpinion[]; likes: FeedLike[] };
+export type Feed = { enabled: boolean; items: FeedTitle[] };
 
 const base = () => `${getApiBaseUrl()}/opinions`;
 const json = { "Content-Type": "application/json" };
@@ -133,6 +131,19 @@ export function likeSentence(l: LikeSummary): string {
   const tail = more > 0 ? ` + ${more} ${more === 1 ? "other" : "others"}` : "";
   const verb = names.length === 1 && more === 0 && names[0] !== "You" ? "liked this" : "liked this";
   return `${list}${tail} ${verb}`;
+}
+
+export async function getBannerSocial(items: { media_type: MediaType; tmdb_id: number }[]): Promise<Feed> {
+  const q = items.map((i) => `${i.media_type}:${i.tmdb_id}`).join(",");
+  const res = await fetchWithTimeout(`${base()}/banner?items=${encodeURIComponent(q)}`, { credentials: "include", cache: "no-store" });
+  if (!res.ok) throw new Error("Couldn't load the family's activity.");
+  return res.json();
+}
+
+/** Where an opinion was written, e.g. "Season 2 · Episode 3"; null when it is about the whole title. */
+export function whereLabel(o: { season_number: number; episode_number: number }): string | null {
+  if (o.season_number < 0) return null;
+  return o.episode_number >= 0 ? `Season ${o.season_number} · Episode ${o.episode_number}` : `Season ${o.season_number}`;
 }
 
 export function timeAgo(iso: string, now = Date.now()): string {

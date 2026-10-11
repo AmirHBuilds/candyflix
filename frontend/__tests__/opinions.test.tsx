@@ -33,11 +33,11 @@ vi.mock("@/lib/opinions", async () => {
 const person = (name: string) => ({ id: name, name, avatar_url: null });
 const op = (over: Partial<lib.Opinion> = {}): lib.Opinion => ({
   id: "o1", body: "Amazing, watch it!", created_at: new Date().toISOString(), author: person("Mom"), is_anonymous: false,
-  mine: false, likes: 0, liked_by_me: false, real_author: null, hidden: false, replies: [], ...over,
+  mine: false, likes: 0, liked_by_me: false, season_number: -1, episode_number: -1, real_author: null, hidden: false, replies: [], ...over,
 });
 const title = (over: Partial<lib.TitleOpinions> = {}): lib.TitleOpinions => ({
   enabled: true, moderator: false, can_comment: true, why_not: null, allow_anonymous: true, allow_replies: true, anonymous_default: false,
-  likes: { count: 0, you_liked: false, people: [], more: 0 }, opinions: [], ...over,
+  likes: { count: 0, you_liked: false, people: [], more: 0 }, comment_count: 0, opinions: [], ...over,
 });
 
 beforeEach(() => vi.clearAllMocks());
@@ -136,29 +136,75 @@ describe("OpinionsSection", () => {
   });
 });
 
-describe("OpinionsStrip", () => {
-  const feedOp = (id: string, body: string): lib.FeedOpinion => ({
-    id, body, created_at: new Date().toISOString(), author: person("Mom"), media_type: "movie", tmdb_id: 1,
-    season_number: -1, episode_number: -1, title: "Spirited Away", poster_path: null, backdrop_path: null, likes: 3,
+describe("OpinionsSection — episodes in a show's thread", () => {
+  it("says which episode an opinion is about, links to it, and replies go to the parent's episode", async () => {
+    vi.mocked(lib.getTitleOpinions).mockResolvedValue(
+      title({ opinions: [op({ id: "e1", body: "That ending", season_number: 2, episode_number: 3 }), op({ id: "t1", body: "Whole show" })] })
+    );
+    vi.mocked(lib.postOpinion).mockResolvedValue(op());
+    render(<OpinionsSection mediaType="tv" tmdbId={7} />);
+    const link = await screen.findByRole("link", { name: /Season 2 · Episode 3/ });
+    expect(link).toHaveAttribute("href", "/watch/tv/7/2/3");
+    expect(screen.getAllByRole("link")).toHaveLength(1); // the whole-show opinion has no episode link
+    fireEvent.click(screen.getAllByRole("button", { name: "Reply" })[0]);
+    fireEvent.change(screen.getByLabelText("Reply to Mom"), { target: { value: "Same" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Post" })[1]);
+    await waitFor(() =>
+      expect(lib.postOpinion).toHaveBeenCalledWith(expect.objectContaining({ tmdb_id: 7, season_number: 2, episode_number: 3 }), "Same", false, "e1")
+    );
   });
 
-  it("shows a quiet row of cards: quotes with their author, and who liked what", async () => {
+  it("an episode's own thread doesn't repeat where it is", async () => {
+    vi.mocked(lib.getTitleOpinions).mockResolvedValue(title({ opinions: [op({ season_number: 2, episode_number: 3 })] }));
+    render(<OpinionsSection mediaType="tv" tmdbId={7} seasonNumber={2} episodeNumber={3} />);
+    await screen.findByText("Amazing, watch it!");
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+});
+
+describe("OpinionsStrip (the home row)", () => {
+  const card = (over: Partial<lib.FeedTitle> = {}): lib.FeedTitle => ({
+    media_type: "movie", tmdb_id: 1, title: "Spirited Away", poster_path: null, backdrop_path: null, comment_count: 1,
+    latest: { id: "a", body: "So lovely", created_at: new Date().toISOString(), author: person("Mom"), season_number: -1, episode_number: -1 },
+    likes: { count: 0, you_liked: false, people: [], more: 0 }, ...over,
+  });
+
+  it("one card per title with the newest comment, how many more, and who liked it", async () => {
     vi.mocked(lib.getFeed).mockResolvedValue({
-      enabled: true, opinions: [feedOp("a", "So lovely"), feedOp("b", "Cried")],
-      likes: [{ media_type: "movie", tmdb_id: 2, season_number: -1, episode_number: -1, title: "Up", poster_path: null, people: [person("Candy")], more: 0 }],
+      enabled: true,
+      items: [
+        card({ comment_count: 4, likes: { count: 25, you_liked: false, people: [person("Amir")], more: 24 } }),
+        card({ tmdb_id: 2, title: "Up", latest: null, comment_count: 0, likes: { count: 1, you_liked: false, people: [person("Candy")], more: 0 } }),
+      ],
     });
     render(<OpinionsStrip />);
     expect(await screen.findByText(/So lovely/)).toBeInTheDocument();
-    expect(screen.getByText(/Cried/)).toBeInTheDocument();
-    expect(screen.getByText("Candy liked this")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What people are saying" })).toBeInTheDocument();
+    expect(screen.getByText(/Mom · \+3 more comments/)).toBeInTheDocument();
+    expect(screen.getByText("Amir + 24 others liked it")).toBeInTheDocument();
+    expect(screen.getByText("Candy liked it")).toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(2); // a title appears once, however much happened on it
   });
 
-  it("renders nothing when off or empty", async () => {
-    vi.mocked(lib.getFeed).mockResolvedValue({ enabled: false, opinions: [], likes: [] });
+  it("names the episode a comment was about", async () => {
+    vi.mocked(lib.getFeed).mockResolvedValue({
+      enabled: true,
+      items: [card({ media_type: "tv", comment_count: 1, latest: { id: "a", body: "Wow", created_at: new Date().toISOString(), author: null, season_number: 2, episode_number: 3 } })],
+    });
+    render(<OpinionsStrip />);
+    expect(await screen.findByText("Someone · Season 2 · Episode 3")).toBeInTheDocument();
+  });
+
+  it("is titled and renders nothing when off or empty", async () => {
+    vi.mocked(lib.getFeed).mockResolvedValue({ enabled: false, items: [] });
     const { container } = render(<OpinionsStrip />);
     await waitFor(() => expect(lib.getFeed).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("has a heading that isn't 'What people are saying'", async () => {
+    vi.mocked(lib.getFeed).mockResolvedValue({ enabled: true, items: [card()] });
+    render(<OpinionsStrip layout="rows" />);
+    expect(await screen.findByRole("heading", { name: "Family favorites" })).toBeInTheDocument();
   });
 });
 

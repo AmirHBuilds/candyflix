@@ -25,8 +25,7 @@ from app.services import content_rating_service, site_service, tmdb_service
 
 MAX_PER_HOUR = 20
 PEOPLE_SHOWN = 3
-FEED_OPINIONS = 12
-FEED_LIKES = 8
+FEED_TITLES = 12
 FEED_DAYS = 45
 
 
@@ -131,6 +130,8 @@ async def _opinion_outs(db: AsyncSession, user: User, rows: list[Opinion], autho
             mine=is_mine,
             likes=counts.get(o.id, 0),
             liked_by_me=o.id in mine,
+            season_number=o.season_number,
+            episode_number=o.episode_number,
             real_author=(author.display_name if author and o.is_anonymous and user.is_admin and not is_mine else None),
             hidden=o.is_hidden if user.is_admin else False,
         )
@@ -143,7 +144,11 @@ async def for_title(db: AsyncSession, user: User, scope: s.Scope) -> s.TitleOpin
     if not on:
         return s.TitleOpinions(enabled=False)
 
-    where = [*_scope_where(Opinion, scope)]
+    if scope.season_number < 0:
+        # The whole title: also what was said about its episodes (each opinion says where it belongs).
+        where = [Opinion.media_type == scope.media_type, Opinion.tmdb_id == scope.tmdb_id]
+    else:
+        where = [*_scope_where(Opinion, scope)]
     if not user.is_admin:
         where.append(Opinion.is_hidden.is_(False))
     rows = list((await db.execute(select(Opinion).where(*where).order_by(Opinion.created_at))).scalars())
@@ -171,6 +176,7 @@ async def for_title(db: AsyncSession, user: User, scope: s.Scope) -> s.TitleOpin
         allow_replies=config.allow_replies,
         anonymous_default=flags.anonymous_by_default and config.allow_anonymous,
         likes=await like_summary(db, user, scope),
+        comment_count=len(rows) if not user.is_admin else sum(1 for o in rows if not o.is_hidden),
         opinions=top[:100],
     )
 
@@ -249,75 +255,116 @@ async def _title_info(media_type: str, tmdb_id: int) -> tuple[str, str | None, s
     return d.title, d.poster_path, d.backdrop_path
 
 
-async def feed(db: AsyncSession, user: User) -> s.Feed:
-    on, config, flags = await _on(db, user)
-    if not on or not config.home_section or not flags.show_on_home:
-        return s.Feed(enabled=False)
-    since = datetime.now(timezone.utc) - timedelta(days=FEED_DAYS)
+async def summaries(db: AsyncSession, user: User, keys: list[tuple[str, int]], *, with_titles: bool = True) -> list[s.FeedTitle]:
+    """One card per title with other people's newest opinion, how many they wrote, and who liked it. Titles nobody touched are left out."""
+    if not keys:
+        return []
+    media = {m for m, _ in keys}
+    ids = {i for _, i in keys}
+    wanted = set(keys)
 
-    rows = list(
-        (
+    ops = [
+        o
+        for o in (
             await db.execute(
                 select(Opinion)
-                .where(Opinion.parent_id.is_(None), Opinion.is_hidden.is_(False), Opinion.user_id != user.id, Opinion.created_at >= since)
+                .where(Opinion.media_type.in_(media), Opinion.tmdb_id.in_(ids), Opinion.is_hidden.is_(False), Opinion.user_id != user.id)
                 .order_by(Opinion.created_at.desc())
-                .limit(FEED_OPINIONS * 3)
+                .limit(600)
             )
         ).scalars()
-    )
-    rows = await content_rating_service.filter_items(user, rows)  # needs .media_type/.tmdb_id: Opinion has both
-    rows = rows[:FEED_OPINIONS]
-    authors = {u.id: u for u in (await db.execute(select(User).where(User.id.in_({o.user_id for o in rows})))).scalars()} if rows else {}
-    outs = await _opinion_outs(db, user, rows, authors)
+        if (o.media_type, o.tmdb_id) in wanted
+    ]
+    likes = [
+        r
+        for r in (
+            await db.execute(
+                select(TitleLike).where(
+                    TitleLike.media_type.in_(media), TitleLike.tmdb_id.in_(ids), TitleLike.season_number == WHOLE,
+                    TitleLike.episode_number == WHOLE, TitleLike.user_id != user.id,
+                ).order_by(TitleLike.created_at.desc())
+            )
+        ).scalars()
+        if (r.media_type, r.tmdb_id) in wanted
+    ]
+    lflags = await flags_for(db, list({r.user_id for r in likes}))
+    likes = [r for r in likes if lflags[r.user_id].share_likes and lflags[r.user_id].enabled]
 
-    infos = await asyncio.gather(*(_title_info(o.media_type, o.tmdb_id) for o in rows))
-    opinions = []
-    for o, info in zip(rows, infos):
-        if info is None:
+    user_ids = {o.user_id for o in ops if o.parent_id is None} | {r.user_id for r in likes}
+    people = {u.id: u for u in (await db.execute(select(User).where(User.id.in_(user_ids)))).scalars()} if user_ids else {}
+
+    out: list[s.FeedTitle] = []
+    for key in dict.fromkeys(keys):
+        mine = [o for o in ops if (o.media_type, o.tmdb_id) == key]
+        liked = [r for r in likes if (r.media_type, r.tmdb_id) == key]
+        if not mine and not liked:
             continue
-        out = outs[o.id]
-        opinions.append(
-            s.FeedOpinion(
-                id=o.id, body=o.body, created_at=o.created_at, author=out.author, media_type=o.media_type, tmdb_id=o.tmdb_id,
-                season_number=o.season_number, episode_number=o.episode_number, title=info[0], poster_path=info[1], backdrop_path=info[2], likes=out.likes,
+        top = next((o for o in mine if o.parent_id is None), None)
+        latest = None
+        if top is not None:
+            a = people.get(top.user_id)
+            latest = s.Latest(
+                id=top.id, body=top.body, created_at=top.created_at, season_number=top.season_number, episode_number=top.episode_number,
+                author=None if top.is_anonymous or a is None else _person(a),
+            )
+        lp = [_person(people[r.user_id]) for r in liked[:PEOPLE_SHOWN] if r.user_id in people]
+        out.append(
+            s.FeedTitle(
+                media_type=key[0], tmdb_id=key[1], latest=latest, comment_count=len(mine),
+                likes=s.LikeSummary(count=len(liked), people=lp, more=max(0, len(liked) - PEOPLE_SHOWN)),
             )
         )
 
-    like_rows = (
+    out = await content_rating_service.filter_items(user, out)
+    if with_titles:
+        infos = await asyncio.gather(*(_title_info(t.media_type, t.tmdb_id) for t in out))
+        kept = []
+        for t, info in zip(out, infos):
+            if info is None:
+                continue
+            t.title, t.poster_path, t.backdrop_path = info
+            kept.append(t)
+        out = kept
+    return out
+
+
+async def _home_on(db: AsyncSession, user: User) -> bool:
+    on, config, flags = await _on(db, user)
+    return on and config.home_section and flags.show_on_home
+
+
+async def feed(db: AsyncSession, user: User) -> s.Feed:
+    """The home row: the titles other people commented on or liked lately, newest activity first, one card each."""
+    if not await _home_on(db, user):
+        return s.Feed(enabled=False)
+    since = datetime.now(timezone.utc) - timedelta(days=FEED_DAYS)
+    activity: dict[tuple[str, int], datetime] = {}
+    for m, i, at in (
         await db.execute(
-            select(TitleLike).where(TitleLike.user_id != user.id, TitleLike.created_at >= since).order_by(TitleLike.created_at.desc()).limit(FEED_LIKES * 6)
+            select(Opinion.media_type, Opinion.tmdb_id, func.max(Opinion.created_at))
+            .where(Opinion.is_hidden.is_(False), Opinion.user_id != user.id, Opinion.created_at >= since)
+            .group_by(Opinion.media_type, Opinion.tmdb_id)
         )
-    ).scalars().all()
-    lflags = await flags_for(db, list({r.user_id for r in like_rows}))
-    groups: dict[tuple, list[uuid.UUID]] = {}
-    for r in like_rows:
-        f = lflags[r.user_id]
-        if f.share_likes and f.enabled:
-            groups.setdefault((r.media_type, r.tmdb_id, r.season_number, r.episode_number), []).append(r.user_id)
-    keys = list(groups)
-
-    class _K:  # for filter_items
-        def __init__(self, k):
-            self.media_type, self.tmdb_id = k[0], k[1]
-            self.key = k
-
-    allowed = await content_rating_service.filter_items(user, [_K(k) for k in keys])
-    keys = [a.key for a in allowed][:FEED_LIKES]
-    liker_ids = {i for k in keys for i in groups[k][:PEOPLE_SHOWN]}
-    likers = {u.id: u for u in (await db.execute(select(User).where(User.id.in_(liker_ids)))).scalars()} if liker_ids else {}
-    linfos = await asyncio.gather(*(_title_info(k[0], k[1]) for k in keys))
-    likes = []
-    for k, info in zip(keys, linfos):
-        if info is None:
-            continue
-        ids = groups[k]
-        likes.append(
-            s.FeedLike(
-                media_type=k[0], tmdb_id=k[1], season_number=k[2], episode_number=k[3], title=info[0], poster_path=info[1],
-                people=[_person(likers[i]) for i in ids[:PEOPLE_SHOWN] if i in likers], more=max(0, len(ids) - PEOPLE_SHOWN),
-            )
+    ).all():
+        activity[(m, i)] = at
+    for m, i, at in (
+        await db.execute(
+            select(TitleLike.media_type, TitleLike.tmdb_id, func.max(TitleLike.created_at))
+            .where(TitleLike.user_id != user.id, TitleLike.created_at >= since, TitleLike.season_number == WHOLE, TitleLike.episode_number == WHOLE)
+            .group_by(TitleLike.media_type, TitleLike.tmdb_id)
         )
-    return s.Feed(enabled=True, opinions=opinions, likes=likes)
+    ).all():
+        activity[(m, i)] = max(at, activity.get((m, i), at))
+    keys = [k for k, _ in sorted(activity.items(), key=lambda kv: kv[1], reverse=True)][: FEED_TITLES * 2]
+    items = await summaries(db, user, keys)
+    return s.Feed(enabled=True, items=items[:FEED_TITLES])
+
+
+async def banner_social(db: AsyncSession, user: User, keys: list[tuple[str, int]]) -> s.Feed:
+    """The same cards for the titles in the home banner (no title lookups: the banner already knows them)."""
+    if not await _home_on(db, user):
+        return s.Feed(enabled=False)
+    return s.Feed(enabled=True, items=await summaries(db, user, keys[:10], with_titles=False))
 
 
 # ---------------------------------------------------------------- admin

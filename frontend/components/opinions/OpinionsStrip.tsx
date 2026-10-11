@@ -4,61 +4,71 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
+import { MEDIA_GRID_CLASSES } from "@/components/MediaGrid";
 import { HeartIcon } from "@/components/opinions/TitleLikeButton";
-import { posterUrl } from "@/lib/media";
-import { getFeed, type Feed, type FeedLike, type FeedOpinion } from "@/lib/opinions";
+import { detailHref, posterUrl } from "@/lib/media";
+import { getFeed, likeSentence, whereLabel, type Feed, type FeedTitle } from "@/lib/opinions";
 
-const hrefFor = (x: { media_type: string; tmdb_id: number }) => `/${x.media_type}/${x.tmdb_id}`;
+export const FAMILY_ROW_TITLE = "Family favorites";
 
-function Poster({ path, title }: { path: string | null; title: string }) {
-  const src = posterUrl(path, "w342");
+const href = (t: FeedTitle) => detailHref({ media_type: t.media_type, tmdb_id: t.tmdb_id } as never);
+
+/**
+ * One title, with what the family did on it kept under the poster: the newest opinion (clipped), how many more
+ * there are, and who liked it. Quiet on purpose: small type, no boxes.
+ */
+function FamilyCard({ t }: { t: FeedTitle }) {
+  const poster = posterUrl(t.poster_path, "w500");
+  const latest = t.latest;
+  const who = latest?.author?.name ?? "Someone";
+  const where = latest ? whereLabel(latest) : null;
+  const others = t.comment_count - 1;
+  const liked = likeSentence({ ...t.likes, you_liked: false }).replace(/ liked this$/, " liked it");
   return (
-    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-white/5">
-      {src && <Image src={src} alt={title} fill sizes="168px" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />}
-    </div>
-  );
-}
-
-function OpinionCard({ o }: { o: FeedOpinion }) {
-  const who = o.author?.name ?? "Someone";
-  return (
-    <Link href={hrefFor(o)} className="group flex w-[148px] shrink-0 snap-start flex-col gap-2 sm:w-[168px]">
-      <Poster path={o.poster_path} title={o.title} />
-      <p className="line-clamp-3 break-words text-sm leading-snug text-white/85">“{o.body}”</p>
-      <p className="flex items-center gap-1.5 text-xs text-white/50">
-        {o.author && <Avatar name={who} src={o.author.avatar_url} size={16} />}
-        <span className="truncate">{who}</span>
-        {o.likes > 0 && (
-          <span className="ml-auto flex shrink-0 items-center gap-1 text-accent">
-            <HeartIcon filled className="h-3 w-3" />
-            {o.likes}
+    <Link href={href(t)} className="group block w-full min-w-0">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 transition-all duration-200 group-hover:ring-accent/50">
+        {poster ? (
+          <Image src={poster} alt={t.title} fill sizes="(min-width: 1024px) 16vw, (min-width: 640px) 25vw, 50vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+        ) : (
+          <div className="flex h-full items-center justify-center px-3 text-center text-sm text-white/40">{t.title}</div>
+        )}
+        {t.comment_count > 0 && (
+          <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">
+            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+            </svg>
+            {t.comment_count}
           </span>
         )}
-      </p>
+      </div>
+      <p className="mt-2 truncate text-sm text-white/80">{t.title}</p>
+      {latest && (
+        <div className="mt-1">
+          <p className="line-clamp-2 break-words text-xs italic leading-snug text-white/65">“{latest.body}”</p>
+          <p className="mt-0.5 truncate text-[11px] text-white/40">
+            {who}
+            {where ? ` · ${where}` : ""}
+            {others > 0 ? ` · +${others} more ${others === 1 ? "comment" : "comments"}` : ""}
+          </p>
+        </div>
+      )}
+      {t.likes.count > 0 && (
+        <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/50">
+          <span className="flex -space-x-1.5">
+            {t.likes.people.map((p) => (
+              <Avatar key={p.id} name={p.name} src={p.avatar_url} size={16} className="ring-2 ring-canvas" />
+            ))}
+          </span>
+          <HeartIcon filled className="h-3 w-3 shrink-0 text-accent" />
+          <span className="truncate">{liked}</span>
+        </p>
+      )}
     </Link>
   );
 }
 
-function likeText(l: FeedLike): string {
-  const names = l.people.map((p) => p.name);
-  const list = names.length > 1 && l.more === 0 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join(", ");
-  return `${list}${l.more > 0 ? ` + ${l.more}` : ""} liked this`;
-}
-
-function LikeCard({ l }: { l: FeedLike }) {
-  return (
-    <Link href={hrefFor(l)} className="group flex w-[148px] shrink-0 snap-start flex-col gap-2 sm:w-[168px]">
-      <Poster path={l.poster_path} title={l.title} />
-      <p className="flex items-start gap-1.5 text-sm leading-snug text-white/70">
-        <HeartIcon filled className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-        <span className="line-clamp-2">{likeText(l)}</span>
-      </p>
-    </Link>
-  );
-}
-
-/** "What people are saying": one quiet row of the family's latest opinions and likes, in the same card size as the other rows. */
-export default function OpinionsStrip() {
+/** A home row like the others (grid or swipe, as chosen in Settings): the titles your people commented on or liked. */
+export default function OpinionsStrip({ layout = "grid", max = 24 }: { layout?: "grid" | "rows"; max?: number }) {
   const [feed, setFeed] = useState<Feed | null>(null);
 
   useEffect(() => {
@@ -71,18 +81,28 @@ export default function OpinionsStrip() {
     };
   }, []);
 
-  if (!feed || !feed.enabled || (feed.opinions.length === 0 && feed.likes.length === 0)) return null;
+  if (!feed || !feed.enabled || feed.items.length === 0) return null;
+  const items = feed.items.slice(0, max);
   return (
-    <section aria-label="What people are saying">
-      <h2 className="mb-3 text-lg font-medium text-white/90">What people are saying</h2>
-      <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0">
-        {feed.opinions.map((o) => (
-          <OpinionCard key={o.id} o={o} />
-        ))}
-        {feed.likes.map((l) => (
-          <LikeCard key={`${l.media_type}-${l.tmdb_id}-${l.season_number}-${l.episode_number}`} l={l} />
-        ))}
-      </div>
+    <section aria-label={FAMILY_ROW_TITLE}>
+      <h2 className="mb-3 text-lg font-medium text-white/90">{FAMILY_ROW_TITLE}</h2>
+      {layout === "rows" ? (
+        <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-6 px-6 pb-2 sm:-mx-10 sm:scroll-px-10 sm:px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {items.map((t) => (
+            <div key={`${t.media_type}-${t.tmdb_id}`} className="w-[42%] shrink-0 snap-start min-[640px]:w-[28%] min-[1000px]:w-[19%] min-[1280px]:w-[15%]">
+              <FamilyCard t={t} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={MEDIA_GRID_CLASSES}>
+          {items.map((t) => (
+            <div key={`${t.media_type}-${t.tmdb_id}`} className="min-w-0">
+              <FamilyCard t={t} />
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

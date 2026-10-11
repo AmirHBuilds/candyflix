@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import OpinionsSection from "@/components/opinions/OpinionsSection";
-import { useTitleLikes } from "@/lib/title-likes";
+import { setCommentCount, useTitleLikes } from "@/lib/title-likes";
 import type { Scope } from "@/lib/opinions";
 
 function ChatIcon() {
@@ -25,10 +25,11 @@ export default function DiscussionButton({
 }: {
   scope: Scope;
   title: string;
-  variant?: "pill" | "plain";
+  /** "action": icon + count, tall like Watch Now. "pill": icon + count, small. "plain": bring your own classes. */
+  variant?: "action" | "pill" | "plain";
   className?: string;
 }) {
-  const { enabled } = useTitleLikes(scope);
+  const { enabled, comments } = useTitleLikes(scope);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -50,14 +51,17 @@ export default function DiscussionButton({
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
+        aria-label={comments > 0 ? `Discussion, ${comments} ${comments === 1 ? "comment" : "comments"}` : "Discussion"}
         className={
           (variant === "pill"
             ? "inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 px-3.5 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white "
-            : "") + className
+            : variant === "action"
+              ? "flex h-12 min-w-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-white/15 px-3 font-semibold text-white/80 transition-colors hover:border-white/30 hover:text-white "
+              : "") + className
         }
       >
         <ChatIcon />
-        Discussion
+        {comments > 0 && <span className="tabular-nums">{comments}</span>}
       </button>
       {open && (
         <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={`Discussion: ${title}`}>
@@ -81,6 +85,7 @@ export default function DiscussionButton({
                 seasonNumber={scope.season_number}
                 episodeNumber={scope.episode_number}
                 heading={null}
+                onLoaded={(n) => setCommentCount(scope, n)}
               />
             </div>
           </div>

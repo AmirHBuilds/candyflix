@@ -61,6 +61,7 @@ export default function TitleLikeButton({
     >
       <HeartIcon key={pop} filled={liked} className={`h-[1.2em] w-[1.2em] shrink-0 ${pop > 0 && liked ? "animate-heart-pop" : ""}`} />
       <span className={labelClass}>{liked ? "Liked" : "Like"}</span>
+      {likes.count > 0 && <span className="tabular-nums">{likes.count}</span>}
     </button>
   );
 }

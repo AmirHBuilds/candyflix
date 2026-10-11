@@ -11,6 +11,7 @@ import {
   likeTitle,
   postOpinion,
   timeAgo,
+  whereLabel,
   type Opinion,
   type Scope,
   type TitleOpinions,
@@ -96,13 +97,16 @@ function OpinionItem({
   data,
   isAdmin,
   onReply,
+  tvId,
   onChanged,
   reply = false,
 }: {
   o: Opinion;
   data: TitleOpinions;
   isAdmin: boolean;
-  onReply?: (parentId: string, body: string, anon: boolean) => Promise<void>;
+  onReply?: (parent: Opinion, body: string, anon: boolean) => Promise<void>;
+  /** Show "Season 2 · Episode 3" (linked) on opinions written about an episode: used on a show's whole-title thread. */
+  tvId?: number;
   onChanged: () => void;
   reply?: boolean;
 }) {
@@ -146,6 +150,14 @@ function OpinionItem({
           {isAdmin && o.hidden && <span className="rounded-full bg-white/10 px-2 text-xs text-white/60">hidden</span>}
           <span className="text-xs text-white/35">{timeAgo(o.created_at)}</span>
         </div>
+        {tvId != null && !reply && whereLabel(o) && (
+          <a
+            href={o.episode_number >= 0 ? `/watch/tv/${tvId}/${o.season_number}/${o.episode_number}` : `/tv/${tvId}`}
+            className="mt-0.5 inline-block rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-accent transition-colors hover:bg-white/10"
+          >
+            {whereLabel(o)} →
+          </a>
+        )}
         <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-white/80">{o.body}</p>
         <div className="mt-1 flex items-center gap-1 text-xs">
           <HeartButton liked={liked} count={likes} onToggle={toggle} label={liked ? "Unlike" : "Like"} size={16} />
@@ -169,7 +181,7 @@ function OpinionItem({
               anonymousDefault={data.anonymous_default}
               onCancel={() => setReplying(false)}
               onSend={async (b, a) => {
-                await onReply(o.id, b, a);
+                await onReply(o, b, a);
                 setReplying(false);
               }}
             />
@@ -194,6 +206,7 @@ export default function OpinionsSection({
   seasonNumber,
   episodeNumber,
   heading = "What everyone thinks",
+  onLoaded,
 }: {
   mediaType: "movie" | "tv";
   tmdbId: number;
@@ -201,6 +214,8 @@ export default function OpinionsSection({
   episodeNumber?: number;
   /** null: no heading and no heart row (the caller already shows them, e.g. the discussion panel). */
   heading?: string | null;
+  /** Told the number of comments each time the thread loads. */
+  onLoaded?: (count: number) => void;
 }) {
   const scope: Scope = { media_type: mediaType, tmdb_id: tmdbId, season_number: seasonNumber, episode_number: episodeNumber };
   const [data, setData] = useState<TitleOpinions | null>(null);
@@ -208,11 +223,14 @@ export default function OpinionsSection({
 
   const load = useCallback(async () => {
     try {
-      setData(await getTitleOpinions({ media_type: mediaType, tmdb_id: tmdbId, season_number: seasonNumber, episode_number: episodeNumber }));
+      const d = await getTitleOpinions({ media_type: mediaType, tmdb_id: tmdbId, season_number: seasonNumber, episode_number: episodeNumber });
+      setData(d);
+      onLoaded?.(d.comment_count);
       setFailed(false);
     } catch {
       setFailed(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mediaType, tmdbId, seasonNumber, episodeNumber]);
 
   useEffect(() => {
@@ -279,8 +297,10 @@ export default function OpinionsSection({
               data={data}
               isAdmin={data.moderator}
               onChanged={load}
-              onReply={async (parentId, b, a) => {
-                await postOpinion(scope, b, a, parentId);
+              tvId={mediaType === "tv" && seasonNumber == null ? tmdbId : undefined}
+              onReply={async (parent, b, a) => {
+                // A reply belongs wherever its parent was written (a show's thread also holds its episodes' opinions).
+                await postOpinion({ ...scope, season_number: parent.season_number, episode_number: parent.episode_number }, b, a, parent.id);
                 await load();
               }}
             />

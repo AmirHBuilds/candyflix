@@ -53,6 +53,9 @@ class OpinionOut(BaseModel):
     mine: bool
     likes: int = 0
     liked_by_me: bool = False
+    # Where it was written: -1 = about the whole title, otherwise a season/episode of a show.
+    season_number: int = -1
+    episode_number: int = -1
     # Only admins ever get these two.
     real_author: str | None = None
     hidden: bool = False
@@ -75,6 +78,7 @@ class TitleOpinions(BaseModel):
     allow_replies: bool = True
     anonymous_default: bool = False
     likes: LikeSummary = LikeSummary()
+    comment_count: int = 0  # every visible opinion and reply (for a whole show: its episodes' too)
     opinions: list[OpinionOut] = []
 
 
@@ -91,36 +95,31 @@ class OpinionLikeResult(BaseModel):
     liked_by_me: bool
 
 
-class FeedOpinion(BaseModel):
+class Latest(BaseModel):
     id: uuid.UUID
     body: str
     created_at: datetime
     author: Person | None
+    season_number: int = -1
+    episode_number: int = -1
+
+
+class FeedTitle(BaseModel):
+    """Everything the family did on one title, as one card: the newest opinion, how many more, and who liked it."""
+
     media_type: MediaKind
     tmdb_id: int
-    season_number: int
-    episode_number: int
-    title: str
+    title: str = ""
     poster_path: str | None = None
     backdrop_path: str | None = None
-    likes: int = 0
-
-
-class FeedLike(BaseModel):
-    media_type: MediaKind
-    tmdb_id: int
-    season_number: int
-    episode_number: int
-    title: str
-    poster_path: str | None = None
-    people: list[Person]
-    more: int = 0
+    latest: Latest | None = None
+    comment_count: int = 0  # opinions and replies by other people
+    likes: LikeSummary = LikeSummary()
 
 
 class Feed(BaseModel):
     enabled: bool
-    opinions: list[FeedOpinion] = []
-    likes: list[FeedLike] = []
+    items: list[FeedTitle] = []
 
 
 class AdminOpinion(BaseModel):

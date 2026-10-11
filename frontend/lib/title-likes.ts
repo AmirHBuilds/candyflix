@@ -8,8 +8,8 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { getTitleOpinions, likeTitle, type LikeSummary, type Scope } from "@/lib/opinions";
 import { showToast } from "@/lib/toast";
 
-type State = { enabled: boolean | null; likes: LikeSummary };
-const EMPTY: State = { enabled: null, likes: { count: 0, you_liked: false, people: [], more: 0 } };
+type State = { enabled: boolean | null; likes: LikeSummary; comments: number };
+const EMPTY: State = { enabled: null, likes: { count: 0, you_liked: false, people: [], more: 0 }, comments: 0 };
 
 const states = new Map<string, State>();
 const inflight = new Map<string, Promise<Awaited<ReturnType<typeof getTitleOpinions>>>>();
@@ -20,6 +20,13 @@ const get = (key: string) => states.get(key) ?? EMPTY;
 function set(key: string, next: State) {
   states.set(key, next);
   listeners.get(key)?.forEach((l) => l());
+}
+
+/** The discussion panel tells everyone else on the page how many comments there are now. */
+export function setCommentCount(scope: Scope, comments: number) {
+  const key = scopeKey(scope);
+  const cur = get(key);
+  if (cur.comments !== comments) set(key, { ...cur, comments });
 }
 
 export function useTitleLikes(scope: Scope, active = true) {
@@ -48,8 +55,8 @@ export function useTitleLikes(scope: Scope, active = true) {
       request.then(forget, forget);
     }
     request
-      .then((d) => live && set(key, { enabled: d.enabled, likes: d.likes }))
-      .catch(() => live && set(key, { enabled: false, likes: EMPTY.likes }));
+      .then((d) => live && set(key, { enabled: d.enabled, likes: d.likes, comments: d.comment_count }))
+      .catch(() => live && set(key, { enabled: false, likes: EMPTY.likes, comments: 0 }));
     return () => {
       live = false;
     };
@@ -61,12 +68,12 @@ export function useTitleLikes(scope: Scope, active = true) {
     // Show it at once; the server's answer replaces it.
     set(key, { ...cur, likes: { ...cur.likes, you_liked: next, count: Math.max(0, cur.likes.count + (next ? 1 : -1)) } });
     try {
-      set(key, { enabled: true, likes: await likeTitle({ media_type, tmdb_id, season_number, episode_number }, next) });
+      set(key, { ...get(key), enabled: true, likes: await likeTitle({ media_type, tmdb_id, season_number, episode_number }, next) });
     } catch (e) {
       set(key, cur);
       showToast(e instanceof Error ? e.message : "Couldn't save that.");
     }
   }, [key, media_type, tmdb_id, season_number, episode_number]);
 
-  return { enabled: state.enabled === true, loaded: state.enabled !== null, likes: state.likes, toggle };
+  return { enabled: state.enabled === true, loaded: state.enabled !== null, likes: state.likes, comments: state.comments, toggle };
 }

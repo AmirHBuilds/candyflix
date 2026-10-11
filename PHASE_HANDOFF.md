@@ -948,3 +948,11 @@ Item 10 (big admin upgrade: drill-down, per-user info, public messages with "I u
 - **Profile hover**: the whole picture + crown wrapper scales, so the badge grows with the picture.
 - **Age limits**: PG now reads "about 8 and up"; the age tag's tooltip shows the full label.
 - Frontend 703 passed (`login.test.tsx` needs the real backend and is excluded as before).
+
+## §49 Phase 21 v4 — feedback round (one card per title, counts, banner)
+- **Backend**: `GET /api/opinions/title` for a whole title now includes opinions written about its episodes (each carries `season_number`/`episode_number`) and returns `comment_count`. `GET /api/opinions/feed` is now `{enabled, items: FeedTitle[]}`: **one card per title** (newest opinion by others, `comment_count` by others, title-level likers with names/`more`), ordered by newest activity, age-limited. New `GET /api/opinions/banner?items=movie:1,tv:2` gives the same cards for the home banner's titles (no TMDB lookups). Tests: 27 in `test_opinions.py`.
+- **Show page discussion** lists episode opinions with a "Season 2 · Episode 3 →" link to that episode; replies go to the parent's episode.
+- **Counts**: heart shows its like count, the discussion button is now just a chat icon + comment count (detail page: fourth item next to the heart, icon only; player: pill). The "Discussion" text and the lower-line button are gone.
+- **Banner**: the like/discussion buttons no longer appear in the home banner (they were loading there by mistake: `DetailActions` only shows them when given a `title`). Banner slides now show `HeroSocial`: who liked it + the newest comment, drifting in per slide.
+- **Home row**: renamed "Family favorites", follows Settings → Home layout (grid or swipe), sits right after Continue Watching (first if nothing to continue). `OpinionsStrip` cards = poster (comment-count chip) + title + clipped newest comment ("Mom · Season 2 · Episode 3 · +3 more comments") + faces and "Amir + 24 others liked it".
+- Frontend 711 passed, backend 516 passed.

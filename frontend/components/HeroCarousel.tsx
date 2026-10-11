@@ -6,6 +6,8 @@ import Link from "next/link";
 import { backdropUrl, detailHref, overviewForLength, type MediaItem } from "@/lib/media";
 import { useSettings } from "@/components/SettingsProvider";
 import DetailActions from "@/components/DetailActions";
+import HeroSocial from "@/components/opinions/HeroSocial";
+import { getBannerSocial, type FeedTitle } from "@/lib/opinions";
 
 const MAX_SLIDES = 5;
 const SWIPE_THRESHOLD_PX = 40;
@@ -16,6 +18,20 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
   const rotateMs = hero_interval_seconds * 1000;
   const slides = hero_enabled ? items.slice(0, MAX_SLIDES) : [];
   const [index, setIndex] = useState(0);
+  // Who liked / said what about each slide's title (nothing when it's switched off or nobody has).
+  const [social, setSocial] = useState<Record<string, FeedTitle>>({});
+  const slideKeys = slides.map((s) => `${s.media_type}:${s.tmdb_id}`).join(",");
+  useEffect(() => {
+    if (!slideKeys) return;
+    let live = true;
+    getBannerSocial(slides.map((s) => ({ media_type: s.media_type, tmdb_id: s.tmdb_id })))
+      .then((f) => live && f.enabled && setSocial(Object.fromEntries(f.items.map((i) => [`${i.media_type}:${i.tmdb_id}`, i]))))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideKeys]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const touchStartX = useRef<number | null>(null);
 
@@ -105,6 +121,7 @@ export default function HeroCarousel({ items }: { items: MediaItem[] }) {
                   {overviewForLength(item.overview, description_length, 180)}
                 </p>
               )}
+              {isActive && <HeroSocial key={`${item.media_type}-${item.tmdb_id}`} social={social[`${item.media_type}:${item.tmdb_id}`]} />}
               <DetailActions tmdbId={item.tmdb_id} mediaType={item.media_type} />
             </div>
           </div>

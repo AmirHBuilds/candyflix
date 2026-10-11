@@ -37,21 +37,21 @@ const GRID_BY_LABEL = {
 
 // With a heart the container needs 60px more before the buttons can share a row, and the heart's column is "auto".
 const GRID_WITH_HEART_BY_LABEL = {
-  none: "grid gap-3 text-base [--pad:1.25rem] @[384px]:w-fit @[384px]:grid-flow-col @[384px]:[grid-template-columns:1fr_1fr_auto] @[384px]:text-sm @[384px]:[--pad:0.75rem] @[418px]:text-[15px] @[418px]:[--pad:1rem] @[452px]:text-base @[452px]:[--pad:1.25rem]",
+  none: "grid gap-3 text-base [--pad:1.25rem] @[444px]:w-fit @[444px]:grid-flow-col @[444px]:[grid-template-columns:1fr_1fr_auto] @[444px]:text-sm @[444px]:[--pad:0.75rem] @[478px]:text-[15px] @[478px]:[--pad:1rem] @[512px]:text-base @[512px]:[--pad:1.25rem]",
   short:
-    "grid gap-3 text-base [--pad:1.25rem] @[420px]:w-fit @[420px]:grid-flow-col @[420px]:[grid-template-columns:1fr_1fr_auto] @[420px]:text-sm @[420px]:[--pad:0.75rem] @[468px]:text-[15px] @[468px]:[--pad:1rem] @[512px]:text-base @[512px]:[--pad:1.25rem]",
-  long: "grid gap-3 text-base [--pad:1.25rem] @[448px]:w-fit @[448px]:grid-flow-col @[448px]:[grid-template-columns:1fr_1fr_auto] @[448px]:text-sm @[448px]:[--pad:0.75rem] @[498px]:text-[15px] @[498px]:[--pad:1rem] @[544px]:text-base @[544px]:[--pad:1.25rem]",
+    "grid gap-3 text-base [--pad:1.25rem] @[480px]:w-fit @[480px]:grid-flow-col @[480px]:[grid-template-columns:1fr_1fr_auto] @[480px]:text-sm @[480px]:[--pad:0.75rem] @[528px]:text-[15px] @[528px]:[--pad:1rem] @[572px]:text-base @[572px]:[--pad:1.25rem]",
+  long: "grid gap-3 text-base [--pad:1.25rem] @[508px]:w-fit @[508px]:grid-flow-col @[508px]:[grid-template-columns:1fr_1fr_auto] @[508px]:text-sm @[508px]:[--pad:0.75rem] @[558px]:text-[15px] @[558px]:[--pad:1rem] @[604px]:text-base @[604px]:[--pad:1.25rem]",
 } as const;
 // The point (per label size) at which the grid above becomes a row, where the heart drops its text.
 const HEART_ROW_LABEL = {
-  none: "@[384px]:sr-only",
-  short: "@[420px]:sr-only",
-  long: "@[448px]:sr-only",
+  none: "@[444px]:sr-only",
+  short: "@[480px]:sr-only",
+  long: "@[508px]:sr-only",
 } as const;
-const HEART_ROW_WIDTH = {
-  none: "@[384px]:w-12 @[384px]:px-0",
-  short: "@[420px]:w-12 @[420px]:px-0",
-  long: "@[448px]:w-12 @[448px]:px-0",
+const HEART_ROW_FLEX = {
+  none: "@[444px]:flex-none @[444px]:min-w-12 @[444px]:px-3",
+  short: "@[480px]:flex-none @[480px]:min-w-12 @[480px]:px-3",
+  long: "@[508px]:flex-none @[508px]:min-w-12 @[508px]:px-3",
 } as const;
 
 const BUTTON_BASE =
@@ -194,13 +194,15 @@ export default function DetailActions({
         >
           {inCandyBox ? `✓ In ${boxName}` : `Add to ${boxName}`}
         </button>
-        <TitleLikeButton scope={scope} className={`w-full px-[var(--pad)] ${HEART_ROW_WIDTH[labelSize]}`} labelClass={HEART_ROW_LABEL[labelSize]} />
+        {title !== undefined && (
+          <div className="flex gap-3">
+            <TitleLikeButton scope={scope} className={`flex-1 px-[var(--pad)] ${HEART_ROW_FLEX[labelSize]}`} labelClass={HEART_ROW_LABEL[labelSize]} />
+            <DiscussionButton scope={scope} title={title} variant="action" />
+          </div>
+        )}
       </div>
       {socialOn && (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <LikedByLine scope={scope} />
-          <DiscussionButton scope={scope} title={title ?? ""} className="ml-auto" />
-        </div>
+        <LikedByLine scope={scope} className="mt-3" />
       )}
     </div>
   );

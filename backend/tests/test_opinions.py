@@ -9,7 +9,7 @@ from app.core.db import AsyncSessionLocal, engine
 from app.core.security import SESSION_COOKIE_NAME
 from app.main import app
 from app.models.user_settings import UserSettings as UserSettingsRow
-from app.schemas.media import MovieDetail
+from app.schemas.media import MovieDetail, TVShowDetail
 from app.schemas.site import SocialConfig
 from sqlalchemy import delete
 
@@ -37,7 +37,11 @@ async def env(monkeypatch):
 
     monkeypatch.setattr(tmdb_service, "get_certification", cert)
     monkeypatch.setattr(tmdb_service, "is_adult_flagged", adult)
+    async def tv(i):
+        return TVShowDetail(tmdb_id=i, title=f"Show {i}", overview="x", poster_path=f"/t{i}.jpg", seasons=[])
+
     monkeypatch.setattr(tmdb_service, "get_movie", movie)
+    monkeypatch.setattr(tmdb_service, "get_tv", tv)
     async def clean():
         async with AsyncSessionLocal() as db:
             await db.execute(delete(Opinion))
@@ -204,7 +208,8 @@ async def test_episode_scope_is_separate_from_the_title():
     await a.post("/api/opinions", json={**ep, "body": "This episode!"})
     await a.post("/api/opinions", json=body("whole movie"))
     assert [o["body"] for o in (await a.get("/api/opinions/title", params=ep)).json()["opinions"]] == ["This episode!"]
-    assert (await a.get("/api/opinions/title", params={"media_type": "tv", "tmdb_id": 1})).json()["opinions"] == []
+    whole = (await a.get("/api/opinions/title", params={"media_type": "tv", "tmdb_id": 1})).json()["opinions"]
+    assert [(o["body"], o["season_number"], o["episode_number"]) for o in whole] == [("This episode!", 1, 2)]  # the show's page lists its episodes' opinions too
     bad = {"media_type": "tv", "tmdb_id": 1, "episode_number": 2, "body": "x"}
     assert (await a.post("/api/opinions", json=bad)).status_code == 422
     await a.aclose()
@@ -246,20 +251,77 @@ async def test_age_limit_applies_to_opinions():
     assert (await kid.get("/api/opinions/title", params={"media_type": "movie", "tmdb_id": 4})).status_code == 403
     assert (await kid.post("/api/opinions", json=body(tmdb_id=4))).status_code == 403
     feed = (await kid.get("/api/opinions/feed")).json()
-    assert {o["tmdb_id"] for o in feed["opinions"]} == {1}
+    assert {o["tmdb_id"] for o in feed["items"]} == {1}
     await kid.aclose(); await adult.aclose()
 
 
-async def test_feed_shows_others_recent_opinions_and_likes_with_titles():
-    me, other = await client_for(await make()), await client_for(await make())
-    await other.post("/api/opinions", json=body("Please watch", tmdb_id=1))
-    await other.put("/api/opinions/likes/title", json={"media_type": "movie", "tmdb_id": 1, "liked": True})
+async def test_feed_is_one_card_per_title_with_the_newest_opinion_comment_count_and_likers():
+    me, other, third = await client_for(await make()), await client_for(await make()), await client_for(await make())
+    await other.post("/api/opinions", json=body("First thoughts", tmdb_id=1))
+    await third.post("/api/opinions", json=body("Please watch", tmdb_id=1))
+    await other.put("/api/opinions/likes/title", json={**Q, "liked": True})
+    await third.put("/api/opinions/likes/title", json={**Q, "liked": True})
     await me.post("/api/opinions", json=body("mine", tmdb_id=1))
     feed = (await me.get("/api/opinions/feed")).json()
     assert feed["enabled"]
-    assert [o["body"] for o in feed["opinions"]] == ["Please watch"]
-    assert feed["opinions"][0]["title"] == "Movie 1" and feed["opinions"][0]["author"]["name"]
-    assert feed["likes"][0]["title"] == "Movie 1" and len(feed["likes"][0]["people"]) == 1
+    assert len(feed["items"]) == 1  # comments and likes on the same title are one card
+    card = feed["items"][0]
+    assert card["title"] == "Movie 1" and card["tmdb_id"] == 1
+    assert card["latest"]["body"] == "Please watch" and card["latest"]["author"]["name"]
+    assert card["comment_count"] == 2  # other people's, not mine
+    assert card["likes"]["count"] == 2 and len(card["likes"]["people"]) == 2
+    for c in (me, other, third):
+        await c.aclose()
+
+
+async def test_feed_has_a_card_for_a_title_that_was_only_liked_and_orders_by_newest_activity():
+    me, other = await client_for(await make()), await client_for(await make())
+    await other.put("/api/opinions/likes/title", json={"media_type": "movie", "tmdb_id": 2, "liked": True})
+    await other.post("/api/opinions", json=body("Newer", tmdb_id=1))
+    items = (await me.get("/api/opinions/feed")).json()["items"]
+    assert [i["tmdb_id"] for i in items] == [1, 2]
+    assert items[1]["latest"] is None and items[1]["likes"]["count"] == 1
+    await me.aclose(); await other.aclose()
+
+
+async def test_feed_counts_episode_opinions_and_says_where_the_newest_one_was_written():
+    me, other = await client_for(await make()), await client_for(await make())
+    await other.post("/api/opinions", json={"media_type": "tv", "tmdb_id": 7, "season_number": 2, "episode_number": 3, "body": "That ending"})
+    card = (await me.get("/api/opinions/feed")).json()["items"][0]
+    assert (card["media_type"], card["latest"]["season_number"], card["latest"]["episode_number"]) == ("tv", 2, 3)
+    await me.aclose(); await other.aclose()
+
+
+async def test_the_title_thread_includes_episode_opinions_with_where_they_belong_and_a_comment_count():
+    a, b = await client_for(await make()), await client_for(await make())
+    await a.post("/api/opinions", json={"media_type": "tv", "tmdb_id": 7, "season_number": 1, "episode_number": 2, "body": "Ep talk"})
+    top = (await a.post("/api/opinions", json={"media_type": "tv", "tmdb_id": 7, "body": "About the show"})).json()["id"]
+    await b.post("/api/opinions", json={"media_type": "tv", "tmdb_id": 7, "body": "Agreed", "parent_id": top})
+    whole = (await a.get("/api/opinions/title", params={"media_type": "tv", "tmdb_id": 7})).json()
+    assert whole["comment_count"] == 3
+    by_body = {o["body"]: o for o in whole["opinions"]}
+    assert (by_body["Ep talk"]["season_number"], by_body["Ep talk"]["episode_number"]) == (1, 2)
+    assert by_body["About the show"]["season_number"] == -1
+    ep = (await a.get("/api/opinions/title", params={"media_type": "tv", "tmdb_id": 7, "season_number": 1, "episode_number": 2})).json()
+    assert [o["body"] for o in ep["opinions"]] == ["Ep talk"] and ep["comment_count"] == 1
+    await a.aclose(); await b.aclose()
+
+
+async def test_banner_social_gives_likers_and_the_newest_comment_for_the_banner_titles_only():
+    me, other = await client_for(await make()), await client_for(await make())
+    await other.post("/api/opinions", json=body("Great", tmdb_id=1))
+    await other.put("/api/opinions/likes/title", json={"media_type": "movie", "tmdb_id": 1, "liked": True})
+    await other.post("/api/opinions", json=body("Elsewhere", tmdb_id=2))
+    got = (await me.get("/api/opinions/banner", params={"items": "movie:1,tv:99,bogus:1,movie:x"})).json()
+    assert got["enabled"] and [i["tmdb_id"] for i in got["items"]] == [1]
+    assert got["items"][0]["latest"]["body"] == "Great" and got["items"][0]["likes"]["count"] == 1
+    await me.aclose(); await other.aclose()
+
+
+async def test_the_banner_respects_the_home_switches():
+    me, other = await client_for(await make(social={"show_on_home": False})), await client_for(await make())
+    await other.post("/api/opinions", json=body("Great", tmdb_id=1))
+    assert (await me.get("/api/opinions/banner", params={"items": "movie:1"})).json()["enabled"] is False
     await me.aclose(); await other.aclose()
 
 
@@ -267,7 +329,7 @@ async def test_feed_hides_anonymous_authors_and_respects_the_home_switches():
     me = await client_for(await make())
     other = await client_for(await make())
     await other.post("/api/opinions", json=body("secret", anonymous=True))
-    assert (await me.get("/api/opinions/feed")).json()["opinions"][0]["author"] is None
+    assert (await me.get("/api/opinions/feed")).json()["items"][0]["latest"]["author"] is None
     nohome = await client_for(await make(social={"show_on_home": False}))
     assert (await nohome.get("/api/opinions/feed")).json()["enabled"] is False
     async with AsyncSessionLocal() as db:
@@ -285,7 +347,7 @@ async def test_admin_can_hide_unhide_and_delete_and_sees_hidden_ones():
     assert row["author_name"] and row["is_anonymous"] and row["title"] == "Movie 1"
     assert (await admin.post(f"/api/admin/opinions/{oid}/hide")).status_code == 204
     assert (await other.get("/api/opinions/title", params=Q)).json()["opinions"] == []
-    assert (await other.get("/api/opinions/feed")).json()["opinions"] == []
+    assert (await other.get("/api/opinions/feed")).json()["items"] == []
     assert (await other.put(f"/api/opinions/{oid}/like", params={"liked": True})).status_code == 404
     mine = (await admin.get("/api/opinions/title", params=Q)).json()["opinions"][0]
     assert mine["hidden"] is True

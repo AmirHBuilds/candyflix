@@ -143,6 +143,7 @@ export default async function Home() {
 
       {/* The sections that actually have something to show, with a feature banner after Trending Today,
           Trending This Week and Popular Movies (a banner the admin switched off just leaves its gap out). */}
+      {continueWatching.items.length === 0 && <OpinionsStrip layout={layout} max={max} />}
       {[
         { key: "continue", title: "Continue Watching", items: toContinueWatchingItems(continueWatching.items), error: null as string | null, viewAllHref: continueWatching.hasMore || continueWatching.items.length > max ? "/continue-watching" : undefined },
         { key: "today", title: "Trending Today", items: today.items, error: today.error },
@@ -159,8 +160,8 @@ export default async function Home() {
           return [
             <Section key={s.key} title={s.title} items={s.items} error={null} viewAllHref={s.viewAllHref} max={max} layout={layout} />,
             ...(banner?.enabled ? [<HomeBanner key={`banner-${index}`} banner={banner} slot={index as 0 | 1 | 2} />] : []),
-            // What people are saying sits right after Trending Today: a row like the others, not a block above them.
-            ...(s.key === "today" ? [<OpinionsStrip key="opinions" />] : []),
+            // The family's row sits right after Continue Watching (or first, if there's nothing to continue).
+            ...(s.key === "continue" ? [<OpinionsStrip key="opinions" layout={layout} max={max} />] : []),
           ];
         })}
     </div>
