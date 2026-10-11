@@ -32,12 +32,23 @@ function FamilyCard({ t }: { t: FeedTitle }) {
         ) : (
           <div className="flex h-full items-center justify-center px-3 text-center text-sm text-white/40">{t.title}</div>
         )}
-        {t.comment_count > 0 && (
-          <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm">
-            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
-            </svg>
-            {t.comment_count}
+        {(t.likes.count > 0 || t.comment_count > 0) && (
+          // One joined chip, like the heart | comment block on the detail page.
+          <span className="absolute right-2 top-2 flex divide-x divide-white/20 overflow-hidden rounded-full bg-black/65 text-[11px] font-medium text-white/90 backdrop-blur-sm">
+            {t.likes.count > 0 && (
+              <span className="flex items-center gap-1 px-2 py-0.5" aria-label={`${t.likes.count} likes`}>
+                <HeartIcon filled className="h-3 w-3 text-accent" />
+                {t.likes.count}
+              </span>
+            )}
+            {t.comment_count > 0 && (
+              <span className="flex items-center gap-1 px-2 py-0.5" aria-label={`${t.comment_count} comments`}>
+                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+                </svg>
+                {t.comment_count}
+              </span>
+            )}
           </span>
         )}
       </div>

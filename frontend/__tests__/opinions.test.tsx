@@ -186,6 +186,11 @@ describe("OpinionsStrip (the home row)", () => {
     const quote = screen.getByText(/So lovely/);
     expect(quote.parentElement).toBe(screen.getByText(/Mom · \+3 more comments/).parentElement);
     expect(quote.parentElement!.previousElementSibling).not.toBeNull();
+    // the poster's corner chip is one block: hearts | comments
+    const hearts = screen.getByLabelText("25 likes");
+    expect(hearts.parentElement).toBe(screen.getByLabelText("4 comments").parentElement);
+    expect(screen.getByLabelText("1 likes")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^0 /)).toBeNull();
     expect(screen.getAllByRole("link")).toHaveLength(2); // a title appears once, however much happened on it
   });
 
