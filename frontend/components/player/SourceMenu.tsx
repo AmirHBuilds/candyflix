@@ -12,7 +12,7 @@ export type SourcePicker = {
   /** Still looking for more sources. */
   searching: boolean;
   /** `atSeconds` is where the video is right now, so a switch carries on from the same spot. */
-  onSelect: (streamId: string, atSeconds: number) => void;
+  onSelect: (streamId: string, atSeconds: number, totalSeconds: number) => void;
 };
 
 function Row({ stream, playing, onClick }: { stream: StreamState; playing: boolean; onClick: () => void }) {
@@ -21,7 +21,7 @@ function Row({ stream, playing, onClick }: { stream: StreamState; playing: boole
   const ready = stream.state === "ready";
   const failed = stream.state === "failed";
   const canPlay = !!stream.play_url;
-  const hint = playing ? "Playing" : ready ? "Ready" : failed ? "Try again" : downloading ? (canPlay ? `${pct}%` : `${pct}%`) : "Download";
+  const hint = playing ? (downloading ? `Playing · ${pct}%` : "Playing") : ready ? "Ready" : failed ? "Try again" : downloading ? `${pct}%` : "Download";
 
   return (
     <button
@@ -110,6 +110,13 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
     };
   }, [open]);
 
+  // Which source's qualities are listed: the one the person picked, else the one playing, else the first.
+  const [picked, setPicked] = useState<string | null>(null);
+  const shown =
+    picker.sources.find((x) => x.name === picked) ??
+    picker.sources.find((x) => x.streams.some((y) => y.stream_id === picker.playingId)) ??
+    picker.sources[0] ??
+    null;
   const total = picker.sources.reduce((n, s) => n + s.streams.length, 0);
   const portalTarget = fullscreenHost ?? (typeof document !== "undefined" ? document.body : null);
 
@@ -140,30 +147,51 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
               ...(anchor.up ? { bottom: window.innerHeight - anchor.top + 8 } : { top: anchor.bottom + 8 }),
               maxHeight: anchor.max,
             }}
-            className="z-50 w-72 max-w-[calc(100vw-1rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-canvas/95 p-2 shadow-2xl backdrop-blur"
+            className="z-50 w-[22rem] max-w-[calc(100vw-1rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-white/10 bg-canvas/95 p-2 shadow-2xl backdrop-blur"
           >
-            <p className="px-2 pb-1.5 pt-1 text-xs font-medium uppercase tracking-wide text-white/45">Sources</p>
-            {picker.sources.map((src) => (
-              <div key={src.name} className="mb-2 last:mb-0">
-                <div className="flex items-center gap-1.5 px-2 pb-1 text-sm font-semibold text-white">
-                  {src.name}
-                  {src.starred && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent" aria-label="Reliable source">
-                      <path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9 6.6 19.8l1.1-6.1L3.2 9.4l6.1-.8z" />
-                    </svg>
-                  )}
-                </div>
-                {src.streams.length === 0 ? (
-                  <p className="px-2 pb-1 text-xs text-white/45">{src.status === "ok" || src.status === "done" ? "No video here" : "Nothing found"}</p>
+            <div className="flex gap-2">
+              <div className="w-28 shrink-0 border-r border-white/10 pr-2" role="tablist" aria-label="Sources">
+                <p className="px-2 pb-1.5 pt-1 text-xs font-medium uppercase tracking-wide text-white/45">Sources</p>
+                {picker.sources.map((src) => {
+                  const active = src.name === shown?.name;
+                  const hasPlaying = src.streams.some((x) => x.stream_id === picker.playingId);
+                  return (
+                    <button
+                      key={src.name}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setPicked(src.name)}
+                      className={`mb-1 flex w-full items-center justify-between gap-1 rounded-lg px-2 py-2 text-left text-sm transition-colors ${
+                        active ? "bg-white/15 font-semibold text-white" : "text-white/70 hover:bg-white/10"
+                      }`}
+                    >
+                      <span className="flex min-w-0 items-center gap-1">
+                        <span className="truncate">{src.name}</span>
+                        {src.starred && (
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-accent" aria-label="Reliable source">
+                            <path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9 6.6 19.8l1.1-6.1L3.2 9.4l6.1-.8z" />
+                          </svg>
+                        )}
+                      </span>
+                      {hasPlaying && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-label="Playing from this source" />}
+                    </button>
+                  );
+                })}
+                {picker.sources.length === 0 && <p className="px-2 py-1 text-xs text-white/45">None yet</p>}
+              </div>
+              <div className="min-w-0 flex-1" role="tabpanel">
+                <p className="px-1 pb-1.5 pt-1 text-xs font-medium uppercase tracking-wide text-white/45">Quality</p>
+                {shown && shown.streams.length === 0 ? (
+                  <p className="px-1 pb-1 text-xs text-white/45">{shown.status === "ok" || shown.status === "done" ? "No video here" : "Nothing found"}</p>
                 ) : (
                   <div className="flex flex-col gap-1">
-                    {src.streams.map((s) => (
+                    {shown?.streams.map((s) => (
                       <Row
                         key={s.stream_id}
                         stream={s}
                         playing={s.stream_id === picker.playingId}
                         onClick={() => {
-                          picker.onSelect(s.stream_id, getTime());
+                          picker.onSelect(s.stream_id, getTime(), 0);
                           // Starting a download keeps the menu open so its progress can be watched.
                           if (s.play_url && s.stream_id !== picker.playingId) setOpen(false);
                         }}
@@ -171,11 +199,11 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
                     ))}
                   </div>
                 )}
+                {total === 0 && <p className="px-1 py-2 text-sm text-white/60">No sources yet…</p>}
               </div>
-            ))}
-            {total === 0 && <p className="px-2 py-2 text-sm text-white/60">No sources yet…</p>}
+            </div>
             {picker.searching && (
-              <p className="flex items-center gap-2 px-2 pt-1 text-xs text-white/50">
+              <p className="flex items-center gap-2 px-2 pt-2 text-xs text-white/50">
                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-accent" aria-hidden />
                 Still looking for more sources…
               </p>

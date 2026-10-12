@@ -21,6 +21,7 @@ export default function ResolverPlayer({
   nextEpisode,
   prevEpisode,
   artwork,
+  runtimeSeconds,
 }: {
   source: PlaybackSource;
   title: string;
@@ -29,6 +30,8 @@ export default function ResolverPlayer({
   nextEpisode?: { href: string; label: string } | null;
   prevEpisode?: { href: string; label: string } | null;
   artwork: string | null;
+  /** The listed length of the film / episode, to show a sensible end time while it still downloads. */
+  runtimeSeconds?: number | null;
 }) {
   const r = useResolver({
     mediaType: identity.mediaType,
@@ -101,14 +104,28 @@ export default function ResolverPlayer({
       nextEpisode={nextEpisode}
       prevEpisode={prevEpisode}
       poster={artwork}
+      growth={{ ready: r.playing?.state === "ready", progress: r.playing?.progress ?? null, runtimeSeconds: runtimeSeconds ?? null }}
       forceResume={switchedAt !== null}
       autoStart={switchedAt !== null}
       sourcePicker={{
         sources: r.state?.sources ?? [],
         playingId: r.playingId,
         searching: !!r.searching,
-        onSelect: (streamId, atSeconds) => {
+        onSelect: (streamId, atSeconds, totalSeconds) => {
           const s = findStream(r.state, streamId);
+          // Another quality that hasn't downloaded as far as you have watched: say so instead of jumping back.
+          if (
+            s?.play_url &&
+            streamId !== r.playingId &&
+            s.state !== "ready" &&
+            s.progress != null &&
+            totalSeconds > 0 &&
+            atSeconds > 30 &&
+            (s.progress / 100) * totalSeconds < atSeconds + 15
+          ) {
+            showToast(`That one has only downloaded ${Math.round(s.progress)}% so far, not up to where you are yet.`, "info");
+            return;
+          }
           if (s?.play_url && streamId !== r.playingId) setSwitchedAt(atSeconds);
           if (!s?.play_url && s?.state === "downloading") showToast("Still getting it ready. Click it again in a moment.", "info");
           r.choose(streamId);

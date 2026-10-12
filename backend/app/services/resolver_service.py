@@ -145,7 +145,7 @@ def _subtitle_items(raw: list[dict]) -> list[SubtitleItem]:
     return out
 
 
-def build_state(task: dict, extra_subtitles: list[dict]) -> ResolveState:
+def build_state(task: dict, extra_subtitles: list[dict], auto: str | None = None) -> ResolveState:
     items_by_stream: dict[str, list[dict]] = {}
     for it in task.get("library") or []:
         if it.get("mode") == "subs":
@@ -176,8 +176,7 @@ def build_state(task: dict, extra_subtitles: list[dict]) -> ResolveState:
         sources.append(SourceState(name=name, status="ok", streams=streams))
 
     live_items = [i for items in items_by_stream.values() for i in items if _item_state(i) != "failed"]
-    auto = None
-    if live_items:
+    if auto is None and live_items:
         oldest = min(live_items, key=lambda i: i.get("requested_at") or "")
         auto = oldest.get("stream_id")
 
@@ -303,24 +302,47 @@ async def start(user: User, media_type: str, tmdb_id: int, season: int | None, e
     await content_rating_service.ensure(user, media_type, tmdb_id)
     s = get_settings()
 
-    # Already downloaded? Then there is nothing to wait for.
-    params = {"tmdb_id": tmdb_id, "type": media_type, "limit": 20}
+    # Already downloaded, or still downloading from before a page refresh? Carry on with that instead of
+    # starting over: ready first (best quality), then one that already plays, then any that is on its way.
+    params = {"tmdb_id": tmdb_id, "type": media_type, "limit": 30}
     if media_type == "tv":
         params.update(season=season, episode=episode)
     try:
         lib = await _call("GET", "/v1/library", params=params)
     except HTTPException:
         lib = []
-    ready = [i for i in lib if _item_state(i) == "ready" and (i.get("stream_url") or i.get("url")) and i.get("mode") != "subs"]
-    if ready:
-        best = max(ready, key=lambda i: quality_rank(i.get("quality")))
+    usable = [i for i in lib if i.get("mode") != "subs" and _item_state(i) != "failed" and i.get("task_id")]
+
+    def rank(i: dict) -> tuple:
+        ready = _item_state(i) == "ready" and bool(i.get("stream_url") or i.get("url"))
+        return (0 if ready else 1 if i.get("playable") else 2, -quality_rank(i.get("quality")))
+
+    if usable:
+        best = sorted(usable, key=rank)[0]
         try:
             task = await _call("GET", f"/v1/tasks/{best['task_id']}")
         except HTTPException:
             task = {"task_id": best["task_id"], "status": "expired", "type": media_type, "tmdb_id": tmdb_id, "sources": [], "library": []}
         have = {i.get("id") for i in task.get("library") or []}
-        task["library"] = [*(task.get("library") or []), *[i for i in ready if i.get("task_id") == task["task_id"] and i.get("id") not in have]]
-        return build_state(task, await _task_subtitles(task))
+        task["library"] = [*(task.get("library") or []), *[i for i in usable if i.get("task_id") == task["task_id"] and i.get("id") not in have]]
+        return build_state(task, await _task_subtitles(task), auto=best.get("stream_id"))
+
+    # Nothing downloaded: a search that is still running (or found something) a moment ago is reused too.
+    try:
+        recent = await _call("GET", "/v1/tasks", params={**{k: v for k, v in params.items() if k != "limit"}, "limit": 5})
+    except HTTPException:
+        recent = []
+    for summary in recent:
+        if summary.get("status") == "expired":
+            continue
+        try:
+            task = await _call("GET", f"/v1/tasks/{summary['task_id']}")
+        except HTTPException:
+            continue
+        if task.get("status") == "running" or best_stream(task):
+            if best_stream(task):
+                return await request_download(user, task["task_id"], None)
+            return build_state(task, [])
 
     body: dict = {"tmdb_id": tmdb_id, "type": media_type, "starred_first": s.resolver_starred_first}
     if media_type == "tv":

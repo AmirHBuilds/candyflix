@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { isExternalUrl, mediaUrl } from "@/lib/resolve";
+import { showToast } from "@/lib/toast";
 import SourceMenu, { type SourcePicker } from "@/components/player/SourceMenu";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
 import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings, getSegments } from "@/lib/playback";
@@ -85,6 +86,7 @@ export default function VideoPlayer({
   poster,
   forceResume,
   autoStart,
+  growth,
 }: {
   source: PlaybackSource;
   title: string;
@@ -100,6 +102,11 @@ export default function VideoPlayer({
   forceResume?: boolean;
   /** Start playing as soon as the video is ready (a source switch while it was playing). */
   autoStart?: boolean;
+  /**
+   * A video that is still downloading is a growing playlist, so its own length keeps rising. This gives
+   * the player what it needs to show the real length, the downloaded part, and to wait for a resume spot.
+   */
+  growth?: { ready: boolean; progress: number | null; runtimeSeconds: number | null };
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -108,7 +115,32 @@ export default function VideoPlayer({
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  // The length of the media as the browser sees it: for a video still downloading, only what has arrived so far.
+  const [mediaDuration, setDuration] = useState(0);
+  const growing = !!growth && !growth.ready;
+  const growthProgress = growth?.progress ?? null;
+  const growthRuntime = growth?.runtimeSeconds ?? null;
+  // The length shown and used everywhere: the real one when known, otherwise the best estimate (the film's
+  // listed runtime, or what has arrived divided by the share downloaded), never shorter than what is there.
+  const duration = useMemo(() => {
+    if (!growing) return mediaDuration;
+    let est = growthRuntime && growthRuntime > 0 ? growthRuntime : 0;
+    const p = growthProgress;
+    if (p !== null && mediaDuration >= 60) {
+      const byShare = mediaDuration / Math.max(p / 100, 0.01);
+      if (p >= 25 && (!est || Math.abs(byShare - est) / est > 0.15)) est = byShare;
+      else if (!est && p >= 5) est = byShare;
+    }
+    return Math.max(est, mediaDuration);
+  }, [growing, mediaDuration, growthProgress, growthRuntime]);
+  const totalRef = useRef(0);
+  totalRef.current = growing ? duration : 0;
+  const growingRef = useRef(growing);
+  growingRef.current = growing;
+  // A resume spot further than what has downloaded: wait for the download to reach it.
+  const [waitingFor, setWaitingFor] = useState<number | null>(null);
+  const pendingResumeRef = useRef<number | null>(null);
+  const cancelResumeRef = useRef<() => void>(() => {});
   const [bufferedEnd, setBufferedEnd] = useState(0);
   const [scrubHover, setScrubHover] = useState(false);
   const [scrubDragging, setScrubDragging] = useState(false);
@@ -224,7 +256,7 @@ export default function VideoPlayer({
   const playbackSettingsRef = useRef(playbackSettings);
   playbackSettingsRef.current = playbackSettings;
 
-  useWatchProgress(videoRef, identity, progressRestored, playbackSettings.save_progress);
+  useWatchProgress(videoRef, identity, progressRestored, playbackSettings.save_progress, totalRef);
   usePresence(videoRef, identity);
 
   // Autoplay next episode: once a video has ENDED and there is a next
@@ -424,10 +456,22 @@ export default function VideoPlayer({
         return;
       }
       const resume = source.resume_position_seconds;
+      const total = growingRef.current ? Math.max(totalRef.current, video.duration) : video.duration;
+      // A download still under way that hasn't reached the spot yet: wait for it (see onDurationChange).
+      const wants = forceResume ? !!resume && resume > 1 : playbackSettingsRef.current.save_progress && !!resume && resume > 3 && resume < total - 5;
+      if (growingRef.current && wants && resume && resume > video.duration - 2) {
+        if (pendingResumeRef.current === null) {
+          log("attemptResume: waiting for the download to reach", resume);
+          pendingResumeRef.current = resume;
+          setWaitingFor(resume);
+        }
+        return;
+      }
       // "Save watch progress" off: nothing was saved, and nothing is resumed.
       if (forceResume && resume && resume > 1) {
-        // A source switch: carry on from the same spot (as far as this one has downloaded).
         video.currentTime = Math.min(resume, Math.max(0, video.duration - 2));
+      } else if (growingRef.current && wants && resume) {
+        video.currentTime = resume;
       } else if (playbackSettingsRef.current.save_progress && resume && resume > 3 && resume < video.duration - 5) {
         log("attemptResume: seeking to saved position", resume);
         video.currentTime = resume;
@@ -449,8 +493,17 @@ export default function VideoPlayer({
       if (handedOver || autoStart || playbackSettingsRef.current.autoplay_on_open) void video.play().catch(() => {});
     }
 
+    // Gives up waiting and starts at the beginning (the button, or the download finished short of the spot).
+    cancelResumeRef.current = () => {
+      pendingResumeRef.current = null;
+      setWaitingFor(null);
+      resumeAttemptedRef.current = true;
+      setProgressRestored(true);
+      maybeAutoplay();
+    };
+
     const resumeFallbackTimer = setTimeout(() => {
-      if (!resumeAttemptedRef.current) {
+      if (!resumeAttemptedRef.current && pendingResumeRef.current === null) {
         const v = videoRef.current;
         const stuck = !v || !Number.isFinite(v.duration) || v.duration <= 0;
         log("attemptResume: 8s fallback fired", { stuck, duration: v?.duration });
@@ -472,6 +525,17 @@ export default function VideoPlayer({
       log("durationchange", video.duration);
       setDuration(video.duration);
       if (Number.isFinite(video.duration) && video.duration > 0) setVideoStuck(false);
+      const pending = pendingResumeRef.current;
+      if (pending !== null && video.duration - 2 >= pending) {
+        // The download has reached the spot: go there and start.
+        pendingResumeRef.current = null;
+        setWaitingFor(null);
+        video.currentTime = pending;
+        resumeAttemptedRef.current = true;
+        setProgressRestored(true);
+        maybeAutoplay();
+        return;
+      }
       attemptResume();
     }
     function onTimeUpdate() {
@@ -711,6 +775,13 @@ export default function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The download finished but the spot is further than the video turned out to be: stop waiting.
+  useEffect(() => {
+    if (waitingFor === null || growing) return;
+    const t = setTimeout(() => cancelResumeRef.current(), 4000);
+    return () => clearTimeout(t);
+  }, [waitingFor, growing]);
+
   // --- Fullscreen tracking ---
   useEffect(() => {
     function onFsChange() {
@@ -848,13 +919,15 @@ export default function VideoPlayer({
   function seekBy(delta: number) {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.min(Math.max(video.currentTime + delta, 0), video.duration || Infinity);
+    video.currentTime = Math.min(Math.max(video.currentTime + delta, 0), growingRef.current ? Math.max(0, (video.duration || 0) - 1) : video.duration || Infinity);
   }
 
   function seekTo(seconds: number) {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.min(Math.max(seconds, 0), video.duration || Infinity);
+    const end = video.duration || Infinity;
+    if (growingRef.current && seconds > end - 1) showToast("That part hasn't downloaded yet.", "info");
+    video.currentTime = Math.min(Math.max(seconds, 0), growingRef.current ? Math.max(0, end - 1) : end);
   }
 
   // --- Skip intro / recap / credits (Phase 9f) ---
@@ -1384,7 +1457,20 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {buffering && !videoStuck && !error && (
+      {waitingFor !== null && !error && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/70 px-6 text-center" data-testid="waiting-for-download">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-accent" />
+          <p className="text-sm text-white/85">
+            Getting the video ready up to {formatTime(waitingFor)}
+            {growthProgress !== null && <span className="ml-2 tabular-nums text-white/60">{Math.round(growthProgress)}%</span>}
+          </p>
+          <button onClick={() => cancelResumeRef.current()} className="rounded-lg bg-white/15 px-4 py-2 text-sm text-white hover:bg-white/25">
+            Start from the beginning
+          </button>
+        </div>
+      )}
+
+      {buffering && !videoStuck && !error && waitingFor === null && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-accent" />
         </div>
@@ -1507,6 +1593,14 @@ export default function VideoPlayer({
               scrubHover || scrubDragging ? "h-[5px]" : "h-[3px]"
             }`}
           >
+            {growing && (
+              <div
+                data-testid="downloaded-bar"
+                title="Downloaded so far"
+                className="absolute left-0 top-0 h-full rounded-full bg-accent/30"
+                style={{ width: `${duration ? (Math.min(mediaDuration, duration) / duration) * 100 : 0}%` }}
+              />
+            )}
             <div
               className="absolute left-0 top-0 h-full rounded-full bg-white/35"
               style={{ width: `${duration ? (Math.min(bufferedEnd, duration) / duration) * 100 : 0}%` }}
@@ -1637,6 +1731,13 @@ export default function VideoPlayer({
           )}
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
+            {sourcePicker && (
+              <SourceMenu
+                picker={{ ...sourcePicker, onSelect: (id, at) => sourcePicker.onSelect(id, at, duration) }}
+                getTime={() => videoRef.current?.currentTime ?? 0}
+                fullscreenHost={fullscreen ? containerRef.current : null}
+              />
+            )}
             {assistantOn && (
               <PlayerTooltip label="Ask AI about this" align="end">
                 <button
@@ -1648,13 +1749,6 @@ export default function VideoPlayer({
                   <AssistantIcon />
                 </button>
               </PlayerTooltip>
-            )}
-            {sourcePicker && (
-              <SourceMenu
-                picker={sourcePicker}
-                getTime={() => videoRef.current?.currentTime ?? 0}
-                fullscreenHost={fullscreen ? containerRef.current : null}
-              />
             )}
             {controls.captions && (
             <PlayerTooltip

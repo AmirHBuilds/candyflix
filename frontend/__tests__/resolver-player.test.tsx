@@ -116,7 +116,24 @@ describe("SourceMenu", () => {
     render(<SourceMenu picker={p} getTime={() => 77} />);
     fireEvent.click(screen.getByLabelText("Sources and quality"));
     fireEvent.click(screen.getByLabelText(/^534p/));
-    expect(p.onSelect).toHaveBeenCalledWith("a", 77);
+    expect(p.onSelect).toHaveBeenCalledWith("a", 77, 0);
+  });
+
+  it("lists the sources on the left, even when there is only one, and switches the qualities shown", () => {
+    const two = [
+      ...picker().sources,
+      { name: "Other", starred: false, status: "ok", error: null, streams: [stream("e", "1080p")] },
+    ];
+    const { unmount } = render(<SourceMenu picker={picker({ sources: [picker().sources[0]] })} getTime={() => 0} />);
+    fireEvent.click(screen.getByLabelText("Sources and quality"));
+    expect(screen.getByRole("tab", { name: /Vertex/ })).toHaveAttribute("aria-selected", "true");
+    unmount();
+    render(<SourceMenu picker={picker({ sources: two })} getTime={() => 0} />);
+    fireEvent.click(screen.getByLabelText("Sources and quality"));
+    expect(screen.queryByLabelText(/^1080p/)).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: /Other/ }));
+    expect(screen.getByLabelText(/^1080p/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^534p/)).toBeNull();
   });
 
   it("says when it is still searching and when nothing is there yet", () => {

@@ -44,7 +44,8 @@ export default async function WatchMoviePage({
           title={movie.title}
           identity={{ tmdbId: movie.tmdb_id, mediaType: "movie" }}
           backHref={`/movie/${movie.tmdb_id}`}
-          artwork={backdropUrl(movie.backdrop_path)}
+          artwork={backdropUrl(movie.backdrop_path, "original")}
+          runtimeSeconds={movie.runtime_minutes ? movie.runtime_minutes * 60 : null}
         />
       ) : (
         <VideoPlayer

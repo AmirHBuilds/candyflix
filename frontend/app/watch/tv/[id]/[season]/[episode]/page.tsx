@@ -114,7 +114,8 @@ export default async function WatchEpisodePage({
                 }
               : null
           }
-          artwork={stillUrl(currentEpisode?.still_path ?? null, "original") ?? backdropUrl(show.backdrop_path)}
+          artwork={stillUrl(currentEpisode?.still_path ?? null, "original") ?? backdropUrl(show.backdrop_path, "original")}
+            runtimeSeconds={currentEpisode?.runtime_minutes ? currentEpisode.runtime_minutes * 60 : null}
         />
       ) : (
         <VideoPlayer

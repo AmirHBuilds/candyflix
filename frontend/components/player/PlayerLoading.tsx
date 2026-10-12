@@ -59,7 +59,7 @@ export default function PlayerLoading({
     >
       {artwork && (
         <div className="absolute inset-0 overflow-hidden">
-          <FadeImage src={artwork} alt="" fill priority sizes="100vw" className="animate-ken-burns object-cover opacity-80" />
+          <FadeImage src={artwork} alt="" fill priority quality={90} sizes="100vw" className="animate-ken-burns object-cover opacity-80" />
         </div>
       )}
       {/* The shadow: darker at the edges and the bottom, so the text always reads. */}

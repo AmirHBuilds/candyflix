@@ -71,6 +71,10 @@ def make_fake():
         st["library"].append(item)
         return JSONResponse(item, status_code=202)
 
+    @fake.get("/v1/tasks")
+    async def tasks_list(req: Request):
+        return [{k: v for k, v in t.items() if k not in ("sources",)} for t in st["tasks"].values() if t["tmdb_id"] == int(req.query_params["tmdb_id"])]
+
     @fake.get("/v1/library")
     async def library(req: Request):
         return [i for i in st["library"] if i.get("tmdb_id") == int(req.query_params["tmdb_id"])]
@@ -314,4 +318,41 @@ async def test_unreachable_resolver_is_a_clean_error(env, monkeypatch):
     c = await client()
     r = await c.post("/api/resolve/start", json=START)
     assert r.status_code == 502 and "video service" in r.json()["detail"]
+    await c.aclose()
+
+
+async def test_a_refresh_carries_on_with_the_download_that_is_running(env):
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    env["library"][0].update(tmdb_id=550, progress=0.4)
+    env["calls"].clear()
+    again = (await c.post("/api/resolve/start", json=START)).json()
+    assert [x[0] for x in env["calls"]] == []  # no new search, no second download
+    assert again["task_id"] == first["task_id"] and again["auto_stream_id"] == "str_b"
+    assert stream_of(again, "str_b")["state"] == "downloading" and stream_of(again, "str_b")["progress"] == 40.0
+    await c.aclose()
+
+
+async def test_a_refresh_right_after_the_search_reuses_the_task(env):
+    c = await client()
+    env["tasks"]["tsk_1"] = {
+        "task_id": "tsk_1", "status": "running", "tmdb_id": 550, "type": "movie", "season": None, "episode": None,
+        "title": "T", "version": 2, "sources_total": 2, "sources_done": 1, "sources": [], "library": [],
+    }
+    r = (await c.post("/api/resolve/start", json=START)).json()
+    assert r["task_id"] == "tsk_1" and r["status"] == "running"
+    assert [x for x in env["calls"] if x[0] == "resolve"] == []  # reused the running search
+    await c.aclose()
+
+
+async def test_the_best_ready_download_beats_one_still_running(env):
+    c = await client()
+    tid = (await c.post("/api/resolve/start", json=START)).json()["task_id"]
+    await c.post(f"/api/resolve/tasks/{tid}/download", json={"stream_id": "str_a"})
+    for it in env["library"]:
+        it["tmdb_id"] = 550
+    env["library"][1].update(status="ready")  # the 534p one is done, the 800p one is not
+    env["calls"].clear()
+    s = (await c.post("/api/resolve/start", json=START)).json()
+    assert s["auto_stream_id"] == "str_a"
     await c.aclose()

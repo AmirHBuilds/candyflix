@@ -45,7 +45,10 @@ export function useWatchProgress(
   // Settings -> Playback -> Save watch progress. Off stops every position
   // save below; the "this was opened" visit records still happen, so
   // Continue Watching and the last-watched episode keep working.
-  saveProgress = true
+  saveProgress = true,
+  // A video still downloading reports a growing length of its own; this holds the real (estimated) one
+  // while that is the case, and 0 otherwise.
+  durationOverride?: React.RefObject<number>
 ) {
   const identityRef = useRef(identity);
   identityRef.current = identity;
@@ -85,7 +88,7 @@ export function useWatchProgress(
         season_number: id.seasonNumber ?? null,
         episode_number: id.episodeNumber ?? null,
         position_seconds: v.currentTime,
-        duration_seconds: v.duration,
+        duration_seconds: durationOverride?.current ? Math.max(durationOverride.current, v.duration) : v.duration,
       };
     }
 
