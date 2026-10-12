@@ -27,7 +27,7 @@ class SubtitleTrackOut(BaseModel):
 
 
 class PlaybackSource(BaseModel):
-    source_type: Literal["mock"]
+    source_type: Literal["mock", "resolver"]
     url: str
     subtitles: list[SubtitleTrackOut]
     resume_position_seconds: float | None = None

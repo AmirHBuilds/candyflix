@@ -1,8 +1,9 @@
-import { getTVShow, getSeason, type TVShowDetail, type SeasonDetail } from "@/lib/media";
+import { backdropUrl, getTVShow, getSeason, stillUrl, type TVShowDetail, type SeasonDetail } from "@/lib/media";
 import { authInit } from "@/lib/media-server";
 import { getEpisodePlaybackSourceServer, getLatestTVWatchProgressServer } from "@/lib/playback-server";
 import { mergeResumeWithHint, parseResumeHintFromSearchParams, type PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
+import ResolverPlayer from "@/components/player/ResolverPlayer";
 import SeasonBrowser from "@/components/SeasonBrowser";
 import PlayerSocial from "@/components/opinions/PlayerSocial";
 import BackToDetailsLink from "@/components/player/BackToDetailsLink";
@@ -86,33 +87,64 @@ export default async function WatchEpisodePage({
   return (
     <div>
       <StripResumeHintFromUrl />
-      <VideoPlayer
-        source={source}
-        title={`${show.title} — ${currentEpisode?.name ?? `Episode ${episodeNum}`}`}
-        identity={{
-          tmdbId: show.tmdb_id,
-          mediaType: "tv",
-          seasonNumber: seasonNum,
-          episodeNumber: episodeNum,
-        }}
-        backHref={`/tv/${show.tmdb_id}`}
-        prevEpisode={
-          prevEp
-            ? {
-                href: `/watch/tv/${show.tmdb_id}/${prevSeasonNum}/${prevEp.episode_number}`,
-                label: prevEp.name,
-              }
-            : null
-        }
-        nextEpisode={
-          nextEp
-            ? {
-                href: `/watch/tv/${show.tmdb_id}/${nextSeasonNum}/${nextEp.episode_number}`,
-                label: nextEp.name,
-              }
-            : null
-        }
-      />
+      {source.source_type === "resolver" ? (
+        <ResolverPlayer
+          source={source}
+          title={`${show.title} — ${currentEpisode?.name ?? `Episode ${episodeNum}`}`}
+          identity={{
+            tmdbId: show.tmdb_id,
+            mediaType: "tv",
+            seasonNumber: seasonNum,
+            episodeNumber: episodeNum,
+          }}
+          backHref={`/tv/${show.tmdb_id}`}
+          prevEpisode={
+            prevEp
+              ? {
+                  href: `/watch/tv/${show.tmdb_id}/${prevSeasonNum}/${prevEp.episode_number}`,
+                  label: prevEp.name,
+                }
+              : null
+          }
+          nextEpisode={
+            nextEp
+              ? {
+                  href: `/watch/tv/${show.tmdb_id}/${nextSeasonNum}/${nextEp.episode_number}`,
+                  label: nextEp.name,
+                }
+              : null
+          }
+          artwork={stillUrl(currentEpisode?.still_path ?? null, "original") ?? backdropUrl(show.backdrop_path)}
+        />
+      ) : (
+        <VideoPlayer
+          source={source}
+          title={`${show.title} — ${currentEpisode?.name ?? `Episode ${episodeNum}`}`}
+          identity={{
+            tmdbId: show.tmdb_id,
+            mediaType: "tv",
+            seasonNumber: seasonNum,
+            episodeNumber: episodeNum,
+          }}
+          backHref={`/tv/${show.tmdb_id}`}
+          prevEpisode={
+            prevEp
+              ? {
+                  href: `/watch/tv/${show.tmdb_id}/${prevSeasonNum}/${prevEp.episode_number}`,
+                  label: prevEp.name,
+                }
+              : null
+          }
+          nextEpisode={
+            nextEp
+              ? {
+                  href: `/watch/tv/${show.tmdb_id}/${nextSeasonNum}/${nextEp.episode_number}`,
+                  label: nextEp.name,
+                }
+              : null
+          }
+        />
+      )}
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 p-6">
         <div className="min-w-0">
           <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">

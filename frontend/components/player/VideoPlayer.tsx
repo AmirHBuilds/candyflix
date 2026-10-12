@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import { getStaticOrigin } from "@/lib/api-client";
+import { isExternalUrl, mediaUrl } from "@/lib/resolve";
+import SourceMenu, { type SourcePicker } from "@/components/player/SourceMenu";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
 import { searchOnlineSubtitles, downloadOnlineSubtitle, navigateWithResumeHint, patchVideoSettings, getSegments } from "@/lib/playback";
 import { consumeAutoplayFlag, flagAutoplayNext } from "@/lib/autoplay";
@@ -55,6 +56,14 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const SLEEP_TIMER_OPTIONS = [15, 30, 45, 60]; // minutes
 const SLEEP_TIMER_STORAGE_KEY = "candyflix:sleep-timer-ends-at";
 
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
   const h = Math.floor(seconds / 3600);
@@ -72,6 +81,10 @@ export default function VideoPlayer({
   backHref,
   nextEpisode,
   prevEpisode,
+  sourcePicker,
+  poster,
+  forceResume,
+  autoStart,
 }: {
   source: PlaybackSource;
   title: string;
@@ -79,6 +92,14 @@ export default function VideoPlayer({
   backHref: string;
   nextEpisode?: { href: string; label: string } | null;
   prevEpisode?: { href: string; label: string } | null;
+  /** Real playback: the sources and qualities to offer in the player's source menu. */
+  sourcePicker?: SourcePicker;
+  /** Shown behind the video until it starts. */
+  poster?: string | null;
+  /** Carry on from `source.resume_position_seconds` even when saving progress is off (a source switch). */
+  forceResume?: boolean;
+  /** Start playing as soon as the video is ready (a source switch while it was playing). */
+  autoStart?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -237,7 +258,62 @@ export default function VideoPlayer({
     setPipSupported(typeof document !== "undefined" && !!document.pictureInPictureEnabled);
   }, []);
 
-  const videoUrl = `${getStaticOrigin()}${source.url}`;
+  const videoUrl = mediaUrl(source.url);
+  // Real video comes as HLS (a playlist of pieces), played through hls.js (or natively where the browser can).
+  const isHls = source.source_type === "resolver" || /\.m3u8/i.test(safeDecode(videoUrl));
+  const hlsRef = useRef<import("hls.js").default | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isHls) return;
+    let cancelled = false;
+    let hls: import("hls.js").default | null = null;
+    (async () => {
+      const { default: Hls } = await import("hls.js");
+      if (cancelled) return;
+      if (Hls.isSupported()) {
+        const instance = new Hls({
+          // A video that is still downloading is a growing playlist: start at its beginning, not at its "live" end.
+          startPosition: 0,
+          xhrSetup: (xhr) => {
+            xhr.withCredentials = !isExternalUrl(videoUrl);
+          },
+        });
+        hls = instance;
+        hlsRef.current = instance;
+        let networkRetries = 0;
+        instance.on(Hls.Events.FRAG_LOADED, () => {
+          networkRetries = 0;
+        });
+        instance.on(Hls.Events.ERROR, (_e, data) => {
+          if (!data.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && networkRetries < 4) {
+            networkRetries += 1;
+            instance.startLoad();
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && networkRetries < 4) {
+            networkRetries += 1;
+            instance.recoverMediaError();
+          } else {
+            instance.destroy();
+            setError("This video couldn't be played. Try another source.");
+            setBuffering(false);
+          }
+        });
+        instance.loadSource(videoUrl);
+        instance.attachMedia(video);
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = videoUrl;
+      } else {
+        setError("This browser can't play this kind of video.");
+        setBuffering(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      hls?.destroy();
+      hlsRef.current = null;
+    };
+  }, [videoUrl, isHls]);
 
   // --- Subtitle track loading ---
   useEffect(() => {
@@ -251,7 +327,7 @@ export default function VideoPlayer({
       return;
     }
     let cancelled = false;
-    fetch(`${getStaticOrigin()}${track.url}`, { credentials: "include" })
+    fetch(mediaUrl(track.url), { credentials: isExternalUrl(mediaUrl(track.url)) ? "omit" : "include" })
       .then((res) => res.text())
       .then((text) => {
         if (!cancelled) setCues(parseSubtitles(text));
@@ -349,7 +425,10 @@ export default function VideoPlayer({
       }
       const resume = source.resume_position_seconds;
       // "Save watch progress" off: nothing was saved, and nothing is resumed.
-      if (playbackSettingsRef.current.save_progress && resume && resume > 3 && resume < video.duration - 5) {
+      if (forceResume && resume && resume > 1) {
+        // A source switch: carry on from the same spot (as far as this one has downloaded).
+        video.currentTime = Math.min(resume, Math.max(0, video.duration - 2));
+      } else if (playbackSettingsRef.current.save_progress && resume && resume > 3 && resume < video.duration - 5) {
         log("attemptResume: seeking to saved position", resume);
         video.currentTime = resume;
       } else {
@@ -367,7 +446,7 @@ export default function VideoPlayer({
       if (autoplayHandledRef.current || !video) return;
       autoplayHandledRef.current = true;
       const handedOver = consumeAutoplayFlag();
-      if (handedOver || playbackSettingsRef.current.autoplay_on_open) void video.play().catch(() => {});
+      if (handedOver || autoStart || playbackSettingsRef.current.autoplay_on_open) void video.play().catch(() => {});
     }
 
     const resumeFallbackTimer = setTimeout(() => {
@@ -1068,6 +1147,11 @@ export default function VideoPlayer({
     resumeAttemptedRef.current = false;
     setVideoStuck(false);
     setBuffering(true);
+    if (hlsRef.current) {
+      hlsRef.current.stopLoad();
+      hlsRef.current.startLoad(video.currentTime || 0);
+      return;
+    }
     video.load();
   }
 
@@ -1226,7 +1310,13 @@ export default function VideoPlayer({
         setShowControls(false);
       }}
     >
-      <video ref={videoRef} src={videoUrl} className="h-full w-full" playsInline />
+      <video
+        ref={videoRef}
+        src={isHls ? undefined : videoUrl}
+        poster={poster ?? undefined}
+        className="h-full w-full"
+        playsInline
+      />
 
       {/* Click/tap zones — single click toggles play/pause, a second
           click/tap on the same side within DOUBLE_TAP_MS skips ±10s.
@@ -1558,6 +1648,13 @@ export default function VideoPlayer({
                   <AssistantIcon />
                 </button>
               </PlayerTooltip>
+            )}
+            {sourcePicker && (
+              <SourceMenu
+                picker={sourcePicker}
+                getTime={() => videoRef.current?.currentTime ?? 0}
+                fullscreenHost={fullscreen ? containerRef.current : null}
+              />
             )}
             {controls.captions && (
             <PlayerTooltip

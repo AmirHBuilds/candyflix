@@ -14,7 +14,7 @@ from app.providers import mock_provider
 from app.providers.mock_provider import MockVideoNotConfigured
 from app.schemas.playback import EpisodeVisitIn, MovieVisitIn, PlaybackSource, WatchProgressIn, WatchProgressOut
 from app.schemas.video_settings import ClearedResult
-from app.services import content_rating_service, subtitle_service, subtitle_sync_service, video_settings_service, watch_progress_service
+from app.services import content_rating_service, resolver_service, subtitle_service, subtitle_sync_service, video_settings_service, watch_progress_service
 
 router = APIRouter(tags=["playback"])
 
@@ -37,8 +37,10 @@ async def playback_movie(
     db: AsyncSession = Depends(get_db),
 ):
     await content_rating_service.ensure(current_user, "movie", tmdb_id)
+    # Real video (Candy Resolver): there is no file yet, the player asks /api/resolve for one.
+    live = resolver_service.enabled()
     try:
-        url = mock_provider.get_mock_video_url()
+        url = "" if live else mock_provider.get_mock_video_url()
     except MockVideoNotConfigured as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -48,7 +50,7 @@ async def playback_movie(
         db, current_user.id, tmdb_id, "movie", None, None
     )
     return PlaybackSource(
-        source_type="mock",
+        source_type="resolver" if live else "mock",
         url=url,
         subtitles=_subtitle_tracks(default_track, "movie", tmdb_id, None, None),
         resume_position_seconds=progress.position_seconds if progress else None,
@@ -65,8 +67,9 @@ async def playback_episode(
     db: AsyncSession = Depends(get_db),
 ):
     await content_rating_service.ensure(current_user, "tv", tmdb_id)
+    live = resolver_service.enabled()
     try:
-        url = mock_provider.get_mock_video_url()
+        url = "" if live else mock_provider.get_mock_video_url()
     except MockVideoNotConfigured as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -78,7 +81,7 @@ async def playback_episode(
         db, current_user.id, tmdb_id, "tv", season_number, episode_number
     )
     return PlaybackSource(
-        source_type="mock",
+        source_type="resolver" if live else "mock",
         url=url,
         subtitles=_subtitle_tracks(default_track, "tv", tmdb_id, season_number, episode_number),
         resume_position_seconds=progress.position_seconds if progress else None,

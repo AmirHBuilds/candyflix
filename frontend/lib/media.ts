@@ -220,7 +220,7 @@ export function backdropUrl(
   return path ? `${IMG_BASE}/${size}${path}` : null;
 }
 
-export function stillUrl(path: string | null, size: "w300" = "w300") {
+export function stillUrl(path: string | null, size: "w300" | "original" = "w300") {
   return path ? `${IMG_BASE}/${size}${path}` : null;
 }
 

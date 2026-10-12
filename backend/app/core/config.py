@@ -92,6 +92,25 @@ class Settings(BaseSettings):
     skipdb_base_url: str = "https://api.skipdb.tv"
     introdb_base_url: str = "https://api.introdb.app"
 
+    # Phase 22 — Candy Resolver (finds and downloads the real video). Leave the URL or key
+    # empty and the player falls back to the mock video folder.
+    resolver_url: str = ""
+    resolver_api_key: str = ""
+    # How long the resolver keeps a downloaded video, in hours.
+    resolver_ttl_hours: int = 24
+    # "proxy": the browser talks only to CandyFlix, which relays the video from the resolver
+    #          (works on localhost, no CORS needed on the resolver).
+    # "direct": the browser plays the resolver's own link (needs CORS on the resolver; no relay cost).
+    resolver_stream_mode: str = "proxy"
+    # Extra hostnames the relay may fetch from (the resolver's own host is always allowed).
+    resolver_extra_hosts: str = ""
+    # How many seconds the first lookup waits for the first source (the resolver allows up to 30).
+    resolver_first_wait_s: int = 25
+    # Ask the resolver to start its starred (reliable) sources first.
+    resolver_starred_first: bool = True
+    # Downloads one person may start per minute.
+    resolver_downloads_per_minute: int = 12
+
     # Profile pictures (resized WebP files), served from /avatars.
     avatars_dir: str = "avatars"
     max_avatar_bytes: int = 5_000_000

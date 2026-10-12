@@ -13,7 +13,7 @@ export type SubtitleTrack = {
 };
 
 export type PlaybackSource = {
-  source_type: "mock";
+  source_type: "mock" | "resolver";
   url: string;
   subtitles: SubtitleTrack[];
   resume_position_seconds: number | null;

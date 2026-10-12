@@ -1,8 +1,9 @@
-import { getMovie, type MovieDetail } from "@/lib/media";
+import { backdropUrl, getMovie, type MovieDetail } from "@/lib/media";
 import { authInit } from "@/lib/media-server";
 import { getMoviePlaybackSourceServer } from "@/lib/playback-server";
 import type { PlaybackSource } from "@/lib/playback";
 import VideoPlayer from "@/components/player/VideoPlayer";
+import ResolverPlayer from "@/components/player/ResolverPlayer";
 import PlayerSocial from "@/components/opinions/PlayerSocial";
 import BackToDetailsLink from "@/components/player/BackToDetailsLink";
 import ErrorState from "@/components/ErrorState";
@@ -37,12 +38,22 @@ export default async function WatchMoviePage({
 
   return (
     <div>
-      <VideoPlayer
-        source={source}
-        title={movie.title}
-        identity={{ tmdbId: movie.tmdb_id, mediaType: "movie" }}
-        backHref={`/movie/${movie.tmdb_id}`}
-      />
+      {source.source_type === "resolver" ? (
+        <ResolverPlayer
+          source={source}
+          title={movie.title}
+          identity={{ tmdbId: movie.tmdb_id, mediaType: "movie" }}
+          backHref={`/movie/${movie.tmdb_id}`}
+          artwork={backdropUrl(movie.backdrop_path)}
+        />
+      ) : (
+        <VideoPlayer
+          source={source}
+          title={movie.title}
+          identity={{ tmdbId: movie.tmdb_id, mediaType: "movie" }}
+          backHref={`/movie/${movie.tmdb_id}`}
+        />
+      )}
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 p-6">
         <div className="min-w-0">
           <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">

@@ -171,3 +171,14 @@ export function AssistantIcon() {
     </svg>
   );
 }
+
+/** "Sources": stacked layers, outlined like the other control icons. */
+export function SourceIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+      <path d="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z" />
+      <path d="M3.5 12.2l8.5 4.5 8.5-4.5" />
+      <path d="M3.5 16.4l8.5 4.5 8.5-4.5" />
+    </svg>
+  );
+}

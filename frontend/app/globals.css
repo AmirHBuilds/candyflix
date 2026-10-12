@@ -297,3 +297,19 @@ summary {
   from { opacity: 0.2; filter: blur(4px); }
   to { opacity: 1; filter: blur(0); }
 }
+
+/* Real playback: the loading screen behind "finding a video". */
+@keyframes kenBurns {
+  from { transform: scale(1.04); }
+  to { transform: scale(1.14); }
+}
+.animate-ken-burns {
+  animation: kenBurns 24s ease-in-out infinite alternate;
+}
+@keyframes slideBar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+.animate-slide-bar {
+  animation: slideBar 1.6s ease-in-out infinite;
+}
