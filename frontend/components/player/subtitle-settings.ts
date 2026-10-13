@@ -26,7 +26,7 @@ export const DEFAULT_SUBTITLE_SETTINGS: SubtitleSettings = {
   color: "#ffffff",
   backgroundColor: "#000000",
   backgroundOpacity: 0.6,
-  outline: true,
+  outline: false,
   outlineColor: "#000000",
   shadow: true,
   position: "bottom",

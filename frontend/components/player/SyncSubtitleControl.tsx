@@ -15,10 +15,12 @@ const POLL_MS = 1000;
 export default function SyncSubtitleControl({
   track,
   identity,
+  libraryId,
   onSynced,
 }: {
   track: SubtitleTrack;
   identity: WatchIdentity;
+  libraryId?: string | null;
   onSynced: (track: SubtitleTrack) => void;
 }) {
   const [status, setStatus] = useState<SyncStatus | null>(null);
@@ -65,7 +67,7 @@ export default function SyncSubtitleControl({
     setError(null);
     setStarting(true);
     try {
-      apply(await startSync(identity, track));
+      apply(await startSync(identity, track, libraryId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't start the sync.");
     } finally {

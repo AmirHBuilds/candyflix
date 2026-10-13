@@ -87,6 +87,7 @@ export default function VideoPlayer({
   forceResume,
   autoStart,
   growth,
+  syncLibraryId,
 }: {
   source: PlaybackSource;
   title: string;
@@ -106,7 +107,9 @@ export default function VideoPlayer({
    * A video that is still downloading is a growing playlist, so its own length keeps rising. This gives
    * the player what it needs to show the real length, the downloaded part, and to wait for a resume spot.
    */
-  growth?: { ready: boolean; progress: number | null; runtimeSeconds: number | null };
+  /** The resolver download being played; subtitle sync listens to its audio. */
+  syncLibraryId?: string | null;
+  growth?: { ready: boolean; progress: number | null; durationSeconds?: number | null; runtimeSeconds: number | null };
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,24 +118,28 @@ export default function VideoPlayer({
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  // Where a click on the seek bar asked to go: the bar and the time jump there at once, while the video
+  // catches up (it may have to load that part first).
+  const [seekPreview, setSeekPreview] = useState<number | null>(null);
+  const shownTime = seekPreview ?? currentTime;
+  useEffect(() => {
+    if (seekPreview === null) return;
+    const t = setTimeout(() => setSeekPreview(null), 15000);
+    return () => clearTimeout(t);
+  }, [seekPreview]);
   // The length of the media as the browser sees it: for a video still downloading, only what has arrived so far.
   const [mediaDuration, setDuration] = useState(0);
   const growing = !!growth && !growth.ready;
   const growthProgress = growth?.progress ?? null;
   const growthRuntime = growth?.runtimeSeconds ?? null;
-  // The length shown and used everywhere: the real one when known, otherwise the best estimate (the film's
-  // listed runtime, or what has arrived divided by the share downloaded), never shorter than what is there.
+  const growthDuration = growth?.durationSeconds ?? null;
+  // The length shown and used everywhere: while a video downloads, the real length the resolver reports (it
+  // never changes), else the listed runtime; never shorter than what has arrived. Once ready, the media's own.
   const duration = useMemo(() => {
     if (!growing) return mediaDuration;
-    let est = growthRuntime && growthRuntime > 0 ? growthRuntime : 0;
-    const p = growthProgress;
-    if (p !== null && mediaDuration >= 60) {
-      const byShare = mediaDuration / Math.max(p / 100, 0.01);
-      if (p >= 25 && (!est || Math.abs(byShare - est) / est > 0.15)) est = byShare;
-      else if (!est && p >= 5) est = byShare;
-    }
-    return Math.max(est, mediaDuration);
-  }, [growing, mediaDuration, growthProgress, growthRuntime]);
+    const known = growthDuration && growthDuration > 0 ? growthDuration : growthRuntime && growthRuntime > 0 ? growthRuntime : 0;
+    return Math.max(known, mediaDuration);
+  }, [growing, mediaDuration, growthDuration, growthRuntime]);
   const totalRef = useRef(0);
   totalRef.current = growing ? duration : 0;
   const growingRef = useRef(growing);
@@ -541,6 +548,10 @@ export default function VideoPlayer({
     function onTimeUpdate() {
       if (video) setCurrentTime(video.currentTime);
     }
+    function onSeeked() {
+      setSeekPreview(null);
+      if (video) setCurrentTime(video.currentTime);
+    }
     // Drives the scrub bar's grey "load progress" fill. Finds whichever
     // buffered range contains (or immediately precedes) the current time,
     // since `buffered` can contain multiple disjoint ranges after seeking.
@@ -623,6 +634,7 @@ export default function VideoPlayer({
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     video.addEventListener("durationchange", onDurationChange);
     video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("seeked", onSeeked);
     video.addEventListener("progress", onProgress);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
@@ -664,6 +676,7 @@ export default function VideoPlayer({
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
       video.removeEventListener("durationchange", onDurationChange);
       video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("seeked", onSeeked);
       video.removeEventListener("progress", onProgress);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
@@ -919,7 +932,9 @@ export default function VideoPlayer({
   function seekBy(delta: number) {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.min(Math.max(video.currentTime + delta, 0), growingRef.current ? Math.max(0, (video.duration || 0) - 1) : video.duration || Infinity);
+    const target = Math.min(Math.max(video.currentTime + delta, 0), growingRef.current ? Math.max(0, (video.duration || 0) - 1) : video.duration || Infinity);
+    setSeekPreview(target);
+    video.currentTime = target;
   }
 
   function seekTo(seconds: number) {
@@ -927,7 +942,9 @@ export default function VideoPlayer({
     if (!video) return;
     const end = video.duration || Infinity;
     if (growingRef.current && seconds > end - 1) showToast("That part hasn't downloaded yet.", "info");
-    video.currentTime = Math.min(Math.max(seconds, 0), growingRef.current ? Math.max(0, end - 1) : end);
+    const target = Math.min(Math.max(seconds, 0), growingRef.current ? Math.max(0, end - 1) : end);
+    setSeekPreview(target);
+    video.currentTime = target;
   }
 
   // --- Skip intro / recap / credits (Phase 9f) ---
@@ -1574,8 +1591,8 @@ export default function VideoPlayer({
           aria-label="Seek"
           aria-valuemin={0}
           aria-valuemax={duration || 0}
-          aria-valuenow={currentTime}
-          aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+          aria-valuenow={shownTime}
+          aria-valuetext={`${formatTime(shownTime)} of ${formatTime(duration)}`}
           onMouseEnter={() => setScrubHover(true)}
           onMouseLeave={() => setScrubHover(false)}
           onMouseDown={(e) => {
@@ -1607,7 +1624,7 @@ export default function VideoPlayer({
             />
             <div
               className="absolute left-0 top-0 h-full rounded-full bg-accent"
-              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              style={{ width: `${duration ? (Math.min(shownTime, duration) / duration) * 100 : 0}%` }}
             >
               <div
                 className={`absolute top-1/2 rounded-full bg-accent shadow-[0_0_2px_rgba(0,0,0,0.6)] transition-all duration-150 ease-out ${
@@ -1726,7 +1743,7 @@ export default function VideoPlayer({
 
           {controls.time && (
             <div className="flex h-10 items-center whitespace-nowrap rounded-full bg-white/15 px-3.5 text-sm font-medium tabular-nums text-white">
-              {formatTime(currentTime)} / {formatTime(duration)}
+              {formatTime(shownTime)} / {formatTime(duration)}
             </div>
           )}
 
@@ -1921,6 +1938,7 @@ export default function VideoPlayer({
                           settings={subtitleSettings}
                           onChange={updateSubtitleSettings}
                           identity={identity}
+                          syncLibraryId={syncLibraryId}
                           onTrackAdded={(track) => {
                             setOnlineTracks((prev) => [...prev.filter((t) => t.url !== track.url), track]);
                             selectSubtitleLanguage(track.language);

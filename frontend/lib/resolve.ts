@@ -9,6 +9,7 @@ export type StreamState = {
   // idle = not downloaded · downloading = being fetched (it may already play) · ready · failed
   state: "idle" | "downloading" | "ready" | "failed";
   progress: number | null; // 0-100
+  duration_seconds: number | null; // the real length of the whole video
   library_id: string | null;
   play_url: string | null;
   error: string | null;

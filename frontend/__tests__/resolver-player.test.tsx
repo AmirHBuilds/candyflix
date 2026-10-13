@@ -59,7 +59,7 @@ import { DEFAULT_SETTINGS } from "@/lib/settings";
 import type { PlaybackSource } from "@/lib/playback";
 
 const stream = (id: string, quality: string, over: Partial<StreamState> = {}): StreamState => ({
-  stream_id: id, quality, rank: parseInt(quality) || 0, state: "idle", progress: null, library_id: null, play_url: null, error: null, ...over,
+  stream_id: id, quality, rank: parseInt(quality) || 0, state: "idle", progress: null, duration_seconds: null, library_id: null, play_url: null, error: null, ...over,
 });
 const state = (over: Partial<ResolveState> = {}): ResolveState => ({
   task_id: "tsk_1", status: "running", version: 1, sources_total: 2, sources_done: 1, queue_position: null,

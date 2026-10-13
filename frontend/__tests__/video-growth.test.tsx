@@ -62,7 +62,7 @@ afterEach(() => vi.unstubAllGlobals());
 const src = (resume: number | null): PlaybackSource => ({ source_type: "resolver", url: "/api/resolve/relay?u=x", subtitles: [], resume_position_seconds: resume, video_settings: {} });
 const identity = { tmdbId: 550, mediaType: "movie" as const };
 
-function mount(growth: { ready: boolean; progress: number | null; runtimeSeconds: number | null }, resume: number | null = null) {
+function mount(growth: { ready: boolean; progress: number | null; durationSeconds?: number | null; runtimeSeconds: number | null }, resume: number | null = null) {
   return render(
     <SettingsProvider initial={{ ...DEFAULT_SETTINGS, playback: { ...DEFAULT_SETTINGS.playback, autoplay_on_open: false } }}>
       <VideoPlayer source={src(resume)} title="t" identity={identity} backHref="/" growth={growth} />
@@ -78,16 +78,24 @@ describe("a video that is still downloading", () => {
     expect(parseFloat(bar.style.width)).toBeCloseTo((100 / 6000) * 100, 1);
   });
 
-  it("estimates the length from the share downloaded when there is no listed length", () => {
+  it("uses the real length from the resolver and never changes it as more downloads", () => {
     mediaDuration = 600;
-    mount({ ready: false, progress: 10, runtimeSeconds: null });
-    expect(screen.getByText("0:00 / 1:40:00")).toBeInTheDocument(); // 600s is 10% of 6000s
+    const { rerender } = mount({ ready: false, progress: 10, durationSeconds: 5400, runtimeSeconds: 6000 });
+    expect(screen.getByText("0:00 / 1:30:00")).toBeInTheDocument();
+    mediaDuration = 3000;
+    rerender(
+      <SettingsProvider initial={{ ...DEFAULT_SETTINGS, playback: { ...DEFAULT_SETTINGS.playback, autoplay_on_open: false } }}>
+        <VideoPlayer source={src(null)} title="t" identity={identity} backHref="/" growth={{ ready: false, progress: 55, durationSeconds: 5400, runtimeSeconds: 6000 }} />
+      </SettingsProvider>
+    );
+    act(() => void document.querySelector("video")!.dispatchEvent(new Event("durationchange")));
+    expect(screen.getByText("0:00 / 1:30:00")).toBeInTheDocument();
   });
 
-  it("trusts the share downloaded over a listed length that is far off (an extended cut)", () => {
+  it("falls back to the listed runtime, not to a guess from the download", () => {
     mediaDuration = 3000;
-    mount({ ready: false, progress: 40, runtimeSeconds: 6000 }); // 3000s is 40% → 7500s
-    expect(screen.getByText("0:00 / 2:05:00")).toBeInTheDocument();
+    mount({ ready: false, progress: 40, runtimeSeconds: 6000 });
+    expect(screen.getByText("0:00 / 1:40:00")).toBeInTheDocument();
   });
 
   it("is plain once it is ready: the real length and no extra bar", () => {
@@ -121,5 +129,19 @@ describe("a video that is still downloading", () => {
     mount({ ready: false, progress: 60, runtimeSeconds: 6000 }, 3000);
     await waitFor(() => expect(currentTime).toBe(3000));
     expect(screen.queryByTestId("waiting-for-download")).toBeNull();
+  });
+});
+
+describe("clicking the seek bar", () => {
+  it("moves the bar and the time at once, before the video has loaded that part", () => {
+    HTMLElement.prototype.getBoundingClientRect = () => ({ left: 0, width: 1000, top: 0, bottom: 4, right: 1000, height: 4, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    mediaDuration = 200;
+    mount({ ready: true, progress: 100, durationSeconds: null, runtimeSeconds: null });
+    fireEvent.mouseDown(screen.getByRole("slider", { name: "Seek" }), { clientX: 500 });
+    expect(screen.getByText("1:40 / 3:20")).toBeInTheDocument(); // halfway, immediately
+    expect(screen.getByRole("slider", { name: "Seek" })).toHaveAttribute("aria-valuenow", "100");
+    currentTime = 100;
+    act(() => void document.querySelector("video")!.dispatchEvent(new Event("seeked")));
+    expect(screen.getByText("1:40 / 3:20")).toBeInTheDocument();
   });
 });

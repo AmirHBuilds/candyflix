@@ -146,6 +146,7 @@ export default function SubtitleSettingsPanel({
   settings,
   onChange,
   identity,
+  syncLibraryId,
   onTrackAdded,
 }: {
   // The track actually used for each language (what plays).
@@ -157,6 +158,8 @@ export default function SubtitleSettingsPanel({
   settings: SubtitleSettings;
   onChange: (settings: SubtitleSettings) => void;
   identity: WatchIdentity;
+  /** The real video being played (for syncing a subtitle against its audio). */
+  syncLibraryId?: string | null;
   onTrackAdded: (track: SubtitleTrack) => void;
 }) {
   const active = selectedLanguage ? tracks.find((t) => t.language === selectedLanguage) : undefined;
@@ -223,7 +226,7 @@ export default function SubtitleSettingsPanel({
             </button>
           ) : null}
         </div>
-        {active && !active.synced && <SyncSubtitleControl track={active} identity={identity} onSynced={choose} />}
+        {active && !active.synced && <SyncSubtitleControl track={active} identity={identity} libraryId={syncLibraryId} onSynced={choose} />}
         {active?.synced && <p className="text-xs text-white/50">Matched to this video&apos;s audio ✓</p>}
       </div>
 

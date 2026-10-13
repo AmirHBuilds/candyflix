@@ -104,7 +104,8 @@ export default function ResolverPlayer({
       nextEpisode={nextEpisode}
       prevEpisode={prevEpisode}
       poster={artwork}
-      growth={{ ready: r.playing?.state === "ready", progress: r.playing?.progress ?? null, runtimeSeconds: runtimeSeconds ?? null }}
+      growth={{ ready: r.playing?.state === "ready", progress: r.playing?.progress ?? null, durationSeconds: r.playing?.duration_seconds ?? null, runtimeSeconds: runtimeSeconds ?? null }}
+      syncLibraryId={r.playing?.library_id ?? null}
       forceResume={switchedAt !== null}
       autoStart={switchedAt !== null}
       sourcePicker={{

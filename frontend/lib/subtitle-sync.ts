@@ -31,7 +31,8 @@ export async function getSyncStatus(identity: WatchIdentity, subtitleUrl: string
   return res.json();
 }
 
-export async function startSync(identity: WatchIdentity, track: SubtitleTrack): Promise<SyncStatus> {
+// `libraryId` is the real video being watched (its audio is what the subtitle is fitted to).
+export async function startSync(identity: WatchIdentity, track: SubtitleTrack, libraryId?: string | null): Promise<SyncStatus> {
   const res = await fetch(`${getApiBaseUrl()}/subtitle-sync`, {
     method: "POST",
     credentials: "include",
@@ -42,6 +43,7 @@ export async function startSync(identity: WatchIdentity, track: SubtitleTrack): 
       season_number: identity.seasonNumber ?? null,
       episode_number: identity.episodeNumber ?? null,
       subtitle_url: track.url,
+      library_id: libraryId ?? null,
       language: track.language,
       label: track.label,
     }),
