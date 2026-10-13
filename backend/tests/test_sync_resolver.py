@@ -2,12 +2,14 @@
 that came from the resolver is converted, and any failure is recorded and reported to Telegram."""
 import asyncio
 import json
+import os
+import time
 import stat
 import textwrap
 import uuid
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import PlainTextResponse
 from httpx import ASGITransport, AsyncClient
 
@@ -39,6 +41,14 @@ FAKE_SYNC = textwrap.dedent('''
 
 def fake_resolver(state):
     fake = FastAPI()
+    state.setdefault("audio_calls", [])
+
+    @fake.get("/v1/library/{item_id}/audio")
+    async def audio(item_id: str, request: Request, format: str = "aac", track: int = 0):
+        state["audio_calls"].append({"id": item_id, "format": format, "track": track, "key": request.headers.get("x-api-key")})
+        if state.get("audio_fail"):
+            return PlainTextResponse("no audio for you", status_code=500)
+        return Response(b"a" * 5000, media_type="audio/aac")
 
     @fake.get("/v1/library/{item_id}")
     async def item(item_id: str):
@@ -71,13 +81,6 @@ async def env(tmp_path, monkeypatch):
     script = tmp_path / "fake_sync.py"
     script.write_text(FAKE_SYNC)
     monkeypatch.setattr(sync_service, "SCRIPT", script)
-    # a fake ffmpeg: records its arguments and writes the output file (the last argument)
-    ff = tmp_path / "ffmpeg"
-    ff.write_text(f'#!/usr/bin/env python3\nimport sys, json\nargs = sys.argv[1:]\nopen(r"{tmp_path}/ffmpeg-args.json", "w").write(json.dumps(args))\n'
-                  f'if r"{tmp_path}/FAIL" and __import__("os").path.exists(r"{tmp_path}/FAIL"):\n    sys.stderr.write("Server returned 403 Forbidden"); sys.exit(1)\n'
-                  'print("out_time_us=50000000", flush=True)\nopen(args[-1], "wb").write(b"x" * 5000)\n')
-    ff.chmod(ff.stat().st_mode | stat.S_IEXEC)
-    monkeypatch.setattr(sync_service.shutil, "which", lambda name: str(ff) if name == "ffmpeg" else None)
     reports = []
     monkeypatch.setattr(telegram_service, "report_sync_failure", lambda *a: reports.append(a))
     yield {"state": state, "tmp": tmp_path, "reports": reports, "syncs": syncs, "subs": subs}
@@ -124,13 +127,10 @@ async def test_syncs_a_resolver_subtitle_against_the_audio_of_the_playing_video(
     assert first.status_code == 200
     done = await wait_state(authed, {"done", "failed"})
     assert done["state"] == "done" and done["track"]["synced"] is True
-    args = json.loads((env["tmp"] / "ffmpeg-args.json").read_text())
-    assert args[args.index("-i") + 1] == f"{BASE}/s/index.m3u8?sig=1"
-    assert "-vn" in args and args[args.index("-map") + 1] == "0:a:0" and "flac" in args
-    # the sync tool got the extracted audio, not the stream link
-    media = next(env["syncs"].glob("tmp-*"), None)
-    assert media is None  # temp files are cleaned up
-    assert list(env["syncs"].glob("audio-*.flac"))
+    # only the audio was asked for, from the resolver's audio endpoint, with the key
+    assert env["state"]["audio_calls"] == [{"id": "lib_1", "format": "aac", "track": 0, "key": "k"}]
+    assert next(env["syncs"].glob("tmp-*"), None) is None  # temp files are cleaned up
+    assert list(env["syncs"].glob("audio-*.aac")) and not list(env["syncs"].glob("*.part"))
     assert list(env["subs"].glob("rs-*.srt"))  # the converted subtitle
     assert env["reports"] == []
 
@@ -147,15 +147,15 @@ async def test_needs_to_know_which_video(authed, env):
 
 
 async def test_an_audio_failure_is_recorded_and_reported(authed, env):
-    (env["tmp"] / "FAIL").write_text("1")
+    env["state"]["audio_fail"] = True
     await authed.post("/api/subtitle-sync", json=BODY)
     failed = await wait_state(authed, {"failed"})
     assert "admins were told" in failed["message"]
     assert len(env["reports"]) == 1
     video, subtitle, stage, detail, media = env["reports"][0]
-    assert stage == "audio" and "403" in detail and media == "Vertex 800p" and video.startswith("movie:550")
+    assert stage == "audio" and "500" in detail and media == "Vertex 800p" and video.startswith("movie:550")
     line = json.loads((env["syncs"] / "failures.jsonl").read_text().splitlines()[0])
-    assert line["stage"] == "audio" and "403" in line["detail"]
+    assert line["stage"] == "audio" and "500" in line["detail"]
 
 
 async def test_a_sync_tool_failure_is_reported_too(authed, env, monkeypatch):
@@ -170,3 +170,33 @@ def test_the_telegram_report_goes_to_the_errors_topic(monkeypatch):
     monkeypatch.setattr(telegram_service, "notify", lambda topic, text, **k: sent.append((topic, text)))
     REAL_REPORT("movie:1:0:0", "x.srt", "audio", "<bad>", "Vertex 800p")
     assert sent[0][0] == "errors" and "Subtitle sync failed" in sent[0][1] and "&lt;bad&gt;" in sent[0][1]
+
+
+async def test_the_saved_audio_is_shared_by_every_sync_of_that_video(authed, env):
+    await authed.post("/api/subtitle-sync", json=BODY)
+    await wait_state(authed, {"done"})
+    other = {**BODY, "subtitle_url": "/api/resolve/relay?u=http%3A%2F%2Fresolver.test%2Fsubs%2Fen.vtt%3Fv%3D2"}
+    await authed.post("/api/subtitle-sync", json=other)
+    for _ in range(300):
+        r = (await authed.get("/api/subtitle-sync/status", params={**Q, "subtitle_url": other["subtitle_url"]})).json()
+        if r["state"] in ("done", "failed"):
+            break
+        await asyncio.sleep(0.05)
+    assert r["state"] == "done"
+    assert len(env["state"]["audio_calls"]) == 1  # the second sync reused the file
+
+
+def test_old_audio_is_deleted_but_not_while_in_use(env):
+    d = env["syncs"]
+    old, fresh, busy = d / "audio-old.aac", d / "audio-fresh.aac", d / "audio-busy.aac"
+    for f in (old, fresh, busy):
+        f.write_bytes(b"x" * 2000)
+    long_ago = time.time() - 25 * 3600
+    for f in (old, busy):
+        os.utime(f, (long_ago, long_ago))
+    sync_service._audio_in_use.add("audio-busy.aac")
+    try:
+        assert sync_service.cleanup_audio() == 1
+    finally:
+        sync_service._audio_in_use.discard("audio-busy.aac")
+    assert not old.exists() and fresh.exists() and busy.exists()

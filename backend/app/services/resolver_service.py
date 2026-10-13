@@ -9,6 +9,8 @@ browser one of two ways, chosen by RESOLVER_STREAM_MODE:
   direct - the browser plays the resolver's own signed link. Needs CORS on the resolver.
 """
 import json
+import os
+from pathlib import Path
 import re
 from urllib.parse import quote, urljoin, urlparse
 
@@ -200,6 +202,7 @@ def build_state(task: dict, extra_subtitles: list[dict], auto: str | None = None
         sources_total=task.get("sources_total") or 0,
         sources_done=task.get("sources_done") or 0,
         queue_position=task.get("queue_position"),
+        has_more=bool(task.get("has_more")),
         sources=sources,
         subtitles=_subtitle_items(raw_subs),
         auto_stream_id=auto,
@@ -302,6 +305,24 @@ async def request_download(user: User, task_id: str, stream_id: str | None) -> R
     return build_state(task, await _task_subtitles(task))
 
 
+async def more_sources(user: User, task_id: str, everything: bool) -> ResolveState:
+    """Asks the resolver for more sources of a finished search: about half of them the first time, all the rest after."""
+    s = get_settings()
+    task = await _call("GET", f"/v1/tasks/{task_id}")
+    await _guard(user, task)
+    if task.get("status") == "running" or not task.get("has_more"):
+        # Still searching (a second click must not stack another search), or nothing is left to ask.
+        return build_state(task, await _task_subtitles(task))
+    if everything:
+        count = 50
+    else:
+        total = int(task.get("sources_total") or 0)
+        count = -(-total // 2) if total > 1 else s.resolver_more_default
+    count = max(1, min(count, 50))
+    task = await _call("POST", f"/v1/tasks/{task_id}/sources", json_body={"count": count})
+    return build_state(task, await _task_subtitles(task))
+
+
 async def start(user: User, media_type: str, tmdb_id: int, season: int | None, episode: int | None) -> ResolveState:
     if media_type == "tv" and (season is None or episode is None):
         raise HTTPException(422, "A series needs a season and an episode.")
@@ -353,6 +374,9 @@ async def start(user: User, media_type: str, tmdb_id: int, season: int | None, e
     body: dict = {"tmdb_id": tmdb_id, "type": media_type, "starred_first": s.resolver_starred_first}
     if media_type == "tv":
         body.update(season=season, episode=episode)
+    # Only the best source(s) at first (RESOLVER_FIRST_SOURCES); the menu can ask for more later.
+    if s.resolver_first_sources > 0:
+        body["max_sources"] = min(s.resolver_first_sources, 50)
     wait = min(max(s.resolver_first_wait_s, 1), 30)
     task = await _call("POST", "/v1/resolve", params={"wait": "first", "wait_s": wait}, json_body=body, timeout=wait + 15)
     if best_stream(task):
@@ -361,16 +385,44 @@ async def start(user: User, media_type: str, tmdb_id: int, season: int | None, e
 
 
 async def library_media(library_id: str | None) -> tuple[str, dict]:
-    """The link of a fully downloaded video, for the server's own use (the subtitle sync listens to its audio)."""
+    """A fully downloaded video's id and details, for the server's own use (the subtitle sync takes its audio)."""
     if not library_id:
         raise HTTPException(404, "This video isn't available to sync against.")
     item = await _call("GET", f"/v1/library/{quote(library_id, safe='')}")
     if _item_state(item) != "ready":
         raise HTTPException(409, "Wait until the video has finished downloading, then sync the subtitle.")
-    link = item.get("stream_url") or item.get("url")
-    if not link:
-        raise HTTPException(404, "This video isn't available to sync against.")
-    return link, {"id": item.get("id"), "source": item.get("source"), "quality": item.get("quality"), "duration_s": item.get("duration_s")}
+    return item["id"], {"id": item.get("id"), "source": item.get("source"), "quality": item.get("quality"), "duration_s": item.get("duration_s")}
+
+
+async def fetch_audio(library_id: str, dest: "Path", expected_bytes: int | None = None, on_progress=None) -> str | None:
+    """Streams ONLY the audio of a downloaded video from the resolver (GET /v1/library/{id}/audio) into `dest`.
+    Returns a description of what went wrong, or None. Written to a temp file first, so `dest` is never half-done."""
+    s = get_settings()
+    tmp = dest.with_suffix(dest.suffix + ".part")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    url = f"{_base()}/v1/library/{quote(library_id, safe='')}/audio"
+    got = 0
+    try:
+        async with httpx.AsyncClient(transport=_transport, timeout=httpx.Timeout(600, connect=8), follow_redirects=False) as c:
+            async with c.stream("GET", url, params={"format": s.resolver_audio_format, "track": 0}, headers={"x-api-key": s.resolver_api_key}) as r:
+                if r.status_code >= 400:
+                    body = (await r.aread())[:300].decode(errors="replace")
+                    tmp.unlink(missing_ok=True)
+                    return f"The resolver's audio endpoint answered {r.status_code}: {body}".strip()
+                with tmp.open("wb") as f:
+                    async for chunk in r.aiter_bytes(64 * 1024):
+                        f.write(chunk)
+                        got += len(chunk)
+                        if on_progress and expected_bytes:
+                            await on_progress(min(got / expected_bytes, 1.0))
+    except httpx.HTTPError as e:
+        tmp.unlink(missing_ok=True)
+        return f"Couldn't reach the resolver's audio endpoint: {type(e).__name__} {e}"[:600]
+    if got < 1000:
+        tmp.unlink(missing_ok=True)
+        return f"The resolver's audio endpoint sent almost nothing ({got} bytes)."
+    os.replace(tmp, dest)
+    return None
 
 
 async def fetch_text(url: str) -> str:

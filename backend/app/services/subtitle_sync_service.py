@@ -240,6 +240,7 @@ async def start(
         raise SyncError(404, "This video isn't available to sync against.")
     if len(_tasks) >= MAX_ACTIVE_JOBS:
         raise SyncError(429, "Lots of syncs are running right now. Try again in a few minutes.")
+    cleanup_audio()
 
     await _set_state(job_id, "queued", 0, "queued", "Starting…")
     task = asyncio.create_task(_run(job_id, vkey, media, sub_name, language, label, media_info))
@@ -268,15 +269,21 @@ async def _run(job_id: str, vkey: str, media: "Path | str", sub_name: str, langu
         async with sem:
             await _set_state(job_id, "running", 1, "prepare", "Getting started…")
             base, span = 0.0, 100.0
-            if isinstance(media, str):  # a link to the video: pull its audio out first
-                audio = sync_dir / f"audio-{_digest(media_info.get('id') or media)}.flac"
-                problem = await _extract_audio(job_id, media, audio, media_info or {})
-                if problem:
-                    _record_failure(job_id, vkey, sub_name, "audio", problem, media_info)
-                    await _set_state(job_id, "failed", 0, None, "Couldn't get the audio from this video. The admins were told.")
-                    return
-                media, base, span = audio, 30.0, 70.0
-            result, problem = await _run_script(job_id, media, sub_path, tmp_out, sync_dir, base, span)
+            if isinstance(media, str):  # a downloaded video at the resolver: take only its audio (kept and shared for a while)
+                audio = sync_dir / f"audio-{_digest(media)}.{settings.resolver_audio_format}"
+                _audio_in_use.add(audio.name)
+                try:
+                    problem = await _get_audio(job_id, media, audio, media_info or {})
+                    if problem:
+                        _record_failure(job_id, vkey, sub_name, "audio", problem, media_info)
+                        await _set_state(job_id, "failed", 0, None, "Couldn't get the audio from this video. The admins were told.")
+                        return
+                    media, base, span = audio, 30.0, 70.0
+                    result, problem = await _run_script(job_id, media, sub_path, tmp_out, sync_dir, base, span)
+                finally:
+                    _audio_in_use.discard(audio.name)
+            else:
+                result, problem = await _run_script(job_id, media, sub_path, tmp_out, sync_dir, base, span)
             if result is None:
                 _record_failure(job_id, vkey, sub_name, "sync", problem or "no details", media_info)
             await _finish(job_id, vkey, sub_name, language, label, tmp_out, result)
@@ -347,53 +354,46 @@ async def _run_script(job_id: str, media: Path, sub_path: Path, tmp_out: Path, s
     return result, None
 
 
-async def _extract_audio(job_id: str, url: str, dest: Path, info: dict) -> str | None:
-    """Pulls the first audio track of the video (an HLS link) into a small mono FLAC the sync tool can read.
-    Returns a description of what went wrong, or None. An audio file made earlier for the same download is reused."""
+async def _get_audio(job_id: str, library_id: str, dest: Path, info: dict) -> str | None:
+    """The audio of the downloaded video as a small file, asked from the resolver's audio-only endpoint (no video is
+    transferred). A file made earlier for the same download is reused, whoever asked for it. Returns a description of
+    what went wrong, or None."""
     if dest.is_file() and dest.stat().st_size > 1000:
         return None
-    ffmpeg = shutil.which("ffmpeg")
-    if not ffmpeg:
-        return "ffmpeg is not installed on the server."
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    tmp = dest.with_suffix(".part.flac")
     total = float(info.get("duration_s") or 0)
-    proc = await asyncio.create_subprocess_exec(
-        ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y",
-        "-allowed_extensions", "ALL", "-i", url,
-        "-vn", "-map", "0:a:0", "-ac", "1", "-ar", "16000", "-c:a", "flac", str(tmp),
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-    )
-    last = [0]
+    expected = int(total * 20_000) if total else None  # ~160 kbit/s: only for the progress bar
 
-    async def pump():
-        assert proc.stdout is not None
-        async for raw in proc.stdout:
-            line = raw.decode(errors="replace").strip()
-            if total and (line.startswith("out_time_us=") or line.startswith("out_time_ms=")):
-                try:
-                    seconds = int(line.split("=", 1)[1]) / 1_000_000
-                except ValueError:
-                    continue
-                pct = 2 + 28 * min(seconds / total, 1)
-                if int(pct) != last[0]:
-                    last[0] = int(pct)
-                    await _set_state(job_id, "running", pct, "audio", "Getting the audio from the video…")
+    async def progress(fraction: float):
+        await _set_state(job_id, "running", 2 + 28 * fraction, "audio", "Getting the audio from the video…")
 
     await _set_state(job_id, "running", 2, "audio", "Getting the audio from the video…")
     try:
-        _, err = await asyncio.wait_for(asyncio.gather(pump(), proc.stderr.read()), timeout=JOB_TIMEOUT_SECONDS)
-        await proc.wait()
+        return await asyncio.wait_for(resolver_service.fetch_audio(library_id, dest, expected, progress), timeout=JOB_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
-        proc.kill()
-        await proc.wait()
-        tmp.unlink(missing_ok=True)
+        dest.with_suffix(dest.suffix + ".part").unlink(missing_ok=True)
         return "Getting the audio took too long and was stopped."
-    if proc.returncode != 0 or not tmp.is_file():
-        tmp.unlink(missing_ok=True)
-        return f"ffmpeg failed (exit {proc.returncode}): {err.decode(errors='replace').strip()[-600:]}"
-    os.replace(tmp, dest)
-    return None
+
+
+_audio_in_use: set[str] = set()
+
+
+def cleanup_audio(now: float | None = None) -> int:
+    """Deletes saved audio older than SYNC_AUDIO_TTL_HOURS (never one a sync is using right now). Returns how many."""
+    ttl = get_settings().sync_audio_ttl_hours * 3600
+    d = Path(get_settings().sync_cache_dir)
+    if not d.is_dir():
+        return 0
+    cutoff = (now or time.time()) - ttl
+    removed = 0
+    for f in d.glob("audio-*"):
+        try:
+            if f.name in _audio_in_use or f.name.removesuffix(".part") in _audio_in_use or f.stat().st_mtime > cutoff:
+                continue
+            f.unlink()
+            removed += 1
+        except OSError:
+            pass
+    return removed
 
 
 def _record_failure(job_id: str, vkey: str, sub_name: str, stage: str, detail: str, media_info: dict | None = None) -> None:

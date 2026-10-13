@@ -87,6 +87,8 @@ class Settings(BaseSettings):
     # people talk), so syncing a second subtitle for the same video is instant.
     # Synced subtitles themselves are written into subtitle_cache_dir.
     sync_cache_dir: str = "sync-cache"
+    # The audio taken from a downloaded video for syncing is kept this long (every person reuses it), then deleted.
+    sync_audio_ttl_hours: int = 24
 
     # Intro / recap / credits timestamps (Phase 9f). SkipDB is asked first,
     # IntroDB fills in whatever it lacks. Both are open read APIs (no key).
@@ -111,6 +113,12 @@ class Settings(BaseSettings):
     resolver_starred_first: bool = True
     # Downloads one person may start per minute.
     resolver_downloads_per_minute: int = 12
+    # How many sources the first search asks (1 = only the best one; the menu's "Load more sources" asks for more).
+    resolver_first_sources: int = 1
+    # How many more sources "Load more" asks when the resolver can't say how many exist (the second click asks for all).
+    resolver_more_default: int = 3
+    # Audio taken from a downloaded video for subtitle sync: aac (fastest), mp3 or opus.
+    resolver_audio_format: str = "aac"
 
     # Profile pictures (resized WebP files), served from /avatars.
     avatars_dir: str = "avatars"

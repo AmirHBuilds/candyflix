@@ -48,7 +48,21 @@ def make_fake():
                  "streams": [stream("e", "1080p")], "subtitles": [], "audio": []},
             ],
         }
+        if st.get("honor_max") and body.get("max_sources"):
+            # like the real resolver: only that many sources are asked, the rest wait for POST /sources
+            st["held"] = t["sources"][body["max_sources"]:]
+            t["sources"] = t["sources"][: body["max_sources"]]
+            t.update(sources_total=4, has_more=True, status="done")
         st["tasks"]["tsk_1"] = t
+        return JSONResponse(task_out(t), status_code=202)
+
+    @fake.post("/v1/tasks/{tid}/sources")
+    async def more(tid: str, req: Request):
+        body = await req.json()
+        st["calls"].append(("more", body))
+        t = st["tasks"][tid]
+        t["sources"] += st.pop("held", [])
+        t.update(has_more=False, version=t["version"] + 1)
         return JSONResponse(task_out(t), status_code=202)
 
     @fake.get("/v1/tasks/{tid}")
@@ -356,3 +370,55 @@ async def test_the_best_ready_download_beats_one_still_running(env):
     s = (await c.post("/api/resolve/start", json=START)).json()
     assert s["auto_stream_id"] == "str_a"
     await c.aclose()
+
+
+async def test_the_first_search_asks_only_for_the_best_source_and_more_can_be_loaded(env, monkeypatch):
+    monkeypatch.setattr(get_settings(), "resolver_first_sources", 1)
+    env["honor_max"] = True
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    assert env["calls"][0][2]["max_sources"] == 1
+    assert [x["name"] for x in first["sources"]] == ["Vertex"] and first["has_more"] is True
+
+    more = (await c.post(f"/api/resolve/tasks/{first['task_id']}/more", json={"all": False})).json()
+    assert env["calls"][-1] == ("more", {"count": 2})  # half of the 4 sources
+    assert [x["name"] for x in more["sources"]] == ["Vertex", "Other"] and more["has_more"] is False
+    await c.aclose()
+
+
+async def test_load_all_asks_for_the_maximum_and_nothing_is_asked_when_none_are_left(env, monkeypatch):
+    monkeypatch.setattr(get_settings(), "resolver_first_sources", 1)
+    env["honor_max"] = True
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    await c.post(f"/api/resolve/tasks/{first['task_id']}/more", json={"all": True})
+    assert env["calls"][-1] == ("more", {"count": 50})
+    before = len([x for x in env["calls"] if x[0] == "more"])
+    await c.post(f"/api/resolve/tasks/{first['task_id']}/more", json={"all": True})  # has_more is false now
+    assert len([x for x in env["calls"] if x[0] == "more"]) == before
+    await c.aclose()
+
+
+async def test_without_a_first_sources_limit_every_source_is_asked(env, monkeypatch):
+    monkeypatch.setattr(get_settings(), "resolver_first_sources", 0)
+    c = await client()
+    await c.post("/api/resolve/start", json=START)
+    assert "max_sources" not in env["calls"][0][2]
+    await c.aclose()
+
+
+async def test_a_default_batch_is_used_when_the_total_is_unknown(env, monkeypatch):
+    monkeypatch.setattr(get_settings(), "resolver_first_sources", 1)
+    monkeypatch.setattr(get_settings(), "resolver_more_default", 3)
+    env["honor_max"] = True
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    env["tasks"]["tsk_1"]["sources_total"] = 0
+    await c.post(f"/api/resolve/tasks/{first['task_id']}/more", json={"all": False})
+    assert env["calls"][-1] == ("more", {"count": 3})
+    await c.aclose()
+
+
+async def test_more_sources_needs_sign_in(env):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as anon:
+        assert (await anon.post("/api/resolve/tasks/x/more", json={})).status_code == 401

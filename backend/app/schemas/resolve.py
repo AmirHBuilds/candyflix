@@ -16,6 +16,11 @@ class DownloadIn(BaseModel):
     stream_id: str | None = None
 
 
+class MoreIn(BaseModel):
+    # False = the next batch (about half of the sources); True = every source that is left.
+    all: bool = False
+
+
 class StreamState(BaseModel):
     stream_id: str
     quality: str  # "1080p", "800p", "Auto"
@@ -55,6 +60,8 @@ class ResolveState(BaseModel):
     sources_done: int
     # Place in the resolver's queue while the search waits for a free slot (None when not waiting).
     queue_position: int | None = None
+    # Sources that haven't been asked yet exist (the menu offers "Load more sources").
+    has_more: bool = False
     sources: list[SourceState]
     subtitles: list[SubtitleItem]
     # The stream that was started on its own (the first one downloaded), or None until there is one.

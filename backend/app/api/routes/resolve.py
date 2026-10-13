@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from app.api.deps import get_current_user
 from app.models.user import User
-from app.schemas.resolve import DownloadIn, ResolveState, StartIn
+from app.schemas.resolve import DownloadIn, MoreIn, ResolveState, StartIn
 from app.services import resolver_service
 
 router = APIRouter(prefix="/resolve", tags=["resolve"])
@@ -35,6 +35,12 @@ async def state(
 async def download(task_id: str, payload: DownloadIn, user: User = Depends(get_current_user)):
     _on()
     return await resolver_service.request_download(user, task_id, payload.stream_id)
+
+
+@router.post("/tasks/{task_id}/more", response_model=ResolveState)
+async def more(task_id: str, payload: MoreIn, user: User = Depends(get_current_user)):
+    _on()
+    return await resolver_service.more_sources(user, task_id, payload.all)
 
 
 @router.get("/relay")

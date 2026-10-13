@@ -43,7 +43,7 @@ vi.mock("@/lib/settings", async () => {
 });
 vi.mock("@/lib/resolve", async () => {
   const actual = await vi.importActual<typeof import("@/lib/resolve")>("@/lib/resolve");
-  return { ...actual, startResolve: vi.fn(), getResolveState: vi.fn(), requestDownload: vi.fn() };
+  return { ...actual, startResolve: vi.fn(), getResolveState: vi.fn(), requestDownload: vi.fn(), loadMoreSources: vi.fn() };
 });
 vi.mock("next/image", () => ({
   // eslint-disable-next-line @next/next/no-img-element
@@ -62,7 +62,7 @@ const stream = (id: string, quality: string, over: Partial<StreamState> = {}): S
   stream_id: id, quality, rank: parseInt(quality) || 0, state: "idle", progress: null, duration_seconds: null, library_id: null, play_url: null, error: null, ...over,
 });
 const state = (over: Partial<ResolveState> = {}): ResolveState => ({
-  task_id: "tsk_1", status: "running", version: 1, sources_total: 2, sources_done: 1, queue_position: null,
+  task_id: "tsk_1", status: "running", version: 1, sources_total: 2, sources_done: 1, queue_position: null, has_more: false,
   sources: [{ name: "Vertex", starred: true, status: "ok", error: null, streams: [stream("b", "800p"), stream("a", "534p")] }],
   subtitles: [], auto_stream_id: null, ...over,
 });
@@ -217,5 +217,38 @@ describe("ResolverPlayer", () => {
     fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(screen.getByText("Subtitles"));
     expect(await screen.findByText(/English · Vertex/)).toBeInTheDocument();
+  });
+});
+
+
+describe("Load more sources", () => {
+  it("the menu offers 'Load more sources', then 'Load all sources', and hides it when none are left", async () => {
+    const done = state({ status: "done", has_more: true, auto_stream_id: "b", sources: withDownload({}).sources });
+    vi.mocked(resolve.startResolve).mockResolvedValue(done);
+    vi.mocked(resolve.getResolveState).mockResolvedValue(done);
+    vi.mocked(resolve.loadMoreSources)
+      .mockResolvedValueOnce({ ...done, has_more: true, status: "done", version: 2 })
+      .mockResolvedValueOnce({ ...done, has_more: false, version: 3 });
+    mount();
+    fireEvent.click(await screen.findByLabelText("Sources and quality"));
+    fireEvent.click(await screen.findByRole("button", { name: /Load more sources/ }));
+    await waitFor(() => expect(resolve.loadMoreSources).toHaveBeenLastCalledWith("tsk_1", false));
+    fireEvent.click(await screen.findByRole("button", { name: /Load all sources/ }));
+    await waitFor(() => expect(resolve.loadMoreSources).toHaveBeenLastCalledWith("tsk_1", true));
+    await waitFor(() => expect(screen.queryByRole("button", { name: /Load (more|all) sources/ })).toBeNull());
+  });
+
+  it("is not shown when there is nothing more to ask", () => {
+    const picker = { sources: withDownload({}).sources, playingId: "b", searching: false, onSelect: vi.fn(), more: null };
+    render(<SourceMenu picker={picker} getTime={() => 0} />);
+    fireEvent.click(screen.getByLabelText("Sources and quality"));
+    expect(screen.queryByRole("button", { name: /Load (more|all) sources/ })).toBeNull();
+  });
+
+  it("is disabled while the search is still running", () => {
+    const picker = { sources: withDownload({}).sources, playingId: "b", searching: true, onSelect: vi.fn(), more: { step: 0 as const, loading: false, onClick: vi.fn() } };
+    render(<SourceMenu picker={picker} getTime={() => 0} />);
+    fireEvent.click(screen.getByLabelText("Sources and quality"));
+    expect(screen.getByRole("button", { name: /Load more sources/ })).toBeDisabled();
   });
 });

@@ -11,6 +11,8 @@ export type SourcePicker = {
   playingId: string | null;
   /** Still looking for more sources. */
   searching: boolean;
+  /** More sources exist that haven't been asked: step 0 = "Load more sources", step 1 = "Load all sources". */
+  more?: { step: 0 | 1; loading: boolean; onClick: () => void } | null;
   /** `atSeconds` is where the video is right now, so a switch carries on from the same spot. */
   onSelect: (streamId: string, atSeconds: number, totalSeconds: number) => void;
 };
@@ -202,6 +204,21 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
                 {total === 0 && <p className="px-1 py-2 text-sm text-white/60">No sources yet…</p>}
               </div>
             </div>
+            {picker.more && (
+              <button
+                type="button"
+                onClick={picker.more.onClick}
+                disabled={picker.more.loading || picker.searching}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white/90 transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {picker.more.loading ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-accent" aria-hidden />
+                ) : (
+                  <span aria-hidden>+</span>
+                )}
+                {picker.more.step === 0 ? "Load more sources" : "Load all sources"}
+              </button>
+            )}
             {picker.searching && (
               <p className="flex items-center gap-2 px-2 pt-2 text-xs text-white/50">
                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-accent" aria-hidden />

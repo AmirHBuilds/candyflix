@@ -8,6 +8,7 @@ import {
   getResolveState,
   hasStreams,
   requestDownload,
+  loadMoreSources,
   startResolve,
   type ResolveState,
   type ResolveTarget,
@@ -159,6 +160,25 @@ export function useResolver(target: ResolveTarget) {
 
   const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
+  // "Load more sources": the first click asks for about half of them, the next one for every source left.
+  const [moreStep, setMoreStep] = useState<0 | 1>(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => setMoreStep(0), [taskId]);
+  const more = useCallback(() => {
+    const cur = stateRef.current;
+    if (!cur || loadingMore) return;
+    setLoadingMore(true);
+    loadMoreSources(cur.task_id, moreStep === 1)
+      .then((next) => {
+        setState(next);
+        stateRef.current = next;
+        setMoreStep(1);
+        setKick((k) => k + 1);
+      })
+      .catch((e) => showToast(e instanceof Error ? e.message : "Couldn't look for more sources."))
+      .finally(() => setLoadingMore(false));
+  }, [moreStep, loadingMore]);
+
   return {
     phase,
     state,
@@ -167,6 +187,10 @@ export function useResolver(target: ResolveTarget) {
     playing,
     choose,
     retry,
+    more,
+    moreStep,
+    loadingMore,
+    hasMore: !!state?.has_more,
     searching: state?.status === "running",
   };
 }

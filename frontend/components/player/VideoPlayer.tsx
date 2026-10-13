@@ -1461,11 +1461,10 @@ export default function VideoPlayer({
       )}
 
       {centerPulse && (
-        <div
-          key={centerPulse.nonce}
-          className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex h-24 w-24 items-center justify-center rounded-full bg-black/55 text-white animate-[centerPulse_0.7s_ease-out]"
-        >
-          {centerPulse.icon === "play" ? <BigPlayIcon /> : <BigPauseIcon />}
+        <div key={centerPulse.nonce} className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-black/55 text-white opacity-0 [animation:centerPulse_0.7s_ease-out_forwards]">
+            {centerPulse.icon === "play" ? <BigPlayIcon /> : <BigPauseIcon />}
+          </div>
         </div>
       )}
 

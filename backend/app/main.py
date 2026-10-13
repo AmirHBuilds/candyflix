@@ -117,15 +117,29 @@ class SignedInOnlyFiles:
         await self.app(scope, receive, send)
 
 
+async def _tidy_audio_forever():
+    """Saved sync audio is deleted once it is older than SYNC_AUDIO_TTL_HOURS (checked now, then every hour)."""
+    from app.services import subtitle_sync_service
+
+    while True:
+        try:
+            subtitle_sync_service.cleanup_audio()
+        except Exception:
+            pass
+        await asyncio.sleep(3600)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     if settings.auto_migrate:
         await run_migrations()
     telegram_service.report_started()
     poller = asyncio.create_task(two_factor_service.poll_forever()) if telegram_service.enabled() else None
+    tidy = asyncio.create_task(_tidy_audio_forever())
     try:
         yield
     finally:
+        tidy.cancel()
         if poller:
             poller.cancel()
 

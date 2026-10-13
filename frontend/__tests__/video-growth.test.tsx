@@ -167,3 +167,22 @@ describe("double tap on the screen", () => {
     }
   });
 });
+
+describe("the big play/pause bubble", () => {
+  it("is centred by its wrapper and keeps its hidden end state, so it can't jump at the end", () => {
+    vi.useFakeTimers();
+    try {
+      mount({ ready: true, progress: 100, runtimeSeconds: 100 });
+      fireEvent.click(screen.getByRole("button", { name: /forward 10 seconds/ }));
+      act(() => void vi.advanceTimersByTime(400));
+      const bubble = document.querySelector('[class*="centerPulse"]') as HTMLElement;
+      expect(bubble).not.toBeNull();
+      expect(bubble.className).toContain("forwards");
+      expect(bubble.className).toContain("opacity-0");
+      expect(bubble.parentElement!.className).toContain("inset-0");
+      expect(bubble.parentElement!.className).toContain("items-center");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

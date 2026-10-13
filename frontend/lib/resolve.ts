@@ -39,6 +39,7 @@ export type ResolveState = {
   sources_total: number;
   sources_done: number;
   queue_position: number | null;
+  has_more: boolean; // sources that haven't been asked yet exist
   sources: SourceState[];
   subtitles: ResolverSubtitle[];
   auto_stream_id: string | null;
@@ -108,6 +109,11 @@ export function requestDownload(taskId: string, streamId: string | null): Promis
     method: "POST",
     body: JSON.stringify({ stream_id: streamId }),
   });
+}
+
+/** Asks for more sources: about half of them (`all` false), or every one that is left (`all` true). */
+export function loadMoreSources(taskId: string, all: boolean): Promise<ResolveState> {
+  return call(`/resolve/tasks/${encodeURIComponent(taskId)}/more`, { method: "POST", body: JSON.stringify({ all }) });
 }
 
 export function findStream(state: ResolveState | null, streamId: string | null): StreamState | null {

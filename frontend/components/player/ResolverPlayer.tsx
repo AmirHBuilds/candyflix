@@ -112,6 +112,7 @@ export default function ResolverPlayer({
         sources: r.state?.sources ?? [],
         playingId: r.playingId,
         searching: !!r.searching,
+        more: r.hasMore ? { step: r.moreStep, loading: r.loadingMore, onClick: r.more } : null,
         onSelect: (streamId, atSeconds, totalSeconds) => {
           const s = findStream(r.state, streamId);
           // Another quality that hasn't downloaded as far as you have watched: say so instead of jumping back.

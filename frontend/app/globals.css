@@ -160,26 +160,26 @@ select option {
 
 /* Big center play/pause confirmation shown by VideoPlayer.tsx whenever
    playback is toggled — pops in, holds briefly, then fades while easing
-   outward, the same shape as YouTube's own center bubble. Centering is
-   baked into every step (rather than a static class) because the CSS
-   `transform` property is fully replaced by whatever the keyframe sets
-   at each step. */
+   outward, the same shape as YouTube's own center bubble. The bubble is
+   centred by its wrapper (flex), so the animation only touches opacity and
+   scale; it ends hidden and STAYS hidden (`forwards`), so if the component
+   removes it a frame late it can't flash back at full size or jump. */
 @keyframes centerPulse {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.7);
+    transform: scale(0.7);
   }
   15% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
   70% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: scale(1.2);
   }
 }
 
