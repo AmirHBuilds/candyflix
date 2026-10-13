@@ -23,7 +23,8 @@ function FamilyCard({ t }: { t: FeedTitle }) {
   const who = latest?.author?.name ?? "Someone";
   const where = latest ? whereLabel(latest) : null;
   const others = t.other_comment_count - 1;
-  const liked = likeSentence({ ...t.likes, you_liked: false }).replace(/ liked this$/, " liked it");
+  // Only you liked it (someone else just commented): say so, instead of a heart with nobody next to it.
+  const liked = t.likes.people.length > 0 ? likeSentence({ ...t.likes, you_liked: false }).replace(/ liked this$/, " liked it") : "You liked it";
   return (
     <Link href={href(t)} className="group block w-full min-w-0">
       <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10 transition-all duration-200 group-hover:ring-accent/50">
@@ -32,10 +33,10 @@ function FamilyCard({ t }: { t: FeedTitle }) {
         ) : (
           <div className="flex h-full items-center justify-center px-3 text-center text-sm text-white/40">{t.title}</div>
         )}
-        {(t.likes.count > 0 || t.comment_count > 0) && (
+        {(t.likes.people.length > 0 || t.comment_count > 0) && (
           // One joined chip, like the heart | comment block on the detail page.
           <span className="absolute right-2 top-2 flex divide-x divide-white/20 overflow-hidden rounded-full bg-black/65 text-[11px] font-medium text-white/90 backdrop-blur-sm">
-            {t.likes.count > 0 && (
+            {t.likes.people.length > 0 && (
               <span className="flex items-center gap-1 px-2 py-0.5" aria-label={`${t.likes.count} likes`}>
                 <HeartIcon filled={false} className="h-3 w-3" />
                 {t.likes.count}

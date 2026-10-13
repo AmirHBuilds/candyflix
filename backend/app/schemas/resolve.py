@@ -24,6 +24,7 @@ class StreamState(BaseModel):
     # ready = fully downloaded; failed = the resolver gave up.
     state: Literal["idle", "downloading", "ready", "failed"]
     progress: float | None = None  # 0-100
+    duration_seconds: float | None = None  # the real length of the whole video, from the resolver
     library_id: str | None = None
     play_url: str | None = None  # set once the video can be played (even while it still downloads)
     error: str | None = None

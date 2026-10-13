@@ -1,0 +1,101 @@
+# Production / VPS. Run with:
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+# (docker-compose.yml stays the local development setup.)
+#
+# Only Caddy is reachable from the internet (ports 80 and 443). The database, Redis, backend and
+# frontend live on the private Docker network.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: candyflix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
+      POSTGRES_DB: candyflix
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U candyflix"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.prod
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql+asyncpg://candyflix:${POSTGRES_PASSWORD}@db:5432/candyflix
+      REDIS_URL: redis://redis:6379/0
+      FRONTEND_ORIGIN: https://${DOMAIN:?set DOMAIN in .env.prod}
+    volumes:
+      # What the backend writes must survive a rebuild.
+      - avatars:/app/avatars
+      - subtitle-cache:/app/subtitle-cache
+      - sync-cache:/app/sync-cache
+      # Mock videos (only used while RESOLVER_URL is empty): put files in ./backend/mock-videos on the server.
+      - ./backend/mock-videos:/app/mock-videos:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health').status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN}/api
+    restart: unless-stopped
+    environment:
+      API_URL_INTERNAL: http://backend:8000/api
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:
+  avatars:
+  subtitle-cache:
+  sync-cache:
+  caddy_data:
+  caddy_config:

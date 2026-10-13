@@ -20,13 +20,17 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 import time
 from pathlib import Path
 
+from fastapi import HTTPException
+
 from app.core.config import get_settings
 from app.core.redis import get_redis
 from app.providers import mock_provider
+from app.services import resolver_service, telegram_service
 from app.schemas.playback import SubtitleTrackOut
 from app.schemas.subtitle_sync import SyncStatus
 
@@ -89,6 +93,67 @@ def subtitle_name_from_url(url: str) -> str:
     if not (_cache_dir() / m.group(1)).is_file():
         raise SyncError(404, "That subtitle file is no longer available.")
     return m.group(1)
+
+
+_RELAY_URL = re.compile(r"^/api/resolve/relay\?")
+
+
+def is_relay_url(url: str) -> bool:
+    return bool(_RELAY_URL.match(url or ""))
+
+
+def _relay_target(url: str) -> str:
+    from urllib.parse import parse_qs, urlparse
+
+    return (parse_qs(urlparse(url).query).get("u") or [""])[0]
+
+
+def relay_cache_name(url: str) -> str:
+    """The cache file a subtitle that comes from the resolver is kept as once converted to .srt."""
+    return f"rs-{_digest(_relay_target(url))}.srt"
+
+
+def vtt_to_srt(text: str) -> str:
+    """WebVTT -> SRT (the sync tool reads SRT): drop the header, notes and cue settings, use commas in times."""
+    blocks, out, n = re.split(r"\r?\n\r?\n+", text.replace("\ufeff", "").strip()), [], 0
+    for block in blocks:
+        lines = block.splitlines()
+        for i, line in enumerate(lines):
+            if "-->" in line:
+                start, _, rest = line.partition("-->")
+                end = rest.strip().split()[0] if rest.strip() else ""
+                start = start.strip()
+
+                def fix(t: str) -> str:
+                    t = t.replace(".", ",")
+                    return t if t.count(":") == 2 else f"00:{t}"
+
+                body = [l for l in lines[i + 1:] if l.strip()]
+                if not body:
+                    break
+                n += 1
+                out.append(f"{n}\n{fix(start)} --> {fix(end)}\n" + "\n".join(body))
+                break
+    return "\n\n".join(out) + "\n"
+
+
+async def prepare_subtitle(url: str) -> str:
+    """The cache file name for a subtitle url. A subtitle from the resolver is fetched and converted first."""
+    if not is_relay_url(url):
+        return subtitle_name_from_url(url)
+    name = relay_cache_name(url)
+    path = _cache_dir() / name
+    if not path.is_file():
+        try:
+            raw = await resolver_service.fetch_text(_relay_target(url))
+        except Exception:
+            raise SyncError(502, "Couldn't get that subtitle from the video service.")
+        srt = vtt_to_srt(raw)
+        if "-->" not in srt:
+            raise SyncError(400, "That subtitle can't be synced.")
+        _cache_dir().mkdir(parents=True, exist_ok=True)
+        path.write_text(srt, encoding="utf-8")
+    return name
 
 
 # ---------------------------------------------------------------- results
@@ -154,21 +219,30 @@ async def get_status(vkey: str, sub_name: str) -> SyncStatus:
 
 
 async def start(
-    vkey: str, sub_name: str, language: str, label: str
+    vkey: str, sub_name: str, language: str, label: str, library_id: str | None = None
 ) -> SyncStatus:
     job_id = _job_id(vkey, sub_name)
     current = await get_status(vkey, sub_name)
     if current.state in ("done", "queued", "running"):
         return current
 
-    media = mock_provider.get_mock_video_path()
+    media: Path | str | None
+    media_info: dict = {}
+    if resolver_service.enabled():
+        # Real video: the audio is taken from the very video being watched (its quality / source may differ).
+        try:
+            media, media_info = await resolver_service.library_media(library_id)
+        except HTTPException as e:
+            raise SyncError(e.status_code, str(e.detail))
+    else:
+        media = mock_provider.get_mock_video_path()
     if media is None:
         raise SyncError(404, "This video isn't available to sync against.")
     if len(_tasks) >= MAX_ACTIVE_JOBS:
         raise SyncError(429, "Lots of syncs are running right now. Try again in a few minutes.")
 
     await _set_state(job_id, "queued", 0, "queued", "Starting…")
-    task = asyncio.create_task(_run(job_id, vkey, media, sub_name, language, label))
+    task = asyncio.create_task(_run(job_id, vkey, media, sub_name, language, label, media_info))
     _tasks[job_id] = task
     task.add_done_callback(lambda _t, j=job_id: _tasks.pop(j, None))
     return await get_status(vkey, sub_name)
@@ -181,7 +255,7 @@ def _semaphore_instance() -> asyncio.Semaphore:
     return _semaphore
 
 
-async def _run(job_id: str, vkey: str, media: Path, sub_name: str, language: str, label: str):
+async def _run(job_id: str, vkey: str, media: "Path | str", sub_name: str, language: str, label: str, media_info: dict | None = None):
     settings = get_settings()
     sub_path = _cache_dir() / sub_name
     sync_dir = Path(settings.sync_cache_dir)
@@ -193,19 +267,33 @@ async def _run(job_id: str, vkey: str, media: Path, sub_name: str, language: str
             await _set_state(job_id, "queued", 0, "queued", "Waiting for another sync to finish…")
         async with sem:
             await _set_state(job_id, "running", 1, "prepare", "Getting started…")
-            result = await _run_script(job_id, media, sub_path, tmp_out, sync_dir)
+            base, span = 0.0, 100.0
+            if isinstance(media, str):  # a link to the video: pull its audio out first
+                audio = sync_dir / f"audio-{_digest(media_info.get('id') or media)}.flac"
+                problem = await _extract_audio(job_id, media, audio, media_info or {})
+                if problem:
+                    _record_failure(job_id, vkey, sub_name, "audio", problem, media_info)
+                    await _set_state(job_id, "failed", 0, None, "Couldn't get the audio from this video. The admins were told.")
+                    return
+                media, base, span = audio, 30.0, 70.0
+            result, problem = await _run_script(job_id, media, sub_path, tmp_out, sync_dir, base, span)
+            if result is None:
+                _record_failure(job_id, vkey, sub_name, "sync", problem or "no details", media_info)
             await _finish(job_id, vkey, sub_name, language, label, tmp_out, result)
     except asyncio.CancelledError:
         raise
     except Exception:
         logger.exception("Subtitle sync crashed for %s", job_id)
+        import traceback
+
+        _record_failure(job_id, vkey, sub_name, "crash", traceback.format_exc()[-900:], media_info)
         await _set_state(job_id, "failed", 0, None, "Syncing didn't work out. Please try again.")
     finally:
         for leftover in sync_dir.glob(f"tmp-{job_id}*"):  # the output copy and its .report.json
             leftover.unlink(missing_ok=True)
 
 
-async def _run_script(job_id: str, media: Path, sub_path: Path, tmp_out: Path, sync_dir: Path) -> dict | None:
+async def _run_script(job_id: str, media: Path, sub_path: Path, tmp_out: Path, sync_dir: Path, base: float = 0.0, span: float = 100.0) -> tuple[dict | None, str | None]:
     proc = await asyncio.create_subprocess_exec(
         sys.executable,
         str(SCRIPT),
@@ -243,7 +331,7 @@ async def _run_script(job_id: str, media: Path, sub_path: Path, tmp_out: Path, s
                 marker = (int(obj["percent"]), obj.get("message"))
                 if marker != last_written:
                     last_written = marker
-                    await _set_state(job_id, "running", obj["percent"], obj.get("stage"), obj.get("message"))
+                    await _set_state(job_id, "running", base + obj["percent"] * span / 100, obj.get("stage"), obj.get("message"))
 
     try:
         await asyncio.wait_for(asyncio.gather(pump(), proc.wait()), timeout=JOB_TIMEOUT_SECONDS)
@@ -251,11 +339,75 @@ async def _run_script(job_id: str, media: Path, sub_path: Path, tmp_out: Path, s
         proc.kill()
         await proc.wait()
         logger.error("Subtitle sync timed out for %s", job_id)
-        return None
+        return None, "The sync tool took too long and was stopped."
     if proc.returncode != 0:
-        logger.error("Subtitle sync script failed (%s): %s", proc.returncode, " | ".join(tail))
+        detail = " | ".join(tail)
+        logger.error("Subtitle sync script failed (%s): %s", proc.returncode, detail)
+        return None, f"The sync tool failed (exit {proc.returncode}): {detail[-600:]}"
+    return result, None
+
+
+async def _extract_audio(job_id: str, url: str, dest: Path, info: dict) -> str | None:
+    """Pulls the first audio track of the video (an HLS link) into a small mono FLAC the sync tool can read.
+    Returns a description of what went wrong, or None. An audio file made earlier for the same download is reused."""
+    if dest.is_file() and dest.stat().st_size > 1000:
         return None
-    return result
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        return "ffmpeg is not installed on the server."
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dest.with_suffix(".part.flac")
+    total = float(info.get("duration_s") or 0)
+    proc = await asyncio.create_subprocess_exec(
+        ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y",
+        "-allowed_extensions", "ALL", "-i", url,
+        "-vn", "-map", "0:a:0", "-ac", "1", "-ar", "16000", "-c:a", "flac", str(tmp),
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    last = [0]
+
+    async def pump():
+        assert proc.stdout is not None
+        async for raw in proc.stdout:
+            line = raw.decode(errors="replace").strip()
+            if total and (line.startswith("out_time_us=") or line.startswith("out_time_ms=")):
+                try:
+                    seconds = int(line.split("=", 1)[1]) / 1_000_000
+                except ValueError:
+                    continue
+                pct = 2 + 28 * min(seconds / total, 1)
+                if int(pct) != last[0]:
+                    last[0] = int(pct)
+                    await _set_state(job_id, "running", pct, "audio", "Getting the audio from the video…")
+
+    await _set_state(job_id, "running", 2, "audio", "Getting the audio from the video…")
+    try:
+        _, err = await asyncio.wait_for(asyncio.gather(pump(), proc.stderr.read()), timeout=JOB_TIMEOUT_SECONDS)
+        await proc.wait()
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        tmp.unlink(missing_ok=True)
+        return "Getting the audio took too long and was stopped."
+    if proc.returncode != 0 or not tmp.is_file():
+        tmp.unlink(missing_ok=True)
+        return f"ffmpeg failed (exit {proc.returncode}): {err.decode(errors='replace').strip()[-600:]}"
+    os.replace(tmp, dest)
+    return None
+
+
+def _record_failure(job_id: str, vkey: str, sub_name: str, stage: str, detail: str, media_info: dict | None = None) -> None:
+    """Keeps a record of a failed sync (the log, a file next to the speech maps) and tells the admins on Telegram."""
+    media = " ".join(str(x) for x in ((media_info or {}).get("source"), (media_info or {}).get("quality")) if x) or None
+    logger.error("Subtitle sync failed (%s) for %s / %s: %s", stage, vkey, sub_name, detail)
+    try:
+        d = Path(get_settings().sync_cache_dir)
+        d.mkdir(parents=True, exist_ok=True)
+        with (d / "failures.jsonl").open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"at": int(time.time()), "job": job_id, "video": vkey, "subtitle": sub_name, "stage": stage, "media": media, "detail": detail[-1500:]}) + "\n")
+    except Exception:
+        logger.warning("Couldn't write the sync failure record")
+    telegram_service.report_sync_failure(vkey, sub_name, stage, detail, media)
 
 
 def _already_in_sync(report: dict) -> bool:

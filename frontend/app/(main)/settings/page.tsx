@@ -3,6 +3,7 @@ import AboutSection from "@/components/settings/AboutSection";
 import AccountSettingsForm from "@/components/settings/AccountSettingsForm";
 import AppearanceSettingsForm from "@/components/settings/AppearanceSettingsForm";
 import CommunitySettingsForm from "@/components/settings/CommunitySettingsForm";
+import FeedbackForm from "@/components/settings/FeedbackForm";
 import PlaybackSettingsForm from "@/components/settings/PlaybackSettingsForm";
 import PrivacyDataForm from "@/components/settings/PrivacyDataForm";
 import SubtitleOverridesCard from "@/components/settings/SubtitleOverridesCard";
@@ -41,6 +42,9 @@ export default async function SettingsPage() {
         </SettingsSection>
         <SettingsSection id="privacy" title={label("privacy")}>
           <PrivacyDataForm />
+        </SettingsSection>
+        <SettingsSection id="feedback" title={label("feedback")}>
+          <FeedbackForm />
         </SettingsSection>
         <SettingsSection id="about" title={label("about")}>
           <AboutSection />

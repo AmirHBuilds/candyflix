@@ -317,3 +317,21 @@ export const listAdminOpinions = (offset = 0, hidden = false, limit = 30, userId
 export const hideAdminOpinion = (id: string, hide: boolean) =>
   request<void>(`/opinions/${id}/${hide ? "hide" : "unhide"}`, { method: "POST" }, "Couldn't change that.");
 export const deleteAdminOpinion = (id: string) => request<void>(`/opinions/${id}`, { method: "DELETE" }, "Couldn't delete that.");
+
+export type AdminFeedback = {
+  id: string;
+  kind: "problem" | "idea" | "other";
+  message: string;
+  page: string | null;
+  device: string | null;
+  created_at: string;
+  handled: boolean;
+  author_id: string | null;
+  author_name: string;
+};
+export type AdminFeedbackPage = { items: AdminFeedback[]; total: number; unhandled: number };
+export const listFeedback = (offset = 0, handled?: boolean, limit = 30) =>
+  request<AdminFeedbackPage>(`/feedback?offset=${offset}&limit=${limit}${handled === undefined ? "" : `&handled=${handled}`}`, {}, "Couldn't load feedback.");
+export const markFeedback = (id: string, handled: boolean) =>
+  request<void>(`/feedback/${id}/handled?handled=${handled}`, { method: "POST" }, "Couldn't change that.");
+export const deleteFeedback = (id: string) => request<void>(`/feedback/${id}`, { method: "DELETE" }, "Couldn't delete that.");

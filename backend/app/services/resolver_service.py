@@ -91,6 +91,11 @@ def _progress(item: dict) -> float | None:
     return max(0.0, min(100.0, p * 100 if p <= 1 else p))
 
 
+def _duration(item: dict) -> float | None:
+    d = item.get("duration_s")
+    return float(d) if isinstance(d, (int, float)) and d > 0 else None
+
+
 def _item_state(item: dict) -> str:
     status = (item.get("status") or "").lower()
     if status == "ready":
@@ -117,6 +122,7 @@ def _stream_state(stream: dict | None, item: dict | None, stream_id: str, qualit
         rank=quality_rank(quality or item.get("quality")),
         state=state,
         progress=_progress(item),
+        duration_seconds=_duration(item),
         library_id=item.get("id"),
         play_url=public_url(link) if (playable and link and state != "failed") else None,
         error=item.get("error") if state == "failed" else None,
@@ -352,6 +358,31 @@ async def start(user: User, media_type: str, tmdb_id: int, season: int | None, e
     if best_stream(task):
         return await request_download(user, task["task_id"], None)
     return build_state(task, [])
+
+
+async def library_media(library_id: str | None) -> tuple[str, dict]:
+    """The link of a fully downloaded video, for the server's own use (the subtitle sync listens to its audio)."""
+    if not library_id:
+        raise HTTPException(404, "This video isn't available to sync against.")
+    item = await _call("GET", f"/v1/library/{quote(library_id, safe='')}")
+    if _item_state(item) != "ready":
+        raise HTTPException(409, "Wait until the video has finished downloading, then sync the subtitle.")
+    link = item.get("stream_url") or item.get("url")
+    if not link:
+        raise HTTPException(404, "This video isn't available to sync against.")
+    return link, {"id": item.get("id"), "source": item.get("source"), "quality": item.get("quality"), "duration_s": item.get("duration_s")}
+
+
+async def fetch_text(url: str) -> str:
+    """A small text file (a subtitle) from the resolver's own host."""
+    p = urlparse(url)
+    if p.scheme not in ("http", "https") or (p.hostname or "").lower() not in _allowed_hosts():
+        raise HTTPException(400, "That link can't be fetched.")
+    async with _client(30) as c:
+        r = await c.get(url)
+    if r.status_code != 200:
+        raise HTTPException(502, UNAVAILABLE)
+    return r.text
 
 
 # ---------------------------------------------------------------- relay (proxy mode)

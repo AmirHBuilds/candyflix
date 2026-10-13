@@ -64,7 +64,7 @@ def make_fake():
         item = {
             "id": f"lib_{len(st['library'])}", "task_id": tid, "stream_id": body["stream_id"], "source": "Vertex",
             "quality": {"a": "534p", "b": "800p", "e": "1080p"}.get(body["stream_id"], "auto"), "format": "hls", "status": "downloading",
-            "progress": 0.25, "size": None, "total_bytes": None, "playable": True,
+            "progress": 0.25, "duration_s": 5400.5, "size": None, "total_bytes": None, "playable": True,
             "stream_url": f"{BASE}/s/{body['stream_id']}/index.m3u8?sig=1", "url": None,
             "requested_at": f"2026-10-12T06:3{len(st['library'])}:00Z", "subtitles": [],
         }
@@ -173,7 +173,7 @@ async def test_start_downloads_the_best_quality_of_the_first_source(env):
     assert [x["name"] for x in s["sources"]] == ["Vertex", "Other"]
     assert [q["quality"] for q in s["sources"][0]["streams"]] == ["800p", "534p", "266p", "Auto"]
     b = stream_of(s, "str_b")
-    assert b["state"] == "downloading" and b["progress"] == 25.0
+    assert b["state"] == "downloading" and b["progress"] == 25.0 and b["duration_seconds"] == 5400.5
     assert b["play_url"].startswith("/api/resolve/relay?u=")
     assert stream_of(s, "str_e")["state"] == "idle" and stream_of(s, "str_e")["play_url"] is None
     await c.aclose()

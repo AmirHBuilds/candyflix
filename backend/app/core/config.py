@@ -6,6 +6,7 @@ Nothing sensitive is hard-coded here.
 """
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -120,6 +121,13 @@ class Settings(BaseSettings):
     # covers `uvicorn --reload`, which restarts the app *without* going
     # back through the entrypoint (so new migrations were being missed).
     auto_migrate: bool = True
+
+    @model_validator(mode="after")
+    def _production_is_safe(self):
+        # A real deployment must never run with the placeholder secret: anyone could forge their way in.
+        if self.environment == "production" and (self.session_secret in ("", "change-me-in-env") or len(self.session_secret) < 24):
+            raise ValueError("Set SESSION_SECRET to a long random value (at least 24 characters) before running in production.")
+        return self
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

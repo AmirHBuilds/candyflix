@@ -194,6 +194,16 @@ describe("OpinionsStrip (the home row)", () => {
     expect(screen.getAllByRole("link")).toHaveLength(2); // a title appears once, however much happened on it
   });
 
+  it("when only you liked it (someone else commented) it says so instead of a bare heart", async () => {
+    vi.mocked(lib.getFeed).mockResolvedValue({
+      enabled: true,
+      items: [card({ comment_count: 1, likes: { count: 1, you_liked: false, people: [], more: 0 } })],
+    });
+    render(<OpinionsStrip />);
+    expect(await screen.findByText("You liked it")).toBeInTheDocument();
+    expect(screen.queryByLabelText("1 likes")).toBeNull();
+  });
+
   it("names the episode a comment was about", async () => {
     vi.mocked(lib.getFeed).mockResolvedValue({
       enabled: true,

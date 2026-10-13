@@ -11,7 +11,9 @@ class SyncRequest(BaseModel):
     tmdb_id: int
     season_number: int | None = None
     episode_number: int | None = None
-    subtitle_url: str = Field(max_length=300)  # the track's url, '/subtitle-cache/<file>.srt'
+    # The resolver video being watched (needed for real video: its audio is what the subtitle is fitted to).
+    library_id: str | None = Field(default=None, max_length=80)
+    subtitle_url: str = Field(max_length=2000)  # the track's url, '/subtitle-cache/<file>.srt'
     language: str = Field(min_length=1, max_length=16)
     label: str = Field(min_length=1, max_length=60)
 

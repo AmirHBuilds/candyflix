@@ -29,7 +29,7 @@ async def sync_status(
         raise HTTPException(status_code=400, detail="media_type must be 'movie' or 'tv'.")
     await content_rating_service.ensure(current_user, media_type, tmdb_id)
     try:
-        name = sync.subtitle_name_from_url(subtitle_url)
+        name = sync.relay_cache_name(subtitle_url) if sync.is_relay_url(subtitle_url) else sync.subtitle_name_from_url(subtitle_url)
     except SyncError:
         return SyncStatus(state="idle")
     return await sync.get_status(sync.video_key(media_type, tmdb_id, season_number, episode_number), name)
@@ -39,8 +39,8 @@ async def sync_status(
 async def start_sync(payload: SyncRequest, current_user: User = Depends(get_current_user)):
     await content_rating_service.ensure(current_user, payload.media_type, payload.tmdb_id)
     try:
-        name = sync.subtitle_name_from_url(payload.subtitle_url)
+        name = await sync.prepare_subtitle(payload.subtitle_url)
         vkey = sync.video_key(payload.media_type, payload.tmdb_id, payload.season_number, payload.episode_number)
-        return await sync.start(vkey, name, payload.language, payload.label)
+        return await sync.start(vkey, name, payload.language, payload.label, payload.library_id)
     except SyncError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)

@@ -21,7 +21,12 @@ function CommentIcon({ className = "" }: { className?: string }) {
  */
 export default function HeroSocial({ social }: { social: FeedTitle | undefined }) {
   if (!social) return null;
-  const liked = social.likes.count > 0 ? likeSentence({ ...social.likes, you_liked: false }).replace(/ liked this$/, " liked it") : null;
+  const liked =
+    social.likes.count === 0
+      ? null
+      : social.likes.people.length > 0
+        ? likeSentence({ ...social.likes, you_liked: false }).replace(/ liked this$/, " liked it")
+        : "You liked it"; // only you: never a bare heart
   const latest = social.latest;
   if (!liked && !latest) return null;
   const who = latest?.author?.name ?? "Someone";

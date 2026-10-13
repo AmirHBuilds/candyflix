@@ -115,6 +115,8 @@ export default function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTapRef = useRef<{ zone: "left" | "right"; time: number } | null>(null);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (tapTimerRef.current) clearTimeout(tapTimerRef.current); }, []);
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -1370,12 +1372,21 @@ export default function VideoPlayer({
     const now = Date.now();
     const last = lastTapRef.current;
     if (last && last.zone === zone && now - last.time < DOUBLE_TAP_MS) {
+      // A double tap: the first tap's play/pause never happens (it was only waiting to see if a second tap came), so the
+      // video keeps doing what it was doing. More quick taps on the same side keep skipping.
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      tapTimerRef.current = null;
       seekBy(zone === "left" ? -seekSeconds : seekSeconds);
       setSkipPulse({ side: zone, nonce: now });
-      lastTapRef.current = null;
-    } else {
       lastTapRef.current = { zone, time: now };
-      togglePlay();
+    } else {
+      // A first tap: wait a moment before toggling, in case it turns into a double tap.
+      lastTapRef.current = { zone, time: now };
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      tapTimerRef.current = setTimeout(() => {
+        tapTimerRef.current = null;
+        togglePlay();
+      }, DOUBLE_TAP_MS);
     }
     handleActivity();
   }

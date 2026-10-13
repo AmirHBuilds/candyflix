@@ -145,3 +145,25 @@ describe("clicking the seek bar", () => {
     expect(screen.getByText("1:40 / 3:20")).toBeInTheDocument();
   });
 });
+
+describe("double tap on the screen", () => {
+  it("skips without pausing; a lone tap still toggles after a short wait", () => {
+    vi.useFakeTimers();
+    try {
+      mount({ ready: true, progress: 100, runtimeSeconds: 100 });
+      currentTime = 30;
+      const right = screen.getByRole("button", { name: /forward 10 seconds/ });
+      fireEvent.click(right);
+      fireEvent.click(right);
+      act(() => void vi.advanceTimersByTime(500));
+      expect(currentTime).toBe(40);
+      expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+      expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+      fireEvent.click(right); // a lone tap, much later
+      act(() => void vi.advanceTimersByTime(500));
+      expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

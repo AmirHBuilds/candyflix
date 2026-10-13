@@ -35,6 +35,7 @@ from app.api.routes import (
     admin,
     auth,
     continue_watching,
+    feedback,
     health,
     movies,
     opinions,
@@ -191,6 +192,8 @@ app.include_router(presence.router, prefix="/api")
 app.include_router(announcements.router, prefix="/api")
 app.include_router(opinions.router, prefix="/api")
 app.include_router(resolve.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
+app.include_router(feedback.admin_router, prefix="/api")
 
 
 @app.get("/api")

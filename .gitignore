@@ -8,6 +8,7 @@
 .env.*
 !.env.example
 !.env.local.example
+!.env.prod.example
 
 # --- Node / frontend ---
 node_modules/

@@ -5,6 +5,7 @@ export const SETTINGS_SECTIONS = [
   { id: "account", label: "Account" },
   { id: "community", label: "Community" },
   { id: "privacy", label: "Privacy & data" },
+  { id: "feedback", label: "Feedback" },
   { id: "about", label: "About" },
 ] as const;
 

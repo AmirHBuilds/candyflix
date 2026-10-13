@@ -146,5 +146,23 @@ def report_error(method: str, path: str, error: Exception) -> None:
     notify("errors", f"🔥 <b>Server error</b>\n{esc(method)} {esc(path)}\n{esc(type(error).__name__)}: {esc(str(error)[:300])}", dedupe=True)
 
 
+def report_sync_failure(video: str, subtitle: str, stage: str, detail: str, media: str | None) -> None:
+    where = {"audio": "getting the audio", "sync": "the sync tool", "crash": "an unexpected error"}.get(stage, stage)
+    lines = ["🎞 <b>Subtitle sync failed</b>", f"Video: {esc(video)}", f"Subtitle: {esc(subtitle)}", f"Step: {esc(where)}"]
+    if media:
+        lines.append(f"Source: {esc(media)}")
+    lines.append(f"<pre>{esc(detail[-700:])}</pre>")
+    notify("errors", "\n".join(lines), dedupe=True)
+
+
+def report_feedback(name: str, kind: str, message: str, page: str | None) -> None:
+    icon = {"problem": "🐞", "idea": "💡"}.get(kind, "💬")
+    lines = [f"{icon} <b>Feedback ({esc(kind)})</b>", f"From {esc(name)}"]
+    if page:
+        lines.append(f"On {esc(page)}")
+    lines.append(f"<pre>{esc(message[:1500])}</pre>")
+    notify("admin", "\n".join(lines))
+
+
 def report_started() -> None:
     notify("system", "🟢 <b>CandyFlix started</b>")

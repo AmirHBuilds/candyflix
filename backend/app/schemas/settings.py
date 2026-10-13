@@ -106,7 +106,7 @@ class SubtitleStyle(_Group):
     color: str = Field(default="#ffffff", pattern=r"^#[0-9A-Fa-f]{6}$")
     background_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
     background_opacity: float = Field(default=0.6, ge=0, le=1)
-    outline: bool = True
+    outline: bool = False
     outline_color: str = Field(default="#000000", pattern=r"^#[0-9A-Fa-f]{6}$")
     shadow: bool = True
     position: Literal["bottom", "top"] = "bottom"
