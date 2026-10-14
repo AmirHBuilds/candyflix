@@ -482,6 +482,27 @@ async def test_three_dead_sources_or_none_left_means_a_new_search_once_then_give
     await c.aclose()
 
 
+async def test_a_link_that_fails_after_the_download_started_goes_to_the_next_source_not_the_next_quality(env):
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    assert first["auto_stream_id"] == "str_b"  # 800p of Vertex was started (accepted by the resolver)
+    # a moment later the resolver finds the link dead: the item fails and the quality leaves the list
+    item = env["library"][0]
+    item.update(status="failed", error="401", error_code="source_link_expired", playable=False)
+    for src in env["tasks"]["tsk_1"]["sources"]:
+        src["streams"] = [x for x in src["streams"] if x["id"] != "str_b"]
+    env["library"].remove(item)  # the resolver may forget the failed item altogether
+    r = await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={})
+    assert r.status_code == 200
+    asked = [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"]
+    assert asked == ["str_b", "str_e"]  # never Vertex's 534p
+    assert r.json()["auto_stream_id"] == "str_e"
+    # asked again while that one downloads: nothing new is started
+    await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={})
+    assert [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"] == ["str_b", "str_e"]
+    await c.aclose()
+
+
 async def test_a_picked_quality_with_a_dead_link_just_reports_it(env):
     c = await client()
     first = (await c.post("/api/resolve/start", json=START)).json()

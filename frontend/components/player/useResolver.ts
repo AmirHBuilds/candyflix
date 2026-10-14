@@ -38,6 +38,7 @@ export function useResolver(target: ResolveTarget) {
   const stateRef = useRef<ResolveState | null>(null);
   stateRef.current = state;
   const autoAskedRef = useRef<string | null>(null);
+  const autoCountRef = useRef(0);
 
   const key = `${target.mediaType}:${target.tmdbId}:${target.seasonNumber ?? ""}:${target.episodeNumber ?? ""}`;
 
@@ -48,6 +49,7 @@ export function useResolver(target: ResolveTarget) {
     setError(null);
     setPlayingId(null);
     autoAskedRef.current = null;
+    autoCountRef.current = 0;
     startResolve(target, ctl.signal)
       .then((s) => !ctl.signal.aborted && setState(s))
       .catch((e) => !ctl.signal.aborted && setError(e instanceof Error ? e.message : "Couldn't start."));
@@ -92,8 +94,12 @@ export function useResolver(target: ResolveTarget) {
   // A source turned up but nothing has been started yet (the first answer came after the wait): start the best one.
   useEffect(() => {
     if (!state || state.auto_stream_id || !hasStreams(state)) return;
-    if (autoAskedRef.current === state.task_id) return;
-    autoAskedRef.current = state.task_id;
+    // Asked again whenever the picture changes (a quality failed or was removed by the resolver): the server picks the
+    // next SOURCE, or searches again, and gives up by itself. At most 6 asks per search.
+    const key = `${state.task_id}:${state.sources.reduce((n, src) => n + src.streams.length * 10 + src.streams.filter((x) => x.state === "failed").length, 0)}`;
+    if (autoAskedRef.current === key || autoCountRef.current >= 6) return;
+    autoAskedRef.current = key;
+    autoCountRef.current += 1;
     requestDownload(state.task_id, null)
       .then((s) => {
         setState(s);
