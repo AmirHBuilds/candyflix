@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-const hlsInstances: Array<{ loadSource: ReturnType<typeof vi.fn>; attachMedia: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> }> = [];
+const hlsInstances: Array<{ on: ReturnType<typeof vi.fn>; loadSource: ReturnType<typeof vi.fn>; attachMedia: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> }> = [];
 vi.mock("hls.js", () => {
   class FakeHls {
     static isSupported() {
@@ -94,6 +94,26 @@ function mount() {
     </SettingsProvider>
   );
 }
+
+describe("when the video breaks while playing", () => {
+  it("asks the server to start again (same source if it did not fail), at most 3 times", async () => {
+    const playing = state({
+      auto_stream_id: "b", status: "done",
+      sources: [{ name: "Vertex", starred: true, status: "ok", error: null, streams: [stream("b", "800p", { state: "ready", progress: 100, play_url: "/api/resolve/relay?u=B", library_id: "lib_1" })] }],
+    });
+    vi.mocked(resolve.startResolve).mockResolvedValue(playing);
+    vi.mocked(resolve.getResolveState).mockResolvedValue(playing);
+    vi.mocked(resolve.requestDownload).mockResolvedValue(playing);
+    mount();
+    await waitFor(() => expect(hlsInstances.length).toBe(1));
+    const onErr = hlsInstances[0].on.mock.calls.find((c) => c[0] === "e")![1];
+    await act(async () => {
+      for (let i = 0; i < 5; i++) onErr("e", { fatal: true, type: "n" }); // retries are used up, then it gives up
+    });
+    await waitFor(() => expect(resolve.requestDownload).toHaveBeenCalledWith("tsk_1", null));
+    expect(resolve.requestDownload).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("SourceMenu", () => {
   const picker = (over = {}) => ({

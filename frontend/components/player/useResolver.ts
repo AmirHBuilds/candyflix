@@ -158,6 +158,34 @@ export function useResolver(target: ResolveTarget) {
     []
   );
 
+  // The video broke while playing (its file was removed, the link died): forget the playing stream and ask the server
+  // to start again. It restarts the same source if that did not fail (a removed file is not a failed source), moves
+  // to the next source if it did, and searches again when none is left. At most 3 times per page, so it never loops.
+  const recoverRef = useRef(0);
+  const recover = useCallback(() => {
+    const cur = stateRef.current;
+    if (!cur || recoverRef.current >= 3) return false;
+    recoverRef.current += 1;
+    setPlayingId(null);
+    getResolveState(cur.task_id)
+      .catch(() => cur)
+      .then((fresh) => {
+        setState(fresh);
+        stateRef.current = fresh;
+        return requestDownload(fresh.task_id, null);
+      })
+      .then((next) => {
+        setState(next);
+        stateRef.current = next;
+        setKick((k) => k + 1);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Couldn't start the video again."));
+    return true;
+  }, []);
+  useEffect(() => {
+    recoverRef.current = 0;
+  }, [key, attempt]);
+
   let phase: ResolverPhase = "finding";
   const noVideoAnywhere = !!state && state.status !== "running" && !hasStreams(state);
   if (playing?.play_url) phase = "playing";
@@ -192,6 +220,7 @@ export function useResolver(target: ResolveTarget) {
     playingId,
     playing,
     choose,
+    recover,
     retry,
     more,
     moreStep,

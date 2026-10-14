@@ -118,6 +118,12 @@ export default function ResolverPlayer({
       growth={{ ready: r.playing?.state === "ready", progress: r.playing?.progress ?? null, durationSeconds: r.playing?.duration_seconds ?? null, runtimeSeconds: runtimeSeconds ?? null }}
       syncLibraryId={r.playing?.library_id ?? null}
       onWatchedMost={onWatchedMost}
+      onFatalError={(at) => {
+        if (r.recover()) {
+          setSwitchedAt(at);
+          setLocked(null);
+        }
+      }}
       forceResume={switchedAt !== null}
       autoStart={switchedAt !== null}
       sourcePicker={{

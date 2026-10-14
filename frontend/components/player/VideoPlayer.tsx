@@ -89,6 +89,7 @@ export default function VideoPlayer({
   growth,
   syncLibraryId,
   onWatchedMost,
+  onFatalError,
 }: {
   source: PlaybackSource;
   title: string;
@@ -112,6 +113,8 @@ export default function VideoPlayer({
   syncLibraryId?: string | null;
   /** Called once when 95% of the video has been watched (the next episode can be got ready now). */
   onWatchedMost?: () => void;
+  /** The video broke while playing for good (the file is gone, the link died). Gets the second it stopped at. */
+  onFatalError?: (atSeconds: number) => void;
   growth?: { ready: boolean; progress: number | null; durationSeconds?: number | null; runtimeSeconds: number | null };
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -187,6 +190,8 @@ export default function VideoPlayer({
     bufferingRef.current = buffering;
   }, [buffering]);
   const [error, setError] = useState<string | null>(null);
+  const onFatalErrorRef = useRef(onFatalError);
+  onFatalErrorRef.current = onFatalError;
   // True when the resume-fallback timer fires and the video STILL hasn't
   // reported a finite duration — the signature of the browser failing to
   // locate the MP4's moov atom (metadata) for this particular load. Shows a
@@ -341,6 +346,7 @@ export default function VideoPlayer({
             instance.destroy();
             setError("This video couldn't be played. Try another source.");
             setBuffering(false);
+            onFatalErrorRef.current?.(video.currentTime || 0);
           }
         });
         instance.loadSource(videoUrl);
@@ -623,6 +629,7 @@ export default function VideoPlayer({
       log("error", videoRef.current?.error);
       setError("This video couldn't be played. Try refreshing the page.");
       setBuffering(false);
+      onFatalErrorRef.current?.(videoRef.current?.currentTime || 0);
     }
     function onEnded() {
       log("ended");
