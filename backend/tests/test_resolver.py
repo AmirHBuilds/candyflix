@@ -482,14 +482,15 @@ async def test_three_dead_sources_or_none_left_means_a_new_search_once_then_give
     await c.aclose()
 
 
-async def test_a_picked_quality_with_a_dead_link_uses_another_source_but_never_a_new_task(env):
+async def test_a_picked_quality_with_a_dead_link_just_reports_it(env):
     c = await client()
     first = (await c.post("/api/resolve/start", json=START)).json()
-    env["dead"] = {"str_a", "str_e"}
-    resolves = len([x for x in env["calls"] if x[0] == "resolve"])
+    env["dead"] = {"str_a"}
+    before = [x for x in env["calls"]]
     r = await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={"stream_id": "str_a"})
-    assert r.status_code == 410  # the only other source is dead too
-    assert len([x for x in env["calls"] if x[0] == "resolve"]) == resolves  # no new task behind the playing video
+    assert r.status_code == 410 and "expired" in r.json()["detail"]
+    new = env["calls"][len(before):]
+    assert [x[0] for x in new] == ["library"] and new[0][1]["stream_id"] == "str_a"  # asked once; no other source, no new search
     await c.aclose()
 
 

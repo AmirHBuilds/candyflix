@@ -361,7 +361,10 @@ async def _after_dead_link(user: User, task: dict, bad: str | None, tries: int, 
     """A link is dead. In order: the best link of ANOTHER source of this task (never another quality of the same source),
     more sources of this task, and, after MAX_SOURCE_TRIES sources or when none is left, a brand-new search for the same
     movie / episode (new links). Never the same link twice. A new search is only started when nobody picked a quality
-    (it would replace the task behind a video that is playing)."""
+    (it would replace the task behind a video that is playing). When the person picked the quality, none of this happens: the error is shown."""
+    if not allow_new_task:
+        # A person picked this quality: say it failed (the resolver removes it from the list); never switch source for them.
+        raise HTTPException(410, "That quality's link expired and was removed. Pick another one.")
     tid = task["task_id"]
     fresh_task = await _call("GET", f"/v1/tasks/{tid}")  # the resolver now leaves dead links out
     avoid = set(skip) | (({source_of_stream(task, bad)} - {None}) if bad else set())  # sources already tried for this request
@@ -374,7 +377,7 @@ async def _after_dead_link(user: User, task: dict, bad: str | None, tries: int, 
             return await request_download(user, tid, other["id"], tries + 1, allow_new_task, fresh, frozenset(avoid))
     if allow_new_task:
         return await _fresh_search(user, fresh_task, fresh)
-    raise HTTPException(410, "That source's link has expired. Try another one.")
+    raise HTTPException(410, "That link expired. Try again in a moment.")
 
 
 async def _fresh_search(user: User, old: dict, fresh: int) -> ResolveState:
