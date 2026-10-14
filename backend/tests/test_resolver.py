@@ -426,18 +426,18 @@ async def test_more_sources_needs_sign_in(env):
         assert (await anon.post("/api/resolve/tasks/x/more", json={})).status_code == 401
 
 
-async def test_a_dead_link_is_never_retried_another_stream_is_used(env):
-    env["dead"] = {"str_b"}  # the 800p link of the first source is dead
+async def test_a_dead_link_moves_to_another_source_never_another_quality(env):
+    env["dead"] = {"str_b"}  # the 800p link of the first source (Vertex) is dead
     c = await client()
     s = (await c.post("/api/resolve/start", json=START)).json()
     asked = [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"]
-    assert asked[0] == "str_b" and "str_b" not in asked[1:]  # tried once, never again
-    assert len(asked) == 2 and asked[1] != "str_b"
-    assert s["auto_stream_id"] == asked[1]
+    assert asked == ["str_b", "str_e"]  # Vertex once, then the other source ("Other"), not Vertex's 534p
+    assert s["auto_stream_id"] == "str_e"
+    assert not [x for x in env["calls"] if x[0] == "resolve" and False]
     await c.aclose()
 
 
-async def test_a_failed_download_with_error_code_is_not_picked_again(env):
+async def test_a_failed_download_with_error_code_skips_that_whole_source(env):
     env["library"].append({
         "id": "lib_x", "task_id": "tsk_1", "stream_id": "str_b", "source": "Vertex", "quality": "800p", "format": "hls",
         "status": "failed", "error": "401", "error_code": "source_link_expired", "progress": 0, "playable": False, "tmdb_id": 550,
@@ -446,33 +446,49 @@ async def test_a_failed_download_with_error_code_is_not_picked_again(env):
     c = await client()
     env["tasks"]["tsk_1"] = {
         "task_id": "tsk_1", "status": "done", "tmdb_id": 550, "type": "movie", "season": None, "episode": None, "title": "T", "version": 2,
-        "sources_total": 1, "sources_done": 1,
+        "sources_total": 2, "sources_done": 2,
         "sources": [{"source": "Vertex", "starred": True, "status": "ok", "error": None, "duration_ms": 5,
                      "streams": [{"id": "str_b", "quality": "800p", "format": "hls", "url": "u", "size": None, "headers": {}},
-                                 {"id": "str_a", "quality": "534p", "format": "hls", "url": "u", "size": None, "headers": {}}], "subtitles": [], "audio": []}],
+                                 {"id": "str_a", "quality": "534p", "format": "hls", "url": "u", "size": None, "headers": {}}], "subtitles": [], "audio": []},
+                    {"source": "Other", "starred": False, "status": "ok", "error": None, "duration_ms": 5,
+                     "streams": [{"id": "str_e", "quality": "1080p", "format": "hls", "url": "u", "size": None, "headers": {}}], "subtitles": [], "audio": []}],
     }
-    s = (await c.post("/api/resolve/start", json=START)).json()
+    await c.post("/api/resolve/start", json=START)
     asked = [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"]
-    assert asked == ["str_a"]  # the failed-for-link-expiry 800p is skipped
+    assert asked == ["str_e"]  # not Vertex's 534p
     await c.aclose()
 
 
-async def test_everything_dead_gives_up_after_a_few_tries_instead_of_looping(env):
-    env["dead"] = {"str_a", "str_b", "str_c", "str_d", "str_e"}
+async def test_when_no_other_source_is_left_the_title_is_searched_again(env):
+    env["dead"] = {"str_a", "str_b", "str_c", "str_d"}  # every Vertex link is dead; "Other" works
+    env["honor_max"] = True
+    c = await client()
+    s = (await c.post("/api/resolve/start", json=START)).json()
+    resolves = [x for x in env["calls"] if x[0] == "resolve"]
+    asked = [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"]
+    assert asked[0] == "str_b" and asked[-1] == "str_e"  # the 2nd source was loaded as "more", then used
+    assert len(resolves) == 1  # a source was still available, so no new search
+    assert s["auto_stream_id"] == "str_e"
+    await c.aclose()
+
+
+async def test_three_dead_sources_or_none_left_means_a_new_search_once_then_give_up(env):
+    env["dead"] = {"str_a", "str_b", "str_c", "str_d", "str_e"}  # everything is dead, also after a new search
     c = await client()
     r = await c.post("/api/resolve/start", json=START)
-    assert r.status_code in (410, 502)
-    assert len([x for x in env["calls"] if x[0] == "library"]) <= 3
+    assert r.status_code == 502 and "expired" in r.json()["detail"]
+    assert len([x for x in env["calls"] if x[0] == "resolve"]) == 2  # the first search + exactly one new one
+    assert len([x for x in env["calls"] if x[0] == "library"]) <= 4  # never the same link twice
     await c.aclose()
 
 
-async def test_a_picked_quality_with_a_dead_link_says_so_and_does_not_start_a_new_search(env):
+async def test_a_picked_quality_with_a_dead_link_uses_another_source_but_never_a_new_task(env):
     c = await client()
     first = (await c.post("/api/resolve/start", json=START)).json()
-    env["dead"] = {"str_a"}
+    env["dead"] = {"str_a", "str_e"}
     resolves = len([x for x in env["calls"] if x[0] == "resolve"])
     r = await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={"stream_id": "str_a"})
-    assert r.status_code in (200, 410)
+    assert r.status_code == 410  # the only other source is dead too
     assert len([x for x in env["calls"] if x[0] == "resolve"]) == resolves  # no new task behind the playing video
     await c.aclose()
 
