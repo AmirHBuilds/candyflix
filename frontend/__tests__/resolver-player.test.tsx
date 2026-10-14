@@ -134,6 +134,34 @@ describe("when the file is deleted while playing (404 on a piece)", () => {
     await waitFor(() => expect(resolve.requestDownload).toHaveBeenCalledWith("tsk_1", null));
     expect(resolve.requestDownload).toHaveBeenCalledTimes(1);
   });
+
+  it("carries on from the second it stopped at, not from the beginning (hls.js resets the video on destroy)", async () => {
+    const playing = state({
+      auto_stream_id: "b", status: "done",
+      sources: [{ name: "Vertex", starred: true, status: "ok", error: null, streams: [stream("b", "800p", { state: "ready", progress: 100, play_url: "/api/resolve/relay?u=B", library_id: "lib_1" })] }],
+    });
+    vi.mocked(resolve.startResolve).mockResolvedValue(playing);
+    vi.mocked(resolve.getResolveState).mockResolvedValue(playing);
+    vi.mocked(resolve.requestDownload).mockResolvedValue(playing);
+    let cur = 73;
+    const sets: number[] = [];
+    Object.defineProperty(HTMLMediaElement.prototype, "currentTime", { configurable: true, get: () => cur, set: (v: number) => { sets.push(v); cur = v; } });
+    mount();
+    await waitFor(() => expect(hlsInstances.length).toBe(1));
+    hlsInstances[0].destroy.mockImplementation(() => { cur = 0; });
+    const onErr = hlsInstances[0].on.mock.calls.find((c) => c[0] === "e")![1];
+    await act(async () => {
+      onErr("e", { fatal: false, type: "n", response: { code: 404 } });
+    });
+    await waitFor(() => expect(hlsInstances.length).toBe(2)); // the player started again
+    const video = document.querySelector("video") as HTMLVideoElement;
+    await act(async () => {
+      fireEvent(video, new Event("durationchange"));
+      fireEvent(video, new Event("loadedmetadata"));
+    });
+    expect(sets).toContain(73);
+    delete (HTMLMediaElement.prototype as unknown as Record<string, unknown>).currentTime;
+  });
 });
 
 describe("SourceMenu", () => {

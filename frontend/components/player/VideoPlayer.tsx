@@ -190,6 +190,8 @@ export default function VideoPlayer({
     bufferingRef.current = buffering;
   }, [buffering]);
   const [error, setError] = useState<string | null>(null);
+  // The last second that was really played: hls.js resets the video to 0 when it is destroyed, so the spot is read from here.
+  const lastPlayedRef = useRef(0);
   const onFatalErrorRef = useRef(onFatalError);
   onFatalErrorRef.current = onFatalError;
   // True when the resume-fallback timer fires and the video STILL hasn't
@@ -341,10 +343,11 @@ export default function VideoPlayer({
           const code = (data as { response?: { code?: number } }).response?.code;
           if (!gone && (code === 404 || code === 410)) {
             gone = true;
+            const at = video.currentTime || lastPlayedRef.current;
             instance.destroy();
             setError("This video couldn't be played. Try another source.");
             setBuffering(false);
-            onFatalErrorRef.current?.(video.currentTime || 0);
+            onFatalErrorRef.current?.(at);
             return;
           }
           if (gone || !data.fatal) return;
@@ -355,10 +358,11 @@ export default function VideoPlayer({
             networkRetries += 1;
             instance.recoverMediaError();
           } else {
+            const at = video.currentTime || lastPlayedRef.current;
             instance.destroy();
             setError("This video couldn't be played. Try another source.");
             setBuffering(false);
-            onFatalErrorRef.current?.(video.currentTime || 0);
+            onFatalErrorRef.current?.(at);
           }
         });
         instance.loadSource(videoUrl);
@@ -569,7 +573,10 @@ export default function VideoPlayer({
       attemptResume();
     }
     function onTimeUpdate() {
-      if (video) setCurrentTime(video.currentTime);
+      if (video) {
+        setCurrentTime(video.currentTime);
+        if (video.currentTime > 0) lastPlayedRef.current = video.currentTime;
+      }
     }
     function onSeeked() {
       setSeekPreview(null);
@@ -641,7 +648,7 @@ export default function VideoPlayer({
       log("error", videoRef.current?.error);
       setError("This video couldn't be played. Try refreshing the page.");
       setBuffering(false);
-      onFatalErrorRef.current?.(videoRef.current?.currentTime || 0);
+      onFatalErrorRef.current?.(videoRef.current?.currentTime || lastPlayedRef.current);
     }
     function onEnded() {
       log("ended");
