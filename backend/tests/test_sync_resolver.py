@@ -200,3 +200,18 @@ def test_old_audio_is_deleted_but_not_while_in_use(env):
     finally:
         sync_service._audio_in_use.discard("audio-busy.aac")
     assert not old.exists() and fresh.exists() and busy.exists()
+
+
+async def test_direct_mode_resolver_subtitle_links_are_accepted_too(authed, env):
+    direct = f"{BASE}/subs/en.vtt"
+    assert sync_service.is_relay_url(direct)
+    assert not sync_service.is_relay_url("https://elsewhere.example/subs/en.vtt")
+    r = await authed.post("/api/subtitle-sync", json={**BODY, "subtitle_url": direct})
+    assert r.status_code == 200
+    done = None
+    for _ in range(300):
+        done = (await authed.get("/api/subtitle-sync/status", params={**Q, "subtitle_url": direct})).json()
+        if done["state"] in ("done", "failed"):
+            break
+        await asyncio.sleep(0.05)
+    assert done["state"] == "done"

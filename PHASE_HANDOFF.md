@@ -1010,3 +1010,4 @@ Needs in `backend/.env`: `RESOLVER_URL`, `RESOLVER_API_KEY` (empty = the old moc
   - Assumption: `sources_total` is the number of sources that exist (not only those asked). If it only counts asked ones, the first batch will be smaller than half.
 - **Pause/play bubble**: the keyframes no longer set `translate(-50%,-50%)`; a flex wrapper centres it and the animation is `forwards` from `opacity-0`, so it cannot snap to the corner for a frame at the end.
 - Tests: `test_sync_resolver.py` (audio endpoint, sharing, TTL), `test_resolver.py` (max_sources, more), `resolver-player.test.tsx`, `video-growth.test.tsx`.
+- **Direct mode** (`RESOLVER_STREAM_MODE=direct`): the browser plays the resolver's own links (no relay). Subtitle sync now also accepts a resolver subtitle given as its own full link (`is_relay_url` accepts links on the resolver's host), not only relay links.

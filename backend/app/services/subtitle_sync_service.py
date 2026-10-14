@@ -99,12 +99,20 @@ _RELAY_URL = re.compile(r"^/api/resolve/relay\?")
 
 
 def is_relay_url(url: str) -> bool:
-    return bool(_RELAY_URL.match(url or ""))
+    """A subtitle that comes from the resolver: through our relay, or (RESOLVER_STREAM_MODE=direct) its own link."""
+    if _RELAY_URL.match(url or ""):
+        return True
+    from urllib.parse import urlparse
+
+    p = urlparse(url or "")
+    return p.scheme in ("http", "https") and bool(p.hostname) and p.hostname in resolver_service._allowed_hosts()
 
 
 def _relay_target(url: str) -> str:
     from urllib.parse import parse_qs, urlparse
 
+    if not _RELAY_URL.match(url or ""):
+        return url
     return (parse_qs(urlparse(url).query).get("u") or [""])[0]
 
 
