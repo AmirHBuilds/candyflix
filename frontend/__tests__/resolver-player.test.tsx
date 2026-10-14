@@ -115,6 +115,27 @@ describe("when the video breaks while playing", () => {
   });
 });
 
+describe("when the file is deleted while playing (404 on a piece)", () => {
+  it("starts again at once, without waiting for hls.js to give up", async () => {
+    const playing = state({
+      auto_stream_id: "b", status: "done",
+      sources: [{ name: "Vertex", starred: true, status: "ok", error: null, streams: [stream("b", "800p", { state: "ready", progress: 100, play_url: "/api/resolve/relay?u=B", library_id: "lib_1" })] }],
+    });
+    vi.mocked(resolve.startResolve).mockResolvedValue(playing);
+    vi.mocked(resolve.getResolveState).mockResolvedValue(playing);
+    vi.mocked(resolve.requestDownload).mockResolvedValue(playing);
+    mount();
+    await waitFor(() => expect(hlsInstances.length).toBe(1));
+    const onErr = hlsInstances[0].on.mock.calls.find((c) => c[0] === "e")![1];
+    await act(async () => {
+      onErr("e", { fatal: false, type: "n", details: "fragLoadError", response: { code: 404 } });
+      onErr("e", { fatal: false, type: "n", details: "fragLoadError", response: { code: 404 } });
+    });
+    await waitFor(() => expect(resolve.requestDownload).toHaveBeenCalledWith("tsk_1", null));
+    expect(resolve.requestDownload).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("SourceMenu", () => {
   const picker = (over = {}) => ({
     sources: withDownload({ state: "downloading", progress: 42, play_url: null }).sources,

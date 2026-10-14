@@ -334,8 +334,20 @@ export default function VideoPlayer({
         instance.on(Hls.Events.FRAG_LOADED, () => {
           networkRetries = 0;
         });
+        let gone = false;
         instance.on(Hls.Events.ERROR, (_e, data) => {
-          if (!data.fatal) return;
+          // The file is gone (404 / 410 on a piece, the playlist or a key): retrying cannot help, and hls.js would
+          // keep asking for minutes. Give up at once so the page can start the video again.
+          const code = (data as { response?: { code?: number } }).response?.code;
+          if (!gone && (code === 404 || code === 410)) {
+            gone = true;
+            instance.destroy();
+            setError("This video couldn't be played. Try another source.");
+            setBuffering(false);
+            onFatalErrorRef.current?.(video.currentTime || 0);
+            return;
+          }
+          if (gone || !data.fatal) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR && networkRetries < 4) {
             networkRetries += 1;
             instance.startLoad();
