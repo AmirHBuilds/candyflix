@@ -491,7 +491,6 @@ async def test_a_link_that_fails_after_the_download_started_goes_to_the_next_sou
     item.update(status="failed", error="401", error_code="source_link_expired", playable=False)
     for src in env["tasks"]["tsk_1"]["sources"]:
         src["streams"] = [x for x in src["streams"] if x["id"] != "str_b"]
-    env["library"].remove(item)  # the resolver may forget the failed item altogether
     r = await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={})
     assert r.status_code == 200
     asked = [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"]
@@ -500,6 +499,19 @@ async def test_a_link_that_fails_after_the_download_started_goes_to_the_next_sou
     # asked again while that one downloads: nothing new is started
     await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={})
     assert [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"] == ["str_b", "str_e"]
+    await c.aclose()
+
+
+async def test_a_cancelled_download_does_not_blacklist_the_source(env):
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    assert first["auto_stream_id"] == "str_b"
+    env["library"][0].update(status="deleted", playable=False)  # cancelled at the resolver
+    again = (await c.post("/api/resolve/start", json=START)).json()
+    asked = [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"]
+    assert asked == ["str_b", "str_b"]  # Vertex is used again, no error
+    assert again["auto_stream_id"] == "str_b"
+    assert not [x for x in env["calls"] if x[0] == "resolve"][1:]
     await c.aclose()
 
 

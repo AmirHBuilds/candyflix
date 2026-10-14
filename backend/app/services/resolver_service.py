@@ -230,6 +230,17 @@ def dead_sources(task: dict) -> set[str]:
     return {n for n in (source_of_stream(task, sid) for sid in dead_streams(task)) if n}
 
 
+def failed_sources(task: dict) -> set[str]:
+    """Sources with a download that failed in this task (status failed / error; a cancelled one is 'deleted' and does not count)."""
+    out = set()
+    for i in task.get("library") or []:
+        if i.get("mode") != "subs" and (i.get("status") or "").lower() in ("failed", "error"):
+            n = source_of_stream(task, i.get("stream_id")) or i.get("source")
+            if n:
+                out.add(n)
+    return out | dead_sources(task)
+
+
 def _past_expiry(stream: dict) -> bool:
     raw = stream.get("expires_at")
     if not raw:
@@ -299,24 +310,6 @@ async def get_state(user: User, task_id: str, after: int | None = None, wait_s: 
     return build_state(task, await _task_subtitles(task))
 
 
-async def _tried_sources(task_id: str) -> set[str]:
-    try:
-        return set(await get_redis().smembers(f"resolver:tried:{task_id}"))
-    except Exception:
-        return set()
-
-
-async def _mark_tried(task_id: str, source: str | None) -> None:
-    if not source:
-        return
-    try:
-        redis = get_redis()
-        await redis.sadd(f"resolver:tried:{task_id}", source)
-        await redis.expire(f"resolver:tried:{task_id}", 6 * 3600)
-    except Exception:
-        pass
-
-
 MAX_SOURCE_TRIES = 3  # sources tried (never the same link twice, never another quality of a dead source) before a new search
 
 
@@ -326,12 +319,12 @@ async def request_download(user: User, task_id: str, stream_id: str | None, _tri
     task = await _call("GET", f"/v1/tasks/{task_id}")
     await _guard(user, task)
     if auto:
-        # Sources already started automatically for this search: their download may have failed later (the resolver
-        # accepts the request and the link is refused a moment after), so they are never tried again, whatever the
-        # resolver then shows in its list.
-        tried = await _tried_sources(task_id)
-        _skip = frozenset(set(_skip) | tried)
-        _tries = max(_tries, len(tried))
+        # Sources whose download really FAILED in this search (not cancelled / deleted by someone): the resolver accepts a
+        # download and the link is refused a moment later, so the failure only shows up in the library. Those sources are
+        # not picked again for this request. Nothing is remembered otherwise: a source that did not fail is fine next time.
+        failed = failed_sources(task)
+        _skip = frozenset(set(_skip) | failed)
+        _tries = max(_tries, len(failed))
         if stream_id is None:
             running = [i for i in task.get("library") or [] if i.get("mode") != "subs" and _item_state(i) != "failed"]
             if running:  # something is already on its way / playing: nothing to start
@@ -358,8 +351,6 @@ async def request_download(user: User, task_id: str, stream_id: str | None, _tri
 
     already = [i for i in task.get("library") or [] if i.get("stream_id") == stream_id and i.get("mode") != "subs" and _item_state(i) != "failed"]
     if not already:
-        if auto:
-            await _mark_tried(task_id, source_of_stream(task, stream_id))
         redis = get_redis()
         rk = f"resolver:dl:{user.id}"
         used = await redis.incr(rk)
@@ -414,8 +405,15 @@ async def _after_dead_link(user: User, task: dict, bad: str | None, tries: int, 
 async def _fresh_search(user: User, old: dict, fresh: int) -> ResolveState:
     """A new search for the same movie / episode (new links), then the best of its first source. Only once per request."""
     redis = get_redis()
-    if fresh >= 1 or await redis.get(f"resolver:fresh:{old.get('task_id')}"):  # this task already is a new search
+    if fresh >= 1:
         raise HTTPException(502, "This video's links have expired. Try again in a moment.")
+    # At most 2 new searches per person and title in 10 minutes (a loop guard; the next minute's try starts clean).
+    fk = f"resolver:fresh:{user.id}:{old.get('type')}:{old.get('tmdb_id')}:{old.get('season')}:{old.get('episode')}"
+    n = await redis.incr(fk)
+    if n == 1:
+        await redis.expire(fk, 600)
+    if n > 2:
+        raise HTTPException(502, "This video's links have expired. Try again in a few minutes.")
     s = get_settings()
     body: dict = {"tmdb_id": old["tmdb_id"], "type": old["type"], "starred_first": s.resolver_starred_first}
     if old.get("type") == "tv":
@@ -424,7 +422,6 @@ async def _fresh_search(user: User, old: dict, fresh: int) -> ResolveState:
         body["max_sources"] = min(s.resolver_first_sources, 50)
     wait = min(max(s.resolver_first_wait_s, 1), 30)
     task = await _call("POST", "/v1/resolve", params={"wait": "first", "wait_s": wait}, json_body=body, timeout=wait + 15)
-    await redis.set(f"resolver:fresh:{task['task_id']}", "1", ex=6 * 3600)
     if best_stream(task):
         return await request_download(user, task["task_id"], None, 0, True, fresh + 1)
     return build_state(task, [])
