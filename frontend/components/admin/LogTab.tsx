@@ -44,6 +44,8 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted a comment`;
     case "social.config":
       return `${who} changed the comments and likes switches`;
+    case "playback.config":
+      return `${who} changed the playback switch (${e.detail ?? "auto-download next episode"})`;
     case "ai.searches.view":
       return `${who} looked at ${t}'s AI searches`;
     case "watchlist.view":

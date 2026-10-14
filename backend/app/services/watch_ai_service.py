@@ -10,6 +10,7 @@ come along so it can follow the conversation. Everything else is the AI's genera
 
 Each answered question uses one of the person's daily watch-assistant allowance (separate from AI searches).
 """
+import html
 import json
 import logging
 import re
@@ -50,7 +51,7 @@ def parse_srt(raw: str) -> list[tuple[float, str]]:
             h, mi, sec, ms = m.groups()
             start = int(h) * 3600 + int(mi) * 60 + int(sec) + int(ms.ljust(3, "0")) / 1000
             body = " ".join(_TAGS.sub("", r).strip() for r in rows[i + 1 :])
-            body = re.sub(r"\s+", " ", body).replace("♪", "").strip()
+            body = re.sub(r"\s+", " ", html.unescape(body)).replace("♪", "").strip()
             if body and not (lines_out and lines_out[-1][1] == body):
                 lines_out.append((start, body))
             break

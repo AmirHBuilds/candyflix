@@ -43,7 +43,7 @@ vi.mock("@/lib/settings", async () => {
 });
 vi.mock("@/lib/resolve", async () => {
   const actual = await vi.importActual<typeof import("@/lib/resolve")>("@/lib/resolve");
-  return { ...actual, startResolve: vi.fn(), getResolveState: vi.fn(), requestDownload: vi.fn(), loadMoreSources: vi.fn() };
+  return { ...actual, startResolve: vi.fn(), getResolveState: vi.fn(), requestDownload: vi.fn(), loadMoreSources: vi.fn(), prefetchTitle: vi.fn().mockResolvedValue({ started: true }) };
 });
 vi.mock("next/image", () => ({
   // eslint-disable-next-line @next/next/no-img-element
@@ -231,24 +231,39 @@ describe("Load more sources", () => {
       .mockResolvedValueOnce({ ...done, has_more: false, version: 3 });
     mount();
     fireEvent.click(await screen.findByLabelText("Sources and quality"));
-    fireEvent.click(await screen.findByRole("button", { name: /Load more sources/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^\+?\s*Load more$/ }));
     await waitFor(() => expect(resolve.loadMoreSources).toHaveBeenLastCalledWith("tsk_1", false));
-    fireEvent.click(await screen.findByRole("button", { name: /Load all sources/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /^\+?\s*Load all$/ }));
     await waitFor(() => expect(resolve.loadMoreSources).toHaveBeenLastCalledWith("tsk_1", true));
-    await waitFor(() => expect(screen.queryByRole("button", { name: /Load (more|all) sources/ })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: /Load (more|all)$/ })).toBeNull());
   });
 
   it("is not shown when there is nothing more to ask", () => {
     const picker = { sources: withDownload({}).sources, playingId: "b", searching: false, onSelect: vi.fn(), more: null };
     render(<SourceMenu picker={picker} getTime={() => 0} />);
     fireEvent.click(screen.getByLabelText("Sources and quality"));
-    expect(screen.queryByRole("button", { name: /Load (more|all) sources/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Load (more|all)$/ })).toBeNull();
   });
 
   it("is disabled while the search is still running", () => {
     const picker = { sources: withDownload({}).sources, playingId: "b", searching: true, onSelect: vi.fn(), more: { step: 0 as const, loading: false, onClick: vi.fn() } };
     render(<SourceMenu picker={picker} getTime={() => 0} />);
     fireEvent.click(screen.getByLabelText("Sources and quality"));
-    expect(screen.getByRole("button", { name: /Load more sources/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^\+?\s*Load more$/ })).toBeDisabled();
+  });
+});
+
+
+describe("sources without video", () => {
+  it("are shown disabled and can't be opened", () => {
+    const sources = [
+      { name: "Vertex", starred: true, status: "ok", error: null, streams: [stream("b", "800p")] },
+      { name: "Empty", starred: false, status: "ok", error: null, streams: [] },
+    ];
+    render(<SourceMenu picker={{ sources, playingId: null, searching: false, onSelect: vi.fn(), more: null }} getTime={() => 0} />);
+    fireEvent.click(screen.getByLabelText("Sources and quality"));
+    expect(screen.getByRole("tab", { name: "Empty" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: /Vertex/ })).not.toBeDisabled();
+    expect(screen.getByText("800p")).toBeInTheDocument(); // the first source with video is the one shown
   });
 });

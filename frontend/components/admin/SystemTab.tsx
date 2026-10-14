@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { quietButton } from "@/components/admin/Dialog";
-import { clearSubtitleCache, clearTmdbCache, getSystemStatus, type ServiceCheck, type SystemStatus } from "@/lib/admin";
+import { Toggle } from "@/components/settings/controls";
+import { clearSubtitleCache, clearTmdbCache, getPlaybackConfig, getSystemStatus, savePlaybackConfig, type ServiceCheck, type SystemStatus } from "@/lib/admin";
 import { showToast } from "@/lib/toast";
 
 function formatBytes(bytes: number): string {
@@ -32,6 +33,24 @@ export default function SystemTab() {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"tmdb" | "subs" | null>(null);
+  const [prefetch, setPrefetch] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getPlaybackConfig()
+      .then((c) => setPrefetch(c.prefetch_next_episode))
+      .catch(() => setPrefetch(null));
+  }, []);
+
+  async function changePrefetch(next: boolean) {
+    setPrefetch(next);
+    try {
+      await savePlaybackConfig({ prefetch_next_episode: next });
+      showToast(next ? "The next episode will be got ready near the end of an episode." : "Auto-download of the next episode is off.", "success");
+    } catch (err) {
+      setPrefetch(!next);
+      showToast(err instanceof Error ? err.message : "Couldn't save that.");
+    }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -88,6 +107,24 @@ export default function SystemTab() {
           <Check name="OMDb (ratings)" check={status.omdb} />
           <Check name="Gemini (Ask AI)" check={status.gemini} />
         </ul>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
+        <header className="border-b border-white/10 px-5 py-4">
+          <h2 className="text-base font-semibold text-white">Playback</h2>
+        </header>
+        <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sm:max-w-md">
+            <p className="text-sm font-medium text-white">
+              Auto-download the next episode
+            </p>
+            <p className="text-sm text-white/50">
+              When someone has watched 95% of an episode, the next one starts downloading at the video service so it is ready when they press play.
+              It uses the resolver's bandwidth and space for episodes that may not be watched.
+            </p>
+          </div>
+          {prefetch !== null && <Toggle checked={prefetch} onChange={changePrefetch} label="Auto-download the next episode" />}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.03]">

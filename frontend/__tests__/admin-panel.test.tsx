@@ -3,6 +3,8 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 
 vi.mock("@/lib/admin", () => ({
+  getPlaybackConfig: vi.fn().mockResolvedValue({ prefetch_next_episode: true }),
+  savePlaybackConfig: vi.fn().mockResolvedValue({ prefetch_next_episode: true }),
   listAdminUsers: vi.fn(),
   createAdminUser: vi.fn(),
   updateAdminUser: vi.fn(),
@@ -87,6 +89,7 @@ beforeEach(() => {
   vi.mocked(admin.getAdminStats).mockResolvedValue(stats);
   vi.mocked(admin.getNowWatching).mockResolvedValue([]);
   vi.mocked(admin.getSystemStatus).mockResolvedValue(system);
+  vi.mocked(admin.getPlaybackConfig).mockResolvedValue({ prefetch_next_episode: true });
 });
 
 const openTab = (name: string) => fireEvent.click(screen.getByRole("tab", { name }));
@@ -386,5 +389,18 @@ describe("Admin panel", () => {
       fireEvent.click(await screen.findByRole("button", { name: "Clear subtitle cache" }));
       await waitFor(() => expect(showToast).toHaveBeenCalledWith("disk"));
     });
+  });
+});
+
+
+describe("Admin panel > system > playback switch", () => {
+  it("shows the auto-download switch and saves a change", async () => {
+    vi.mocked(admin.savePlaybackConfig).mockResolvedValue({ prefetch_next_episode: false });
+    render(<AdminPanel currentUserId="me" />);
+    fireEvent.click(screen.getByRole("tab", { name: "System" }));
+    const sw = await screen.findByRole("switch", { name: "Auto-download the next episode" });
+    expect(sw).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(sw);
+    await waitFor(() => expect(admin.savePlaybackConfig).toHaveBeenCalledWith({ prefetch_next_episode: false }));
   });
 });

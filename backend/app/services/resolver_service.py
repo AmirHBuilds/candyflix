@@ -218,18 +218,6 @@ def dead_streams(task: dict) -> set[str]:
     return {i.get("stream_id") for i in task.get("library") or [] if i.get("error_code") == "source_link_expired"}
 
 
-def source_of_stream(task: dict, stream_id: str | None) -> str | None:
-    for src in task.get("sources") or []:
-        if any(st["id"] == stream_id for st in src.get("streams") or []):
-            return src.get("source")
-    return None
-
-
-def dead_sources(task: dict) -> set[str]:
-    """Sources one of whose links is known to be dead (the others of that source are not tried: its links share a fate)."""
-    return {n for n in (source_of_stream(task, sid) for sid in dead_streams(task)) if n}
-
-
 def _past_expiry(stream: dict) -> bool:
     raw = stream.get("expires_at")
     if not raw:
@@ -240,15 +228,13 @@ def _past_expiry(stream: dict) -> bool:
         return False
 
 
-def best_stream(task: dict, skip_sources: set[str] | None = None) -> dict | None:
-    """The best quality of the first source that has a usable video. Sources with a dead link (and `skip_sources`) are
-    left out entirely, and so is any link past its expiry."""
-    skip = dead_sources(task) | (skip_sources or set())
-    dead = dead_streams(task)
+def best_stream(task: dict, avoid: set[str] | None = None) -> dict | None:
+    """The best quality of the first source that has a usable video (never a link known to be dead or past its expiry)."""
+    skip = dead_streams(task) | (avoid or set())
     for src in task.get("sources") or []:
-        if src.get("status") not in (None, "ok", "done") or src.get("source") in skip:
+        if src.get("status") not in (None, "ok", "done"):
             continue
-        streams = [st for st in src.get("streams") or [] if st["id"] not in dead and not _past_expiry(st)]
+        streams = [st for st in src.get("streams") or [] if st["id"] not in skip and not _past_expiry(st)]
         if not streams:
             continue
         numbered = [st for st in streams if quality_rank(st.get("quality")) > 0]
@@ -299,10 +285,10 @@ async def get_state(user: User, task_id: str, after: int | None = None, wait_s: 
     return build_state(task, await _task_subtitles(task))
 
 
-MAX_SOURCE_TRIES = 3  # sources tried (never the same link twice, never another quality of a dead source) before a new search
+MAX_LINK_TRIES = 3  # a dead link is never retried; at most this many different ones are tried before giving up
 
 
-async def request_download(user: User, task_id: str, stream_id: str | None, _tries: int = 0, _auto: bool | None = None, _fresh: int = 0, _skip: frozenset = frozenset()) -> ResolveState:
+async def request_download(user: User, task_id: str, stream_id: str | None, _tries: int = 0, _auto: bool | None = None) -> ResolveState:
     s = get_settings()
     auto = (stream_id is None) if _auto is None else _auto  # nobody picked a quality: a new search is allowed if needed
     task = await _call("GET", f"/v1/tasks/{task_id}")
@@ -311,21 +297,21 @@ async def request_download(user: User, task_id: str, stream_id: str | None, _tri
     if task.get("status") == "expired" and not [i for i in task.get("library") or [] if _item_state(i) != "failed"]:
         # Nothing of this search is left: ask again from scratch (only when the person did not pick one quality).
         if auto:
-            return await _fresh_search(user, task, _fresh)
+            return await _fresh_search(user, task, _tries)
         raise HTTPException(410, "That video request has expired. Start again.")
 
     if stream_id is None:
-        chosen = best_stream(task, set(_skip))
+        chosen = best_stream(task)
         if chosen is None:
-            return await _after_dead_link(user, task, None, _tries, auto, _fresh, _skip)
+            return await _after_dead_link(user, task, None, _tries, allow_new_task=auto)
         stream_id = chosen["id"]
     known = {st["id"] for src in task.get("sources") or [] for st in src.get("streams") or []}
     known |= {i.get("stream_id") for i in task.get("library") or []}
     if stream_id not in known:
         raise HTTPException(404, "That quality isn't available.")
     if stream_id in dead_streams(task):
-        # The source refused this link before: never ask for it again, use another source.
-        return await _after_dead_link(user, task, stream_id, _tries, auto, _fresh, _skip)
+        # The source refused this link before: never ask for it again, use another one.
+        return await _after_dead_link(user, task, stream_id, _tries, allow_new_task=auto)
 
     already = [i for i in task.get("library") or [] if i.get("stream_id") == stream_id and i.get("mode") != "subs" and _item_state(i) != "failed"]
     if not already:
@@ -352,34 +338,35 @@ async def request_download(user: User, task_id: str, stream_id: str | None, _tri
         except HTTPException as e:
             if e.status_code != 410:
                 raise
-            return await _after_dead_link(user, task, stream_id, _tries, auto, _fresh, _skip)
+            return await _after_dead_link(user, task, stream_id, _tries, allow_new_task=auto)
         task = {**task, "library": [item, *(task.get("library") or [])]}
     return build_state(task, await _task_subtitles(task))
 
 
-async def _after_dead_link(user: User, task: dict, bad: str | None, tries: int, allow_new_task: bool, fresh: int, skip: frozenset = frozenset()) -> ResolveState:
-    """A link is dead. In order: the best link of ANOTHER source of this task (never another quality of the same source),
-    more sources of this task, and, after MAX_SOURCE_TRIES sources or when none is left, a brand-new search for the same
-    movie / episode (new links). Never the same link twice. A new search is only started when nobody picked a quality
-    (it would replace the task behind a video that is playing)."""
+async def _after_dead_link(user: User, task: dict, bad: str | None, tries: int, allow_new_task: bool) -> ResolveState:
+    """The link of `bad` (or every link of the task) is dead. In order: another stream of this task, more sources of this
+    task, and (only when nobody picked a quality) a brand-new search. Never the same link twice; gives up after a few."""
     tid = task["task_id"]
-    fresh_task = await _call("GET", f"/v1/tasks/{tid}")  # the resolver now leaves dead links out
-    avoid = set(skip) | (({source_of_stream(task, bad)} - {None}) if bad else set())  # sources already tried for this request
-    if tries + 1 < MAX_SOURCE_TRIES:
-        other = best_stream(fresh_task, avoid)
-        if other is None and fresh_task.get("has_more"):
-            more = await _call("POST", f"/v1/tasks/{tid}/sources", params={"wait": "first", "wait_s": 20}, json_body={"count": get_settings().resolver_more_default}, timeout=35)
-            other = best_stream(more, avoid)
+    if tries + 1 >= MAX_LINK_TRIES:
+        raise HTTPException(502, "This video's links have expired. Try again in a moment.")
+    avoid = {bad} if bad else set()
+    fresh = await _call("GET", f"/v1/tasks/{tid}")  # the resolver now leaves dead links out
+    other = best_stream(fresh, avoid)
+    if other is not None:
+        return await request_download(user, tid, other["id"], tries + 1, allow_new_task)
+    if fresh.get("has_more"):
+        more = await _call("POST", f"/v1/tasks/{tid}/sources", params={"wait": "first", "wait_s": 20}, json_body={"count": get_settings().resolver_more_default}, timeout=35)
+        other = best_stream(more, avoid)
         if other is not None:
-            return await request_download(user, tid, other["id"], tries + 1, allow_new_task, fresh, frozenset(avoid))
+            return await request_download(user, tid, other["id"], tries + 1, allow_new_task)
     if allow_new_task:
-        return await _fresh_search(user, fresh_task, fresh)
-    raise HTTPException(410, "That source's link has expired. Try another one.")
+        return await _fresh_search(user, fresh, tries + 1)
+    raise HTTPException(410, "That quality's link has expired. Try another one.")
 
 
-async def _fresh_search(user: User, old: dict, fresh: int) -> ResolveState:
-    """A new search for the same movie / episode (new links), then the best of its first source. Only once per request."""
-    if fresh >= 1:
+async def _fresh_search(user: User, old: dict, tries: int) -> ResolveState:
+    """A new search for the same movie / episode (new links), then the best of its first source."""
+    if tries + 1 >= MAX_LINK_TRIES:
         raise HTTPException(502, "This video's links have expired. Try again in a moment.")
     s = get_settings()
     body: dict = {"tmdb_id": old["tmdb_id"], "type": old["type"], "starred_first": s.resolver_starred_first}
@@ -390,7 +377,7 @@ async def _fresh_search(user: User, old: dict, fresh: int) -> ResolveState:
     wait = min(max(s.resolver_first_wait_s, 1), 30)
     task = await _call("POST", "/v1/resolve", params={"wait": "first", "wait_s": wait}, json_body=body, timeout=wait + 15)
     if best_stream(task):
-        return await request_download(user, task["task_id"], None, 0, True, fresh + 1)
+        return await request_download(user, task["task_id"], None, tries + 1, True)
     return build_state(task, [])
 
 

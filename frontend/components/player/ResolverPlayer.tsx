@@ -6,7 +6,7 @@ import PlayerLoading from "@/components/player/PlayerLoading";
 import { useResolver } from "@/components/player/useResolver";
 import type { WatchIdentity } from "@/components/player/useWatchProgress";
 import type { PlaybackSource, SubtitleTrack } from "@/lib/playback";
-import { findStream, sourceOf } from "@/lib/resolve";
+import { findStream, prefetchTitle, sourceOf } from "@/lib/resolve";
 import { showToast } from "@/lib/toast";
 
 /**
@@ -39,6 +39,17 @@ export default function ResolverPlayer({
     seasonNumber: identity.seasonNumber,
     episodeNumber: identity.episodeNumber,
   });
+
+  // At 95% of an episode: get the next one ready at the video service (the server checks the admin's switch).
+  const nextHref = nextEpisode?.href;
+  const onWatchedMost = useMemo(() => {
+    const m = nextHref?.match(/^\/watch\/tv\/(\d+)\/(\d+)\/(\d+)/);
+    if (!m || identity.mediaType !== "tv") return undefined;
+    const target = { mediaType: "tv" as const, tmdbId: Number(m[1]), seasonNumber: Number(m[2]), episodeNumber: Number(m[3]) };
+    return () => {
+      prefetchTitle(target).catch(() => {});
+    };
+  }, [nextHref, identity.mediaType]);
 
   // The link of the playing stream is frozen when it starts: the server hands out a fresh signed link on
   // every poll, and swapping it under a playing video would restart it.
@@ -106,6 +117,7 @@ export default function ResolverPlayer({
       poster={artwork}
       growth={{ ready: r.playing?.state === "ready", progress: r.playing?.progress ?? null, durationSeconds: r.playing?.duration_seconds ?? null, runtimeSeconds: runtimeSeconds ?? null }}
       syncLibraryId={r.playing?.library_id ?? null}
+      onWatchedMost={onWatchedMost}
       forceResume={switchedAt !== null}
       autoStart={switchedAt !== null}
       sourcePicker={{

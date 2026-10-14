@@ -131,3 +131,10 @@ class BadgePublic(BaseModel):
 
 class BadgePositionUpdate(BaseModel):
     position: BadgePosition
+
+
+class PlaybackConfig(BaseModel):
+    """Site-wide playback switches (admin)."""
+
+    # Near the end of an episode (95%), start getting the next episode ready at the video service.
+    prefetch_next_episode: bool = True

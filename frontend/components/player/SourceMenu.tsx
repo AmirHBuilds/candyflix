@@ -115,8 +115,9 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
   // Which source's qualities are listed: the one the person picked, else the one playing, else the first.
   const [picked, setPicked] = useState<string | null>(null);
   const shown =
-    picker.sources.find((x) => x.name === picked) ??
+    picker.sources.find((x) => x.name === picked && x.streams.length > 0) ??
     picker.sources.find((x) => x.streams.some((y) => y.stream_id === picker.playingId)) ??
+    picker.sources.find((x) => x.streams.length > 0) ??
     picker.sources[0] ??
     null;
   const total = picker.sources.reduce((n, s) => n + s.streams.length, 0);
@@ -157,14 +158,21 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
                 {picker.sources.map((src) => {
                   const active = src.name === shown?.name;
                   const hasPlaying = src.streams.some((x) => x.stream_id === picker.playingId);
+                  const empty = src.streams.length === 0 && (src.status === "ok" || src.status === "done" || src.status === "error" || src.status === "expired" || src.status === "failed");
                   return (
                     <button
                       key={src.name}
                       role="tab"
                       aria-selected={active}
+                      disabled={empty}
+                      title={empty ? "No video from this source" : undefined}
                       onClick={() => setPicked(src.name)}
                       className={`mb-1 flex w-full items-center justify-between gap-1 rounded-lg px-2 py-2 text-left text-sm transition-colors ${
-                        active ? "bg-white/15 font-semibold text-white" : "text-white/70 hover:bg-white/10"
+                        empty
+                          ? "cursor-not-allowed text-white/30 line-through decoration-white/20"
+                          : active
+                            ? "bg-white/15 font-semibold text-white"
+                            : "text-white/70 hover:bg-white/10"
                       }`}
                     >
                       <span className="flex min-w-0 items-center gap-1">
@@ -180,6 +188,21 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
                   );
                 })}
                 {picker.sources.length === 0 && <p className="px-2 py-1 text-xs text-white/45">None yet</p>}
+                {picker.more && (
+                  <button
+                    type="button"
+                    onClick={picker.more.onClick}
+                    disabled={picker.more.loading || picker.searching}
+                    className="mt-1 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-accent transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {picker.more.loading ? (
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-accent" aria-hidden />
+                    ) : (
+                      <span aria-hidden>+</span>
+                    )}
+                    {picker.more.step === 0 ? "Load more" : "Load all"}
+                  </button>
+                )}
               </div>
               <div className="min-w-0 flex-1" role="tabpanel">
                 <p className="px-1 pb-1.5 pt-1 text-xs font-medium uppercase tracking-wide text-white/45">Quality</p>
@@ -204,21 +227,6 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
                 {total === 0 && <p className="px-1 py-2 text-sm text-white/60">No sources yet…</p>}
               </div>
             </div>
-            {picker.more && (
-              <button
-                type="button"
-                onClick={picker.more.onClick}
-                disabled={picker.more.loading || picker.searching}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white/90 transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {picker.more.loading ? (
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-accent" aria-hidden />
-                ) : (
-                  <span aria-hidden>+</span>
-                )}
-                {picker.more.step === 0 ? "Load more sources" : "Load all sources"}
-              </button>
-            )}
             {picker.searching && (
               <p className="flex items-center gap-2 px-2 pt-2 text-xs text-white/50">
                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-accent" aria-hidden />

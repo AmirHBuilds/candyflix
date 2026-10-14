@@ -137,3 +137,37 @@ describe("findActiveCue", () => {
     expect(findActiveCue(cues, 0, -1)).toEqual(cues[0]);
   });
 });
+
+describe("subtitle text is cleaned", () => {
+  it("removes <i>, <b>, <font> tags, {\\an8} codes and decodes entities", () => {
+    const srt = `1
+00:00:01,000 --> 00:00:03,000
+<i>I told you</i> &amp; she said <font color="#ff0000">no</font>.
+
+2
+00:00:04,000 --> 00:00:06,000
+{\\an8}<b>Don&#39;t</b> go&nbsp;now
+<i></i>
+`;
+    const cues = parseSubtitles(srt);
+    expect(cues[0].text).toBe("I told you & she said no.");
+    expect(cues[1].text).toBe("Don't go now");
+  });
+
+  it("drops advertising lines from subtitle sites but keeps dialogue", () => {
+    const srt = `1
+00:00:01,000 --> 00:00:03,000
+Advertise your product or brand here
+contact www.OpenSubtitles.org today
+
+2
+00:00:04,000 --> 00:00:06,000
+Hello there.
+`;
+    expect(parseSubtitles(srt).map((c) => c.text)).toEqual(["Hello there."]);
+  });
+
+  it("a text that is only markup produces no cue", () => {
+    expect(parseSubtitles("1\n00:00:01,000 --> 00:00:03,000\n<i> </i>\n")).toEqual([]);
+  });
+});

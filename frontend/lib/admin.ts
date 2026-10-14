@@ -335,3 +335,8 @@ export const listFeedback = (offset = 0, handled?: boolean, limit = 30) =>
 export const markFeedback = (id: string, handled: boolean) =>
   request<void>(`/feedback/${id}/handled?handled=${handled}`, { method: "POST" }, "Couldn't change that.");
 export const deleteFeedback = (id: string) => request<void>(`/feedback/${id}`, { method: "DELETE" }, "Couldn't delete that.");
+
+export type PlaybackConfig = { prefetch_next_episode: boolean };
+export const getPlaybackConfig = () => request<PlaybackConfig>("/playback", {}, "Couldn't load the playback switch.");
+export const savePlaybackConfig = (body: PlaybackConfig) =>
+  request<PlaybackConfig>("/playback", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the playback switch.");

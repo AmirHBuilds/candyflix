@@ -1,10 +1,12 @@
 """Real video through Candy Resolver (Phase 22). Everything needs a signed-in person."""
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.core.db import get_db
 from app.models.user import User
 from app.schemas.resolve import DownloadIn, MoreIn, ResolveState, StartIn
-from app.services import resolver_service
+from app.services import resolver_service, site_service
 
 router = APIRouter(prefix="/resolve", tags=["resolve"])
 
@@ -18,6 +20,16 @@ def _on() -> None:
 async def start(payload: StartIn, user: User = Depends(get_current_user)):
     _on()
     return await resolver_service.start(user, payload.media_type, payload.tmdb_id, payload.season_number, payload.episode_number)
+
+
+@router.post("/prefetch")
+async def prefetch(payload: StartIn, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Near the end of an episode the player asks for the next one to be got ready (if the admin allows it)."""
+    _on()
+    if not (await site_service.get_playback_config(db)).prefetch_next_episode:
+        return {"started": False, "reason": "off"}
+    started = await resolver_service.prefetch(user, payload.media_type, payload.tmdb_id, payload.season_number, payload.episode_number)
+    return {"started": started}
 
 
 @router.get("/tasks/{task_id}", response_model=ResolveState)

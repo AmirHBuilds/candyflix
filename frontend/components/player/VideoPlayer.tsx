@@ -88,6 +88,7 @@ export default function VideoPlayer({
   autoStart,
   growth,
   syncLibraryId,
+  onWatchedMost,
 }: {
   source: PlaybackSource;
   title: string;
@@ -109,6 +110,8 @@ export default function VideoPlayer({
    */
   /** The resolver download being played; subtitle sync listens to its audio. */
   syncLibraryId?: string | null;
+  /** Called once when 95% of the video has been watched (the next episode can be got ready now). */
+  onWatchedMost?: () => void;
   growth?: { ready: boolean; progress: number | null; durationSeconds?: number | null; runtimeSeconds: number | null };
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -1390,6 +1393,15 @@ export default function VideoPlayer({
     }
     handleActivity();
   }
+
+  const watchedMostRef = useRef(false);
+  useEffect(() => {
+    if (watchedMostRef.current || !onWatchedMost) return;
+    if (duration > 120 && currentTime / duration >= 0.95) {
+      watchedMostRef.current = true;
+      onWatchedMost();
+    }
+  }, [currentTime, duration, onWatchedMost]);
 
   const showUpNext =
     !!nextEpisode &&

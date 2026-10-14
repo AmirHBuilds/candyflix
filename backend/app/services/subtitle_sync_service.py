@@ -136,7 +136,8 @@ def vtt_to_srt(text: str) -> str:
                     t = t.replace(".", ",")
                     return t if t.count(":") == 2 else f"00:{t}"
 
-                body = [l for l in lines[i + 1:] if l.strip()]
+                body = [re.sub(r"<[^>]+>|\{\\[^}]*\}", "", l).strip() for l in lines[i + 1:]]
+                body = [l for l in body if l]
                 if not body:
                     break
                 n += 1

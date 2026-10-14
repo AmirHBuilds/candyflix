@@ -134,3 +134,11 @@ export function anyDownloading(state: ResolveState | null): boolean {
 export function hasStreams(state: ResolveState | null): boolean {
   return !!state && state.sources.some((src) => src.streams.length > 0);
 }
+
+/** Near the end of an episode: get the next one ready at the video service (the server decides if that is allowed). */
+export function prefetchTitle(t: ResolveTarget): Promise<{ started: boolean }> {
+  return call("/resolve/prefetch", {
+    method: "POST",
+    body: JSON.stringify({ media_type: t.mediaType, tmdb_id: t.tmdbId, season_number: t.seasonNumber ?? null, episode_number: t.episodeNumber ?? null }),
+  });
+}

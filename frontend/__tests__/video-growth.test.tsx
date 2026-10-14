@@ -186,3 +186,25 @@ describe("the big play/pause bubble", () => {
     }
   });
 });
+
+describe("95% watched", () => {
+  it("calls onWatchedMost once, only after 95%", () => {
+    const onWatchedMost = vi.fn();
+    render(
+      <SettingsProvider initial={{ ...DEFAULT_SETTINGS, playback: { ...DEFAULT_SETTINGS.playback, autoplay_on_open: false } }}>
+        <VideoPlayer source={src(null)} title="t" identity={identity} backHref="/" growth={{ ready: true, progress: 100, runtimeSeconds: 100 }} onWatchedMost={onWatchedMost} />
+      </SettingsProvider>
+    );
+    const video = document.querySelector("video") as HTMLVideoElement;
+    mediaDuration = 1000;
+    act(() => void fireEvent.durationChange(video));
+    act(() => void fireEvent.loadedMetadata(video));
+    currentTime = 900;
+    act(() => void fireEvent.timeUpdate(video));
+    expect(onWatchedMost).not.toHaveBeenCalled();
+    currentTime = 960;
+    act(() => void fireEvent.timeUpdate(video));
+    act(() => void fireEvent.timeUpdate(video));
+    expect(onWatchedMost).toHaveBeenCalledTimes(1);
+  });
+});

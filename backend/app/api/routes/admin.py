@@ -16,7 +16,7 @@ from app.models.user import User
 from app.schemas import admin as schemas
 from app.schemas.site import BadgePositionUpdate, BadgePublic, Footer, HomeBanners
 from app.schemas import opinions as opinion_schemas
-from app.schemas.site import SocialConfig
+from app.schemas.site import PlaybackConfig, SocialConfig
 from app.services import opinions_service, admin_service, ai_service, audit_service, avatar_service, site_service, two_factor_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -175,6 +175,18 @@ async def read_social_config(db: AsyncSession = Depends(get_db)):
 async def update_social_config(payload: SocialConfig, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     saved = await site_service.set_social_config(db, payload)
     await audit_service.record(db, actor, "social.config")
+    return saved
+
+
+@router.get("/playback", response_model=PlaybackConfig)
+async def read_playback_config(db: AsyncSession = Depends(get_db)):
+    return await site_service.get_playback_config(db)
+
+
+@router.put("/playback", response_model=PlaybackConfig)
+async def update_playback_config(payload: PlaybackConfig, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    saved = await site_service.set_playback_config(db, payload)
+    await audit_service.record(db, actor, "playback.config", detail=f"Auto-download next episode: {'on' if saved.prefetch_next_episode else 'off'}")
     return saved
 
 
