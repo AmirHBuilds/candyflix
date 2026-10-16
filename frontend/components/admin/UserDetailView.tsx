@@ -396,7 +396,7 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
             )}
           </div>
 
-          <div role="tablist" aria-label="Person sections" className="flex gap-2">
+          <div role="tablist" aria-label="Person sections" className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
             {sectionsFor(detail.user.display_name).map((s) => (
               <button
                 key={s.id}
@@ -404,7 +404,7 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
                 role="tab"
                 aria-selected={section === s.id}
                 onClick={() => setSection(s.id)}
-                className={`rounded-xl px-4 py-2 text-sm font-medium ${section === s.id ? "bg-accent/15 text-accent" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
+                className={`shrink-0 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium ${section === s.id ? "bg-accent/15 text-accent" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
               >
                 {s.label}
               </button>

@@ -1069,3 +1069,12 @@ Needs in `backend/.env`: `RESOLVER_URL`, `RESOLVER_API_KEY` (empty = the old moc
 - **APIs**: person `GET /api/account/devices`, `DELETE /api/account/devices/{id}` (not the current one); `POST /api/account/sessions/sign-out-others` (kept); admin `GET /api/admin/users/{id}/devices`, `DELETE /api/admin/users/{id}/devices/{device}` (audit `device.end`), `GET/PUT /api/admin/security/device-config` (audit `device.config`; GET also says `country_available`). The v9 `/api/account/sessions` list endpoints still exist but the UI uses devices.
 - **UI**: Settings > "Your devices" and admin person page > "Devices" share `components/DeviceList.tsx` (address, country, last seen, signed in/out, counts "x of y allowed"); Security tab "Devices per account" card; country in Log > sign-ins and in the shared-account addresses; `lib/country.ts`.
 - Tests: `tests/test_devices.py` (17), frontend `admin-devices.test.tsx`, `admin-security.test.tsx`, `account-settings.test.tsx`.
+
+## 62. v11 — phone pass
+
+Frontend only (no backend or migration changes). Checked in headless Chromium at 390 and 360 wide (portrait) and 667×375 (landscape); no page scrolls sideways on any screen checked.
+
+- **Player controls** (`VideoPlayer.tsx`): the button row now wraps (`flex-wrap`). On a portrait phone the right-hand group (sources, AI, captions, settings, PiP, fullscreen) drops to its own right-aligned second row, so nothing falls off the edge; in landscape it stays on one row. The volume group is hidden on touch devices below `md` (`pointer-coarse:max-md:hidden`, phones use the hardware volume). The time pill is smaller on `max-sm`. The skip-intro / up-next overlays sit higher on `max-sm` to clear the taller bar. The bar respects the safe-area insets (notch, home bar).
+- **Like / comment buttons**: `DetailActions` stacked layout gives the comment button `flex-1` too, so the pair splits the width in half (it reverts to icon-sized at the row breakpoint via `HEART_ROW_FLEX`). `PlayerSocial` on the watch page is full width with two equal halves on `max-sm`.
+- **Admin on a phone**: the person page tab row scrolls sideways (the "Devices" tab was clipped and unreachable); the Security tab and Login protection card headers stack instead of squeezing the Refresh button.
+- Not exercised in the sandbox: real video playback (headless Chromium has no H.264) and TMDB-backed pages (home, movie, tv, search), which can't be reached from here. Desktop layouts are unchanged: every change is behind `max-sm`, `pointer-coarse`, or the existing breakpoints.

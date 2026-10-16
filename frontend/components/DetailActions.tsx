@@ -198,7 +198,7 @@ export default function DetailActions({
           // The heart and the discussion icon are one block, split by a thin line.
           <div className="flex h-12 divide-x divide-white/15 overflow-hidden rounded-xl border border-white/15">
             <TitleLikeButton scope={scope} variant="segment" className={`flex-1 px-[var(--pad)] ${HEART_ROW_FLEX[labelSize]}`} labelClass={HEART_ROW_LABEL[labelSize]} />
-            <DiscussionButton scope={scope} title={title} variant="segment" />
+            <DiscussionButton scope={scope} title={title} variant="segment" className={`flex-1 ${HEART_ROW_FLEX[labelSize]}`} />
           </div>
         )}
       </div>

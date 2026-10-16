@@ -96,14 +96,14 @@ export default function LoginProtection() {
   return (
     <div className="space-y-6">
       <div className={card}>
-        <header className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
+        <header className="flex flex-col gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div>
             <h2 className="text-base font-semibold text-white">Wrong passwords</h2>
             <p className="mt-0.5 text-sm text-white/50">
               Too many wrong passwords for one name, or from one address, blocks further tries for a while. The first block is {cfg?.lockout_minutes ?? 15} minutes; if it happens again within a day it doubles (never more than four times). A blocked try gets the same message even when the password is right, so a guesser never learns they were close. A name block lets through an address that person has already signed in from, so a stranger can&apos;t lock them out at home. You hear about each new block here and on Telegram.
             </p>
           </div>
-          <button type="button" className={quietButton} onClick={load}>
+          <button type="button" className={`${quietButton} self-start`} onClick={load}>
             Refresh
           </button>
         </header>

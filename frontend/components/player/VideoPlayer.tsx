@@ -1562,7 +1562,7 @@ export default function VideoPlayer({
             seekTo(skipTarget.end);
           }}
           aria-label={SKIP_LABELS[skipTarget.kind]}
-          className="absolute bottom-24 right-4 z-20 flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-black shadow-[0_6px_24px_rgba(0,0,0,0.6)] ring-2 ring-accent transition-transform hover:scale-105 active:scale-95 sm:right-6"
+          className="absolute bottom-24 right-4 z-20 flex items-center gap-2 rounded-full bg-white max-sm:bottom-40 px-5 py-3 text-sm font-bold text-black shadow-[0_6px_24px_rgba(0,0,0,0.6)] ring-2 ring-accent transition-transform hover:scale-105 active:scale-95 sm:right-6"
         >
           {SKIP_LABELS[skipTarget.kind]}
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
@@ -1572,7 +1572,7 @@ export default function VideoPlayer({
       )}
 
       {showUpNext && nextEpisode && (
-        <div className="absolute bottom-24 right-6 z-20 flex items-center gap-3 rounded-xl border border-white/10 bg-canvas/95 p-3 shadow-2xl">
+        <div className="absolute bottom-24 right-6 z-20 flex items-center gap-3 rounded-xl max-sm:bottom-40 max-sm:right-3 border border-white/10 bg-canvas/95 p-3 shadow-2xl">
           <div className="text-sm">
             <p className="text-white/50">{autoNextWanted ? `Up next · playing in ${autoNextRemaining}s` : "Up next"}</p>
             <p className="text-white/90">{nextEpisode.label}</p>
@@ -1632,7 +1632,7 @@ export default function VideoPlayer({
 
       {/* Control bar */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 to-transparent px-4 pb-2 pt-7 transition-opacity duration-200 ${
+        className={`absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 to-transparent pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-7 transition-opacity duration-200 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
@@ -1688,7 +1688,10 @@ export default function VideoPlayer({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-white">
+        {/* On a narrow screen the buttons don't fit one row: the right-hand group (sources, subtitles, settings, fullscreen)
+            wraps to a second row of its own instead of running off the edge. Phones also drop the volume control (they
+            have volume keys). */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-white">
           <PlayerTooltip label={playing ? "Pause" : "Play"} shortcuts={["Space", "K"]} align="start">
             <button
               aria-label="Play/Pause"
@@ -1762,7 +1765,7 @@ export default function VideoPlayer({
           )}
 
           {controls.volume && (
-          <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 pl-1 pr-2">
+          <div className="player-volume-group flex h-10 items-center rounded-full bg-white/15 pl-1 pr-2 pointer-coarse:max-md:hidden">
             <PlayerTooltip label={muted || volume === 0 ? "Unmute" : "Mute"} shortcuts={["M"]}>
               <button
                 aria-label="Mute/unmute"
@@ -1794,7 +1797,7 @@ export default function VideoPlayer({
           )}
 
           {controls.time && (
-            <div className="flex h-10 items-center whitespace-nowrap rounded-full bg-white/15 px-3.5 text-sm font-medium tabular-nums text-white">
+            <div className="flex h-10 items-center whitespace-nowrap rounded-full bg-white/15 px-3.5 text-sm font-medium tabular-nums text-white max-sm:px-2.5 max-sm:text-xs">
               {formatTime(shownTime)} / {formatTime(duration)}
             </div>
           )}

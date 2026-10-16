@@ -239,14 +239,14 @@ export default function SecurityTab({ onViewPerson }: { onViewPerson: (id: strin
       <Settings onSaved={load} />
       <DeviceSettings />
       <div className={card}>
-        <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <header className="flex flex-col gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-semibold text-white">Signed in from several addresses</h2>
             <p className="mt-0.5 text-sm text-white/50">
               {data ? `The last ${data.window_hours} hours. Everyone with two or more addresses is listed, those at ${data.max_ips} or more first.` : "Checking…"}
             </p>
           </div>
-          <button type="button" className={quietButton} onClick={load}>
+          <button type="button" className={`${quietButton} self-start`} onClick={load}>
             Refresh
           </button>
         </header>
