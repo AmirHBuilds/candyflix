@@ -1,5 +1,6 @@
 "use client";
 
+import { reportClientError } from "@/lib/report-error";
 import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { isExternalUrl, mediaUrl } from "@/lib/resolve";
@@ -347,6 +348,7 @@ export default function VideoPlayer({
             instance.destroy();
             setError("This video couldn't be played. Try another source.");
             setBuffering(false);
+            reportClientError("player", new Error("The video file is gone (HTTP " + code + ")"), `${data.details ?? ""} ${(data as { url?: string }).url?.split("?")[0] ?? ""}`);
             onFatalErrorRef.current?.(at);
             return;
           }
@@ -362,6 +364,7 @@ export default function VideoPlayer({
             instance.destroy();
             setError("This video couldn't be played. Try another source.");
             setBuffering(false);
+            reportClientError("player", new Error("The video stopped for good: " + (data.details ?? data.type)), `after ${Math.round(at)}s`);
             onFatalErrorRef.current?.(at);
           }
         });
@@ -648,6 +651,7 @@ export default function VideoPlayer({
       log("error", videoRef.current?.error);
       setError("This video couldn't be played. Try refreshing the page.");
       setBuffering(false);
+      reportClientError("player", new Error("The video element failed (code " + (videoRef.current?.error?.code ?? "?") + ")"), videoRef.current?.error?.message);
       onFatalErrorRef.current?.(videoRef.current?.currentTime || lastPlayedRef.current);
     }
     function onEnded() {

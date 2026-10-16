@@ -1,5 +1,6 @@
 "use client";
 
+import CandyIcon from "@/components/CandyIcon";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminBadge from "@/components/AdminBadge";
@@ -129,7 +130,7 @@ export default function LoginPage() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center gap-10 px-6 pb-14 text-center">
       <div className="flex flex-col items-center gap-2">
-        <div className="text-4xl">🍬</div>
+        <CandyIcon size={56} />
         <h1 className="text-2xl font-semibold tracking-tight">CandyFlix</h1>
       </div>
 

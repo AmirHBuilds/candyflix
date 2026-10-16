@@ -5,6 +5,7 @@ import { DayView, SignInsView, TitleViewersView, TitlesView } from "@/components
 import AITab from "@/components/admin/AITab";
 import BadgeTab from "@/components/admin/BadgeTab";
 import BannersTab from "@/components/admin/BannersTab";
+import ErrorsTab from "@/components/admin/ErrorsTab";
 import FeedbackTab from "@/components/admin/FeedbackTab";
 import FooterTab from "@/components/admin/FooterTab";
 import LogTab from "@/components/admin/LogTab";
@@ -21,6 +22,7 @@ const TABS = [
   { id: "messages", label: "Messages" },
   { id: "opinions", label: "Opinions" },
   { id: "feedback", label: "Feedback" },
+  { id: "errors", label: "Errors" },
   { id: "log", label: "Log" },
   { id: "ai", label: "AI" },
   { id: "badge", label: "Badge" },
@@ -129,6 +131,7 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
             {tab === "messages" && <MessagesTab />}
             {tab === "opinions" && <OpinionsTab />}
             {tab === "feedback" && <FeedbackTab />}
+            {tab === "errors" && <ErrorsTab />}
             {tab === "log" && <LogTab />}
             {tab === "ai" && <AITab onViewPerson={toPerson} />}
             {tab === "badge" && <BadgeTab />}

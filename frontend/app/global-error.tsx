@@ -1,11 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
 import "./globals.css";
+import { reportClientError } from "@/lib/report-error";
 
 // Replaces the root layout when *it* fails, so it must supply its own
 // <html>/<body>. Deliberately self-contained: no fonts, no router, no
 // shared components — anything that could itself be what broke.
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    reportClientError("page", error);
+  }, [error]);
+
   return (
     <html lang="en">
       <body className="flex min-h-dvh items-center justify-center bg-canvas px-6 text-center text-white antialiased">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { quietButton } from "@/components/admin/Dialog";
+import HostCard from "@/components/admin/HostCard";
 import { Toggle } from "@/components/settings/controls";
 import { clearSubtitleCache, clearTmdbCache, getPlaybackConfig, getSystemStatus, savePlaybackConfig, type ServiceCheck, type SystemStatus } from "@/lib/admin";
 import { showToast } from "@/lib/toast";
@@ -92,6 +93,8 @@ export default function SystemTab() {
 
   return (
     <section aria-label="System" className="space-y-6">
+      <HostCard />
+
       <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
         <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <h2 className="text-base font-semibold text-white">Health</h2>

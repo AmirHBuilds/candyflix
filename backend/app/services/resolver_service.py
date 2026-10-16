@@ -24,7 +24,7 @@ from app.core.config import get_settings
 from app.core.redis import get_redis
 from app.models.user import User
 from app.schemas.resolve import ResolveState, SourceState, StreamState, SubtitleItem
-from app.services import content_rating_service
+from app.services import content_rating_service, error_log_service
 
 # Tests point this at a fake resolver (an ASGI transport).
 _transport: httpx.AsyncBaseTransport | None = None
@@ -52,16 +52,23 @@ async def _call(method: str, path: str, *, params: dict | None = None, json_body
     try:
         async with _client(timeout) as c:
             r = await c.request(method, f"{_base()}{path}", params=params, json=json_body, headers=headers)
-    except httpx.HTTPError:
-        raise HTTPException(502, UNAVAILABLE)
+    except httpx.HTTPError as e:
+        raise _logged(HTTPException(502, UNAVAILABLE), f"Video service unreachable: {type(e).__name__}", f"{method} {path}\n{e!r}")
     if r.status_code == 404:
         raise HTTPException(404, "That video request has expired. Start again.")
     if r.status_code == 410:
         # The source's own link is dead (the resolver says so at once instead of starting a download that would fail).
         raise HTTPException(410, "source_link_expired")
     if r.status_code >= 400:
-        raise HTTPException(502, UNAVAILABLE)
+        raise _logged(HTTPException(502, UNAVAILABLE), f"Video service answered HTTP {r.status_code}", f"{method} {path}\n{r.text[:500]}")
     return r.json()
+
+
+def _logged(exc: HTTPException, title: str, detail: str) -> HTTPException:
+    """Puts the failure in the error log (with what was asked) and marks the exception so it is not logged a second time."""
+    error_log_service.record("resolver", title, detail, where=f"resolver {detail.splitlines()[0][:120]}")
+    exc.logged = True  # type: ignore[attr-defined]
+    return exc
 
 
 # ---------------------------------------------------------------- helpers
@@ -301,12 +308,33 @@ async def _guard(user: User, task: dict) -> None:
     await content_rating_service.ensure(user, task["type"], task["tmdb_id"])
 
 
+async def _note_failed_downloads(task: dict) -> None:
+    """A download that failed at the video service goes in the error log (once per download), with the source, quality and the reason."""
+    for it in task.get("library") or []:
+        if it.get("mode") == "subs" or (it.get("status") or "").lower() not in ("failed", "error"):
+            continue
+        try:
+            if not await get_redis().set(f"resolver:noted:{it.get('id')}", "1", nx=True, ex=86400):
+                continue
+        except Exception:
+            return
+        src = it.get("source") or source_of_stream(task, it.get("stream_id")) or "?"
+        code = it.get("error_code")
+        error_log_service.record(
+            "resolver", f"A video download failed ({src} {it.get('quality') or ''})".replace(" )", ")"),
+            f"Title: {task.get('title') or task.get('tmdb_id')} ({task.get('type')} {task.get('season') or ''} {task.get('episode') or ''})\n"
+            f"Source: {src}  Quality: {it.get('quality')}\nReason: {code or 'download error'}\n\n{str(it.get('error') or '')[-1500:]}",
+            level="warning" if code == "source_link_expired" else "error", where=f"task {task.get('task_id')}",
+        )
+
+
 async def get_state(user: User, task_id: str, after: int | None = None, wait_s: int = 0) -> ResolveState:
     params: dict = {}
     if after is not None and wait_s:
         params = {"after": after, "wait_s": min(wait_s, 25)}
     task = await _call("GET", f"/v1/tasks/{task_id}", params=params, timeout=15 + wait_s)
     await _guard(user, task)
+    await _note_failed_downloads(task)
     return build_state(task, await _task_subtitles(task))
 
 
@@ -388,6 +416,7 @@ async def _after_dead_link(user: User, task: dict, bad: str | None, tries: int, 
         # A person picked this quality: say it failed (the resolver removes it from the list); never switch source for them.
         raise HTTPException(410, "That quality's link expired and was removed. Pick another one.")
     tid = task["task_id"]
+    error_log_service.record("resolver", "A video link had expired; trying another source", f"Task {tid}, stream {bad or '-'}, source {source_of_stream(task, bad) or '-'}", level="warning", where=f"task {tid}")
     fresh_task = await _call("GET", f"/v1/tasks/{tid}")  # the resolver now leaves dead links out
     avoid = set(skip) | (({source_of_stream(task, bad)} - {None}) if bad else set())  # sources already tried for this request
     if tries + 1 < MAX_SOURCE_TRIES:

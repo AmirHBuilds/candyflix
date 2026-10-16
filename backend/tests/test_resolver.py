@@ -572,3 +572,21 @@ async def test_the_admin_can_read_and_change_the_playback_switch(env):
         assert (await ac.put("/api/admin/playback", json={"prefetch_next_episode": False})).json() == {"prefetch_next_episode": False}
         assert (await ac.get("/api/admin/playback")).json() == {"prefetch_next_episode": False}
         await ac.put("/api/admin/playback", json={"prefetch_next_episode": True})
+
+
+async def test_a_failed_download_is_put_in_the_error_log_once(env, monkeypatch):
+    from app.services import error_log_service
+
+    from app.core.redis import get_redis
+
+    await get_redis().delete("resolver:noted:lib_0")  # "noted once" is remembered in Redis between runs
+    logged = []
+    monkeypatch.setattr(error_log_service, "record", lambda source, title, detail=None, **k: logged.append((source, title, detail, k)))
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    env["library"][0].update(status="failed", error="HTTP 500 from the source", error_code=None, playable=False)
+    for _ in range(3):
+        await c.get(f"/api/resolve/tasks/{first['task_id']}")
+    mine = [x for x in logged if "download failed" in x[1]]
+    assert len(mine) == 1 and mine[0][0] == "resolver" and mine[0][3]["level"] == "error" and "HTTP 500" in mine[0][2]
+    await c.aclose()

@@ -202,6 +202,13 @@ async def system(db: AsyncSession = Depends(get_db)):
     return await admin_service.system_status(db, app.version)
 
 
+@router.get("/system/host")
+async def system_host(db: AsyncSession = Depends(get_db)):
+    from app.services import host_service
+
+    return await host_service.snapshot(db)
+
+
 @router.post("/system/clear-tmdb-cache", response_model=schemas.ClearedResult)
 async def clear_tmdb_cache(actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     cleared = await admin_service.clear_tmdb_cache()

@@ -340,3 +340,47 @@ export type PlaybackConfig = { prefetch_next_episode: boolean };
 export const getPlaybackConfig = () => request<PlaybackConfig>("/playback", {}, "Couldn't load the playback switch.");
 export const savePlaybackConfig = (body: PlaybackConfig) =>
   request<PlaybackConfig>("/playback", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the playback switch.");
+
+// ---------- error log ----------
+export type ErrorSource = "server" | "ai" | "resolver" | "sync" | "subtitles" | "tmdb" | "browser" | "system";
+export type AdminError = {
+  id: string;
+  created_at: string;
+  last_seen: string;
+  count: number;
+  source: ErrorSource | string;
+  level: "error" | "warning";
+  title: string;
+  detail: string | null;
+  where: string | null;
+  user_name: string | null;
+  handled: boolean;
+};
+export type AdminErrorPage = { items: AdminError[]; total: number; unhandled: number; last_24h: number; by_source: Record<string, number> };
+export type ErrorQuery = { offset?: number; source?: string; level?: string; handled?: boolean; q?: string };
+export const listErrors = ({ offset = 0, source, level, handled, q }: ErrorQuery = {}) => {
+  const p = new URLSearchParams({ offset: String(offset), limit: "30" });
+  if (source) p.set("source", source);
+  if (level) p.set("level", level);
+  if (handled !== undefined) p.set("handled", String(handled));
+  if (q) p.set("q", q);
+  return request<AdminErrorPage>(`/errors?${p}`, {}, "Couldn't load the error log.");
+};
+export const markError = (id: string, handled: boolean) => request<AdminError>(`/errors/${id}/handled?handled=${handled}`, { method: "POST" }, "Couldn't change that.");
+export const deleteError = (id: string) => request<void>(`/errors/${id}`, { method: "DELETE" }, "Couldn't delete that.");
+export const handleAllErrors = (source?: string) => request<{ changed: number }>(`/errors/handle-all${source ? `?source=${source}` : ""}`, { method: "POST" }, "Couldn't change that.");
+export const clearHandledErrors = () => request<{ cleared: number }>("/errors/clear-handled", { method: "POST" }, "Couldn't clear them.");
+
+// ---------- the server itself ----------
+export type HostStatus = {
+  memory: { total: number; available: number; used: number; swap_total: number; swap_used: number; limit?: number; container_used?: number } | null;
+  cpu: { cores: number; load_1: number; load_5: number; load_15: number } | null;
+  uptime: { host_seconds: number | null; app_seconds: number; app_memory: number | null };
+  disks: { label: string; path: string; total: number; used: number; free: number }[];
+  folders: { label: string; files: number; bytes: number }[];
+  database: { bytes: number; connections: number } | null;
+  redis: { bytes: number; keys: number } | null;
+  resolver: { ok: boolean; detail: string; latency_ms: number | null } | null;
+  watching_now: number;
+};
+export const getHostStatus = () => request<HostStatus>("/system/host", {}, "Couldn't read the server's numbers.");

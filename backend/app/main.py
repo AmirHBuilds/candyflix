@@ -24,6 +24,8 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -35,6 +37,7 @@ from app.api.routes import (
     admin,
     auth,
     continue_watching,
+    errors,
     feedback,
     health,
     movies,
@@ -58,7 +61,7 @@ from app.core.config import get_settings
 from app.core.migrate import run_migrations
 from app.core.security import SESSION_COOKIE_NAME
 from app.services import auth_service
-from app.services import telegram_service, two_factor_service
+from app.services import error_log_service, telegram_service, two_factor_service
 
 settings = get_settings()
 
@@ -126,6 +129,10 @@ async def _tidy_audio_forever():
             subtitle_sync_service.cleanup_audio()
         except Exception:
             pass
+        try:
+            await error_log_service.cleanup()
+        except Exception:
+            pass
         await asyncio.sleep(3600)
 
 
@@ -133,6 +140,7 @@ async def _tidy_audio_forever():
 async def lifespan(_app: FastAPI):
     if settings.auto_migrate:
         await run_migrations()
+    error_log_service.install_log_handler()
     telegram_service.report_started()
     poller = asyncio.create_task(two_factor_service.poll_forever()) if telegram_service.enabled() else None
     tidy = asyncio.create_task(_tidy_audio_forever())
@@ -157,8 +165,23 @@ app = FastAPI(
 
 @app.exception_handler(Exception)
 async def report_unhandled(request: Request, exc: Exception):
-    telegram_service.report_error(request.method, request.url.path, exc)
+    where = f"{request.method} {request.url.path}"
+    await error_log_service.record_now(
+        error_log_service.source_for_path(request.url.path), f"{type(exc).__name__}: {str(exc)[:200]}",
+        error_log_service.format_exception(exc), where=where,
+    )
     return JSONResponse({"detail": "Internal Server Error"}, status_code=500)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def report_server_answers(request: Request, exc: StarletteHTTPException):
+    """A 5xx the code raised on purpose (the video service is down, the AI failed...) is a failure worth knowing about too."""
+    if exc.status_code >= 500 and not getattr(exc, "logged", False):
+        error_log_service.record(
+            error_log_service.source_for_path(request.url.path), f"{exc.status_code}: {exc.detail}", None,
+            where=f"{request.method} {request.url.path}",
+        )
+    return await http_exception_handler(request, exc)
 
 
 app.add_middleware(SignedInOnlyFiles)
@@ -206,6 +229,8 @@ app.include_router(presence.router, prefix="/api")
 app.include_router(announcements.router, prefix="/api")
 app.include_router(opinions.router, prefix="/api")
 app.include_router(resolve.router, prefix="/api")
+app.include_router(errors.router, prefix="/api")
+app.include_router(errors.admin_router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(feedback.admin_router, prefix="/api")
 

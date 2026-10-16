@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 import ErrorState from "@/components/ErrorState";
+import { reportClientError } from "@/lib/report-error";
 
 // Last line of defence for routes outside (main) — the watch pages and
 // the login page — and for failures in the (main) layout itself.
 export default function RootError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error(error);
+    reportClientError("page", error);
   }, [error]);
 
   return (

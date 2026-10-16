@@ -1,5 +1,6 @@
 "use client";
 
+import CandyIcon from "@/components/CandyIcon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -96,8 +97,9 @@ export default function Nav() {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-canvas/95 backdrop-blur">
       <div className="flex items-center gap-4 px-6 py-4 sm:px-10">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          🍬 CandyFlix
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <CandyIcon size={26} />
+          CandyFlix
         </Link>
 
         <nav className="hidden items-center gap-5 text-sm sm:flex">

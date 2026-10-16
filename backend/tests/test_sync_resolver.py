@@ -82,7 +82,9 @@ async def env(tmp_path, monkeypatch):
     script.write_text(FAKE_SYNC)
     monkeypatch.setattr(sync_service, "SCRIPT", script)
     reports = []
-    monkeypatch.setattr(telegram_service, "report_sync_failure", lambda *a: reports.append(a))
+    from app.services import error_log_service
+
+    monkeypatch.setattr(error_log_service, "record", lambda source, title, detail=None, **k: reports.append((source, title, detail or "", k)))
     yield {"state": state, "tmp": tmp_path, "reports": reports, "syncs": syncs, "subs": subs}
     await redis.aclose()
     redis_module._redis_client = None
@@ -151,9 +153,10 @@ async def test_an_audio_failure_is_recorded_and_reported(authed, env):
     await authed.post("/api/subtitle-sync", json=BODY)
     failed = await wait_state(authed, {"failed"})
     assert "admins were told" in failed["message"]
-    assert len(env["reports"]) == 1
-    video, subtitle, stage, detail, media = env["reports"][0]
-    assert stage == "audio" and "500" in detail and media == "Vertex 800p" and video.startswith("movie:550")
+    assert len([r for r in env["reports"] if "Subtitle sync failed while" in r[1]]) == 1
+    source, title, detail, kw = next(r for r in env["reports"] if "Subtitle sync failed while" in r[1])
+    assert source == "sync" and "getting the audio" in title and "500" in detail and "Vertex 800p" in detail and kw["where"].startswith("movie:550")
+    assert "Subtitle sync failed" in kw["telegram"] and "Vertex 800p" in kw["telegram"]  # the Telegram text is the detailed one
     line = json.loads((env["syncs"] / "failures.jsonl").read_text().splitlines()[0])
     assert line["stage"] == "audio" and "500" in line["detail"]
 
@@ -162,7 +165,8 @@ async def test_a_sync_tool_failure_is_reported_too(authed, env, monkeypatch):
     (env["tmp"] / "fake_sync.py").write_text("import sys\nprint('boom')\nsys.exit(3)\n")
     await authed.post("/api/subtitle-sync", json=BODY)
     await wait_state(authed, {"failed"})
-    assert env["reports"][0][2] == "sync" and "boom" in env["reports"][0][3]
+    mine = [r for r in env["reports"] if "Subtitle sync failed while" in r[1]]
+    assert len(mine) == 1 and "the sync tool" in mine[0][1] and "boom" in mine[0][2]
 
 
 def test_the_telegram_report_goes_to_the_errors_topic(monkeypatch):

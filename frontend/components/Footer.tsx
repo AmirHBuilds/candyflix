@@ -1,3 +1,4 @@
+import CandyIcon from "@/components/CandyIcon";
 import Link from "next/link";
 import { authInit } from "@/lib/media-server";
 import { getFooterServer, LOVE_NOTE, type FooterContent } from "@/lib/site";
@@ -20,7 +21,10 @@ export function FooterView({ footer, year }: { footer: FooterContent; year: numb
     <footer className="mt-12 border-t border-white/10 px-6 py-8 text-sm text-white/50 sm:px-10">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-sm space-y-1.5">
-          <p className="font-semibold text-white/80">🍬 CandyFlix</p>
+          <p className="flex items-center gap-2 font-semibold text-white/80">
+            <CandyIcon size={20} />
+            CandyFlix
+          </p>
           {footer.tagline && <p>{footer.tagline}</p>}
           {footer.email && (
             <p>

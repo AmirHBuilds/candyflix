@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import ErrorState from "@/components/ErrorState";
+import { reportClientError } from "@/lib/report-error";
 
 // Catches anything a (main) page throws that it didn't handle itself.
 // Rendered inside the layout, so the header stays and "Try again" just
@@ -9,6 +10,7 @@ import ErrorState from "@/components/ErrorState";
 export default function MainError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error(error);
+    reportClientError("page", error);
   }, [error]);
 
   return (

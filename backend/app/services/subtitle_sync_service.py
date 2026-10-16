@@ -30,7 +30,7 @@ from fastapi import HTTPException
 from app.core.config import get_settings
 from app.core.redis import get_redis
 from app.providers import mock_provider
-from app.services import resolver_service, telegram_service
+from app.services import error_log_service, resolver_service, telegram_service
 from app.schemas.playback import SubtitleTrackOut
 from app.schemas.subtitle_sync import SyncStatus
 
@@ -408,7 +408,7 @@ def cleanup_audio(now: float | None = None) -> int:
 def _record_failure(job_id: str, vkey: str, sub_name: str, stage: str, detail: str, media_info: dict | None = None) -> None:
     """Keeps a record of a failed sync (the log, a file next to the speech maps) and tells the admins on Telegram."""
     media = " ".join(str(x) for x in ((media_info or {}).get("source"), (media_info or {}).get("quality")) if x) or None
-    logger.error("Subtitle sync failed (%s) for %s / %s: %s", stage, vkey, sub_name, detail)
+    logger.error("Subtitle sync failed (%s) for %s / %s: %s", stage, vkey, sub_name, detail, extra={"skip_errorlog": True})
     try:
         d = Path(get_settings().sync_cache_dir)
         d.mkdir(parents=True, exist_ok=True)
@@ -416,7 +416,12 @@ def _record_failure(job_id: str, vkey: str, sub_name: str, stage: str, detail: s
             f.write(json.dumps({"at": int(time.time()), "job": job_id, "video": vkey, "subtitle": sub_name, "stage": stage, "media": media, "detail": detail[-1500:]}) + "\n")
     except Exception:
         logger.warning("Couldn't write the sync failure record")
-    telegram_service.report_sync_failure(vkey, sub_name, stage, detail, media)
+    where_step = {"audio": "getting the audio", "sync": "the sync tool", "crash": "an unexpected error"}.get(stage, stage)
+    error_log_service.record(
+        "sync", f"Subtitle sync failed while {where_step}", f"Video: {vkey}\nSubtitle: {sub_name}\nSource: {media or '-'}\n\n{detail[-1500:]}",
+        where=vkey,
+        telegram=telegram_service.sync_failure_message(vkey, sub_name, stage, detail, media),
+    )
 
 
 def _already_in_sync(report: dict) -> bool:
