@@ -180,8 +180,15 @@ def build_state(task: dict, extra_subtitles: list[dict], auto: str | None = None
             item = _best_item(items_by_stream[st["id"]]) if st["id"] in items_by_stream else None
             streams.append(_stream_state(st, item, st["id"], st.get("quality")))
         streams.sort(key=lambda s: (s.rank == 0, -s.rank))
+        name = src.get("source") or "Source"
+        twin = next((s for s in sources if s.name == name), None)
+        if twin is not None:  # one row per source name
+            twin.streams.extend(streams)
+            twin.streams.sort(key=lambda s: (s.rank == 0, -s.rank))
+            twin.starred = twin.starred or bool(src.get("starred"))
+            continue
         sources.append(
-            SourceState(name=src.get("source") or "Source", starred=bool(src.get("starred")), status=src.get("status") or "", error=src.get("error"), streams=streams)
+            SourceState(name=name, starred=bool(src.get("starred")), status=src.get("status") or "", error=src.get("error"), streams=streams)
         )
     # Downloads whose source list is gone (the task expired) still play.
     orphans: dict[str, list[StreamState]] = {}
@@ -191,6 +198,14 @@ def build_state(task: dict, extra_subtitles: list[dict], auto: str | None = None
         item = _best_item(items)
         orphans.setdefault(item.get("source") or "Source", []).append(_stream_state(None, item, sid, item.get("quality")))
     for name, streams in orphans.items():
+        same = next((s for s in sources if s.name == name), None)
+        if same is not None:
+            # Same source, so one entry: a failed leftover whose quality is
+            # already listed adds nothing but a duplicate row.
+            have = {s.quality for s in same.streams}
+            same.streams.extend(s for s in streams if not (s.state == "failed" and s.quality in have))
+            same.streams.sort(key=lambda s: (s.rank == 0, -s.rank))
+            continue
         streams.sort(key=lambda s: (s.rank == 0, -s.rank))
         sources.append(SourceState(name=name, status="ok", streams=streams))
 

@@ -146,3 +146,13 @@ class SharingConfig(BaseModel):
     enabled: bool = True
     max_ips: int = Field(default=4, ge=2, le=50)
     window_hours: int = Field(default=24, ge=1, le=720)
+
+
+class LoginGuardConfig(BaseModel):
+    """Limits on wrong passwords (admin). Too many wrong tries for one name, or from one address, blocks further tries for a while."""
+
+    enabled: bool = True
+    name_failures: int = Field(default=5, ge=2, le=50)  # wrong passwords for one name ...
+    ip_failures: int = Field(default=20, ge=3, le=500)  # ... or from one address ...
+    window_minutes: int = Field(default=15, ge=1, le=1440)  # ... within this long
+    lockout_minutes: int = Field(default=15, ge=1, le=1440)  # the first block lasts this long; repeats double it (up to 4x)

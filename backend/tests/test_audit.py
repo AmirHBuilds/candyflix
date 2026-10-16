@@ -69,7 +69,7 @@ async def test_account_changes_are_recorded(client, db):
     created = None
     try:
         as_(client, at)
-        r = await client.post("/api/admin/users", json={"username": f"new_{uuid.uuid4().hex[:6]}", "display_name": "Newbie", "password": "password123", "is_admin": False})
+        r = await client.post("/api/admin/users", json={"username": f"new_{uuid.uuid4().hex[:6]}", "display_name": "Newbie", "password": "Teal-River-88", "is_admin": False})
         assert r.status_code == 201
         created = r.json()
         assert (await client.patch(f"/api/admin/users/{other.id}", json={"is_disabled": True})).status_code == 200

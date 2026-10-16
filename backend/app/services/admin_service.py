@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.redis import get_redis
+from app.core import password_policy
 from app.core.security import hash_password
 from app.models.user import User
 from app.models.watch_progress import WatchProgress
@@ -105,6 +106,8 @@ async def create_user(db: AsyncSession, payload: schemas.AdminUserCreate) -> sch
         raise AdminError(f"The username '{payload.username}' is already taken.", status=409)
     if payload.is_admin and payload.age_limit:
         raise AdminError("An admin can't have an age limit.")
+    if (why := password_policy.problem(payload.password, payload.username)) is not None:
+        raise AdminError(why)
     user = await auth_service.create_user(
         db, payload.username, payload.display_name, payload.password, is_admin=payload.is_admin, age_limit=payload.age_limit
     )
@@ -151,6 +154,8 @@ async def reset_password(db: AsyncSession, actor: User, target: User, new_passwo
     """Returns how many of the person's sessions were ended."""
     if target.id == actor.id:
         raise AdminError("Use Account settings to change your own password.")
+    if (why := password_policy.problem(new_password, target.username)) is not None:
+        raise AdminError(why)
     target.password_hash = hash_password(new_password)
     await db.commit()
     return await auth_service.invalidate_user_sessions(target.id)

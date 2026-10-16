@@ -142,10 +142,10 @@ async def test_media_routes_need_a_signed_in_person(client):
 async def test_admins_create_and_change_limits_but_admins_cannot_have_one(client):
     admin = await make(None, is_admin=True)
     await as_user(client, admin)
-    made = await client.post("/api/admin/users", json={"username": f"kid_{uuid.uuid4().hex[:6]}", "display_name": "Kid", "password": "password123", "age_limit": "PG-13"})
+    made = await client.post("/api/admin/users", json={"username": f"kid_{uuid.uuid4().hex[:6]}", "display_name": "Kid", "password": "Teal-River-88", "age_limit": "PG-13"})
     assert made.status_code == 201 and made.json()["age_limit"] == "PG-13"
     kid = made.json()["id"]
-    assert (await client.post("/api/admin/users", json={"username": f"x_{uuid.uuid4().hex[:6]}", "display_name": "X", "password": "password123", "is_admin": True, "age_limit": "G"})).status_code == 400
+    assert (await client.post("/api/admin/users", json={"username": f"x_{uuid.uuid4().hex[:6]}", "display_name": "X", "password": "Teal-River-88", "is_admin": True, "age_limit": "G"})).status_code == 400
     assert (await client.patch(f"/api/admin/users/{kid}", json={"age_limit": "G"})).json()["age_limit"] == "G"
     assert (await client.patch(f"/api/admin/users/{kid}", json={"is_admin": True})).status_code == 400
     assert (await client.patch(f"/api/admin/users/{kid}", json={"age_limit": None})).json()["age_limit"] is None

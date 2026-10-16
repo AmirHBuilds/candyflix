@@ -590,3 +590,31 @@ async def test_a_failed_download_is_put_in_the_error_log_once(env, monkeypatch):
     mine = [x for x in logged if "download failed" in x[1]]
     assert len(mine) == 1 and mine[0][0] == "resolver" and mine[0][3]["level"] == "error" and "HTTP 500" in mine[0][2]
     await c.aclose()
+
+
+def test_a_failed_leftover_does_not_add_a_second_row_for_its_source():
+    task = {
+        "task_id": "t1",
+        "sources": [{"source": "Licorice", "streams": [{"id": "s720", "quality": "720p"}]}],
+        "library": [
+            {"id": "lib_a", "stream_id": "s_dead", "source": "Licorice", "quality": "720p", "status": "failed", "error_code": "source_link_expired"},
+            {"id": "lib_b", "stream_id": "s_dead2", "source": "Licorice", "quality": "360p", "status": "failed", "error_code": "source_link_expired"},
+        ],
+    }
+    state = resolver_service.build_state(task, [])
+    assert [s.name for s in state.sources] == ["Licorice"]
+    qualities = [(s.quality, s.state) for s in state.sources[0].streams]
+    assert qualities.count(("720p", "failed")) == 0  # 720p is already listed
+    assert any(q == "360p" and st == "failed" for q, st in qualities)  # a different quality still shows
+
+
+def test_two_entries_with_one_source_name_become_one_row():
+    task = {
+        "task_id": "t2",
+        "sources": [
+            {"source": "Vertex", "streams": [{"id": "a", "quality": "720p"}]},
+            {"source": "Vertex", "streams": [{"id": "b", "quality": "360p"}]},
+        ],
+    }
+    state = resolver_service.build_state(task, [])
+    assert len(state.sources) == 1 and len(state.sources[0].streams) == 2

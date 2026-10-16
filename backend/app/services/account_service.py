@@ -1,6 +1,7 @@
 """A person's own account: display name, password, profile picture."""
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import password_policy
 from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.services import auth_service, avatar_service
@@ -27,6 +28,8 @@ async def change_password(
         raise AccountError("Your current password is incorrect.")
     if current == new:
         raise AccountError("Your new password must be different from the current one.")
+    if (why := password_policy.problem(new, user.username)) is not None:
+        raise AccountError(why)
     user.password_hash = hash_password(new)
     await db.commit()
     # Anyone else holding this account (a lost phone, a shared computer)

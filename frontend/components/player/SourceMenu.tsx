@@ -155,7 +155,7 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
             <div className="flex gap-2">
               <div className="w-28 shrink-0 border-r border-white/10 pr-2" role="tablist" aria-label="Sources">
                 <p className="px-2 pb-1.5 pt-1 text-xs font-medium uppercase tracking-wide text-white/45">Sources</p>
-                {picker.sources.map((src) => {
+                {picker.sources.filter((src, i, all) => all.findIndex((o) => o.name === src.name) === i).map((src) => {
                   const active = src.name === shown?.name;
                   const hasPlaying = src.streams.some((x) => x.stream_id === picker.playingId);
                   const empty = src.streams.length === 0 && (src.status === "ok" || src.status === "done" || src.status === "error" || src.status === "expired" || src.status === "failed");

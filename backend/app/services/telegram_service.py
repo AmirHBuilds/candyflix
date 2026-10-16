@@ -137,6 +137,16 @@ def report_failed_sign_in(username: str, ip: str | None, why: str) -> None:
     notify("security", f"⚠️ <b>Sign-in refused</b>\nName tried: {esc(username[:60])}\nReason: {esc(why)}\nFrom: {esc(ip or 'unknown')}", dedupe=True)
 
 
+def report_login_blocked(scope: str, key: str, fails: int, minutes: int, others: list[str]) -> None:
+    if scope == "name":
+        head = f"🔒 <b>Sign-in blocked for the name {esc(key)}</b>"
+        tail = f"From: {esc(', '.join(others[:8]) or 'unknown')}"
+    else:
+        head = f"🔒 <b>Sign-in blocked for the address {esc(key)}</b>"
+        tail = f"Names tried: {esc(', '.join(others[:8]) or 'unknown')}"
+    notify("security", f"{head}\n{fails} wrong passwords. Blocked for {minutes} min.\n{tail}", dedupe=True)
+
+
 def report_model_paused(model: str, seconds: int) -> None:
     hours, minutes = divmod(max(1, seconds) // 60, 60)
     notify("ai", f"🚦 <b>{esc(model)}</b> hit its limit\nResting {hours}h {minutes}m. The backup model is used meanwhile.", dedupe=True)

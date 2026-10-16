@@ -13,7 +13,7 @@ from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME, session_cookie_kwargs
 from app.models.user import User
 from app.schemas.auth import LoginRequest, ProfileEntry, TwoFactorChallenge, TwoFactorResend, TwoFactorVerify, UserPublic
-from app.services import auth_service, telegram_service, two_factor_service
+from app.services import auth_service, login_guard_service, site_service, telegram_service, two_factor_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -35,10 +35,23 @@ async def login(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-    user = await auth_service.authenticate(db, payload.username, payload.password)
     ip = request.client.host if request.client else None
+    cfg = await site_service.get_login_guard_config(db)
+    if cfg.enabled:
+        block = await login_guard_service.check(payload.username, ip)
+        # Same answer whether or not the password would have been right. The one way through: a name block doesn't
+        # stop an address that person has already signed in from, so a stranger can't keep them out of their own home.
+        if block is not None and not (block.scope == "name" and await login_guard_service.is_known_address(db, payload.username, ip)):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=login_guard_service.message_for(block.seconds_left),
+                headers={"Retry-After": str(block.seconds_left)},
+            )
+
+    user = await auth_service.authenticate(db, payload.username, payload.password)
     if user is None:
         telegram_service.report_failed_sign_in(payload.username, ip, "wrong name or password")
+        await login_guard_service.failed(payload.username, ip, "wrong name or password", cfg)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -48,10 +61,13 @@ async def login(
     # to discover which accounts exist or are switched off.
     if user.is_disabled:
         telegram_service.report_failed_sign_in(payload.username, ip, "account is switched off")
+        await login_guard_service.add_event("failed", payload.username, ip, "account is switched off")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This account has been disabled. Please ask an admin.",
         )
+
+    await login_guard_service.record_success(payload.username)
 
     if user.telegram_chat_id is not None:
         # Right password, but two-step sign-in is on: send a code and wait for it.
@@ -67,7 +83,7 @@ async def login(
 
 async def _finish_login(db: AsyncSession, user: User, request: Request, response: Response) -> None:
     await auth_service.record_login(db, user, request.headers.get("user-agent"), request.client.host if request.client else None)
-    token = await auth_service.create_session(user.id)
+    token = await auth_service.create_session(user.id, request.headers.get("user-agent"), request.client.host if request.client else None)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=token,

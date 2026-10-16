@@ -9,6 +9,7 @@ import {
   deleteAdminUser,
   listAdminUsers,
   resetAdminPassword,
+  signOutEverywhere,
   switchOffTwoFactor,
   updateAdminUser,
   type AdminUser,
@@ -93,6 +94,15 @@ export default function UsersTab({
     }
   }
 
+  async function signOut(user: AdminUser) {
+    try {
+      const { ended } = await signOutEverywhere(user.id);
+      showToast(ended > 0 ? `${user.display_name} was signed out of ${ended} ${ended === 1 ? "device" : "devices"}.` : `${user.display_name} wasn't signed in anywhere.`, "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't sign them out.");
+    }
+  }
+
   async function toggleMute(user: AdminUser) {
     try {
       await updateAdminUser(user.id, { opinions_blocked: !user.opinions_blocked });
@@ -174,6 +184,7 @@ export default function UsersTab({
                     ? []
                     : [
                         { label: "Reset password", ariaLabel: `Reset password for ${user.display_name}`, onSelect: () => setModal({ kind: "password", user }) },
+                        { label: "Sign out everywhere", ariaLabel: `Sign ${user.display_name} out of every device`, onSelect: () => signOut(user) },
                         ...(user.two_factor_enabled
                           ? [{ label: "Switch off 2-step", ariaLabel: `Switch off two-step sign-in for ${user.display_name}`, onSelect: () => twoFactorOff(user) }]
                           : []),
@@ -425,7 +436,7 @@ function PasswordDialog({ user, onClose, onDone }: { user: AdminUser; onClose: (
   return (
     <Dialog title={`Reset password for ${user.display_name}`} onClose={onClose}>
       <form onSubmit={submit}>
-        <Field label="New password" hint="At least 8 characters. Tell them in person; they can change it in Settings.">
+        <Field label="New password" hint="At least 8 characters, nothing easy to guess. Tell them in person; they can change it in Settings.">
           <input data-autofocus type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={fieldClass} />
         </Field>
         <ErrorLine message={error} />

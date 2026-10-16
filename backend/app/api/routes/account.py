@@ -12,10 +12,10 @@ from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME
 from app.models.user import User
-from app.schemas.account import PasswordChange, ProfileUpdate, TwoFactorLink, TwoFactorOff, TwoFactorStart, TwoFactorStatus
+from app.schemas.account import PasswordChange, SessionOut, ProfileUpdate, TwoFactorLink, TwoFactorOff, TwoFactorStart, TwoFactorStatus
 from app.schemas.auth import UserPublic
 from app.core.security import verify_password
-from app.services import account_service, telegram_service, two_factor_service
+from app.services import account_service, audit_service, auth_service, telegram_service, two_factor_service
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -94,4 +94,38 @@ async def two_factor_off(payload: TwoFactorOff, current_user: User = Depends(get
     if not verify_password(payload.password, current_user.password_hash):
         raise HTTPException(status_code=400, detail="Your password is incorrect.")
     await two_factor_service.turn_off(db, current_user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/sessions", response_model=list[SessionOut])
+async def my_sessions(
+    candyflix_session: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+    current_user: User = Depends(get_current_user),
+):
+    """The devices signed in to this account (this one is marked)."""
+    rows = await auth_service.list_sessions(current_user.id, candyflix_session)
+    return [
+        SessionOut(id=r["id"], at=r["at"], device=audit_service.device_label(r["user_agent"]), ip=r["ip"], current=r["current"])
+        for r in rows
+    ]
+
+
+@router.post("/sessions/sign-out-others")
+async def sign_out_other_devices(
+    candyflix_session: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+    current_user: User = Depends(get_current_user),
+):
+    return {"ended": await auth_service.invalidate_user_sessions(current_user.id, keep_token=candyflix_session)}
+
+
+@router.delete("/sessions/{ref}", status_code=status.HTTP_204_NO_CONTENT)
+async def sign_out_device(
+    ref: str,
+    candyflix_session: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+    current_user: User = Depends(get_current_user),
+):
+    if candyflix_session and auth_service.session_ref(candyflix_session) == ref:
+        raise HTTPException(status_code=400, detail="That's this device. Use Sign out instead.")
+    if not await auth_service.revoke_session(current_user.id, ref):
+        raise HTTPException(status_code=404, detail="That device is already signed out.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

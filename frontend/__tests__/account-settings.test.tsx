@@ -10,6 +10,9 @@ vi.mock("@/lib/account", () => ({
   getTwoFactor: vi.fn(),
   startTwoFactor: vi.fn(),
   stopTwoFactor: vi.fn(),
+  getSessions: vi.fn(),
+  signOutDevice: vi.fn(),
+  signOutOtherDevices: vi.fn(),
 }));
 vi.mock("@/lib/toast", () => ({ showToast: vi.fn() }));
 
@@ -22,6 +25,7 @@ const user = { id: "1", username: "candy", display_name: "Candy", avatar_url: nu
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(account.getTwoFactor).mockResolvedValue({ available: true, enabled: false });
+  vi.mocked(account.getSessions).mockResolvedValue([]);
 });
 
 describe("Account settings", () => {
@@ -145,5 +149,40 @@ describe("Account settings", () => {
       await waitFor(() => expect(account.stopTwoFactor).toHaveBeenCalledWith("secret123"));
       await waitFor(() => expect(showToast).toHaveBeenCalledWith("Two-step sign-in is off.", "success"));
     });
+  });
+});
+
+describe("Your devices", () => {
+  const rows = [
+    { id: "a1", at: "2026-10-15T10:00:00Z", device: "Chrome on Windows", ip: "1.1.1.1", current: true },
+    { id: "b2", at: "2026-10-14T10:00:00Z", device: "Safari on iOS", ip: "2.2.2.2", current: false },
+  ];
+
+  it("lists the devices, marks this one, and signs another out", async () => {
+    vi.mocked(account.getSessions).mockResolvedValue(rows);
+    vi.mocked(account.signOutDevice).mockResolvedValue(undefined);
+    render(<AccountSettingsForm user={user} />);
+    expect(await screen.findByText("Chrome on Windows")).toBeInTheDocument();
+    expect(screen.getByText("This device")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign out Chrome on Windows" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Sign out Safari on iOS" }));
+    await waitFor(() => expect(account.signOutDevice).toHaveBeenCalledWith("b2"));
+    await waitFor(() => expect(account.getSessions).toHaveBeenCalledTimes(2));
+  });
+
+  it("signs out every other device at once, and only offers that when there is one", async () => {
+    vi.mocked(account.getSessions).mockResolvedValue(rows);
+    vi.mocked(account.signOutOtherDevices).mockResolvedValue(1);
+    render(<AccountSettingsForm user={user} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign out all other devices" }));
+    await waitFor(() => expect(account.signOutOtherDevices).toHaveBeenCalled());
+    expect(showToast).toHaveBeenCalledWith("Signed out of 1 other device.", "success");
+  });
+
+  it("hides the bulk button when this is the only device", async () => {
+    vi.mocked(account.getSessions).mockResolvedValue([rows[0]]);
+    render(<AccountSettingsForm user={user} />);
+    await screen.findByText("This device");
+    expect(screen.queryByRole("button", { name: "Sign out all other devices" })).not.toBeInTheDocument();
   });
 });

@@ -405,6 +405,20 @@ export const getSharingConfig = () => request<SharingConfig>("/security/sharing-
 export const saveSharingConfig = (body: SharingConfig) =>
   request<SharingConfig>("/security/sharing-config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the account-sharing settings.");
 
+// ---------- wrong passwords and blocks ----------
+export type LoginGuardConfig = { enabled: boolean; name_failures: number; ip_failures: number; window_minutes: number; lockout_minutes: number };
+export type LoginBlock = { scope: "name" | "ip"; key: string; seconds_left: number; since: string | null; until: string | null; fails: number; minutes: number; strikes: number; others: string[] };
+export type LoginEvent = { id: string; at: string; kind: "failed" | "blocked"; username: string | null; ip: string | null; detail: string | null };
+export type NoTwoStep = { user_id: string; username: string; display_name: string; is_admin: boolean };
+export type LoginsOverview = { config: LoginGuardConfig; blocks: LoginBlock[]; events: LoginEvent[]; two_step_available: boolean; without_two_step: NoTwoStep[] };
+export const getLogins = () => request<LoginsOverview>("/security/logins", {}, "Couldn't load the sign-in protection.");
+export const saveLoginConfig = (body: LoginGuardConfig) =>
+  request<LoginGuardConfig>("/security/login-config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the sign-in limits.");
+export const liftBlock = (scope: "name" | "ip", key: string) =>
+  request<void>(`/security/blocks?scope=${scope}&key=${encodeURIComponent(key)}`, { method: "DELETE" }, "Couldn't lift that block.");
+export const signOutEverywhere = (id: string) =>
+  request<{ ended: number }>(`/users/${id}/sign-out`, { method: "POST" }, "Couldn't sign them out.");
+
 // ---------- notices for admins ----------
 export type AdminNotice = { id: string; at: string; kind: "feedback" | "sharing" | string; title: string; body: string | null; link: string | null; user_id: string | null; user_name: string | null; unread: boolean };
 export type AdminNotices = { items: AdminNotice[]; unread: number; resting: boolean; rest_until: string | null; rest_forever: boolean; server_time: string };

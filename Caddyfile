@@ -23,6 +23,11 @@
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
+		# HTTPS only for the next 180 days, never inside someone else's frame, and no camera / microphone / location.
+		Strict-Transport-Security "max-age=15552000"
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy same-origin
 		-Server
 	}
 }

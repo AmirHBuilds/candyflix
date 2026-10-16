@@ -44,6 +44,12 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted a comment`;
     case "social.config":
       return `${who} changed the comments and likes switches`;
+    case "login.config":
+      return `${who} changed the sign-in limits (${e.detail ?? ""})`;
+    case "login.unblock":
+      return `${who} lifted a sign-in block (${t})`;
+    case "user.sign_out":
+      return `${who} signed ${t} out of every device`;
     case "sharing.config":
       return `${who} changed the account-sharing check (${e.detail ?? ""})`;
     case "playback.config":

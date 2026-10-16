@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.site_setting import SiteSetting
 from app.core.config import get_settings
-from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners, PlaybackConfig, SharingConfig, SocialConfig
+from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners, LoginGuardConfig, PlaybackConfig, SharingConfig, SocialConfig
 from app.services import avatar_service
 
 FOOTER_KEY = "footer"
@@ -142,6 +142,29 @@ async def set_sharing_config(db: AsyncSession, config: SharingConfig) -> Sharing
     row = await db.get(SiteSetting, SHARING_KEY)
     if row is None:
         db.add(SiteSetting(key=SHARING_KEY, value=config.model_dump()))
+    else:
+        row.value = config.model_dump()
+    await db.commit()
+    return config
+
+
+LOGIN_GUARD_KEY = "login_guard_config"
+
+
+async def get_login_guard_config(db: AsyncSession) -> LoginGuardConfig:
+    row = await db.get(SiteSetting, LOGIN_GUARD_KEY)
+    if row is not None:
+        try:
+            return LoginGuardConfig.model_validate(row.value)
+        except Exception:
+            pass
+    return LoginGuardConfig()
+
+
+async def set_login_guard_config(db: AsyncSession, config: LoginGuardConfig) -> LoginGuardConfig:
+    row = await db.get(SiteSetting, LOGIN_GUARD_KEY)
+    if row is None:
+        db.add(SiteSetting(key=LOGIN_GUARD_KEY, value=config.model_dump()))
     else:
         row.value = config.model_dump()
     await db.commit()

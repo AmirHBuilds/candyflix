@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
+import LoginProtection from "@/components/admin/LoginProtection";
 import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import { REST_CHOICES, restLabel, useAdminNotices } from "@/components/admin/useAdminNotices";
 import { Toggle } from "@/components/settings/controls";
@@ -156,6 +157,7 @@ export default function SecurityTab({ onViewPerson }: { onViewPerson: (id: strin
   return (
     <section aria-label="Security" className="space-y-6">
       <Notifications />
+      <LoginProtection />
       <Settings onSaved={load} />
       <div className={card}>
         <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">

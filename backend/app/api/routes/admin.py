@@ -17,7 +17,7 @@ from app.schemas import admin as schemas
 from app.schemas.site import BadgePositionUpdate, BadgePublic, Footer, HomeBanners
 from app.schemas import opinions as opinion_schemas
 from app.schemas.site import PlaybackConfig, SocialConfig
-from app.services import opinions_service, admin_service, ai_service, audit_service, avatar_service, site_service, two_factor_service
+from app.services import opinions_service, admin_service, ai_service, audit_service, auth_service, avatar_service, site_service, two_factor_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -89,6 +89,22 @@ async def reset_password(
         _raise(exc)
     await audit_service.record(db, actor, "user.password_reset", target=target)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/users/{user_id}/sign-out")
+async def sign_out_everywhere(
+    user_id: uuid.UUID,
+    actor: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Signs a person out of every device (their password stays the same)."""
+    try:
+        target = await admin_service.get_user(db, user_id)
+    except admin_service.AdminError as exc:
+        _raise(exc)
+    ended = await auth_service.invalidate_user_sessions(target.id)
+    await audit_service.record(db, actor, "user.sign_out", target=target, detail=f"{ended} device{'s' if ended != 1 else ''}")
+    return {"ended": ended}
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -5,7 +5,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 vi.mock("next/link", () => ({ default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => <a href={href} {...rest}>{children}</a> }));
 vi.mock("@/lib/admin", async () => {
   const actual = await vi.importActual<typeof import("@/lib/admin")>("@/lib/admin");
-  return { ...actual, getNotices: vi.fn(), markNoticesRead: vi.fn(), setRest: vi.fn(), getSharing: vi.fn(), getSharingConfig: vi.fn(), saveSharingConfig: vi.fn() };
+  return { ...actual, getNotices: vi.fn(), markNoticesRead: vi.fn(), setRest: vi.fn(), getSharing: vi.fn(), getSharingConfig: vi.fn(), saveSharingConfig: vi.fn(), getLogins: vi.fn(), saveLoginConfig: vi.fn(), liftBlock: vi.fn() };
 });
 const toast = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/toast", () => ({ showToast: toast }));
@@ -82,6 +82,19 @@ describe("notification bell", () => {
   });
 });
 
+const cfg = { enabled: true, name_failures: 5, ip_failures: 20, window_minutes: 15, lockout_minutes: 15 };
+const logins = (over = {}): admin.LoginsOverview => ({
+  config: cfg,
+  blocks: [{ scope: "name" as const, key: "candy", seconds_left: 600, since: "2026-10-15T10:00:00Z", until: "2026-10-15T10:15:00Z", fails: 5, minutes: 15, strikes: 2, others: ["5.5.5.5"] }],
+  events: [
+    { id: "e1", at: "2026-10-15T10:00:00Z", kind: "blocked" as const, username: "candy", ip: null, detail: "name: 5 wrong passwords; blocked for 15 min" },
+    { id: "e2", at: "2026-10-15T09:59:00Z", kind: "failed" as const, username: "admin", ip: "5.5.5.5", detail: "wrong name or password" },
+  ],
+  two_step_available: true,
+  without_two_step: [{ user_id: "u9", username: "sara", display_name: "Sara", is_admin: false }],
+  ...over,
+});
+
 describe("Security tab", () => {
   const overview = {
     window_hours: 24, max_ips: 3, enabled: true,
@@ -94,6 +107,7 @@ describe("Security tab", () => {
     vi.mocked(admin.getNotices).mockResolvedValue(notices());
     vi.mocked(admin.getSharing).mockResolvedValue(overview);
     vi.mocked(admin.getSharingConfig).mockResolvedValue({ enabled: true, max_ips: 3, window_hours: 24 });
+    vi.mocked(admin.getLogins).mockResolvedValue(logins());
   });
 
   it("lists who may be sharing, with every address and device, and opens the person", async () => {
@@ -119,5 +133,48 @@ describe("Security tab", () => {
     vi.mocked(admin.getSharing).mockResolvedValue({ ...overview, people: [] });
     render(<SecurityTab onViewPerson={vi.fn()} />);
     expect(await screen.findByText(/Nobody has signed in from more than one address/)).toBeInTheDocument();
+  });
+
+  it("lists who is blocked and from where, and lifts a block", async () => {
+    vi.mocked(admin.liftBlock).mockResolvedValue(undefined);
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    expect((await screen.findAllByText("candy", { selector: "span.font-mono" })).length).toBe(2); // the block and its event
+    expect(screen.getByText(/5 wrong passwords · 10 min left · from 5.5.5.5/)).toBeInTheDocument();
+    expect(screen.getByText("repeat #2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Lift the block on candy" }));
+    await waitFor(() => expect(admin.liftBlock).toHaveBeenCalledWith("name", "candy"));
+    await waitFor(() => expect(admin.getLogins).toHaveBeenCalledTimes(2));
+  });
+
+  it("shows the recent wrong tries with the address they came from", async () => {
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    expect(await screen.findByText("wrong name or password")).toBeInTheDocument();
+    expect(screen.getByText("blocked")).toBeInTheDocument();
+    expect(screen.getAllByText("5.5.5.5").length).toBeGreaterThan(0);
+  });
+
+  it("says when nobody is blocked", async () => {
+    vi.mocked(admin.getLogins).mockResolvedValue(logins({ blocks: [], events: [] }));
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    expect(await screen.findByText("Nobody is blocked.")).toBeInTheDocument();
+    expect(screen.getByText("None yet.")).toBeInTheDocument();
+  });
+
+  it("saves new sign-in limits", async () => {
+    vi.mocked(admin.saveLoginConfig).mockResolvedValue({ ...cfg, name_failures: 8 });
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    fireEvent.change(await screen.findByLabelText("Wrong tries per name"), { target: { value: "8" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save sign-in limits" }));
+    await waitFor(() => expect(admin.saveLoginConfig).toHaveBeenCalledWith({ ...cfg, name_failures: 8 }));
+  });
+
+  it("reminds who has no two-step sign-in, only when the server can offer it", async () => {
+    const { unmount } = render(<SecurityTab onViewPerson={vi.fn()} />);
+    expect(await screen.findByText(/Not on yet: Sara/)).toBeInTheDocument();
+    unmount();
+    vi.mocked(admin.getLogins).mockResolvedValue(logins({ two_step_available: false, without_two_step: [] }));
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    await screen.findByText("Wrong passwords");
+    expect(screen.queryByText("Two-step sign-in")).not.toBeInTheDocument();
   });
 });

@@ -20,5 +20,28 @@ def _no_search_cache(request, monkeypatch):
     monkeypatch.setattr(opensubtitles_service, "_cache_set", skip)
 
 
+@pytest.fixture(autouse=True)
+def _fresh_login_limits(request):
+    """Every test starts with no wrong-password counts or blocks (they live in Redis and every test signs in from
+    127.0.0.1, so they would add up across the whole run). test_login_guard tests the limits themselves."""
+    import redis as sync_redis
+
+    from app.core.config import get_settings
+
+    def wipe():
+        try:
+            r = sync_redis.from_url(get_settings().redis_url, decode_responses=True)
+            keys = list(r.scan_iter(match="lg:*", count=500))
+            if keys:
+                r.delete(*keys)
+            r.close()
+        except Exception:
+            pass
+
+    wipe()
+    yield
+    wipe()
+
+
 def pytest_configure(config):
     config.addinivalue_line("markers", "search_cache: use the real OpenSubtitles search cache")

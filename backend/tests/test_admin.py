@@ -125,7 +125,7 @@ class TestCreateAndList:
             await _login(client, db, admin)
             resp = await client.post(
                 "/api/admin/users",
-                json={"username": new.upper(), "display_name": "  New   Kid ", "password": "password123"},
+                json={"username": new.upper(), "display_name": "  New   Kid ", "password": "Teal-River-88"},
             )
             assert resp.status_code == 201
             body = resp.json()
@@ -134,7 +134,7 @@ class TestCreateAndList:
             assert body["is_admin"] is False and body["is_disabled"] is False
 
             async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as fresh:
-                login = await fresh.post("/api/auth/login", json={"username": new, "password": "password123"})
+                login = await fresh.post("/api/auth/login", json={"username": new, "password": "Teal-River-88"})
                 assert login.status_code == 200
         finally:
             await _cleanup(db, admin, new)
@@ -145,7 +145,7 @@ class TestCreateAndList:
             await _login(client, db, admin)
             resp = await client.post(
                 "/api/admin/users",
-                json={"username": new, "display_name": "B", "password": "password123", "is_admin": True},
+                json={"username": new, "display_name": "B", "password": "Teal-River-88", "is_admin": True},
             )
             assert resp.json()["is_admin"] is True
         finally:

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -33,3 +35,11 @@ class TwoFactorLink(BaseModel):
 
 class TwoFactorOff(BaseModel):
     password: str
+
+
+class SessionOut(BaseModel):
+    id: str
+    at: datetime | None
+    device: str
+    ip: str | None
+    current: bool

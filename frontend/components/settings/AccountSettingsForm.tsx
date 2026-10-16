@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { SettingRow, SettingsCard, Toggle } from "@/components/settings/controls";
-import { changePassword, getTwoFactor, removeAvatar, startTwoFactor, stopTwoFactor, updateDisplayName, uploadAvatar, type TwoFactorStatus } from "@/lib/account";
+import { changePassword, getSessions, getTwoFactor, removeAvatar, signOutDevice, signOutOtherDevices, startTwoFactor, stopTwoFactor, updateDisplayName, uploadAvatar, type DeviceSession, type TwoFactorStatus } from "@/lib/account";
 import type { UserPublic } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 
@@ -21,6 +21,7 @@ export default function AccountSettingsForm({ user: initial }: { user: UserPubli
       <ProfileCard user={user} onChange={setUser} />
       <PasswordCard />
       <SecurityCard />
+      <DevicesCard />
     </>
   );
 }
@@ -167,7 +168,7 @@ function PasswordCard() {
           <label className="flex flex-col gap-1.5 text-sm text-white/70">
             New password
             <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} className={`${inputClass} sm:w-full`} />
-            <span className="text-xs text-white/40">At least 8 characters.</span>
+            <span className="text-xs text-white/40">At least 8 characters, and nothing easy to guess.</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-white/70">
             Confirm new password
@@ -184,6 +185,82 @@ function PasswordCard() {
           {saving ? "Changing…" : "Change password"}
         </button>
       </form>
+    </SettingsCard>
+  );
+}
+
+function DevicesCard() {
+  const [rows, setRows] = useState<DeviceSession[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = () =>
+    getSessions()
+      .then(setRows)
+      .catch(() => setRows([]));
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function out(id: string) {
+    setBusy(true);
+    try {
+      await signOutDevice(id);
+      showToast("That device was signed out.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't sign that device out.");
+    } finally {
+      setBusy(false);
+      void load();
+    }
+  }
+
+  async function outOthers() {
+    setBusy(true);
+    try {
+      const n = await signOutOtherDevices();
+      showToast(n > 0 ? `Signed out of ${n} other ${n === 1 ? "device" : "devices"}.` : "No other devices were signed in.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't sign the other devices out.");
+    } finally {
+      setBusy(false);
+      void load();
+    }
+  }
+
+  const others = (rows ?? []).filter((r) => !r.current).length;
+  return (
+    <SettingsCard title="Your devices" description="Where you are signed in. If you don't recognise one, sign it out and change your password.">
+      <div className="space-y-3 px-5 py-4">
+        {rows === null && <p className="text-sm text-white/50">Loading…</p>}
+        {rows !== null && rows.length === 0 && <p className="text-sm text-white/50">Nothing to show yet. Devices signed in from now on are listed here.</p>}
+        {rows !== null && rows.length > 0 && (
+          <ul className="divide-y divide-white/10 rounded-xl border border-white/10">
+            {rows.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-white/90">
+                    {r.device}
+                    {r.current && <span className="ml-2 rounded bg-accent/20 px-1.5 py-0.5 text-xs text-accent">This device</span>}
+                  </p>
+                  <p className="truncate text-xs text-white/40">
+                    {r.ip ?? "unknown address"}
+                    {r.at ? ` · signed in ${new Date(r.at).toLocaleString()}` : ""}
+                  </p>
+                </div>
+                {!r.current && (
+                  <button type="button" disabled={busy} className={quietButtonClass} aria-label={`Sign out ${r.device}`} onClick={() => out(r.id)}>
+                    Sign out
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {others > 0 && (
+          <button type="button" disabled={busy} className={quietButtonClass} onClick={outOthers}>
+            Sign out all other devices
+          </button>
+        )}
+      </div>
     </SettingsCard>
   );
 }

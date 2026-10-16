@@ -14,6 +14,8 @@ tokens. It exists so that "sign this person out everywhere" is possible —
 needed when an admin resets a password or deletes an account, and when
 someone changes their own password (other devices must stop working).
 """
+import hashlib
+import json
 import uuid
 from datetime import datetime, timezone
 
@@ -69,11 +71,24 @@ async def record_login(db: AsyncSession, user: User, user_agent: str | None = No
 USER_SESSIONS_PREFIX = "user_sessions:"
 
 
-async def create_session(user_id: uuid.UUID) -> str:
+SESSION_META_PREFIX = "session_meta:"
+
+
+def session_ref(token: str) -> str:
+    """A short public name for a session, so the list of devices never has to show the token itself."""
+    return hashlib.sha256(token.encode()).hexdigest()[:16]
+
+
+async def create_session(user_id: uuid.UUID, user_agent: str | None = None, ip: str | None = None) -> str:
     """Creates a new server-side session and returns its opaque token."""
     token = generate_session_token()
     redis = get_redis()
     await redis.set(f"{SESSION_KEY_PREFIX}{token}", str(user_id), ex=SESSION_TTL_SECONDS)
+    await redis.set(
+        f"{SESSION_META_PREFIX}{token}",
+        json.dumps({"at": datetime.now(timezone.utc).isoformat(), "ua": (user_agent or "")[:300], "ip": (ip or "")[:45]}),
+        ex=SESSION_TTL_SECONDS,
+    )
     index = f"{USER_SESSIONS_PREFIX}{user_id}"
     await redis.sadd(index, token)
     await redis.expire(index, SESSION_TTL_SECONDS)
@@ -88,9 +103,38 @@ async def invalidate_user_sessions(user_id: uuid.UUID, keep_token: str | None = 
     index = f"{USER_SESSIONS_PREFIX}{user_id}"
     tokens = [t for t in await redis.smembers(index) if t != keep_token]
     for token in tokens:
-        await redis.delete(f"{SESSION_KEY_PREFIX}{token}")
+        await redis.delete(f"{SESSION_KEY_PREFIX}{token}", f"{SESSION_META_PREFIX}{token}")
         await redis.srem(index, token)
     return len(tokens)
+
+
+async def list_sessions(user_id: uuid.UUID, current_token: str | None = None) -> list[dict]:
+    """The devices signed in as this person, newest first. Sessions that already expired are dropped from the index."""
+    redis = get_redis()
+    index = f"{USER_SESSIONS_PREFIX}{user_id}"
+    out: list[dict] = []
+    for token in await redis.smembers(index):
+        if not await redis.exists(f"{SESSION_KEY_PREFIX}{token}"):
+            await redis.srem(index, token)
+            continue
+        try:
+            meta = json.loads(await redis.get(f"{SESSION_META_PREFIX}{token}") or "{}")
+        except ValueError:
+            meta = {}
+        out.append({"id": session_ref(token), "at": meta.get("at"), "user_agent": meta.get("ua") or None, "ip": meta.get("ip") or None, "current": token == current_token})
+    return sorted(out, key=lambda x: x["at"] or "", reverse=True)
+
+
+async def revoke_session(user_id: uuid.UUID, ref: str) -> bool:
+    """Ends one of this person's sessions by its public name. False if there is no such session."""
+    redis = get_redis()
+    index = f"{USER_SESSIONS_PREFIX}{user_id}"
+    for token in await redis.smembers(index):
+        if session_ref(token) == ref:
+            await redis.delete(f"{SESSION_KEY_PREFIX}{token}", f"{SESSION_META_PREFIX}{token}")
+            await redis.srem(index, token)
+            return True
+    return False
 
 
 async def get_session_user_id(token: str) -> uuid.UUID | None:
@@ -107,7 +151,7 @@ async def get_session_user_id(token: str) -> uuid.UUID | None:
 async def delete_session(token: str) -> None:
     redis = get_redis()
     raw = await redis.get(f"{SESSION_KEY_PREFIX}{token}")
-    await redis.delete(f"{SESSION_KEY_PREFIX}{token}")
+    await redis.delete(f"{SESSION_KEY_PREFIX}{token}", f"{SESSION_META_PREFIX}{token}")
     if raw is not None:
         await redis.srem(f"{USER_SESSIONS_PREFIX}{raw}", token)
 

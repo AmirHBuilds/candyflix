@@ -86,3 +86,22 @@ export async function stopTwoFactor(password: string): Promise<void> {
   });
   if (!res.ok) await fail(res, "Couldn't turn that off.");
 }
+
+export type DeviceSession = { id: string; at: string | null; device: string; ip: string | null; current: boolean };
+
+export async function getSessions(): Promise<DeviceSession[]> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/sessions`, { credentials: "include" });
+  if (!res.ok) await fail(res, "Couldn't load your devices.");
+  return res.json();
+}
+
+export async function signOutDevice(id: string): Promise<void> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/sessions/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
+  if (!res.ok) await fail(res, "Couldn't sign that device out.");
+}
+
+export async function signOutOtherDevices(): Promise<number> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/sessions/sign-out-others`, { method: "POST", credentials: "include" });
+  if (!res.ok) await fail(res, "Couldn't sign the other devices out.");
+  return (await res.json()).ended;
+}
