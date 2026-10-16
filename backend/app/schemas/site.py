@@ -138,3 +138,11 @@ class PlaybackConfig(BaseModel):
 
     # Near the end of an episode (95%), start getting the next episode ready at the video service.
     prefetch_next_episode: bool = True
+
+
+class SharingConfig(BaseModel):
+    """When an account looks shared: signed in from this many different addresses within this many hours (admin)."""
+
+    enabled: bool = True
+    max_ips: int = Field(default=4, ge=2, le=50)
+    window_hours: int = Field(default=24, ge=1, le=720)

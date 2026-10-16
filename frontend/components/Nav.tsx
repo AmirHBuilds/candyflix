@@ -1,6 +1,7 @@
 "use client";
 
 import CandyIcon from "@/components/CandyIcon";
+import NoticeBell from "@/components/admin/NoticeBell";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -121,6 +122,8 @@ export default function Nav() {
           {isPlayerPage && (
             <SearchToggle open={playerSearchOpen} onToggle={() => setPlayerSearchOpen((v) => !v)} />
           )}
+
+          {user?.is_admin && <NoticeBell />}
 
           {user && (
             <div className="hidden sm:block">

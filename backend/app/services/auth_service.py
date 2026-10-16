@@ -57,13 +57,13 @@ async def authenticate(db: AsyncSession, username: str, password: str) -> User |
     return user
 
 
-async def record_login(db: AsyncSession, user: User, user_agent: str | None = None) -> None:
+async def record_login(db: AsyncSession, user: User, user_agent: str | None = None, ip: str | None = None) -> None:
     """Stamps the login time (shown in the admin panel) and adds a line to the sign-in log."""
     from app.services import audit_service
 
     user.last_login_at = datetime.now(timezone.utc)
     await db.commit()
-    await audit_service.record_sign_in(db, user, user_agent)
+    await audit_service.record_sign_in(db, user, user_agent, ip)
 
 
 USER_SESSIONS_PREFIX = "user_sessions:"

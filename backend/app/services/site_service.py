@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.site_setting import SiteSetting
 from app.core.config import get_settings
-from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners, PlaybackConfig, SocialConfig
+from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners, PlaybackConfig, SharingConfig, SocialConfig
 from app.services import avatar_service
 
 FOOTER_KEY = "footer"
@@ -119,6 +119,29 @@ async def set_playback_config(db: AsyncSession, config: PlaybackConfig) -> Playb
     row = await db.get(SiteSetting, PLAYBACK_KEY)
     if row is None:
         db.add(SiteSetting(key=PLAYBACK_KEY, value=config.model_dump()))
+    else:
+        row.value = config.model_dump()
+    await db.commit()
+    return config
+
+
+SHARING_KEY = "sharing_config"
+
+
+async def get_sharing_config(db: AsyncSession) -> SharingConfig:
+    row = await db.get(SiteSetting, SHARING_KEY)
+    if row is not None:
+        try:
+            return SharingConfig.model_validate(row.value)
+        except Exception:
+            pass
+    return SharingConfig()
+
+
+async def set_sharing_config(db: AsyncSession, config: SharingConfig) -> SharingConfig:
+    row = await db.get(SiteSetting, SHARING_KEY)
+    if row is None:
+        db.add(SiteSetting(key=SHARING_KEY, value=config.model_dump()))
     else:
         row.value = config.model_dump()
     await db.commit()

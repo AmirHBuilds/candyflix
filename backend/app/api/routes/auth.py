@@ -66,7 +66,7 @@ async def login(
 
 
 async def _finish_login(db: AsyncSession, user: User, request: Request, response: Response) -> None:
-    await auth_service.record_login(db, user, request.headers.get("user-agent"))
+    await auth_service.record_login(db, user, request.headers.get("user-agent"), request.client.host if request.client else None)
     token = await auth_service.create_session(user.id)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,

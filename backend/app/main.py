@@ -38,6 +38,7 @@ from app.api.routes import (
     auth,
     continue_watching,
     errors,
+    security,
     feedback,
     health,
     movies,
@@ -61,7 +62,7 @@ from app.core.config import get_settings
 from app.core.migrate import run_migrations
 from app.core.security import SESSION_COOKIE_NAME
 from app.services import auth_service
-from app.services import error_log_service, telegram_service, two_factor_service
+from app.services import error_log_service, notice_service, telegram_service, two_factor_service
 
 settings = get_settings()
 
@@ -131,6 +132,7 @@ async def _tidy_audio_forever():
             pass
         try:
             await error_log_service.cleanup()
+            await notice_service.cleanup()
         except Exception:
             pass
         await asyncio.sleep(3600)
@@ -229,6 +231,7 @@ app.include_router(presence.router, prefix="/api")
 app.include_router(announcements.router, prefix="/api")
 app.include_router(opinions.router, prefix="/api")
 app.include_router(resolve.router, prefix="/api")
+app.include_router(security.router, prefix="/api")
 app.include_router(errors.router, prefix="/api")
 app.include_router(errors.admin_router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")

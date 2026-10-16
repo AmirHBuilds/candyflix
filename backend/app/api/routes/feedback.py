@@ -11,7 +11,7 @@ from app.core.db import get_db
 from app.models.feedback import Feedback
 from app.models.user import User
 from app.schemas.feedback import FeedbackIn, FeedbackOut, FeedbackPage
-from app.services import telegram_service
+from app.services import notice_service, telegram_service
 from app.services.audit_service import device_label
 
 DAILY_LIMIT = 10  # per person, so a stuck button can't flood the admins
@@ -46,6 +46,8 @@ async def send(
     db.add(row)
     await db.commit()
     telegram_service.report_feedback(name, body.kind, body.message, body.page)
+    kind_word = {"problem": "a problem", "idea": "an idea"}.get(body.kind, "a note")
+    await notice_service.add("feedback", f"{name} sent {kind_word}", body.message[:200], link="feedback", user_id=user.id, user_name=name)
     return {"ok": True}
 
 

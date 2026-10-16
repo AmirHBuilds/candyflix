@@ -283,6 +283,8 @@ class SignInEntry(BaseModel):
     display_name: str
     avatar_url: str | None = None
     device: str
+    ip: str | None = None
+    user_agent: str | None = None
 
 
 class SignInPage(BaseModel):

@@ -88,11 +88,17 @@ async def list_audit(db: AsyncSession, limit: int, offset: int) -> schemas.Audit
 # ---------- sign-ins ----------
 
 
-async def record_sign_in(db: AsyncSession, user: User, user_agent: str | None) -> None:
-    name, uid = user.display_name, user.id
-    db.add(SignInLog(user_id=uid, user_agent=(user_agent or None) and user_agent[:300]))
+async def record_sign_in(db: AsyncSession, user: User, user_agent: str | None, ip: str | None = None) -> None:
+    name = user.display_name
+    db.add(SignInLog(user_id=user.id, user_agent=(user_agent or None) and user_agent[:300], ip=(ip or None) and ip[:45]))
     await db.commit()
-    telegram_service.report_sign_in(name, device_label(user_agent))
+    telegram_service.report_sign_in(name, device_label(user_agent), ip)
+    try:
+        from app.services import sharing_service
+
+        await sharing_service.check_after_sign_in(db, user)
+    except Exception:
+        pass  # spotting a shared account must never stop someone from signing in
 
 
 def device_label(user_agent: str | None) -> str:
@@ -154,6 +160,8 @@ async def list_sign_ins(db: AsyncSession, limit: int, offset: int, user_id: uuid
                 display_name=u.display_name,
                 avatar_url=u.avatar_url,
                 device=device_label(s.user_agent),
+                ip=s.ip,
+                user_agent=s.user_agent,
             )
             for s, u in rows
         ],

@@ -44,6 +44,8 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted a comment`;
     case "social.config":
       return `${who} changed the comments and likes switches`;
+    case "sharing.config":
+      return `${who} changed the account-sharing check (${e.detail ?? ""})`;
     case "playback.config":
       return `${who} changed the playback switch (${e.detail ?? "auto-download next episode"})`;
     case "ai.searches.view":
@@ -119,7 +121,7 @@ function SignIns() {
             <li key={s.id} className="flex items-center gap-3 px-4 py-3">
               <Avatar name={s.display_name} src={s.avatar_url} size={32} />
               <p className="min-w-0 flex-1 truncate text-sm text-white/90">
-                {s.display_name} <span className="text-white/40">· {s.device}</span>
+                {s.display_name} <span className="text-white/40">· {s.device}{s.ip ? ` · ${s.ip}` : ""}</span>
               </p>
               <time dateTime={s.at} className="shrink-0 text-xs text-white/40">
                 {when(s.at)}
@@ -145,7 +147,7 @@ export default function LogTab() {
       <p className="text-sm text-white/50">
         {view === "actions"
           ? "What admins did, including looking at someone's history. Newest first."
-          : "Every successful sign-in, with the device used. Newest first."}
+          : "Every successful sign-in, with the device and the address it came from. Newest first."}
       </p>
       <div role="tablist" aria-label="Log views" className="flex gap-2">
         {VIEWS.map((v) => (

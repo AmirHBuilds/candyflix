@@ -129,8 +129,8 @@ def report_admin_action(actor_name: str, action: str, target: str | None, detail
     notify(topic, "\n".join(lines))
 
 
-def report_sign_in(name: str, device: str) -> None:
-    notify("sign_ins", f"🔓 <b>{esc(name)}</b> signed in\n{esc(device)}")
+def report_sign_in(name: str, device: str, ip: str | None = None) -> None:
+    notify("sign_ins", f"🔓 <b>{esc(name)}</b> signed in\n{esc(device)}" + (f" · {esc(ip)}" if ip else ""))
 
 
 def report_failed_sign_in(username: str, ip: str | None, why: str) -> None:
@@ -166,6 +166,10 @@ def report_feedback(name: str, kind: str, message: str, page: str | None) -> Non
         lines.append(f"On {esc(page)}")
     lines.append(f"<pre>{esc(message[:1500])}</pre>")
     notify("admin", "\n".join(lines))
+
+
+def report_sharing(name: str, ips: int, hours: int, addresses: list[str]) -> None:
+    notify("security", f"👥 <b>{esc(name)}</b> signed in from {ips} different addresses in {hours}h\nThe account may be shared.\n<pre>{esc(chr(10).join(addresses))}</pre>", dedupe=True)
 
 
 def report_started() -> None:

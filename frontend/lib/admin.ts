@@ -220,7 +220,7 @@ export type AuditEntry = {
   detail: string | null;
 };
 export type AuditPage = { items: AuditEntry[]; total: number };
-export type SignInEntry = { id: string; at: string; user_id: string; username: string; display_name: string; avatar_url: string | null; device: string };
+export type SignInEntry = { id: string; at: string; user_id: string; username: string; display_name: string; avatar_url: string | null; device: string; ip?: string | null; user_agent?: string | null };
 export type SignInPage = { items: SignInEntry[]; total: number };
 
 export const getAuditTrail = (offset = 0, limit = 50) =>
@@ -384,3 +384,31 @@ export type HostStatus = {
   watching_now: number;
 };
 export const getHostStatus = () => request<HostStatus>("/system/host", {}, "Couldn't read the server's numbers.");
+
+// ---------- is an account being shared? ----------
+export type SharingIP = { ip: string; sign_ins: number; first_at: string; last_at: string; devices: string[] };
+export type SharingPerson = {
+  user_id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_disabled: boolean;
+  distinct_ips: number;
+  sign_ins: number;
+  flagged: boolean;
+  ips: SharingIP[];
+};
+export type SharingOverview = { window_hours: number; max_ips: number; enabled: boolean; people: SharingPerson[] };
+export type SharingConfig = { enabled: boolean; max_ips: number; window_hours: number };
+export const getSharing = () => request<SharingOverview>("/security/sharing", {}, "Couldn't check the sign-in addresses.");
+export const getSharingConfig = () => request<SharingConfig>("/security/sharing-config", {}, "Couldn't load the account-sharing settings.");
+export const saveSharingConfig = (body: SharingConfig) =>
+  request<SharingConfig>("/security/sharing-config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the account-sharing settings.");
+
+// ---------- notices for admins ----------
+export type AdminNotice = { id: string; at: string; kind: "feedback" | "sharing" | string; title: string; body: string | null; link: string | null; user_id: string | null; user_name: string | null; unread: boolean };
+export type AdminNotices = { items: AdminNotice[]; unread: number; resting: boolean; rest_until: string | null; rest_forever: boolean; server_time: string };
+export const getNotices = () => request<AdminNotices>("/notices", {}, "Couldn't load the notices.");
+export const markNoticesRead = () => request<void>("/notices/read", { method: "POST" }, "Couldn't mark them as read.");
+/** minutes: 0 = stop resting, a number = rest that long, null = rest until switched off. */
+export const setRest = (minutes: number | null) => request<AdminNotices>("/notices/rest", { method: "PUT", body: JSON.stringify({ minutes }) }, "Couldn't change rest mode.");

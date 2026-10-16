@@ -41,3 +41,4 @@ class SignInLog(Base):
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     user_agent: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    ip: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)  # where the sign-in came from

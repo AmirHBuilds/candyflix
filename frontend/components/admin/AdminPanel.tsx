@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DayView, SignInsView, TitleViewersView, TitlesView } from "@/components/admin/DrillViews";
 import AITab from "@/components/admin/AITab";
 import BadgeTab from "@/components/admin/BadgeTab";
@@ -9,6 +9,7 @@ import ErrorsTab from "@/components/admin/ErrorsTab";
 import FeedbackTab from "@/components/admin/FeedbackTab";
 import FooterTab from "@/components/admin/FooterTab";
 import LogTab from "@/components/admin/LogTab";
+import SecurityTab from "@/components/admin/SecurityTab";
 import OpinionsTab from "@/components/admin/OpinionsTab";
 import MessagesTab from "@/components/admin/MessagesTab";
 import OverviewTab, { type OverviewDrill } from "@/components/admin/OverviewTab";
@@ -22,6 +23,7 @@ const TABS = [
   { id: "messages", label: "Messages" },
   { id: "opinions", label: "Opinions" },
   { id: "feedback", label: "Feedback" },
+  { id: "security", label: "Security" },
   { id: "errors", label: "Errors" },
   { id: "log", label: "Log" },
   { id: "ai", label: "AI" },
@@ -54,6 +56,11 @@ function labelOf(d: Drill | undefined, base: string): string {
 
 export default function AdminPanel({ currentUserId }: { currentUserId: string }) {
   const [tab, setTab] = useState<TabId>("overview");
+  // A link from a notification (/admin?tab=feedback) opens that tab.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("tab");
+    if (wanted && TABS.some((t) => t.id === wanted)) setTab(wanted as TabId);
+  }, []);
   // Drill-downs stack on top of the tab; "back" pops one level.
   // Bumping this remounts the open view, so it fetches fresh data without reloading the page.
   const [refreshKey, setRefreshKey] = useState(0);
@@ -131,6 +138,7 @@ export default function AdminPanel({ currentUserId }: { currentUserId: string })
             {tab === "messages" && <MessagesTab />}
             {tab === "opinions" && <OpinionsTab />}
             {tab === "feedback" && <FeedbackTab />}
+            {tab === "security" && <SecurityTab onViewPerson={toPerson} />}
             {tab === "errors" && <ErrorsTab />}
             {tab === "log" && <LogTab />}
             {tab === "ai" && <AITab onViewPerson={toPerson} />}
