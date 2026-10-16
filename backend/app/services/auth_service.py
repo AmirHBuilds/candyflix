@@ -79,14 +79,14 @@ def session_ref(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()[:16]
 
 
-async def create_session(user_id: uuid.UUID, user_agent: str | None = None, ip: str | None = None) -> str:
+async def create_session(user_id: uuid.UUID, user_agent: str | None = None, ip: str | None = None, device: str | None = None) -> str:
     """Creates a new server-side session and returns its opaque token."""
     token = generate_session_token()
     redis = get_redis()
     await redis.set(f"{SESSION_KEY_PREFIX}{token}", str(user_id), ex=SESSION_TTL_SECONDS)
     await redis.set(
         f"{SESSION_META_PREFIX}{token}",
-        json.dumps({"at": datetime.now(timezone.utc).isoformat(), "ua": (user_agent or "")[:300], "ip": (ip or "")[:45]}),
+        json.dumps({"at": datetime.now(timezone.utc).isoformat(), "ua": (user_agent or "")[:300], "ip": (ip or "")[:45], "device": device or ""}),
         ex=SESSION_TTL_SECONDS,
     )
     index = f"{USER_SESSIONS_PREFIX}{user_id}"
@@ -121,8 +121,46 @@ async def list_sessions(user_id: uuid.UUID, current_token: str | None = None) ->
             meta = json.loads(await redis.get(f"{SESSION_META_PREFIX}{token}") or "{}")
         except ValueError:
             meta = {}
-        out.append({"id": session_ref(token), "at": meta.get("at"), "user_agent": meta.get("ua") or None, "ip": meta.get("ip") or None, "current": token == current_token})
+        out.append(
+            {
+                "id": session_ref(token),
+                "at": meta.get("at"),
+                "user_agent": meta.get("ua") or None,
+                "ip": meta.get("ip") or None,
+                "device": meta.get("device") or None,
+                "current": token == current_token,
+            }
+        )
     return sorted(out, key=lambda x: x["at"] or "", reverse=True)
+
+
+async def session_meta(token: str) -> dict:
+    try:
+        return json.loads(await get_redis().get(f"{SESSION_META_PREFIX}{token}") or "{}")
+    except ValueError:
+        return {}
+
+
+async def set_session_device(token: str, device_id: str) -> None:
+    """Links an existing session to a device (sessions made before devices were tracked get one when seen)."""
+    meta = await session_meta(token)
+    meta["device"] = device_id
+    await get_redis().set(f"{SESSION_META_PREFIX}{token}", json.dumps(meta), keepttl=True)
+
+
+async def revoke_device_sessions(user_id: uuid.UUID, device_id: str, keep_token: str | None = None) -> int:
+    """Ends every session that belongs to one device. Returns how many."""
+    redis = get_redis()
+    index = f"{USER_SESSIONS_PREFIX}{user_id}"
+    ended = 0
+    for token in await redis.smembers(index):
+        if token == keep_token:
+            continue
+        if (await session_meta(token)).get("device") == device_id:
+            await redis.delete(f"{SESSION_KEY_PREFIX}{token}", f"{SESSION_META_PREFIX}{token}")
+            await redis.srem(index, token)
+            ended += 1
+    return ended
 
 
 async def revoke_session(user_id: uuid.UUID, ref: str) -> bool:

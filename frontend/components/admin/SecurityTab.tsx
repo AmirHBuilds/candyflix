@@ -6,7 +6,8 @@ import LoginProtection from "@/components/admin/LoginProtection";
 import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import { REST_CHOICES, restLabel, useAdminNotices } from "@/components/admin/useAdminNotices";
 import { Toggle } from "@/components/settings/controls";
-import { getSharing, getSharingConfig, saveSharingConfig, type SharingConfig, type SharingOverview, type SharingPerson } from "@/lib/admin";
+import { getDeviceConfig, getSharing, getSharingConfig, saveDeviceConfig, saveSharingConfig, type DeviceConfigOut, type SharingConfig, type SharingOverview, type SharingPerson } from "@/lib/admin";
+import { placeName } from "@/lib/country";
 import { timeAgo } from "@/lib/opinions";
 import { showToast } from "@/lib/toast";
 
@@ -98,6 +99,80 @@ function Settings({ onSaved }: { onSaved: () => void }) {
   );
 }
 
+function DeviceSettings() {
+  const [cfg, setCfg] = useState<DeviceConfigOut | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    getDeviceConfig()
+      .then(setCfg)
+      .catch(() => setCfg(null));
+  }, []);
+  if (!cfg) return null;
+
+  async function save() {
+    if (!cfg) return;
+    setBusy(true);
+    try {
+      const { country_available: _ignored, ...body } = cfg;
+      void _ignored;
+      setCfg(await saveDeviceConfig(body));
+      showToast("Saved.", "success");
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Couldn't save that.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={card}>
+      <header className="border-b border-white/10 px-5 py-4">
+        <h2 className="text-base font-semibold text-white">Devices per account</h2>
+        <p className="mt-0.5 text-sm text-white/50">
+          Each sign-in is tied to a device (a browser or phone). Every person sees their devices in Settings, and you see them on the person&apos;s page under Devices. When one account goes over a limit you are told once (and again no sooner than 12 hours later).
+        </p>
+        {!cfg.country_available && (
+          <p className="mt-2 text-xs text-amber-300">Countries show as unknown: this server has no IP-to-country file yet (see DEPLOY.md).</p>
+        )}
+      </header>
+      <div className="space-y-4 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-white">Limit devices per account</p>
+          <Toggle checked={cfg.enabled} onChange={(v) => setCfg({ ...cfg, enabled: v })} label="Limit devices per account" />
+        </div>
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="text-sm text-white/70">
+            Different devices per day
+            <input type="number" min={1} max={50} value={cfg.max_devices_per_day} onChange={(e) => setCfg({ ...cfg, max_devices_per_day: Number(e.target.value) })} className={`${fieldClass} mt-1 w-28`} />
+          </label>
+          <label className="text-sm text-white/70">
+            Signed in at once
+            <input type="number" min={1} max={50} value={cfg.max_active} onChange={(e) => setCfg({ ...cfg, max_active: Number(e.target.value) })} className={`${fieldClass} mt-1 w-28`} />
+          </label>
+          <label className="text-sm text-white/70">
+            At the limit
+            <select value={cfg.action} onChange={(e) => setCfg({ ...cfg, action: e.target.value as DeviceConfigOut["action"] })} className={`${fieldClass} mt-1 w-64`}>
+              <option value="alert">Only tell the admins</option>
+              <option value="refuse">Refuse the new device</option>
+              <option value="oldest">Sign out the oldest device</option>
+            </select>
+          </label>
+        </div>
+        <p className="text-xs text-white/40">
+          Admins are never refused or signed out, only reported. &quot;Sign out the oldest&quot; only applies to devices signed in at once; for the daily limit it just tells you.
+        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-white/80">Tell people on Telegram when a device they never used before signs in</p>
+          <Toggle checked={cfg.notify_user} onChange={(v) => setCfg({ ...cfg, notify_user: v })} label="Tell people about new devices" />
+        </div>
+        <button type="button" disabled={busy} className={primaryButton} aria-label="Save device limits" onClick={save}>
+          {busy ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Person({ p, onView }: { p: SharingPerson; onView: (id: string) => void }) {
   const [open, setOpen] = useState(p.flagged);
   return (
@@ -125,7 +200,10 @@ function Person({ p, onView }: { p: SharingPerson; onView: (id: string) => void 
         <ul className="mt-3 divide-y divide-white/10 rounded-xl border border-white/10 bg-black/20">
           {p.ips.map((i) => (
             <li key={i.ip} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2 text-xs">
-              <span className="font-mono text-sm text-white/90">{i.ip}</span>
+              <span className="font-mono text-sm text-white/90">
+                {i.ip}
+                {placeName(i.country) && <span className="ml-2 font-sans text-xs text-white/50">{placeName(i.country)}</span>}
+              </span>
               <span className="text-white/50">{i.devices.join(", ")}</span>
               <span className="text-white/40">
                 {i.sign_ins} {i.sign_ins === 1 ? "sign-in" : "sign-ins"} · last {timeAgo(i.last_at)}
@@ -159,6 +237,7 @@ export default function SecurityTab({ onViewPerson }: { onViewPerson: (id: strin
       <Notifications />
       <LoginProtection />
       <Settings onSaved={load} />
+      <DeviceSettings />
       <div className={card}>
         <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <div>

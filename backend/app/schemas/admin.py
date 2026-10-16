@@ -284,6 +284,7 @@ class SignInEntry(BaseModel):
     avatar_url: str | None = None
     device: str
     ip: str | None = None
+    country: str | None = None
     user_agent: str | None = None
 
 

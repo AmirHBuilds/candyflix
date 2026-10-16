@@ -220,7 +220,7 @@ export type AuditEntry = {
   detail: string | null;
 };
 export type AuditPage = { items: AuditEntry[]; total: number };
-export type SignInEntry = { id: string; at: string; user_id: string; username: string; display_name: string; avatar_url: string | null; device: string; ip?: string | null; user_agent?: string | null };
+export type SignInEntry = { id: string; at: string; user_id: string; username: string; display_name: string; avatar_url: string | null; device: string; ip?: string | null; country?: string | null; user_agent?: string | null };
 export type SignInPage = { items: SignInEntry[]; total: number };
 
 export const getAuditTrail = (offset = 0, limit = 50) =>
@@ -386,7 +386,7 @@ export type HostStatus = {
 export const getHostStatus = () => request<HostStatus>("/system/host", {}, "Couldn't read the server's numbers.");
 
 // ---------- is an account being shared? ----------
-export type SharingIP = { ip: string; sign_ins: number; first_at: string; last_at: string; devices: string[] };
+export type SharingIP = { ip: string; country?: string | null; sign_ins: number; first_at: string; last_at: string; devices: string[] };
 export type SharingPerson = {
   user_id: string;
   username: string;
@@ -418,6 +418,17 @@ export const liftBlock = (scope: "name" | "ip", key: string) =>
   request<void>(`/security/blocks?scope=${scope}&key=${encodeURIComponent(key)}`, { method: "DELETE" }, "Couldn't lift that block.");
 export const signOutEverywhere = (id: string) =>
   request<{ ended: number }>(`/users/${id}/sign-out`, { method: "POST" }, "Couldn't sign them out.");
+
+// ---------- devices ----------
+export type DeviceConfig = { enabled: boolean; max_devices_per_day: number; max_active: number; action: "alert" | "refuse" | "oldest"; notify_user: boolean };
+export type DeviceConfigOut = DeviceConfig & { country_available: boolean };
+export const getDeviceConfig = () => request<DeviceConfigOut>("/security/device-config", {}, "Couldn't load the device limits.");
+export const saveDeviceConfig = (body: DeviceConfig) =>
+  request<DeviceConfigOut>("/security/device-config", { method: "PUT", body: JSON.stringify(body) }, "Couldn't save the device limits.");
+export const getPersonDevices = (id: string) =>
+  request<import("@/components/DeviceList").DevicesOverview>(`/users/${id}/devices`, {}, "Couldn't load their devices.");
+export const endPersonDevice = (id: string, deviceId: string) =>
+  request<{ ended: number }>(`/users/${id}/devices/${deviceId}`, { method: "DELETE" }, "Couldn't sign that device out.");
 
 // ---------- notices for admins ----------
 export type AdminNotice = { id: string; at: string; kind: "feedback" | "sharing" | string; title: string; body: string | null; link: string | null; user_id: string | null; user_name: string | null; unread: boolean };

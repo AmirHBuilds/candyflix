@@ -14,7 +14,7 @@ from app.models.audit import SignInLog
 from app.models.user import User
 from app.schemas.security import SharingIP, SharingOverview, SharingPerson
 from app.schemas.site import SharingConfig
-from app.services import notice_service, telegram_service
+from app.services import geo_service, notice_service, telegram_service
 from app.services.audit_service import device_label
 
 COOLDOWN_HOURS = 12
@@ -32,7 +32,7 @@ def _ips(rows) -> list[SharingIP]:
     for r in rows:
         by.setdefault(r.ip, []).append(r)
     out = [
-        SharingIP(ip=ip, sign_ins=len(rs), first_at=rs[0].at, last_at=rs[-1].at, devices=sorted({device_label(r.user_agent) for r in rs}))
+        SharingIP(ip=ip, country=geo_service.country(ip), sign_ins=len(rs), first_at=rs[0].at, last_at=rs[-1].at, devices=sorted({device_label(r.user_agent) for r in rs}))
         for ip, rs in by.items()
     ]
     return sorted(out, key=lambda i: i.last_at, reverse=True)

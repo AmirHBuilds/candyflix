@@ -5,7 +5,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 vi.mock("next/link", () => ({ default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => <a href={href} {...rest}>{children}</a> }));
 vi.mock("@/lib/admin", async () => {
   const actual = await vi.importActual<typeof import("@/lib/admin")>("@/lib/admin");
-  return { ...actual, getNotices: vi.fn(), markNoticesRead: vi.fn(), setRest: vi.fn(), getSharing: vi.fn(), getSharingConfig: vi.fn(), saveSharingConfig: vi.fn(), getLogins: vi.fn(), saveLoginConfig: vi.fn(), liftBlock: vi.fn() };
+  return { ...actual, getNotices: vi.fn(), markNoticesRead: vi.fn(), setRest: vi.fn(), getSharing: vi.fn(), getSharingConfig: vi.fn(), saveSharingConfig: vi.fn(), getLogins: vi.fn(), saveLoginConfig: vi.fn(), liftBlock: vi.fn(), getDeviceConfig: vi.fn(), saveDeviceConfig: vi.fn() };
 });
 const toast = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/toast", () => ({ showToast: toast }));
@@ -82,6 +82,7 @@ describe("notification bell", () => {
   });
 });
 
+const deviceCfg = (over = {}): admin.DeviceConfigOut => ({ enabled: true, max_devices_per_day: 3, max_active: 5, action: "alert", notify_user: true, country_available: true, ...over });
 const cfg = { enabled: true, name_failures: 5, ip_failures: 20, window_minutes: 15, lockout_minutes: 15 };
 const logins = (over = {}): admin.LoginsOverview => ({
   config: cfg,
@@ -108,6 +109,7 @@ describe("Security tab", () => {
     vi.mocked(admin.getSharing).mockResolvedValue(overview);
     vi.mocked(admin.getSharingConfig).mockResolvedValue({ enabled: true, max_ips: 3, window_hours: 24 });
     vi.mocked(admin.getLogins).mockResolvedValue(logins());
+    vi.mocked(admin.getDeviceConfig).mockResolvedValue(deviceCfg());
   });
 
   it("lists who may be sharing, with every address and device, and opens the person", async () => {
@@ -176,5 +178,26 @@ describe("Security tab", () => {
     render(<SecurityTab onViewPerson={vi.fn()} />);
     await screen.findByText("Wrong passwords");
     expect(screen.queryByText("Two-step sign-in")).not.toBeInTheDocument();
+  });
+
+  it("changes the device limits and what happens at the limit", async () => {
+    vi.mocked(admin.saveDeviceConfig).mockResolvedValue(deviceCfg({ max_devices_per_day: 2, action: "refuse" }));
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    fireEvent.change(await screen.findByLabelText("Different devices per day"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("At the limit"), { target: { value: "refuse" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save device limits" }));
+    await waitFor(() => expect(admin.saveDeviceConfig).toHaveBeenCalledWith({ enabled: true, max_devices_per_day: 2, max_active: 5, action: "refuse", notify_user: true }));
+  });
+
+  it("says when the server has no country file", async () => {
+    vi.mocked(admin.getDeviceConfig).mockResolvedValue(deviceCfg({ country_available: false }));
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    expect(await screen.findByText(/Countries show as unknown/)).toBeInTheDocument();
+  });
+
+  it("shows the country next to an address", async () => {
+    vi.mocked(admin.getSharing).mockResolvedValue({ ...overview, people: [{ ...overview.people[0], ips: [{ ...overview.people[0].ips[0], country: "FR" }, overview.people[0].ips[1]] }] });
+    render(<SecurityTab onViewPerson={vi.fn()} />);
+    expect(await screen.findByText("France")).toBeInTheDocument();
   });
 });

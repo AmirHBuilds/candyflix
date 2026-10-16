@@ -1,4 +1,6 @@
 """/api/admin/security (is an account being shared?) and /api/admin/notices (what the admins are told on the site)."""
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,8 +8,9 @@ from app.api.deps import require_admin
 from app.core.db import get_db
 from app.models.user import User
 from app.schemas.security import LoginBlockOut, LoginEventOut, LoginsOverview, NoTwoStep, NoticesOut, RestIn, SharingOverview
-from app.schemas.site import LoginGuardConfig, SharingConfig
-from app.services import audit_service, auth_service, login_guard_service, notice_service, sharing_service, site_service, telegram_service
+from app.schemas.devices import DevicesOut
+from app.schemas.site import DeviceConfig, LoginGuardConfig, SharingConfig
+from app.services import audit_service, auth_service, device_service, geo_service, login_guard_service, notice_service, sharing_service, site_service, telegram_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -69,6 +72,42 @@ async def lift_block(
     if not await login_guard_service.clear(scope, key):
         raise HTTPException(status_code=404, detail="That block has already ended.")
     await audit_service.record(db, actor, "login.unblock", target_name=key, detail=f"{'name' if scope == 'name' else 'address'} block lifted")
+
+
+class DeviceConfigOut(DeviceConfig):
+    country_available: bool  # the server has the IP-to-country file
+
+
+@router.get("/security/device-config", response_model=DeviceConfigOut)
+async def read_device_config(db: AsyncSession = Depends(get_db)):
+    return DeviceConfigOut(**(await site_service.get_device_config(db)).model_dump(), country_available=geo_service.available())
+
+
+@router.put("/security/device-config", response_model=DeviceConfigOut)
+async def update_device_config(payload: DeviceConfig, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    saved = await site_service.set_device_config(db, payload)
+    detail = "off" if not saved.enabled else f"{saved.max_devices_per_day} devices a day, {saved.max_active} at once, at the limit: {saved.action}"
+    await audit_service.record(db, actor, "device.config", detail=detail)
+    return DeviceConfigOut(**saved.model_dump(), country_available=geo_service.available())
+
+
+@router.get("/users/{user_id}/devices", response_model=DevicesOut)
+async def person_devices(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    target = await auth_service.get_user_by_id(db, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="No such person.")
+    return await device_service.overview(db, user_id, await site_service.get_device_config(db))
+
+
+@router.delete("/users/{user_id}/devices/{device_uuid}")
+async def end_person_device(user_id: uuid.UUID, device_uuid: uuid.UUID, actor: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    """Signs one of their devices out."""
+    target = await auth_service.get_user_by_id(db, user_id)
+    device, ended = await device_service.end(db, user_id, device_uuid)
+    if target is None or device is None:
+        raise HTTPException(status_code=404, detail="That device isn't on this account.")
+    await audit_service.record(db, actor, "device.end", target=target, detail=f"{device.label}, {ended} sign-in{'s' if ended != 1 else ''} ended")
+    return {"ended": ended}
 
 
 @router.get("/notices", response_model=NoticesOut)

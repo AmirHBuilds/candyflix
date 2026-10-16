@@ -13,7 +13,7 @@ from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME, session_cookie_kwargs
 from app.models.user import User
 from app.schemas.auth import LoginRequest, ProfileEntry, TwoFactorChallenge, TwoFactorResend, TwoFactorVerify, UserPublic
-from app.services import auth_service, login_guard_service, site_service, telegram_service, two_factor_service
+from app.services import audit_service, auth_service, device_service, login_guard_service, site_service, telegram_service, two_factor_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -82,14 +82,36 @@ async def login(
 
 
 async def _finish_login(db: AsyncSession, user: User, request: Request, response: Response) -> None:
-    await auth_service.record_login(db, user, request.headers.get("user-agent"), request.client.host if request.client else None)
-    token = await auth_service.create_session(user.id, request.headers.get("user-agent"), request.client.host if request.client else None)
+    ua = request.headers.get("user-agent")
+    ip = request.client.host if request.client else None
+    cfg = await site_service.get_device_config(db)
+    device_id = request.cookies.get(device_service.COOKIE) or device_service.new_device_id()
+    label = audit_service.device_label(ua)
+
+    if cfg.enabled:
+        verdict = await device_service.evaluate(db, user, device_id, cfg)
+        if verdict.over:
+            # Admins are only ever told, never locked out of their own site.
+            refuse = cfg.action == "refuse" and not user.is_admin
+            await device_service.alert_limit(db, user, verdict, cfg, label, ip, refuse)
+            if refuse:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=device_service.refusal_message(verdict))
+            if cfg.action == "oldest" and verdict.over_active and not user.is_admin:
+                await device_service.make_room(user.id, device_id, cfg)
+
+    _, prior, created = await device_service.register(db, user, device_id, ua, ip)
+    await auth_service.record_login(db, user, ua, ip)
+    token = await auth_service.create_session(user.id, ua, ip, device_id)
+    await auth_service.revoke_device_sessions(user.id, device_id, keep_token=token)  # one live sign-in per device
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=token,
         max_age=60 * 60 * 24 * 30,
         **session_cookie_kwargs(),
     )
+    response.set_cookie(key=device_service.COOKIE, value=device_id, max_age=device_service.COOKIE_MAX_AGE, **session_cookie_kwargs())
+    if created and prior > 0 and cfg.notify_user:
+        device_service.tell_user_about_new_device(user, label, ip)
 
 
 @router.post("/login/verify", response_model=UserPublic)
@@ -131,5 +153,18 @@ async def logout(
 
 
 @router.get("/me", response_model=UserPublic)
-async def me(current_user: User = Depends(get_current_user)):
-    return current_user
+async def me(
+    request: Request,
+    response: Response,
+    candyflix_session: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # A sign-in made before devices were tracked gets its device the first time it is seen.
+    if candyflix_session and not request.cookies.get(device_service.COOKIE):
+        try:
+            device_id = await device_service.adopt(db, current_user, candyflix_session, request.headers.get("user-agent"), request.client.host if request.client else None)
+            response.set_cookie(key=device_service.COOKIE, value=device_id, max_age=device_service.COOKIE_MAX_AGE, **session_cookie_kwargs())
+        except Exception:
+            await db.rollback()
+    return UserPublic.model_validate(current_user)

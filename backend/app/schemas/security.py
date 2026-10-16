@@ -9,6 +9,7 @@ from app.schemas.site import LoginGuardConfig
 
 class SharingIP(BaseModel):
     ip: str
+    country: str | None = None
     sign_ins: int
     first_at: datetime
     last_at: datetime

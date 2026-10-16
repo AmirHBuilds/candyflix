@@ -10,7 +10,7 @@ vi.mock("@/lib/account", () => ({
   getTwoFactor: vi.fn(),
   startTwoFactor: vi.fn(),
   stopTwoFactor: vi.fn(),
-  getSessions: vi.fn(),
+  getDevices: vi.fn(),
   signOutDevice: vi.fn(),
   signOutOtherDevices: vi.fn(),
 }));
@@ -25,7 +25,7 @@ const user = { id: "1", username: "candy", display_name: "Candy", avatar_url: nu
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(account.getTwoFactor).mockResolvedValue({ available: true, enabled: false });
-  vi.mocked(account.getSessions).mockResolvedValue([]);
+  vi.mocked(account.getDevices).mockResolvedValue({ items: [], active: 0, today: 0, limits_on: true, max_per_day: 3, max_active: 5 });
 });
 
 describe("Account settings", () => {
@@ -153,25 +153,41 @@ describe("Account settings", () => {
 });
 
 describe("Your devices", () => {
-  const rows = [
-    { id: "a1", at: "2026-10-15T10:00:00Z", device: "Chrome on Windows", ip: "1.1.1.1", current: true },
-    { id: "b2", at: "2026-10-14T10:00:00Z", device: "Safari on iOS", ip: "2.2.2.2", current: false },
-  ];
+  const dev = (over = {}) => ({
+    id: "a1", label: "Chrome on Windows", user_agent: "x", ip: "1.1.1.1", country: "DE", first_seen: "2026-10-01T10:00:00Z", last_seen: new Date().toISOString(),
+    last_login_at: "2026-10-15T10:00:00Z", sign_ins: 4, active: true, sessions: 1, current: true, ...over,
+  });
+  const overview = (items = [dev(), dev({ id: "b2", label: "Safari on iOS", ip: "2.2.2.2", country: "LAN", current: false, sign_ins: 1 }), dev({ id: "c3", label: "Firefox on Linux", active: false, current: false })]) => ({
+    items, active: 2, today: 3, limits_on: true, max_per_day: 3, max_active: 5,
+  });
 
-  it("lists the devices, marks this one, and signs another out", async () => {
-    vi.mocked(account.getSessions).mockResolvedValue(rows);
-    vi.mocked(account.signOutDevice).mockResolvedValue(undefined);
+  it("lists every device with its address, country, when it was last seen and whether it is signed in", async () => {
+    vi.mocked(account.getDevices).mockResolvedValue(overview());
     render(<AccountSettingsForm user={user} />);
     expect(await screen.findByText("Chrome on Windows")).toBeInTheDocument();
     expect(screen.getByText("This device")).toBeInTheDocument();
+    expect(screen.getAllByText(/Germany/).length).toBe(2); // the first and the third device
+    expect(screen.getByText(/Local network/)).toBeInTheDocument();
+    expect(screen.getByText("Using it now", { exact: false })).toBeInTheDocument();
+    expect(screen.getAllByText("Signed in").length).toBe(2);
+    expect(screen.getByText("Signed out")).toBeInTheDocument();
+    expect(screen.getByText(/Signed in on 2 of 5 allowed devices · 3 of 3 different devices today/)).toBeInTheDocument();
+  });
+
+  it("signs out another device, never offers it for this one or for one already signed out", async () => {
+    vi.mocked(account.getDevices).mockResolvedValue(overview());
+    vi.mocked(account.signOutDevice).mockResolvedValue(undefined);
+    render(<AccountSettingsForm user={user} />);
+    await screen.findByText("Safari on iOS");
     expect(screen.queryByRole("button", { name: "Sign out Chrome on Windows" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign out Firefox on Linux" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out Safari on iOS" }));
     await waitFor(() => expect(account.signOutDevice).toHaveBeenCalledWith("b2"));
-    await waitFor(() => expect(account.getSessions).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(account.getDevices).toHaveBeenCalledTimes(2));
   });
 
   it("signs out every other device at once, and only offers that when there is one", async () => {
-    vi.mocked(account.getSessions).mockResolvedValue(rows);
+    vi.mocked(account.getDevices).mockResolvedValue(overview());
     vi.mocked(account.signOutOtherDevices).mockResolvedValue(1);
     render(<AccountSettingsForm user={user} />);
     fireEvent.click(await screen.findByRole("button", { name: "Sign out all other devices" }));
@@ -179,8 +195,8 @@ describe("Your devices", () => {
     expect(showToast).toHaveBeenCalledWith("Signed out of 1 other device.", "success");
   });
 
-  it("hides the bulk button when this is the only device", async () => {
-    vi.mocked(account.getSessions).mockResolvedValue([rows[0]]);
+  it("hides the bulk button when this is the only signed-in device", async () => {
+    vi.mocked(account.getDevices).mockResolvedValue(overview([dev()]));
     render(<AccountSettingsForm user={user} />);
     await screen.findByText("This device");
     expect(screen.queryByRole("button", { name: "Sign out all other devices" })).not.toBeInTheDocument();

@@ -1,16 +1,17 @@
 """
 Shared FastAPI dependencies.
 """
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.security import SESSION_COOKIE_NAME
 from app.models.user import User
-from app.services import auth_service
+from app.services import auth_service, device_service
 
 
 async def get_current_user(
+    request: Request,
     candyflix_session: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
     db: AsyncSession = Depends(get_db),
 ) -> User:
@@ -35,6 +36,7 @@ async def get_current_user(
         # 401 so the app signs the person out, same as an expired session.
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account disabled")
 
+    await device_service.touch(user.id, candyflix_session, request.client.host if request.client else None)
     return user
 
 

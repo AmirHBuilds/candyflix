@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
+import DeviceList, { type DeviceItem, type DevicesOverview } from "@/components/DeviceList";
 import { OpinionList } from "@/components/admin/OpinionsTab";
 import { NowWatchingRow, formatClock, whatLabel } from "@/components/admin/NowWatchingCard";
 import { fieldClass, primaryButton, quietButton } from "@/components/admin/Dialog";
 import {
+  endPersonDevice,
+  getPersonDevices,
   getUserDetail,
   getUserAISearches,
   getUserHistory,
@@ -99,6 +102,45 @@ function History({ userId }: { userId: string }) {
           {busy ? "Loading…" : `Load more (${total - items.length} left)`}
         </button>
       )}
+    </div>
+  );
+}
+
+function Devices({ userId }: { userId: string }) {
+  const [data, setData] = useState<DevicesOverview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => {
+    getPersonDevices(userId)
+      .then((d) => (setData(d), setError(null)))
+      .catch((e) => setError(e instanceof Error ? e.message : "Couldn't load their devices."));
+  }, [userId]);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function end(d: DeviceItem) {
+    setBusy(true);
+    try {
+      await endPersonDevice(userId, d.id);
+      showToast(`${d.label} was signed out.`, "success");
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Couldn't sign that device out.");
+    } finally {
+      setBusy(false);
+      load();
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-white/50">Every device that has signed in to this account, with the address and country it last used and when it was last seen. Signing one out ends its sign-in at once; the person can sign in again.</p>
+      {error && (
+        <p role="alert" className="text-sm text-red-300">
+          {error}
+        </p>
+      )}
+      {data && <DeviceList data={data} busy={busy} onEnd={end} empty="No devices yet. They are recorded from the next sign-in." />}
     </div>
   );
 }
@@ -284,7 +326,7 @@ function LimitRow({
   );
 }
 
-const SECTION_IDS = ["history", "box", "ai", "comments"] as const;
+const SECTION_IDS = ["history", "box", "ai", "comments", "devices"] as const;
 
 // The second tab is that person's own box ("Eve Box"), not the viewer's.
 const sectionsFor = (displayName: string) => [
@@ -292,6 +334,7 @@ const sectionsFor = (displayName: string) => [
   { id: "box" as const, label: boxNameFor(displayName) },
   { id: "ai" as const, label: "AI searches" },
   { id: "comments" as const, label: "Comments" },
+  { id: "devices" as const, label: "Devices" },
 ];
 
 export default function UserDetailView({ userId, onBack, backLabel = "All people" }: { userId: string; onBack: () => void; backLabel?: string }) {
@@ -367,7 +410,7 @@ export default function UserDetailView({ userId, onBack, backLabel = "All people
               </button>
             ))}
           </div>
-          {section === "history" ? <History userId={userId} /> : section === "box" ? <Box userId={userId} name={detail.user.display_name} /> : section === "comments" ? <OpinionList userId={userId} /> : <AISearches userId={userId} />}
+          {section === "history" ? <History userId={userId} /> : section === "box" ? <Box userId={userId} name={detail.user.display_name} /> : section === "comments" ? <OpinionList userId={userId} /> : section === "devices" ? <Devices userId={userId} /> : <AISearches userId={userId} />}
         </>
       )}
     </section>

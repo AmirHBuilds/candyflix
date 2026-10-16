@@ -120,6 +120,9 @@ class Settings(BaseSettings):
     # Audio taken from a downloaded video for subtitle sync: aac (fastest), mp3 or opus.
     resolver_audio_format: str = "aac"
 
+    # Offline IP -> country file (MaxMind format, e.g. DB-IP "IP to Country Lite"). Optional: without it countries show as unknown.
+    geoip_db_path: str = "geoip/country.mmdb"
+
     # Profile pictures (resized WebP files), served from /avatars.
     avatars_dir: str = "avatars"
     max_avatar_bytes: int = 5_000_000

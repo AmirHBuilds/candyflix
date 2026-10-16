@@ -147,6 +147,12 @@ def report_login_blocked(scope: str, key: str, fails: int, minutes: int, others:
     notify("security", f"{head}\n{fails} wrong passwords. Blocked for {minutes} min.\n{tail}", dedupe=True)
 
 
+def report_device_limit(name: str, why: str, refused: bool, label: str, ip: str | None, country: str | None) -> None:
+    head = "⛔ <b>Sign-in refused</b>" if refused else "📱 <b>Device limit reached</b>"
+    where = f"{esc(ip or 'unknown')}" + (f" ({esc(country)})" if country and country != "LAN" else "")
+    notify("security", f"{head}\n<b>{esc(name)}</b>: {esc(why)}\nDevice: {esc(label)}\nFrom: {where}", dedupe=True)
+
+
 def report_model_paused(model: str, seconds: int) -> None:
     hours, minutes = divmod(max(1, seconds) // 60, 60)
     notify("ai", f"🚦 <b>{esc(model)}</b> hit its limit\nResting {hours}h {minutes}m. The backup model is used meanwhile.", dedupe=True)

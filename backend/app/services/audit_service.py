@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.audit import AuditLog, SignInLog
 from app.models.user import User
 from app.schemas import admin as schemas
-from app.services import telegram_service
+from app.services import geo_service, telegram_service
 
 VIEW_DEDUPE = timedelta(minutes=10)
 
@@ -161,6 +161,7 @@ async def list_sign_ins(db: AsyncSession, limit: int, offset: int, user_id: uuid
                 avatar_url=u.avatar_url,
                 device=device_label(s.user_agent),
                 ip=s.ip,
+                country=geo_service.country(s.ip),
                 user_agent=s.user_agent,
             )
             for s, u in rows

@@ -4,7 +4,7 @@
 Username is deliberately not editable here: only an admin can rename an
 account (see routes/admin.py).
 """
-from fastapi import APIRouter, Cookie, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Cookie, Depends, File, HTTPException, Request, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -15,7 +15,10 @@ from app.models.user import User
 from app.schemas.account import PasswordChange, SessionOut, ProfileUpdate, TwoFactorLink, TwoFactorOff, TwoFactorStart, TwoFactorStatus
 from app.schemas.auth import UserPublic
 from app.core.security import verify_password
-from app.services import account_service, audit_service, auth_service, telegram_service, two_factor_service
+import uuid
+
+from app.schemas.devices import DevicesOut
+from app.services import account_service, audit_service, auth_service, device_service, site_service, telegram_service, two_factor_service
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -128,4 +131,32 @@ async def sign_out_device(
         raise HTTPException(status_code=400, detail="That's this device. Use Sign out instead.")
     if not await auth_service.revoke_session(current_user.id, ref):
         raise HTTPException(status_code=404, detail="That device is already signed out.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/devices", response_model=DevicesOut)
+async def my_devices(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Every device that has signed in to this account, with where it last was and when it was last seen."""
+    cfg = await site_service.get_device_config(db)
+    return await device_service.overview(db, current_user.id, cfg, request.cookies.get(device_service.COOKIE))
+
+
+@router.delete("/devices/{device_uuid}", status_code=status.HTTP_204_NO_CONTENT)
+async def sign_out_my_device(
+    device_uuid: uuid.UUID,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    mine = request.cookies.get(device_service.COOKIE)
+    found = await device_service.find(db, current_user.id, mine)
+    if found is not None and found.id == device_uuid:
+        raise HTTPException(status_code=400, detail="That's this device. Use Sign out instead.")
+    device, _ended = await device_service.end(db, current_user.id, device_uuid)
+    if device is None:
+        raise HTTPException(status_code=404, detail="That device isn't on your account.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

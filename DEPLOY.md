@@ -32,6 +32,13 @@ Put `RESOLVER_URL` and `RESOLVER_API_KEY` in `backend/.env.prod`. With the site 
 `RESOLVER_STREAM_MODE=proxy` (works with no extra setup), or switch to `direct` once CORS on the resolver allows
 `https://<your domain>`. Subtitle sync needs ffmpeg, which is already in the backend image.
 
+## Countries for devices and sign-ins (optional)
+Admin and Settings show the country next to each address when the server has an offline IP-to-country file. Without it everything works and countries just show as unknown.
+1. Download the free "IP to Country Lite" database in **MMDB** format from https://db-ip.com/db/download/ip-to-country-lite (it asks for a credit to db-ip.com, which the site's footer or your own notes can carry).
+2. Unzip it and save it on the server as `backend/geoip/country.mmdb`.
+3. `docker compose -f docker-compose.prod.yml restart backend`. The Security tab stops saying "Countries show as unknown".
+No address is ever sent to an outside service: the lookup reads that file only. The file is updated monthly; replace it now and then. Private and local addresses show as "Local network".
+
 ## Logs, backups, restore
 
 - Logs: `docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend`

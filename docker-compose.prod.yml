@@ -50,6 +50,8 @@ services:
       - sync-cache:/app/sync-cache
       # Mock videos (only used while RESOLVER_URL is empty): put files in ./backend/mock-videos on the server.
       - ./backend/mock-videos:/app/mock-videos:ro
+      # Optional IP -> country file (see DEPLOY.md): put country.mmdb in ./backend/geoip on the server.
+      - ./backend/geoip:/app/geoip:ro
     depends_on:
       db:
         condition: service_healthy

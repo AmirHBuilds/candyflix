@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Avatar from "@/components/Avatar";
 import { MoreButton, PagedState, usePaged, when } from "@/components/admin/DrillViews";
 import { boxNameFor } from "@/lib/box-name";
+import { placeName } from "@/lib/country";
 import { getAuditTrail, getSignInLog, type AuditEntry } from "@/lib/admin";
 
 const PAGE = 50;
@@ -44,6 +45,10 @@ export function describe(e: AuditEntry): string {
       return `${who} deleted a comment`;
     case "social.config":
       return `${who} changed the comments and likes switches`;
+    case "device.config":
+      return `${who} changed the device limits (${e.detail ?? ""})`;
+    case "device.end":
+      return `${who} signed a device out for ${t} (${e.detail ?? ""})`;
     case "login.config":
       return `${who} changed the sign-in limits (${e.detail ?? ""})`;
     case "login.unblock":
@@ -127,7 +132,7 @@ function SignIns() {
             <li key={s.id} className="flex items-center gap-3 px-4 py-3">
               <Avatar name={s.display_name} src={s.avatar_url} size={32} />
               <p className="min-w-0 flex-1 truncate text-sm text-white/90">
-                {s.display_name} <span className="text-white/40">· {s.device}{s.ip ? ` · ${s.ip}` : ""}</span>
+                {s.display_name} <span className="text-white/40">· {s.device}{s.ip ? ` · ${s.ip}` : ""}{placeName(s.country) ? ` · ${placeName(s.country)}` : ""}</span>
               </p>
               <time dateTime={s.at} className="shrink-0 text-xs text-white/40">
                 {when(s.at)}

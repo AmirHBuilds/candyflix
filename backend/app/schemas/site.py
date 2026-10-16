@@ -156,3 +156,13 @@ class LoginGuardConfig(BaseModel):
     ip_failures: int = Field(default=20, ge=3, le=500)  # ... or from one address ...
     window_minutes: int = Field(default=15, ge=1, le=1440)  # ... within this long
     lockout_minutes: int = Field(default=15, ge=1, le=1440)  # the first block lasts this long; repeats double it (up to 4x)
+
+
+class DeviceConfig(BaseModel):
+    """Limits on devices (a browser or phone someone signs in from) per account (admin)."""
+
+    enabled: bool = True
+    max_devices_per_day: int = Field(default=3, ge=1, le=50)  # different devices that sign in within 24 hours
+    max_active: int = Field(default=5, ge=1, le=50)  # devices signed in at the same time
+    action: str = Field(default="alert", pattern="^(alert|refuse|oldest)$")  # what happens at the limit (admins are never refused)
+    notify_user: bool = True  # tell the person on Telegram when a device they never used before signs in

@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/Avatar";
+import DeviceList, { type DevicesOverview } from "@/components/DeviceList";
 import { SettingRow, SettingsCard, Toggle } from "@/components/settings/controls";
-import { changePassword, getSessions, getTwoFactor, removeAvatar, signOutDevice, signOutOtherDevices, startTwoFactor, stopTwoFactor, updateDisplayName, uploadAvatar, type DeviceSession, type TwoFactorStatus } from "@/lib/account";
+import { changePassword, getDevices, getTwoFactor, removeAvatar, signOutDevice, signOutOtherDevices, startTwoFactor, stopTwoFactor, updateDisplayName, uploadAvatar, type TwoFactorStatus } from "@/lib/account";
 import type { UserPublic } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 
@@ -190,12 +191,12 @@ function PasswordCard() {
 }
 
 function DevicesCard() {
-  const [rows, setRows] = useState<DeviceSession[] | null>(null);
+  const [data, setData] = useState<DevicesOverview | null>(null);
   const [busy, setBusy] = useState(false);
   const load = () =>
-    getSessions()
-      .then(setRows)
-      .catch(() => setRows([]));
+    getDevices()
+      .then(setData)
+      .catch(() => setData({ items: [], active: 0, today: 0, limits_on: false, max_per_day: 0, max_active: 0 }));
   useEffect(() => {
     void load();
   }, []);
@@ -226,35 +227,11 @@ function DevicesCard() {
     }
   }
 
-  const others = (rows ?? []).filter((r) => !r.current).length;
+  const others = (data?.items ?? []).filter((r) => r.active && !r.current).length;
   return (
-    <SettingsCard title="Your devices" description="Where you are signed in. If you don't recognise one, sign it out and change your password.">
+    <SettingsCard title="Your devices" description="Every device that has signed in to your account, where it was and when it was last used. If you don't recognise one, sign it out and change your password.">
       <div className="space-y-3 px-5 py-4">
-        {rows === null && <p className="text-sm text-white/50">Loading…</p>}
-        {rows !== null && rows.length === 0 && <p className="text-sm text-white/50">Nothing to show yet. Devices signed in from now on are listed here.</p>}
-        {rows !== null && rows.length > 0 && (
-          <ul className="divide-y divide-white/10 rounded-xl border border-white/10">
-            {rows.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-white/90">
-                    {r.device}
-                    {r.current && <span className="ml-2 rounded bg-accent/20 px-1.5 py-0.5 text-xs text-accent">This device</span>}
-                  </p>
-                  <p className="truncate text-xs text-white/40">
-                    {r.ip ?? "unknown address"}
-                    {r.at ? ` · signed in ${new Date(r.at).toLocaleString()}` : ""}
-                  </p>
-                </div>
-                {!r.current && (
-                  <button type="button" disabled={busy} className={quietButtonClass} aria-label={`Sign out ${r.device}`} onClick={() => out(r.id)}>
-                    Sign out
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        {data === null ? <p className="text-sm text-white/50">Loading…</p> : <DeviceList data={data} busy={busy} onEnd={(d) => out(d.id)} />}
         {others > 0 && (
           <button type="button" disabled={busy} className={quietButtonClass} onClick={outOthers}>
             Sign out all other devices

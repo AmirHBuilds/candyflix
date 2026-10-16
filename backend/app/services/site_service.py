@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.site_setting import SiteSetting
 from app.core.config import get_settings
-from app.schemas.site import AdminBadge, AIConfig, BadgePublic, Footer, HomeBanners, LoginGuardConfig, PlaybackConfig, SharingConfig, SocialConfig
+from app.schemas.site import AdminBadge, DeviceConfig, AIConfig, BadgePublic, Footer, HomeBanners, LoginGuardConfig, PlaybackConfig, SharingConfig, SocialConfig
 from app.services import avatar_service
 
 FOOTER_KEY = "footer"
@@ -142,6 +142,29 @@ async def set_sharing_config(db: AsyncSession, config: SharingConfig) -> Sharing
     row = await db.get(SiteSetting, SHARING_KEY)
     if row is None:
         db.add(SiteSetting(key=SHARING_KEY, value=config.model_dump()))
+    else:
+        row.value = config.model_dump()
+    await db.commit()
+    return config
+
+
+DEVICE_KEY = "device_config"
+
+
+async def get_device_config(db: AsyncSession) -> DeviceConfig:
+    row = await db.get(SiteSetting, DEVICE_KEY)
+    if row is not None:
+        try:
+            return DeviceConfig.model_validate(row.value)
+        except Exception:
+            pass
+    return DeviceConfig()
+
+
+async def set_device_config(db: AsyncSession, config: DeviceConfig) -> DeviceConfig:
+    row = await db.get(SiteSetting, DEVICE_KEY)
+    if row is None:
+        db.add(SiteSetting(key=DEVICE_KEY, value=config.model_dump()))
     else:
         row.value = config.model_dump()
     await db.commit()

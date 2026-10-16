@@ -87,16 +87,16 @@ export async function stopTwoFactor(password: string): Promise<void> {
   if (!res.ok) await fail(res, "Couldn't turn that off.");
 }
 
-export type DeviceSession = { id: string; at: string | null; device: string; ip: string | null; current: boolean };
+import type { DevicesOverview } from "@/components/DeviceList";
 
-export async function getSessions(): Promise<DeviceSession[]> {
-  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/sessions`, { credentials: "include" });
+export async function getDevices(): Promise<DevicesOverview> {
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/devices`, { credentials: "include" });
   if (!res.ok) await fail(res, "Couldn't load your devices.");
   return res.json();
 }
 
 export async function signOutDevice(id: string): Promise<void> {
-  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/sessions/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
+  const res = await fetchWithTimeout(`${getApiBaseUrl()}/account/devices/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
   if (!res.ok) await fail(res, "Couldn't sign that device out.");
 }
 
