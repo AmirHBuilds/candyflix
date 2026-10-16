@@ -205,6 +205,9 @@ export default function VideoPlayer({
   const [muted, setMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
+  // On a phone held upright the small player keeps its bar to one row (play, skip, episodes, time, fullscreen); the other
+  // buttons (sources, AI, subtitles, settings, picture in picture) appear once the video is fullscreen.
+  const phoneExtras = fullscreen ? "" : "max-sm:hidden";
   // Sleep timer: a real wall-clock countdown (not tied to playback time —
   // it keeps counting down even while paused, matching how this feature
   // works in basically every other player), stored as an absolute
@@ -1804,11 +1807,13 @@ export default function VideoPlayer({
 
           <div className="ml-auto flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-1" ref={settingsRef}>
             {sourcePicker && (
-              <SourceMenu
-                picker={{ ...sourcePicker, onSelect: (id, at) => sourcePicker.onSelect(id, at, duration) }}
-                getTime={() => videoRef.current?.currentTime ?? 0}
-                fullscreenHost={fullscreen ? containerRef.current : null}
-              />
+              <div className={phoneExtras}>
+                <SourceMenu
+                  picker={{ ...sourcePicker, onSelect: (id, at) => sourcePicker.onSelect(id, at, duration) }}
+                  getTime={() => videoRef.current?.currentTime ?? 0}
+                  fullscreenHost={fullscreen ? containerRef.current : null}
+                />
+              </div>
             )}
             {assistantOn && (
               <PlayerTooltip label="Ask AI about this" align="end">
@@ -1816,7 +1821,7 @@ export default function VideoPlayer({
                   aria-label="Ask AI about this"
                   aria-pressed={assistantOpen}
                   onClick={() => setAssistantOpen((v) => !v)}
-                  className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                  className={`flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white ${phoneExtras}`}
                 >
                   <AssistantIcon />
                 </button>
@@ -1832,14 +1837,14 @@ export default function VideoPlayer({
                 aria-label={selectedLanguage ? "Turn off subtitles" : "Turn on subtitles"}
                 aria-pressed={!!selectedLanguage}
                 onClick={handleCaptionsButtonClick}
-                className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                className={`flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white ${phoneExtras}`}
               >
                 <CCIcon active={!!selectedLanguage} />
               </button>
             </PlayerTooltip>
             )}
 
-            <div className="relative">
+            <div className={`relative ${phoneExtras}`}>
               {/* No tooltip while the menu is open — it would sit on top of it. */}
               <PlayerTooltip label="Settings" shortcuts={["S"]} align="end" disabled={settingsMenu !== null}>
                 <button
@@ -2015,7 +2020,7 @@ export default function VideoPlayer({
                 <button
                   aria-label="Picture in picture"
                   onClick={() => void togglePip()}
-                  className="flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white"
+                  className={`flex h-8 w-8 pointer-coarse:h-10 pointer-coarse:w-10 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20 hover:text-white ${phoneExtras}`}
                 >
                   <PipIcon />
                 </button>

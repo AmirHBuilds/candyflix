@@ -147,7 +147,7 @@ export default async function WatchEpisodePage({
         />
       )}
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 p-6">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1 basis-44">
           <h1 className="font-[family-name:var(--font-display)] text-xl font-semibold text-white">
             {show.title}
           </h1>

@@ -107,8 +107,10 @@ class Settings(BaseSettings):
     resolver_stream_mode: str = "proxy"
     # Extra hostnames the relay may fetch from (the resolver's own host is always allowed).
     resolver_extra_hosts: str = ""
-    # How many seconds the first lookup waits for the first source (the resolver allows up to 30).
-    resolver_first_wait_s: int = 25
+    # How many seconds the first lookup waits for the first source (the resolver allows up to 30). Kept short: if nothing
+    # has answered by then the page gets the running search at once and follows it live (sources answering, place in
+    # line), instead of showing a blank wait; the video starts as soon as a source turns up.
+    resolver_first_wait_s: int = 4
     # Ask the resolver to start its starred (reliable) sources first.
     resolver_starred_first: bool = True
     # Downloads one person may start per minute.

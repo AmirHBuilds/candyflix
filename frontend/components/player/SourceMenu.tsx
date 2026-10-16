@@ -17,6 +17,11 @@ export type SourcePicker = {
   onSelect: (streamId: string, atSeconds: number, totalSeconds: number) => void;
 };
 
+/** A source that has finished and found no video. */
+function isEmpty(src: SourceState): boolean {
+  return src.streams.length === 0 && (src.status === "ok" || src.status === "done" || src.status === "error" || src.status === "expired" || src.status === "failed");
+}
+
 function Row({ stream, playing, onClick }: { stream: StreamState; playing: boolean; onClick: () => void }) {
   const downloading = stream.state === "downloading";
   const pct = Math.round(stream.progress ?? 0);
@@ -120,6 +125,12 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
     picker.sources.find((x) => x.streams.length > 0) ??
     picker.sources[0] ??
     null;
+  // One row per source name; the ones with no video come last (their rows are disabled), the order is otherwise kept.
+  const listed = picker.sources
+    .filter((src, i, all) => all.findIndex((o) => o.name === src.name) === i)
+    .map((src, i) => ({ src, i }))
+    .sort((a, b) => Number(isEmpty(a.src)) - Number(isEmpty(b.src)) || a.i - b.i)
+    .map((x) => x.src);
   const total = picker.sources.reduce((n, s) => n + s.streams.length, 0);
   const portalTarget = fullscreenHost ?? (typeof document !== "undefined" ? document.body : null);
 
@@ -155,10 +166,10 @@ export default function SourceMenu({ picker, getTime, fullscreenHost }: { picker
             <div className="flex gap-2">
               <div className="w-28 shrink-0 border-r border-white/10 pr-2" role="tablist" aria-label="Sources">
                 <p className="px-2 pb-1.5 pt-1 text-xs font-medium uppercase tracking-wide text-white/45">Sources</p>
-                {picker.sources.filter((src, i, all) => all.findIndex((o) => o.name === src.name) === i).map((src) => {
+                {listed.map((src) => {
                   const active = src.name === shown?.name;
                   const hasPlaying = src.streams.some((x) => x.stream_id === picker.playingId);
-                  const empty = src.streams.length === 0 && (src.status === "ok" || src.status === "done" || src.status === "error" || src.status === "expired" || src.status === "failed");
+                  const empty = isEmpty(src);
                   return (
                     <button
                       key={src.name}

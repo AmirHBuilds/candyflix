@@ -99,6 +99,7 @@ export default function ResolverPlayer({
         stream={target}
         error={r.error}
         queuePosition={r.state?.queue_position ?? null}
+        state={r.state}
         onRetry={r.retry}
         backHref={backHref}
       />

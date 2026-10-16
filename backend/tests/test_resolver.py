@@ -178,7 +178,7 @@ async def test_start_downloads_the_best_quality_of_the_first_source(env):
     r = await c.post("/api/resolve/start", json=START)
     assert r.status_code == 200
     s = r.json()
-    assert env["calls"][0][1] == {"wait": "first", "wait_s": "25"}
+    assert env["calls"][0][1] == {"wait": "first", "wait_s": "4"}
     assert env["calls"][0][2]["starred_first"] is True
     lib = [c_ for c_ in env["calls"] if c_[0] == "library"]
     assert len(lib) == 1  # only one download, not every quality
@@ -618,3 +618,15 @@ def test_two_entries_with_one_source_name_become_one_row():
     }
     state = resolver_service.build_state(task, [])
     assert len(state.sources) == 1 and len(state.sources[0].streams) == 2
+
+
+async def test_after_a_delete_at_the_resolver_the_restart_starts_the_same_source_again(env):
+    # what Candy Resolver 1.0.5 does on "delete" (panel or DELETE /v1/library/{id}): the item becomes `deleted`
+    c = await client()
+    first = (await c.post("/api/resolve/start", json=START)).json()
+    env["library"][0].update(status="deleted", playable=False, file_path=None)
+    r = await c.post(f"/api/resolve/tasks/{first['task_id']}/download", json={})  # what the player's recovery asks for
+    assert r.status_code == 200
+    assert [x[1]["stream_id"] for x in env["calls"] if x[0] == "library"] == ["str_b", "str_b"]
+    assert r.json()["auto_stream_id"] == "str_b" and stream_of(r.json(), "str_b")["library_id"] == "lib_1"
+    await c.aclose()

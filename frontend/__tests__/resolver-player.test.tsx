@@ -229,11 +229,69 @@ describe("ResolverPlayer", () => {
     expect(screen.getByLabelText("Sources and quality")).toBeInTheDocument();
   });
 
+  it("on a phone the small player keeps play, skip, time and fullscreen; the other buttons wait for fullscreen", async () => {
+    vi.mocked(resolve.startResolve).mockResolvedValue(withDownload({}));
+    vi.mocked(resolve.getResolveState).mockImplementation(() => new Promise(() => {}));
+    mount();
+    await waitFor(() => expect(hlsInstances.length).toBe(1));
+    const hiddenOnPhone = (el: HTMLElement) => !!el.closest(".max-sm\\:hidden");
+    expect(hiddenOnPhone(screen.getByLabelText("Settings"))).toBe(true);
+    expect(hiddenOnPhone(screen.getByLabelText("Sources and quality"))).toBe(true);
+    expect(hiddenOnPhone(screen.getByLabelText("Fullscreen"))).toBe(false);
+    expect(hiddenOnPhone(screen.getByLabelText("Play/Pause"))).toBe(false);
+  });
+
   it("says when the search is waiting in line", async () => {
     vi.mocked(resolve.startResolve).mockResolvedValue(state({ sources: [], queue_position: 2 }));
     vi.mocked(resolve.getResolveState).mockImplementation(() => new Promise(() => {}));
     mount();
     expect(await screen.findByText("Waiting in line (2)…")).toBeInTheDocument();
+  });
+
+  it("says what the server is doing: how many sources answered, then what was found", async () => {
+    vi.mocked(resolve.startResolve).mockResolvedValue(state({ sources: [], sources_total: 4, sources_done: 1 }));
+    vi.mocked(resolve.getResolveState).mockImplementation(() => new Promise(() => {}));
+    mount();
+    expect(await screen.findByText("1 of 4 sources have answered")).toBeInTheDocument();
+    const steps = screen.getByTestId("loading-steps").querySelectorAll("li");
+    expect(Array.from(steps).map((li) => li.getAttribute("data-step"))).toEqual(["done", "active", "todo", "todo"]);
+  });
+
+  it("says it is waiting for a free spot, and where in line", async () => {
+    vi.mocked(resolve.startResolve).mockResolvedValue(state({ sources: [], queue_position: 3 }));
+    vi.mocked(resolve.getResolveState).mockImplementation(() => new Promise(() => {}));
+    mount();
+    expect(await screen.findByText("Waiting in line (3)…")).toBeInTheDocument();
+    expect(screen.getByText(/starts as soon as a spot is free/)).toBeInTheDocument();
+    expect(screen.getByText("#3 in line")).toBeInTheDocument();
+  });
+
+  it("names what it found and the download's progress while the first part comes in", async () => {
+    const dl = withDownload({});
+    dl.sources[0].streams[0] = { ...dl.sources[0].streams[0], state: "downloading", progress: 30, play_url: null };
+    vi.mocked(resolve.startResolve).mockResolvedValue(dl);
+    vi.mocked(resolve.getResolveState).mockImplementation(() => new Promise(() => {}));
+    mount();
+    expect(await screen.findByText(/Downloading the first part/)).toBeInTheDocument();
+    expect(screen.getByText("Vertex answered")).toBeInTheDocument();
+    expect(screen.getByText("800p from Vertex")).toBeInTheDocument();
+    expect(screen.getAllByText("30%").length).toBeGreaterThan(0);
+  });
+
+  it("reassures after a while and counts the seconds", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(resolve.startResolve).mockImplementation(() => new Promise(() => {})); // no answer yet
+      mount();
+      expect(screen.getByText("Connecting to the video service")).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(11000); });
+      expect(screen.getByText(/Some sources are slow to answer/)).toBeInTheDocument();
+      expect(screen.getByText("11s")).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
+      expect(screen.getByText(/taking longer than usual/)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("says so when nothing was found, and tries again", async () => {
@@ -334,5 +392,19 @@ describe("sources without video", () => {
     expect(screen.getByRole("tab", { name: "Empty" })).toBeDisabled();
     expect(screen.getByRole("tab", { name: /Vertex/ })).not.toBeDisabled();
     expect(screen.getByText("800p")).toBeInTheDocument(); // the first source with video is the one shown
+  });
+
+  it("go to the end of the list, whatever order they came in", () => {
+    const sources = [
+      { name: "Empty", starred: false, status: "ok", error: null, streams: [] },
+      { name: "Vertex", starred: true, status: "ok", error: null, streams: [stream("b", "800p")] },
+      { name: "Gone", starred: false, status: "failed", error: "x", streams: [] },
+      { name: "Other", starred: false, status: "ok", error: null, streams: [stream("e", "1080p")] },
+      { name: "Searching", starred: false, status: "pending", error: null, streams: [] },
+    ];
+    render(<SourceMenu picker={{ sources, playingId: null, searching: true, onSelect: vi.fn(), more: null }} getTime={() => 0} />);
+    fireEvent.click(screen.getByLabelText("Sources and quality"));
+    // the ones with video first, then the one still being asked (not disabled yet), then the empty ones, each group in its order
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Vertex", "Other", "Searching", "Empty", "Gone"]);
   });
 });
