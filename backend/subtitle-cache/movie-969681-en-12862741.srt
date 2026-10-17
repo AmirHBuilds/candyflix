@@ -1,0 +1,11911 @@
+1
+00:00:42,677 --> 00:00:45,212
+[SOMBER INSTRUMENTAL PLAYING]
+
+2
+00:01:18,478 --> 00:01:21,181
+<i>Hi. My name is Peter Parker.</i>
+
+3
+00:01:23,216 --> 00:01:24,217
+<i>You don't remember me,</i>
+
+4
+00:01:24,251 --> 00:01:26,219
+<i>but I have something</i>
+<i>to tell you</i>
+
+5
+00:01:26,253 --> 00:01:28,255
+<i>that's gonna sound crazy.</i>
+
+6
+00:01:28,288 --> 00:01:30,858
+[MACHINE WHIRRING]
+
+7
+00:01:30,892 --> 00:01:31,859
+<i>But it's the truth.</i>
+
+8
+00:01:34,161 --> 00:01:35,830
+<i>And I know</i>
+<i>you're gonna believe me,</i>
+
+9
+00:01:35,863 --> 00:01:37,497
+<i>because you're very good</i>
+<i>at telling...</i>
+
+10
+00:01:37,532 --> 00:01:39,166
+-[BEEPING]
+<i>-...when I'm lying.</i>
+
+11
+00:01:40,802 --> 00:01:42,369
+E.V.,
+can you check the calibration
+
+12
+00:01:42,402 --> 00:01:43,437
+of my targeting matrix?
+
+13
+00:01:43,470 --> 00:01:45,205
+That doesn't feel
+zeroed in to me.
+
+14
+00:01:45,238 --> 00:01:47,240
+E.V.:
+<i>Checking target calibration.</i>
+
+15
+00:01:51,646 --> 00:01:54,381
+[SOFT MUSIC PLAYING]
+
+16
+00:01:55,883 --> 00:01:57,250
+Hey, E.V., take five.
+
+17
+00:01:57,852 --> 00:01:58,886
+E.V.: <i>Standing by.</i>
+
+18
+00:02:04,659 --> 00:02:06,193
+PETER: <i>We used to</i>
+<i>know each other.</i>
+
+19
+00:02:07,494 --> 00:02:09,329
+<i>We were together.</i>
+
+20
+00:02:10,531 --> 00:02:12,232
+<i>But something bad</i>
+<i>was gonna happen,</i>
+
+21
+00:02:12,265 --> 00:02:13,901
+<i>and the only way</i>
+<i>to stop it</i>
+
+22
+00:02:13,935 --> 00:02:14,836
+<i>was to make everyone</i>
+<i>forget me.</i>
+
+23
+00:02:14,869 --> 00:02:15,737
+[PHONE CHIMES]
+
+24
+00:02:20,642 --> 00:02:22,877
+<i>First day at MIT, let's go!</i>
+
+25
+00:02:22,910 --> 00:02:25,245
+[LAUGHING] <i>Oh, my gosh!</i>
+<i>We're here! We made it!</i>
+
+26
+00:02:25,278 --> 00:02:26,914
+<i>Oh, MJ, come on.</i>
+
+27
+00:02:26,948 --> 00:02:28,348
+PETER: <i>Including you.</i>
+
+28
+00:02:28,382 --> 00:02:29,017
+NED: <i>Pretend like you're not</i>
+<i>the happiest you've ever been</i>
+
+29
+00:02:29,050 --> 00:02:31,119
+<i>in your entire life right now.</i>
+
+30
+00:02:31,919 --> 00:02:32,987
+<i>-I can't.</i>
+-[NED EXCLAIMS]
+
+31
+00:02:33,021 --> 00:02:34,722
+<i>-Let's just do this!</i>
+<i>-Okay, okay, okay.</i>
+
+32
+00:02:34,756 --> 00:02:35,857
+NED: <i>You're happy!</i>
+MJ: <i>Okay.</i>
+
+33
+00:02:35,890 --> 00:02:38,158
+PETER: <i>Because I'm not</i>
+<i>just Peter Parker.</i>
+
+34
+00:02:39,761 --> 00:02:41,261
+<i>I'm Spider-Man.</i>
+
+35
+00:02:41,294 --> 00:02:41,996
+NED: [OVER PHONE]
+<i>I'm really, really</i>
+
+36
+00:02:42,030 --> 00:02:43,131
+<i>understanding the culture</i>
+
+37
+00:02:43,163 --> 00:02:44,532
+<i>out here in Boston</i>
+<i>is just so different.</i>
+
+38
+00:02:44,565 --> 00:02:45,566
+PETER: <i>And sometimes,</i>
+
+39
+00:02:45,600 --> 00:02:47,467
+<i>Spider-Man has to do</i>
+<i>the hard thing,</i>
+
+40
+00:02:47,502 --> 00:02:49,537
+<i>even if it breaks</i>
+<i>Peter Parker's heart.</i>
+
+41
+00:02:49,570 --> 00:02:52,740
+NED: <i>And everyone here is like,</i>
+<i>"Pahk the cah by the hahba."</i>
+
+42
+00:02:54,008 --> 00:02:55,977
+PETER: <i>And maybe</i>
+<i>that's my responsibility.</i>
+
+43
+00:02:56,010 --> 00:02:56,978
+[NED TALKING INDISTINCTLY]
+
+44
+00:02:57,011 --> 00:02:58,680
+PETER: <i>To live alone</i>
+<i>with the truth.</i>
+
+45
+00:03:00,014 --> 00:03:03,618
+<i>But the truth is, MJ,</i>
+<i>that I love you.</i>
+
+46
+00:03:05,252 --> 00:03:06,420
+<i>And I hope that deep down,</i>
+
+47
+00:03:06,453 --> 00:03:07,387
+<i>something inside of you</i>
+
+48
+00:03:07,421 --> 00:03:09,256
+<i>remembers that</i>
+<i>you love me, too.</i>
+
+49
+00:03:09,289 --> 00:03:10,457
+[PHONE BEEPS]
+
+50
+00:03:10,490 --> 00:03:13,293
+E.V.: <i>Suspect is 5'8", 5'10",</i>
+<i>medium build.</i>
+
+51
+00:03:13,326 --> 00:03:15,963
+PETER: <i>But until then,</i>
+<i>I'm just gonna be Spider-Man.</i>
+
+52
+00:03:18,365 --> 00:03:20,400
+[SIREN WAILING]
+
+53
+00:03:20,434 --> 00:03:21,936
+[EXHILARATING MUSIC PLAYING]
+
+54
+00:03:21,969 --> 00:03:23,705
+-SPIDER-MAN: Incoming!
+-[THUG GROANS]
+
+55
+00:03:24,404 --> 00:03:26,440
+[ALL GROANING]
+
+56
+00:03:26,473 --> 00:03:28,776
+-Hey, get him!
+-[THUG 2 GROANS]
+
+57
+00:03:28,810 --> 00:03:30,310
+SPIDER-MAN: Hey, hey, hey.
+Whoa, whoa, whoa!
+
+58
+00:03:30,878 --> 00:03:33,313
+[THUG 3 SCREAMING]
+
+59
+00:03:36,851 --> 00:03:38,886
+[SIREN WAILING]
+
+60
+00:03:41,055 --> 00:03:43,256
+[CHUCKLING]
+
+61
+00:03:43,290 --> 00:03:45,325
+ANCHOR: [ON TV] <i>Members of</i>
+<i>the Manfredi crime syndicate</i>
+
+62
+00:03:45,358 --> 00:03:47,895
+<i>were apprehended</i>
+<i>by Spider-Man yesterday.</i>
+
+63
+00:03:47,929 --> 00:03:49,997
+[ROCK SONG PLAYING]
+
+64
+00:04:03,544 --> 00:04:04,545
+[GROANS]
+
+65
+00:04:09,316 --> 00:04:12,419
+-[ELEVATOR DINGS]
+-Hey, we live on the same floor.
+
+66
+00:04:13,020 --> 00:04:15,422
+Oh. Cool.
+
+67
+00:04:17,959 --> 00:04:18,826
+[ELEVATOR DINGS]
+
+68
+00:04:18,860 --> 00:04:21,328
+PETER: Does anybody
+ever come up here?
+
+69
+00:04:21,361 --> 00:04:23,798
+LANDLORD: Not unless
+they like asbestos.
+
+70
+00:04:23,831 --> 00:04:26,601
+We've just been using it
+for storage.
+
+71
+00:04:27,635 --> 00:04:30,505
+[EXHALES] It's perfect.
+
+72
+00:04:30,538 --> 00:04:33,508
+NED: [ON PHONE] <i>Hey, everyone,</i>
+<i>sophomore-year Ned is back.</i>
+
+73
+00:04:33,541 --> 00:04:36,443
+<i>Older, wiser, flyer.</i>
+
+74
+00:04:36,476 --> 00:04:39,080
+-[EXCLAIMS] <i>Let's go!</i>
+<i>-Whoa.</i>
+
+75
+00:04:39,113 --> 00:04:41,649
+<i>-What is on your face?</i>
+-NED: <i>How do you feel about it?</i>
+
+76
+00:04:41,682 --> 00:04:43,818
+<i>I mean, you look</i>
+<i>like an assistant coach.</i>
+
+77
+00:04:43,851 --> 00:04:44,786
+<i>Huh.</i>
+
+78
+00:04:44,819 --> 00:04:46,988
+-[SPIDER-MAN GRUNTS]
+-[PEOPLE SCREAMING]
+
+79
+00:04:48,523 --> 00:04:50,591
+SPIDER-MAN: You sure
+you wanna do this, Scorpion?
+
+80
+00:04:50,625 --> 00:04:51,793
+Did you miss me, Spidey?
+
+81
+00:04:55,596 --> 00:04:56,831
+[TOMBSTONE GRUNTS]
+
+82
+00:04:57,932 --> 00:04:59,066
+If I drop you from here,
+
+83
+00:04:59,100 --> 00:05:01,636
+how long you think it will
+take you to hit the ground?
+
+84
+00:05:02,670 --> 00:05:03,436
+SPIDER-MAN: Well, I don't know.
+
+85
+00:05:03,470 --> 00:05:05,472
+-You tell me.
+-[TOMBSTONE YELPS]
+
+86
+00:05:05,506 --> 00:05:06,674
+SPIDER-MAN: Let's end this
+on a high note, huh?
+
+87
+00:05:08,375 --> 00:05:09,677
+[SCORPION GRUNTS]
+
+88
+00:05:09,710 --> 00:05:12,445
+-[SPIDER-MAN GRUNTS]
+-[TOMBSTONE SCREAMING]
+
+89
+00:05:12,914 --> 00:05:14,015
+Yo, Lonnie!
+
+90
+00:05:14,749 --> 00:05:15,883
+Wha ha happened?
+
+91
+00:05:15,917 --> 00:05:17,952
+SPIDER-MAN: DeWolff, all the
+evidence you're gonna need
+
+92
+00:05:17,985 --> 00:05:19,587
+is in the trunk of his car.
+
+93
+00:05:19,620 --> 00:05:21,756
+You tryin' to take my job,
+Spider-Man?
+
+94
+00:05:21,789 --> 00:05:22,857
+SPIDER-MAN: Hey, you guys
+are the professionals,
+
+95
+00:05:22,890 --> 00:05:24,025
+I'm just a volunteer.
+
+96
+00:05:26,093 --> 00:05:28,596
+[ROCK SONG CONTINUES]
+
+97
+00:05:34,602 --> 00:05:36,637
+ANCHOR: [ON TV]
+<i>It's a new New York.</i>
+
+98
+00:05:36,671 --> 00:05:37,772
+<i>Thanks to Spider-Man,</i>
+
+99
+00:05:37,805 --> 00:05:40,373
+<i>crime rates have dropped</i>
+<i>to a record low.</i>
+
+100
+00:05:40,407 --> 00:05:42,743
+<i>Police and Damage Control</i>
+<i>give much of the credit</i>
+
+101
+00:05:42,777 --> 00:05:43,678
+<i>to the masked hero.</i>
+
+102
+00:05:43,711 --> 00:05:45,746
+-PETER: Initiate HUD test.
+-[PHONE BEEPING]
+
+103
+00:05:45,780 --> 00:05:47,515
+E.V.: <i>Armed robbery</i>
+<i>at Civic Union Bank.</i>
+
+104
+00:05:47,548 --> 00:05:49,550
+ANCHOR: <i>In the past six months,</i>
+<i>he has taken down</i>
+
+105
+00:05:49,584 --> 00:05:52,587
+<i>every major crime lord</i>
+<i>across the five boroughs,</i>
+
+106
+00:05:52,620 --> 00:05:55,990
+<i>including the superpowered</i>
+<i>ninja group The Hand.</i>
+
+107
+00:05:59,894 --> 00:06:01,629
+<i>He is the pride</i>
+<i>of New York City.</i>
+
+108
+00:06:01,662 --> 00:06:04,098
+<i>The hero every</i>
+<i>grown-up relies on</i>
+
+109
+00:06:04,131 --> 00:06:06,901
+<i>and every kid wants to be.</i>
+
+110
+00:06:06,934 --> 00:06:09,469
+NED: [ON PHONE]
+<i>Final semester, MIT.</i>
+
+111
+00:06:09,503 --> 00:06:12,039
+<i>Oh, my gosh,</i>
+<i>we're graduating in a month.</i>
+
+112
+00:06:12,073 --> 00:06:15,475
+<i>We've made so many memories.</i>
+<i>Where do I begin?</i>
+
+113
+00:06:15,509 --> 00:06:16,911
+<i>Night swimming</i>
+<i>in the Charles River</i>
+
+114
+00:06:16,944 --> 00:06:18,679
+<i>with Jim and Wiley.</i>
+
+115
+00:06:18,713 --> 00:06:21,582
+<i>The infamous food fight</i>
+<i>at the Banana Lounge.</i>
+
+116
+00:06:21,616 --> 00:06:25,887
+<i>Pulling all-nighters in Stud 5</i>
+<i>with MJ and Nate Dawg.</i>
+
+117
+00:06:25,920 --> 00:06:26,888
+<i>It feels like yesterday</i>
+
+118
+00:06:26,921 --> 00:06:28,756
+<i>I was sitting</i>
+<i>on a roof with MJ,</i>
+
+119
+00:06:28,789 --> 00:06:29,824
+<i>dreaming about</i>
+<i>coming here together,</i>
+
+120
+00:06:29,857 --> 00:06:32,093
+<i>and I still can't believe</i>
+<i>we did it.</i>
+
+121
+00:06:32,126 --> 00:06:34,929
+<i>I'm so grateful for all</i>
+<i>the friends that I've made.</i>
+
+122
+00:06:34,962 --> 00:06:37,464
+<i>I couldn't imagine going</i>
+<i>through this with anyone else.</i>
+
+123
+00:06:37,497 --> 00:06:39,533
+<i>Ned, who do you think</i>
+<i>is actually watching these?</i>
+
+124
+00:06:39,567 --> 00:06:40,668
+[STUTTERING] <i>I don't know.</i>
+
+125
+00:06:40,701 --> 00:06:42,036
+<i>-But maybe someone.</i>
+<i>-</i> MJ: <i>Okay.</i>
+
+126
+00:06:42,069 --> 00:06:43,537
+<i>Okay, well, bye, someone.</i>
+
+127
+00:06:43,571 --> 00:06:44,437
+NED: <i>What?</i>
+MJ: <i>Bye. We're done.</i>
+
+128
+00:06:44,471 --> 00:06:45,640
+NED: <i>No!</i>
+MJ: <i>Yeah, we're done.</i>
+
+129
+00:07:03,724 --> 00:07:05,793
+I mean, we're talking about
+downtown Brooklyn
+
+130
+00:07:05,826 --> 00:07:06,928
+in broad daylight.
+
+131
+00:07:06,961 --> 00:07:08,495
+High-profile job like that,
+
+132
+00:07:08,529 --> 00:07:09,931
+you know that Foswell
+was involved.
+
+133
+00:07:09,964 --> 00:07:12,166
+Yeah, I hear you,
+but can you prove it?
+
+134
+00:07:12,199 --> 00:07:14,135
+Yeah, I'm going through
+his financial records
+
+135
+00:07:14,168 --> 00:07:15,468
+and I'm following his crew
+every night.
+
+136
+00:07:15,503 --> 00:07:18,806
+DEWOLFF: [CHUCKLES] <i>Do you</i>
+<i>do anything besides work?</i>
+
+137
+00:07:18,839 --> 00:07:20,508
+You know the saying,
+"You do something you love,
+
+138
+00:07:20,541 --> 00:07:21,776
+"you don't work a day
+in your life."
+
+139
+00:07:21,809 --> 00:07:23,177
+[CHUCKLES, SPEAKING SPANISH]
+
+140
+00:07:23,210 --> 00:07:24,245
+[IN ENGLISH] Mom,
+where's my calculator?
+
+141
+00:07:24,278 --> 00:07:25,246
+[SOFTLY] I don't know.
+
+142
+00:07:25,279 --> 00:07:26,914
+<i>Trust me, aight?</i>
+
+143
+00:07:26,948 --> 00:07:29,482
+<i>Being married to the job</i>
+<i>never ends well.</i>
+
+144
+00:07:29,517 --> 00:07:31,552
+[CHUCKLES] Well, don't worry
+about it. I'll be okay.
+
+145
+00:07:31,585 --> 00:07:34,088
+Oh, yeah? You still getting
+them headaches, though?
+
+146
+00:07:35,623 --> 00:07:37,992
+Uh, yeah.
+But, um... But I'll be fine.
+
+147
+00:07:38,025 --> 00:07:39,226
+DEWOLFF: <i>Mmm,</i>
+<i>I don't know, man.</i>
+
+148
+00:07:39,260 --> 00:07:41,262
+<i>I think your body's tryin'</i>
+<i>to tell you somethin'.</i>
+
+149
+00:07:41,295 --> 00:07:42,830
+Like you need to
+get outta that suit
+
+150
+00:07:42,863 --> 00:07:43,731
+every once in a while.
+
+151
+00:07:43,764 --> 00:07:45,866
+Mom, do you know
+where my calculator is?
+
+152
+00:07:45,900 --> 00:07:47,234
+I don't know, <i>Papi.</i>
+
+153
+00:07:47,268 --> 00:07:50,137
+<i>What you need</i>
+<i>is some real human connection.</i>
+
+154
+00:07:50,171 --> 00:07:51,906
+Oh, what?
+And we're not connecting?
+
+155
+00:07:51,939 --> 00:07:52,940
+DEWOLFF: <i>Nah, dude.</i>
+
+156
+00:07:52,974 --> 00:07:54,241
+<i>I don't know your name,</i>
+
+157
+00:07:54,275 --> 00:07:56,744
+<i>your face,</i>
+<i>or nothing about you.</i>
+
+158
+00:07:56,777 --> 00:07:57,912
+I don't think
+you've ever asked me
+
+159
+00:07:57,945 --> 00:07:59,113
+a question about my life.
+
+160
+00:07:59,146 --> 00:08:00,214
+PETER: <i>Sure, I have.</i>
+
+161
+00:08:00,247 --> 00:08:01,382
+DEWOLFF: <i>Yeah,</i>
+<i>what are my kids' names?</i>
+
+162
+00:08:01,415 --> 00:08:04,251
+Uh, well, for starters,
+your son's name's <i>Papi.</i>
+
+163
+00:08:04,285 --> 00:08:05,987
+[LAUGHING]
+
+164
+00:08:06,020 --> 00:08:07,121
+Is it Spider-Man?
+
+165
+00:08:07,154 --> 00:08:09,623
+I can't tell you that,
+sweetheart.
+
+166
+00:08:09,657 --> 00:08:11,025
+That means it's Spider-Man.
+
+167
+00:08:11,058 --> 00:08:12,193
+[SIGHS] Gosh.
+
+168
+00:08:12,893 --> 00:08:14,895
+[ALARM BEEPING]
+
+169
+00:08:14,929 --> 00:08:16,731
+DISPATCHER: <i>A hijacked tank</i>
+<i>is heading southbound</i>
+
+170
+00:08:16,764 --> 00:08:17,898
+<i>past 34th Street.</i>
+
+171
+00:08:17,932 --> 00:08:19,700
+<i>All available units respond.</i>
+
+172
+00:08:19,734 --> 00:08:20,835
+Hey, you getting this?
+
+173
+00:08:20,868 --> 00:08:22,703
+More work. Lucky you.
+
+174
+00:08:22,737 --> 00:08:23,871
+Okay, I'll see you out there.
+
+175
+00:08:23,904 --> 00:08:25,039
+I'm so sorry, I gotta go.
+
+176
+00:08:25,072 --> 00:08:27,141
+[SIREN WAILING]
+
+177
+00:08:27,174 --> 00:08:29,210
+[DRAMATIC MUSIC PLAYING]
+
+178
+00:08:33,948 --> 00:08:35,516
+SPIDER-MAN: Whoo!
+
+179
+00:08:38,252 --> 00:08:39,253
+[GROANS]
+
+180
+00:08:39,987 --> 00:08:41,889
+[EXCLAIMING]
+
+181
+00:08:47,161 --> 00:08:48,929
+[WIND WHISTLING]
+
+182
+00:08:52,700 --> 00:08:54,935
+[BREATHING DEEPLY]
+
+183
+00:09:00,608 --> 00:09:02,810
+Awoo!
+
+184
+00:09:02,843 --> 00:09:05,012
+[WEB WARBLING INTENSELY]
+
+185
+00:09:08,082 --> 00:09:10,117
+[EXPLOSIONS]
+
+186
+00:09:12,820 --> 00:09:14,021
+[SPIDER-MAN GRUNTING]
+
+187
+00:09:15,289 --> 00:09:17,124
+[SIREN WAILING]
+
+188
+00:09:24,765 --> 00:09:26,300
+[GRIPPING MUSIC PLAYING]
+
+189
+00:09:27,902 --> 00:09:29,103
+[SPIDER-MAN EXCLAIMS]
+
+190
+00:09:31,072 --> 00:09:32,073
+SPIDER-MAN: Whoa!
+
+191
+00:09:35,743 --> 00:09:37,011
+[SPIDER-MAN GRUNTS]
+
+192
+00:09:37,044 --> 00:09:38,179
+[METAL CLANGS]
+
+193
+00:09:40,781 --> 00:09:42,283
+[MUSIC PLAYING OVER STEREO]
+
+194
+00:09:42,316 --> 00:09:43,784
+I got you, Spidey!
+
+195
+00:09:43,818 --> 00:09:45,086
+SPIDER-MAN: No, no.
+I don't need your...
+
+196
+00:09:45,119 --> 00:09:47,154
+-[ENGINE ACCELERATING]
+-SPIDER-MAN: Whoa.
+
+197
+00:09:48,756 --> 00:09:49,957
+[CLINKS]
+
+198
+00:09:55,162 --> 00:09:56,797
+[SCREECHING]
+
+199
+00:09:59,333 --> 00:10:00,367
+SPIDER-MAN: Hey! Heads up!
+
+200
+00:10:02,236 --> 00:10:04,772
+You okay, kid?
+Yeah, you're okay.
+
+201
+00:10:04,805 --> 00:10:06,040
+See ya later. [GRUNTS]
+
+202
+00:10:06,807 --> 00:10:08,642
+[SIREN WAILING]
+
+203
+00:10:10,111 --> 00:10:11,712
+You wouldn't know it
+just by looking at it,
+
+204
+00:10:11,745 --> 00:10:13,013
+but this very street
+
+205
+00:10:13,047 --> 00:10:15,783
+was completely destroyed
+in the Battle of New York.
+
+206
+00:10:15,816 --> 00:10:17,284
+[PEOPLE GASPING]
+
+207
+00:10:17,318 --> 00:10:19,687
+-[SPIDER-MAN SHOUTS]
+-[PEOPLE CLAMORING]
+
+208
+00:10:19,720 --> 00:10:20,821
+[SPIDER-MAN GRUNTS]
+
+209
+00:10:23,023 --> 00:10:24,792
+[STRAINING] Come on,
+come on, come on.
+
+210
+00:10:26,327 --> 00:10:28,229
+Come on.
+
+211
+00:10:29,296 --> 00:10:32,032
+[SCREAMING, GROANING]
+
+212
+00:10:38,339 --> 00:10:39,406
+[SPIDER-SENSE TINGLING]
+
+213
+00:10:39,440 --> 00:10:41,142
+[SPIDER-MAN PANTING]
+
+214
+00:10:41,175 --> 00:10:43,677
+Oh, God. [GRUNTS, GROANS]
+
+215
+00:10:45,980 --> 00:10:47,781
+[BREATHING HEAVILY]
+
+216
+00:10:50,951 --> 00:10:52,286
+Come on.
+
+217
+00:10:52,319 --> 00:10:54,889
+-Hey. [GROANS]
+-[SPIDER-MAN GRUNTS]
+
+218
+00:10:54,922 --> 00:10:56,924
+The hell, Frank?
+You just hit me with the van!
+
+219
+00:10:56,957 --> 00:10:58,225
+Quit your whimpering.
+
+220
+00:10:58,259 --> 00:10:59,927
+SPIDER-MAN: We're not
+doing that again, Frank.
+
+221
+00:10:59,960 --> 00:11:01,328
+You're goddamn right we're not.
+
+222
+00:11:01,362 --> 00:11:03,731
+This time you're gonna
+get the hell outta my way.
+
+223
+00:11:03,764 --> 00:11:04,999
+SPIDER-MAN: Oh, you mean
+instead of saving your life?
+
+224
+00:11:05,032 --> 00:11:08,469
+Eh, you gonna talk about that
+Staten Island bullshit again?
+
+225
+00:11:08,503 --> 00:11:10,237
+SPIDER-MAN: Ah, well,
+you said it, not me.
+
+226
+00:11:10,271 --> 00:11:11,372
+Jeez.
+
+227
+00:11:11,405 --> 00:11:11,972
+SPIDER-MAN: Look, man,
+you can't just shoot yourself
+
+228
+00:11:12,006 --> 00:11:13,340
+out of every situation.
+
+229
+00:11:13,374 --> 00:11:14,909
+Innocent people get hurt.
+
+230
+00:11:14,942 --> 00:11:17,178
+Who do you think's downrange
+of that tank, dumb-dumb?
+
+231
+00:11:17,878 --> 00:11:18,979
+[SPIDER-MAN GRUNTS]
+
+232
+00:11:20,481 --> 00:11:22,082
+[LAUGHS MOCKINGLY]
+
+233
+00:11:22,783 --> 00:11:23,784
+Suit yourself.
+
+234
+00:11:24,952 --> 00:11:26,687
+[SPIDER-MAN GROANING]
+
+235
+00:11:27,321 --> 00:11:28,222
+Jackass.
+
+236
+00:11:28,255 --> 00:11:30,457
+SPIDER-MAN: [EXHALES]
+This freakin' guy.
+
+237
+00:11:34,428 --> 00:11:35,696
+[EXCLAIMS]
+
+238
+00:11:36,463 --> 00:11:38,299
+[BOTH GROANING]
+
+239
+00:11:38,332 --> 00:11:40,167
+[GRUNTING]
+
+240
+00:11:41,468 --> 00:11:42,469
+[CLANGS]
+
+241
+00:11:44,338 --> 00:11:46,508
+-Motherf...
+-[PEOPLE CLAMORING]
+
+242
+00:11:46,541 --> 00:11:47,975
+SPIDER-MAN: Go home, Frank!
+
+243
+00:11:48,976 --> 00:11:49,877
+[SPITS]
+
+244
+00:11:50,545 --> 00:11:51,412
+[GRUNTS]
+
+245
+00:11:52,446 --> 00:11:54,081
+I'm gonna kill this kid.
+
+246
+00:11:54,114 --> 00:11:56,116
+[DRAMATIC MUSIC PLAYING]
+
+247
+00:11:57,484 --> 00:11:58,886
+[CELL PHONE RINGING]
+
+248
+00:11:58,919 --> 00:11:59,753
+SPIDER-MAN: DeWolff?
+
+249
+00:11:59,787 --> 00:12:01,188
+Are you gonna stop that thing
+or what?
+
+250
+00:12:01,222 --> 00:12:02,256
+<i>It's heading straight for</i>
+
+251
+00:12:02,289 --> 00:12:03,958
+<i>the Damage Control</i>
+<i>Detention Center.</i>
+
+252
+00:12:03,991 --> 00:12:05,025
+SPIDER-MAN: I'm trying.
+
+253
+00:12:05,059 --> 00:12:06,293
+DEWOLFF: <i>Try harder.</i>
+
+254
+00:12:06,327 --> 00:12:07,394
+<i>There's a lot of scary dudes</i>
+<i>locked up in there.</i>
+
+255
+00:12:07,428 --> 00:12:09,496
+SPIDER-MAN: Well, who do you
+think put them in there?
+
+256
+00:12:09,531 --> 00:12:11,932
+-[PRISON DOOR BEEPS]
+-GUARD: Let's go, Scorpion.
+
+257
+00:12:12,800 --> 00:12:13,867
+Moving day.
+
+258
+00:12:13,901 --> 00:12:15,903
+[TENSE MUSIC PLAYING]
+
+259
+00:12:20,975 --> 00:12:22,476
+[SPIDER-MAN GRUNTS, SHOUTS]
+
+260
+00:12:27,515 --> 00:12:28,949
+[GRUNTS]
+
+261
+00:12:31,018 --> 00:12:32,853
+[ALL CLAMORING]
+
+262
+00:12:37,358 --> 00:12:39,561
+[ALL EXCLAIMING]
+
+263
+00:12:39,594 --> 00:12:41,195
+[INDISTINCT CHATTER]
+
+264
+00:12:41,228 --> 00:12:43,998
+GUARD: Please! Evac now!
+
+265
+00:12:44,031 --> 00:12:45,232
+SPIDER-MAN: All right,
+everybody, clear out!
+
+266
+00:12:45,266 --> 00:12:46,867
+This guy is armed
+and dangerous.
+
+267
+00:12:49,370 --> 00:12:50,904
+[STRAINING]
+
+268
+00:12:53,608 --> 00:12:54,975
+[SPIDER-MAN EXHALES]
+
+269
+00:12:57,478 --> 00:13:01,148
+Uh...
+Get out of the vehicle, ma'am.
+
+270
+00:13:01,181 --> 00:13:03,050
+I was thinking the same thing.
+
+271
+00:13:04,918 --> 00:13:06,020
+[WHOOSHES]
+
+272
+00:13:08,956 --> 00:13:09,990
+[SPIDER-SENSE TINGLING]
+
+273
+00:13:10,024 --> 00:13:11,859
+[SPIDER-MAN BREATHING HEAVILY]
+
+274
+00:13:11,892 --> 00:13:13,260
+Spider-Man?
+
+275
+00:13:14,596 --> 00:13:15,829
+Where am I?
+
+276
+00:13:21,335 --> 00:13:22,903
+[WHOOSHES]
+
+277
+00:13:22,936 --> 00:13:24,038
+SPIDER-MAN: What the...
+
+278
+00:13:24,071 --> 00:13:26,440
+[INDISTINCT CLAMOR]
+
+279
+00:13:26,473 --> 00:13:28,142
+MAN: Move! Move! Move!
+Move! Move!
+
+280
+00:13:28,175 --> 00:13:29,977
+SPIDER-MAN: Keep her for
+questioning. Clear the building.
+
+281
+00:13:33,113 --> 00:13:35,082
+GUARD: Enjoy the ride,
+Scorpion!
+
+282
+00:13:35,115 --> 00:13:37,818
+You won't be seeing
+much daylight in supermax.
+
+283
+00:13:38,653 --> 00:13:40,854
+Scorpions are nocturnal,
+buddy.
+
+284
+00:13:43,591 --> 00:13:45,292
+GUARD 2: [OVER COMMS]
+<i>The building is under attack.</i>
+
+285
+00:13:45,326 --> 00:13:47,094
+<i>Get the prisoner</i>
+<i>out of here now!</i>
+
+286
+00:13:47,895 --> 00:13:49,863
+[PEOPLE CLAMORING]
+
+287
+00:13:52,232 --> 00:13:53,267
+-GUARD: Sir!
+-[WHOOSHES]
+
+288
+00:13:53,300 --> 00:13:55,069
+[DRAMATIC MUSIC PLAYING]
+
+289
+00:13:56,303 --> 00:13:59,239
+[WHOOSHING]
+
+290
+00:14:12,052 --> 00:14:13,521
+GUARD: You gotta take off now!
+
+291
+00:14:13,555 --> 00:14:16,056
+The building has been breached.
+Go! Go!
+
+292
+00:14:16,090 --> 00:14:18,560
+Hey, fire it up! Go! Go!
+
+293
+00:14:22,229 --> 00:14:23,864
+[WHOOSHES]
+
+294
+00:14:27,101 --> 00:14:28,902
+Change of plans!
+
+295
+00:14:28,936 --> 00:14:30,638
+Take him to the helipad
+at Bellevue.
+
+296
+00:14:31,438 --> 00:14:33,207
+-What?
+-That's an order
+
+297
+00:14:33,240 --> 00:14:34,642
+from Director Metzger. Go!
+
+298
+00:14:34,676 --> 00:14:35,943
+Now!
+
+299
+00:14:35,976 --> 00:14:37,010
+Copy that.
+
+300
+00:14:47,988 --> 00:14:49,557
+SPIDER-MAN: Hey! What...
+
+301
+00:14:49,591 --> 00:14:52,126
+-How did I get up here?
+-SPIDER-MAN: Uh...
+
+302
+00:14:54,161 --> 00:14:55,329
+[BREATHING HEAVILY]
+
+303
+00:14:55,362 --> 00:14:58,365
+Spider-Man, save me,
+would you?
+
+304
+00:14:59,199 --> 00:15:00,401
+[SPIDER-MAN GRUNTS]
+
+305
+00:15:04,138 --> 00:15:05,139
+Who are you?
+
+306
+00:15:06,340 --> 00:15:07,941
+You can see me.
+
+307
+00:15:07,975 --> 00:15:09,243
+SPIDER-MAN:
+Tell me who you are.
+
+308
+00:15:10,444 --> 00:15:12,045
+-You first.
+-[WHOOSHES]
+
+309
+00:15:13,013 --> 00:15:14,481
+[KNOCK ON DOOR]
+
+310
+00:15:14,516 --> 00:15:16,651
+MAY: Hey. Hey.
+
+311
+00:15:18,185 --> 00:15:20,688
+-[SPIDER-MAN GROANING]
+-[WHOOSHES]
+
+312
+00:15:22,557 --> 00:15:23,991
+You pushed me out.
+
+313
+00:15:24,024 --> 00:15:25,693
+-[SPIDER-MAN PANTING]
+-GUARD: Interesting.
+
+314
+00:15:25,727 --> 00:15:27,361
+SPIDER-MAN: What the hell
+was that?
+
+315
+00:15:27,394 --> 00:15:29,496
+Did you just try to jump
+into my mind?
+
+316
+00:15:29,531 --> 00:15:33,367
+You know, the whole time
+you've been chasing me,
+
+317
+00:15:33,400 --> 00:15:36,170
+you forgot to ask yourself
+a very important question.
+
+318
+00:15:36,203 --> 00:15:38,005
+[TENSE MUSIC PLAYING]
+
+319
+00:15:38,038 --> 00:15:39,273
+What's in the tank?
+
+320
+00:15:41,241 --> 00:15:42,710
+GUARD: Go! Move.
+
+321
+00:15:43,444 --> 00:15:45,179
+[TIMER BEEPING]
+
+322
+00:15:52,352 --> 00:15:53,487
+[WHOOSHES]
+
+323
+00:15:53,521 --> 00:15:55,189
+[PANTING]
+
+324
+00:15:57,057 --> 00:15:58,058
+Spider-Man?
+
+325
+00:15:59,226 --> 00:16:01,195
+-What just happened?
+-[SIREN WAILING]
+
+326
+00:16:01,228 --> 00:16:03,297
+[SPIDER-MAN PANTING]
+
+327
+00:16:03,330 --> 00:16:04,364
+I don't know.
+
+328
+00:16:06,500 --> 00:16:07,535
+Hey, good job.
+
+329
+00:16:07,569 --> 00:16:08,670
+FIREFIGHTER: Hey,
+way to go, Spidey.
+
+330
+00:16:08,703 --> 00:16:10,505
+SPIDER-MAN: You guys okay?
+You good?
+
+331
+00:16:10,538 --> 00:16:12,507
+I swear. All the things
+they said I did,
+
+332
+00:16:12,540 --> 00:16:13,307
+I don't remember
+doing any of them.
+
+333
+00:16:13,340 --> 00:16:14,308
+SPIDER-MAN: It's okay,
+it's okay.
+
+334
+00:16:14,341 --> 00:16:15,643
+Look, let these people
+take good care of you.
+
+335
+00:16:15,677 --> 00:16:16,578
+I would never hurt you.
+
+336
+00:16:16,611 --> 00:16:18,312
+-SPIDER-MAN: Okay.
+-I love you, Spider-Man.
+
+337
+00:16:18,345 --> 00:16:19,747
+SPIDER-MAN: Yeah.
+All right, buddy. All right.
+
+338
+00:16:19,781 --> 00:16:22,082
+-Hey, what do you got?
+-Here, get this.
+
+339
+00:16:22,115 --> 00:16:23,685
+Chopper took Scorpion
+to Bellevue.
+
+340
+00:16:23,718 --> 00:16:26,220
+Ten minutes later, a guard
+walked him right out the door.
+
+341
+00:16:26,253 --> 00:16:27,488
+SPIDER-MAN: What?
+DEWOLFF: Mmm-hmm.
+
+342
+00:16:27,522 --> 00:16:28,623
+SPIDER-MAN:
+What about the tank?
+
+343
+00:16:28,656 --> 00:16:31,391
+Stolen from the Damage Control
+warehouse in Brooklyn.
+
+344
+00:16:31,425 --> 00:16:33,595
+Driver was a janitor
+who worked there.
+
+345
+00:16:33,628 --> 00:16:34,495
+SPIDER-MAN: You got a motive?
+
+346
+00:16:34,529 --> 00:16:37,064
+<i>Nada.</i> And no criminal record.
+
+347
+00:16:37,097 --> 00:16:39,099
+Scorpion must've
+gotten to her somehow.
+
+348
+00:16:40,133 --> 00:16:41,803
+SPIDER-MAN: Yeah. Maybe.
+
+349
+00:16:41,836 --> 00:16:43,470
+What do you mean, "maybe"?
+
+350
+00:16:43,505 --> 00:16:46,240
+SPIDER-MAN: I mean, I...
+I don't know.
+
+351
+00:16:46,273 --> 00:16:47,575
+But I know someone that might.
+
+352
+00:16:47,609 --> 00:16:48,710
+Where you going?
+
+353
+00:16:48,743 --> 00:16:50,512
+SPIDER-MAN: You keep following
+the leads on Scorpion.
+
+354
+00:16:50,545 --> 00:16:52,312
+I'm gonna go talk to someone.
+
+355
+00:16:52,346 --> 00:16:53,247
+[WHOOSHES]
+
+356
+00:16:53,280 --> 00:16:56,149
+[RUSSIAN POP SONG PLAYING]
+
+357
+00:17:03,858 --> 00:17:06,193
+[SONG CONTINUES PLAYING
+OVER SPEAKER]
+
+358
+00:17:07,729 --> 00:17:11,331
+SPIDER-MAN: Hi, uh,
+is this 3250 Brighton Beach?
+
+359
+00:17:12,332 --> 00:17:14,401
+[SPEAKING RUSSIAN]
+
+360
+00:17:15,837 --> 00:17:17,672
+SPIDER-MAN: [IN ENGLISH] Okay.
+
+361
+00:17:17,705 --> 00:17:19,541
+I think I know
+what that means.
+
+362
+00:17:24,612 --> 00:17:25,747
+WOMAN: Take off your clothes.
+
+363
+00:17:27,682 --> 00:17:30,350
+SPIDER-MAN: Uh, what?
+
+364
+00:17:30,384 --> 00:17:32,352
+You don't wear clothes
+in the <i>banya.</i>
+
+365
+00:17:33,487 --> 00:17:34,722
+Ditch the leotard.
+
+366
+00:17:35,857 --> 00:17:38,191
+SPIDER-MAN: This is not
+a leotard.
+
+367
+00:17:38,225 --> 00:17:40,193
+Your text said that
+this was your office.
+
+368
+00:17:41,461 --> 00:17:43,665
+This is my office.
+
+369
+00:17:43,698 --> 00:17:45,399
+-Get in.
+-[SPIDER-MAN CHUCKLES]
+
+370
+00:17:45,432 --> 00:17:47,467
+Uh, I'm fine, thanks.
+I'll just...
+
+371
+00:17:47,502 --> 00:17:48,636
+Wah-wah. [CHUCKLES]
+
+372
+00:17:48,670 --> 00:17:50,203
+My office, my rules.
+
+373
+00:17:50,237 --> 00:17:54,174
+This way, you get to enjoy
+a nice, relaxing soak,
+
+374
+00:17:54,207 --> 00:17:56,476
+and I get to see that
+you don't have any weapons,
+
+375
+00:17:56,511 --> 00:17:57,679
+and we both win.
+
+376
+00:17:59,814 --> 00:18:00,815
+SPIDER-MAN: Okay.
+
+377
+00:18:04,151 --> 00:18:05,218
+[SPIDER-MAN SIGHS]
+
+378
+00:18:06,921 --> 00:18:08,523
+[YELENA LAUGHING]
+
+379
+00:18:10,257 --> 00:18:12,660
+Really? What,
+you never take that off?
+
+380
+00:18:12,694 --> 00:18:13,728
+SPIDER-MAN: No, I...
+You know, it defeats
+
+381
+00:18:13,761 --> 00:18:14,762
+the whole anonymous thing.
+
+382
+00:18:14,796 --> 00:18:20,200
+Even for your girlfriend
+or boyfriend or whatever?
+
+383
+00:18:20,233 --> 00:18:22,537
+There's a lot of conjecture
+online.
+
+384
+00:18:22,570 --> 00:18:25,339
+And super graphic artwork.
+Have you seen?
+
+385
+00:18:25,372 --> 00:18:28,175
+The one with you
+and the ten Mysterios, it's...
+
+386
+00:18:28,208 --> 00:18:30,444
+[STUTTERING] I've... I've...
+I've seen it. I've...
+
+387
+00:18:30,477 --> 00:18:31,713
+It's hard to unsee,
+to be honest.
+
+388
+00:18:31,746 --> 00:18:34,749
+But, look, I don't have anyone.
+I just kinda keep to myself.
+
+389
+00:18:34,782 --> 00:18:36,416
+All by yourself? All the time?
+
+390
+00:18:36,450 --> 00:18:38,151
+No wonder you're so sad.
+
+391
+00:18:38,185 --> 00:18:40,354
+-[CHUCKLES] I'm not so sad.
+-A little bit.
+
+392
+00:18:40,387 --> 00:18:42,389
+Could we just talk about what I
+came here to talk to you about,
+
+393
+00:18:42,422 --> 00:18:43,725
+the attack on Damage Control?
+
+394
+00:18:43,758 --> 00:18:47,595
+Yes.
+So, that is more your area.
+
+395
+00:18:48,462 --> 00:18:51,431
+Like, small potato stuff.
+
+396
+00:18:51,465 --> 00:18:57,538
+Whereas the New Avengers are
+focusing on big potato stuff.
+
+397
+00:18:58,573 --> 00:18:59,707
+SPIDER-MAN: Right, okay.
+
+398
+00:18:59,741 --> 00:19:02,710
+Well, there's more to it
+than that, you know, the, uh...
+
+399
+00:19:02,744 --> 00:19:05,345
+[WHISPERING] ...the driver
+and the others who were helping,
+
+400
+00:19:05,379 --> 00:19:07,815
+it was like someone
+was talking to me through them.
+
+401
+00:19:07,849 --> 00:19:10,417
+Like someone was looking at me
+through their eyes.
+
+402
+00:19:10,450 --> 00:19:12,654
+And you're wondering
+if it's mind control?
+
+403
+00:19:12,687 --> 00:19:13,554
+Exactly.
+
+404
+00:19:13,588 --> 00:19:15,389
+Like how they used on me
+in the Red Room?
+
+405
+00:19:15,422 --> 00:19:16,958
+-Exactly.
+-And the other widows?
+
+406
+00:19:16,991 --> 00:19:19,192
+-Right.
+-Right. No, I don't think so.
+
+407
+00:19:19,226 --> 00:19:23,798
+I actually think it's probably
+more like possession.
+
+408
+00:19:23,831 --> 00:19:26,233
+-SPIDER-MAN: Possession?
+-Hmm. Hmm.
+
+409
+00:19:26,266 --> 00:19:28,235
+Like a ghost or a demon.
+
+410
+00:19:28,268 --> 00:19:29,871
+-SPIDER-MAN: Oh, man.
+-Or in Russia, we have leshy.
+
+411
+00:19:29,904 --> 00:19:33,608
+Leshy rules the forest
+and can possess...
+
+412
+00:19:35,977 --> 00:19:37,578
+SPIDER-MAN: Sorry.
+
+413
+00:19:37,612 --> 00:19:39,747
+Whatever it is,
+they are looking for something.
+
+414
+00:19:39,781 --> 00:19:40,982
+This is the fourth attack
+
+415
+00:19:41,015 --> 00:19:44,217
+on the Damage Control facility
+this month.
+
+416
+00:19:44,251 --> 00:19:45,753
+And what do you think
+they're looking for?
+
+417
+00:19:45,787 --> 00:19:46,988
+YELENA: I don't know.
+
+418
+00:19:47,021 --> 00:19:48,656
+But you know what?
+
+419
+00:19:48,690 --> 00:19:50,792
+After the attack today,
+
+420
+00:19:50,825 --> 00:19:53,628
+there was a cross-agency
+cybersecurity alert
+
+421
+00:19:53,661 --> 00:19:55,328
+that got triggered.
+
+422
+00:19:55,362 --> 00:19:56,531
+Someone accessed
+
+423
+00:19:56,564 --> 00:19:58,700
+the Damage Control
+restricted servers
+
+424
+00:19:58,733 --> 00:20:02,302
+using credentials from 30
+employees from the way station.
+
+425
+00:20:02,335 --> 00:20:04,639
+They all searched
+for the same thing.
+
+426
+00:20:05,907 --> 00:20:06,974
+V-Max.
+
+427
+00:20:07,008 --> 00:20:08,743
+[SUSPENSEFUL MUSIC PLAYING]
+
+428
+00:20:08,776 --> 00:20:10,210
+SPIDER-MAN: V-Max.
+
+429
+00:20:11,344 --> 00:20:12,714
+Well, what does that mean?
+
+430
+00:20:12,747 --> 00:20:15,583
+I mean,
+it could be alien tech,
+
+431
+00:20:15,616 --> 00:20:19,386
+or secretive weapon programs,
+
+432
+00:20:19,419 --> 00:20:22,623
+or launch codes or...
+
+433
+00:20:23,925 --> 00:20:26,027
+I don't know,
+this is for you to figure out.
+
+434
+00:20:26,060 --> 00:20:27,895
+This is small,
+baby potato stuff...
+
+435
+00:20:27,929 --> 00:20:29,630
+-SPIDER-MAN: Okay, okay.
+-...not big potato brain stuff.
+
+436
+00:20:29,664 --> 00:20:30,998
+SPIDER-MAN: You don't
+have to shout about it. Jeez.
+
+437
+00:20:31,032 --> 00:20:33,000
+Maybe I'll just go ask
+Damage Control myself.
+
+438
+00:20:35,670 --> 00:20:38,573
+You know, you're not
+completely anonymous anymore.
+
+439
+00:20:38,606 --> 00:20:40,440
+I've seen your belly button.
+
+440
+00:20:40,474 --> 00:20:43,745
+SPIDER-MAN: [CHUCKLES] Okay.
+YELENA: Bye.
+
+441
+00:21:07,034 --> 00:21:08,569
+[DOOR SLAMS]
+
+442
+00:21:08,603 --> 00:21:09,670
+SPIDER-MAN: Oh, God.
+
+443
+00:21:10,972 --> 00:21:12,673
+Hi, I got an appointment
+with, uh...
+
+444
+00:21:12,707 --> 00:21:13,975
+Director Metzger. Yes.
+
+445
+00:21:14,008 --> 00:21:15,610
+Please step through the scanner.
+
+446
+00:21:17,011 --> 00:21:18,513
+[SCANNER POWERS ON]
+
+447
+00:21:18,546 --> 00:21:20,548
+AUTOMATED VOICE:
+<i>Enhanced human detected.</i>
+
+448
+00:21:21,115 --> 00:21:23,316
+<i>Superior strength.</i>
+
+449
+00:21:23,350 --> 00:21:25,418
+<i>Superior agility.</i>
+
+450
+00:21:25,452 --> 00:21:26,988
+<i>Heightened senses.</i>
+
+451
+00:21:27,021 --> 00:21:29,456
+<i>Exogenous DNA. Arachnid.</i>
+
+452
+00:21:30,858 --> 00:21:33,094
+Please remove your face covering
+for identity scan.
+
+453
+00:21:33,127 --> 00:21:34,529
+SPIDER-MAN: Oh, no,
+I can't do that.
+
+454
+00:21:34,562 --> 00:21:35,663
+-That's not possible.
+-Failure to remove
+
+455
+00:21:35,696 --> 00:21:38,633
+your face covering will result
+in defensive measures.
+
+456
+00:21:38,666 --> 00:21:40,568
+SPIDER-MAN: Defensive measures?
+What are you talk...
+
+457
+00:21:40,601 --> 00:21:41,602
+Whoa, whoa, whoa.
+
+458
+00:21:41,636 --> 00:21:43,938
+Guys, guys, guys!
+I can't take my mask off. I'm...
+
+459
+00:21:43,971 --> 00:21:46,040
+-METZGER: Spider-Man.
+-[ALARM BLARING]
+
+460
+00:21:46,073 --> 00:21:48,543
+-He's all right. At ease.
+-[ALARM STOPS]
+
+461
+00:21:52,780 --> 00:21:54,715
+METZGER: My apologies.
+
+462
+00:21:54,749 --> 00:21:56,517
+We are so glad you're here.
+
+463
+00:21:56,551 --> 00:21:59,086
+Bill Metzger, Director of
+Damage Control. How are you?
+
+464
+00:21:59,120 --> 00:22:00,755
+SPIDER-MAN: I'm good,
+thank you.
+
+465
+00:22:00,788 --> 00:22:02,089
+We had to beef up
+security around here,
+
+466
+00:22:02,123 --> 00:22:03,323
+but I hope
+we didn't give you a fright.
+
+467
+00:22:03,356 --> 00:22:05,760
+-SPIDER-MAN: No, not at all.
+-All right, come on. This way.
+
+468
+00:22:05,793 --> 00:22:07,427
+[ELEVATOR DINGS]
+
+469
+00:22:07,460 --> 00:22:10,131
+METZGER: This floor is mostly
+research and administrative.
+
+470
+00:22:10,164 --> 00:22:12,099
+Downstairs,
+we have incident cleanup,
+
+471
+00:22:12,133 --> 00:22:13,801
+laboratories, agent training.
+
+472
+00:22:13,835 --> 00:22:15,402
+SPIDER-MAN: Oh.
+
+473
+00:22:15,435 --> 00:22:17,004
+-Hey, what are they doing here?
+-It's okay.
+
+474
+00:22:17,972 --> 00:22:20,041
+The Hand works for us now.
+
+475
+00:22:20,074 --> 00:22:21,843
+After you brought them in,
+I realized that
+
+476
+00:22:21,876 --> 00:22:24,512
+fundamentally, they're a group
+of kids without a leader.
+
+477
+00:22:24,545 --> 00:22:26,514
+All they needed
+was a little direction.
+
+478
+00:22:26,547 --> 00:22:28,481
+Then, suddenly, all the things
+that made them dangerous
+
+479
+00:22:28,516 --> 00:22:30,818
+turned them into an invaluable
+part of our security team.
+
+480
+00:22:31,719 --> 00:22:33,821
+[SPEAKING JAPANESE]
+
+481
+00:22:36,557 --> 00:22:38,125
+[IN ENGLISH] You can look at
+the many threats that face us
+
+482
+00:22:38,159 --> 00:22:39,359
+and see only danger.
+
+483
+00:22:40,661 --> 00:22:42,029
+Or you can see opportunity.
+
+484
+00:22:43,164 --> 00:22:44,699
+SPIDER-MAN: Uh, okay.
+
+485
+00:22:46,834 --> 00:22:49,103
+-[ELECTRICITY CRACKLING]
+-[SPIDER-MAN WHISTLES]
+
+486
+00:22:49,136 --> 00:22:51,172
+Wow, look at that.
+
+487
+00:22:51,205 --> 00:22:54,041
+In the hands of Shocker,
+these are a nuisance.
+
+488
+00:22:54,075 --> 00:22:55,676
+[CLANGS, ELECTRICITY CRACKLING]
+
+489
+00:22:55,710 --> 00:22:57,511
+But it doesn't mean we can't
+learn from the technology,
+
+490
+00:22:57,545 --> 00:22:59,814
+or respect the innovation.
+
+491
+00:22:59,847 --> 00:23:01,849
+Our mission is to
+redirect destructive energy
+
+492
+00:23:01,883 --> 00:23:03,885
+into something useful.
+
+493
+00:23:03,918 --> 00:23:05,653
+That's the true meaning
+of Damage Control.
+
+494
+00:23:09,123 --> 00:23:10,925
+[KNOCKING]
+
+495
+00:23:10,958 --> 00:23:12,126
+SPIDER-MAN:
+Be careful with that.
+
+496
+00:23:13,060 --> 00:23:14,061
+Right this way.
+
+497
+00:23:17,665 --> 00:23:18,933
+SPIDER-MAN: I, uh...
+I wanted to talk to you
+
+498
+00:23:18,966 --> 00:23:21,035
+about the recent attacks
+on the agency.
+
+499
+00:23:21,068 --> 00:23:22,970
+There's been four, right?
+
+500
+00:23:23,004 --> 00:23:24,071
+Please have a seat.
+
+501
+00:23:25,172 --> 00:23:27,074
+You are right.
+
+502
+00:23:27,108 --> 00:23:30,111
+It appears we're faced with
+a threat we can't control.
+
+503
+00:23:30,144 --> 00:23:31,411
+One we can't even see.
+
+504
+00:23:34,048 --> 00:23:35,415
+But you can.
+
+505
+00:23:36,117 --> 00:23:37,818
+I saw the security footage.
+
+506
+00:23:39,186 --> 00:23:42,489
+I also read
+Detective DeWolff's report.
+
+507
+00:23:42,523 --> 00:23:44,892
+I believe you understand
+exactly what we're up against.
+
+508
+00:23:44,926 --> 00:23:46,794
+SPIDER-MAN: [SIGHS]
+Someone or something
+
+509
+00:23:46,827 --> 00:23:48,763
+that can
+hop into people's minds.
+
+510
+00:23:49,797 --> 00:23:50,865
+But not yours.
+
+511
+00:23:50,898 --> 00:23:53,634
+SPIDER-MAN: No, I mean,
+it tried, but it couldn't.
+
+512
+00:24:02,777 --> 00:24:04,211
+I'm gonna be honest with you.
+
+513
+00:24:05,112 --> 00:24:06,547
+We're on our heels right now.
+
+514
+00:24:07,682 --> 00:24:08,950
+God forbid
+if it were to get in here
+
+515
+00:24:08,983 --> 00:24:10,551
+and find whatever it is
+it's looking for,
+
+516
+00:24:10,584 --> 00:24:14,155
+the consequences
+could be unimaginable.
+
+517
+00:24:16,991 --> 00:24:18,826
+SPIDER-MAN: Well, let me guess,
+is whatever it's looking for
+
+518
+00:24:18,859 --> 00:24:19,961
+in that giant vault?
+
+519
+00:24:22,930 --> 00:24:25,166
+There are some things,
+because of the nature of my job
+
+520
+00:24:25,199 --> 00:24:26,968
+I cannot tell you.
+
+521
+00:24:27,001 --> 00:24:29,870
+But I believe you are our
+best defense against this.
+
+522
+00:24:29,904 --> 00:24:31,872
+You're the only one
+who can sense it.
+
+523
+00:24:31,906 --> 00:24:33,908
+You're the only one
+who's immune to it.
+
+524
+00:24:33,941 --> 00:24:35,643
+I'm counting on you
+to defeat it.
+
+525
+00:24:39,080 --> 00:24:41,916
+SPIDER-MAN: That's a pretty
+good speech, Director.
+
+526
+00:24:41,949 --> 00:24:43,084
+I'll do everything that I can,
+I promise.
+
+527
+00:24:45,086 --> 00:24:47,555
+Well, then consider yourself
+a friend of Damage Control.
+
+528
+00:24:47,588 --> 00:24:48,589
+SPIDER-MAN: Thank you.
+
+529
+00:24:49,557 --> 00:24:50,558
+I'll be in touch.
+
+530
+00:24:51,826 --> 00:24:54,762
+Oh. Uh, I wanted to ask, um...
+
+531
+00:24:54,795 --> 00:24:57,298
+the phrase "V-Max" doesn't
+mean anything to you, does it?
+
+532
+00:24:57,331 --> 00:24:58,833
+[QUIRKY MUSIC PLAYING]
+
+533
+00:24:58,866 --> 00:25:01,736
+No. Where'd you hear that?
+
+534
+00:25:01,769 --> 00:25:04,672
+Oh, it's just, you know,
+nature of being a superhero,
+
+535
+00:25:04,705 --> 00:25:06,007
+there are some things
+I just can't tell ya.
+
+536
+00:25:06,040 --> 00:25:07,208
+[LAUGHING]
+
+537
+00:25:07,241 --> 00:25:08,676
+SPIDER-MAN: Anyway,
+I'll see you later.
+
+538
+00:25:09,710 --> 00:25:11,612
+You guys are doing great.
+Keep it up.
+
+539
+00:25:11,645 --> 00:25:13,748
+<i>I don't think Metzger knows</i>
+<i>any more than we do,</i>
+
+540
+00:25:13,781 --> 00:25:15,850
+<i>but I told him</i>
+<i>I'd do whatever I can to help.</i>
+
+541
+00:25:15,883 --> 00:25:18,219
+You wanna help?
+The best thing you could do
+
+542
+00:25:18,252 --> 00:25:20,588
+<i>is find Scorpion.</i>
+<i>He's our only lead.</i>
+
+543
+00:25:20,621 --> 00:25:22,289
+Yeah, I know.
+I have every camera in the city
+
+544
+00:25:22,323 --> 00:25:24,825
+running a facial recognition
+scan for him.
+
+545
+00:25:24,859 --> 00:25:26,794
+That sounds super illegal,
+Spider-Man.
+
+546
+00:25:26,827 --> 00:25:28,129
+I'mma pretend
+I didn't hear that.
+
+547
+00:25:28,162 --> 00:25:29,697
+Yeah, probably for the best.
+[CHUCKLES]
+
+548
+00:25:29,730 --> 00:25:31,132
+But look, if he shows his face,
+we'll know.
+
+549
+00:25:31,165 --> 00:25:32,767
+MAN: Do you have
+any mini-kegs?
+
+550
+00:25:33,601 --> 00:25:34,769
+CASHIER: Down at the end.
+
+551
+00:25:34,802 --> 00:25:35,803
+Thanks.
+
+552
+00:25:39,006 --> 00:25:40,107
+I'll call you back.
+
+553
+00:25:42,276 --> 00:25:45,112
+-Aha.
+-[SLOW MUSIC PLAYING]
+
+554
+00:25:45,146 --> 00:25:46,147
+Easy.
+
+555
+00:25:50,284 --> 00:25:53,854
+Hey, uh, also,
+you got any Sharkfire Energy?
+
+556
+00:25:53,888 --> 00:25:55,189
+Yeah.
+
+557
+00:25:56,323 --> 00:25:57,425
+Oh, no, no, no. [CHUCKLES]
+
+558
+00:25:57,458 --> 00:25:59,960
+[STUTTERS] I don't want any.
+That stuff will kill you.
+
+559
+00:25:59,994 --> 00:26:01,729
+You know, all my friends were
+drinking them during finals
+
+560
+00:26:01,762 --> 00:26:02,730
+and now they're addicted.
+
+561
+00:26:02,763 --> 00:26:06,000
+And so I'm gonna need you
+to not sell me any.
+
+562
+00:26:06,033 --> 00:26:07,168
+Memorize my face.
+
+563
+00:26:08,302 --> 00:26:11,939
+Please do not sell this guy
+any Sharkfire.
+
+564
+00:26:12,840 --> 00:26:13,974
+Sure. Whatever.
+
+565
+00:26:14,942 --> 00:26:16,110
+NED: Actually, I'll take one.
+
+566
+00:26:16,911 --> 00:26:18,079
+Last one.
+
+567
+00:26:18,112 --> 00:26:19,647
+[STUTTERING] Maybe two.
+
+568
+00:26:19,680 --> 00:26:21,782
+And then never sell me any.
+
+569
+00:26:23,250 --> 00:26:25,352
+-[SOFTLY] Damn it.
+-[CASH REGISTER BEEPING]
+
+570
+00:26:25,386 --> 00:26:26,555
+[CASH REGISTER DINGS]
+
+571
+00:26:39,233 --> 00:26:41,268
+[POP SONG PLAYING]
+
+572
+00:26:52,246 --> 00:26:53,114
+[EXHALES]
+
+573
+00:26:58,419 --> 00:26:59,787
+MAN 1: Yo, Ned!
+
+574
+00:26:59,820 --> 00:27:01,088
+-Oh, what?
+-MAN 2: Ned!
+
+575
+00:27:01,122 --> 00:27:02,857
+-Give me that.
+-Oh, my guy, appreciate you.
+
+576
+00:27:02,890 --> 00:27:04,358
+-Let's go!
+-Yeah, man.
+
+577
+00:27:04,391 --> 00:27:05,392
+Let's go!
+
+578
+00:27:20,207 --> 00:27:22,743
+[SONG CONTINUES
+PLAYING OVER SPEAKER]
+
+579
+00:27:22,776 --> 00:27:24,778
+[INDISTINCT CHATTER]
+
+580
+00:27:32,486 --> 00:27:34,255
+[WOMEN LAUGHING]
+
+581
+00:27:40,094 --> 00:27:42,863
+You need a drink.
+Take this, take this, take it.
+
+582
+00:27:42,897 --> 00:27:43,898
+Thanks.
+
+583
+00:27:47,034 --> 00:27:48,469
+WOMAN: Excuse me.
+
+584
+00:27:48,503 --> 00:27:50,371
+[INDISTINCT CHATTER CONTINUES]
+
+585
+00:28:31,779 --> 00:28:32,446
+Oh.
+
+586
+00:28:34,215 --> 00:28:35,482
+Oh. Um...
+
+587
+00:28:35,517 --> 00:28:38,385
+See you've stumbled across
+my board. [CHUCKLES]
+
+588
+00:28:38,419 --> 00:28:40,454
+I'm not one of those weirdos,
+I swear.
+
+589
+00:28:40,487 --> 00:28:41,855
+He actually saved me
+and my friends' lives
+
+590
+00:28:41,889 --> 00:28:42,957
+a few times in high school.
+
+591
+00:28:44,091 --> 00:28:45,960
+-Oh, cool.
+-NED: Yeah, yeah.
+
+592
+00:28:45,993 --> 00:28:48,495
+And ever since, I've just been
+trying to figure out who he is.
+
+593
+00:28:48,530 --> 00:28:51,031
+[STUTTERS] Not to unmask him
+to the world or anything,
+
+594
+00:28:51,065 --> 00:28:52,933
+just to know, you know?
+
+595
+00:28:52,967 --> 00:28:55,202
+And to, hopefully,
+thank him face to face.
+
+596
+00:28:57,805 --> 00:29:01,308
+I actually created this app
+that monitors his sightings.
+
+597
+00:29:01,342 --> 00:29:03,010
+Wait, you created
+Spidey Tracker?
+
+598
+00:29:03,043 --> 00:29:04,912
+You heard of it? Nice.
+[CHUCKLES]
+
+599
+00:29:04,945 --> 00:29:05,980
+[ <i>SPIDER-MAN</i> THEME
+PLAYING ON DEVICE]
+
+600
+00:29:06,013 --> 00:29:07,281
+APP VOICE: <i>Where is Spider-Man?</i>
+
+601
+00:29:07,314 --> 00:29:09,416
+NED: Little chat room
+right there. [CHUCKLES]
+
+602
+00:29:09,450 --> 00:29:12,086
+Now, we know
+he's definitely from Queens.
+
+603
+00:29:12,119 --> 00:29:13,854
+Not the biggest revelation.
+
+604
+00:29:13,887 --> 00:29:16,423
+But I have been able
+to narrow it down
+
+605
+00:29:16,457 --> 00:29:18,392
+to two prime suspects.
+
+606
+00:29:22,396 --> 00:29:25,866
+Yeah, if you knew who they were,
+it would really blow your mind.
+
+607
+00:29:25,899 --> 00:29:27,501
+-I'm sure.
+-[SIGHS]
+
+608
+00:29:27,535 --> 00:29:28,536
+[CLICKS TONGUE] Ned,
+by the way.
+
+609
+00:29:29,470 --> 00:29:30,672
+Oh, I'm, um...
+
+610
+00:29:30,705 --> 00:29:33,207
+[EXHALES] God, there's, like,
+50 people in our apartment.
+
+611
+00:29:33,240 --> 00:29:34,074
+Statistically speaking,
+that means
+
+612
+00:29:34,108 --> 00:29:36,410
+at least two of them
+are sociopaths,
+
+613
+00:29:36,443 --> 00:29:38,846
+-which is kind of cool.
+-[NED LAUGHS]
+
+614
+00:29:40,914 --> 00:29:41,915
+Nice flowers.
+
+615
+00:29:43,083 --> 00:29:46,387
+Oh, they're, uh,
+a housewarming gift.
+
+616
+00:29:46,420 --> 00:29:47,488
+-MJ: Really?
+-Yeah.
+
+617
+00:29:47,522 --> 00:29:49,089
+Oh, okay. [CHUCKLES]
+
+618
+00:29:49,123 --> 00:29:50,357
+Most people just brought
+beer and chips.
+
+619
+00:29:50,391 --> 00:29:51,593
+That's very nice.
+
+620
+00:29:51,626 --> 00:29:53,927
+Uh, I'm MJ.
+
+621
+00:29:53,961 --> 00:29:57,298
+I'm, uh... [CLEARS THROAT]
+I'm, uh, Maynard.
+
+622
+00:29:58,232 --> 00:30:00,301
+Uh, Maynard.
+
+623
+00:30:00,334 --> 00:30:02,870
+Oh, you two
+don't know each other?
+
+624
+00:30:02,903 --> 00:30:04,905
+Uh, no, I'm a neighbor.
+
+625
+00:30:04,938 --> 00:30:06,006
+Hmm, friendly neighbor.
+
+626
+00:30:06,608 --> 00:30:07,975
+[COUGHING]
+
+627
+00:30:09,644 --> 00:30:11,312
+[CHUCKLING] Sorry.
+
+628
+00:30:11,345 --> 00:30:13,480
+So, how was the interview?
+
+629
+00:30:13,515 --> 00:30:15,215
+I'm gonna go
+put these in water.
+
+630
+00:30:15,249 --> 00:30:17,151
+It was nice to meet you,
+Maynard. Nerd.
+
+631
+00:30:17,184 --> 00:30:18,185
+Maynard. Yeah.
+
+632
+00:30:18,919 --> 00:30:20,487
+Excuse me. I'm sorry.
+
+633
+00:30:20,522 --> 00:30:23,390
+Did you go?
+Please tell me that you went.
+
+634
+00:30:23,424 --> 00:30:24,559
+MJ: Yeah. No, I went.
+
+635
+00:30:24,592 --> 00:30:26,193
+And?
+
+636
+00:30:26,226 --> 00:30:27,361
+And I got the job.
+
+637
+00:30:27,394 --> 00:30:29,531
+Oh, my God, MJ,
+that's amazing.
+
+638
+00:30:29,564 --> 00:30:31,432
+I turned it down.
+
+639
+00:30:31,465 --> 00:30:32,667
+NED: What?
+
+640
+00:30:32,701 --> 00:30:35,135
+MJ: Yeah. I don't wanna work
+for some soulless corporation.
+
+641
+00:30:35,169 --> 00:30:39,006
+NED: [SIGHS, STUTTERS]
+They're not all soulless.
+
+642
+00:30:39,039 --> 00:30:40,974
+Okay.
+They're all mostly soulless.
+
+643
+00:30:41,008 --> 00:30:42,943
+But don't you want, like,
+health insurance?
+
+644
+00:30:42,976 --> 00:30:45,212
+Yeah, of course I do.
+But at what cost?
+
+645
+00:30:45,245 --> 00:30:46,947
+Depends on your deductible.
+[CHUCKLES SOFTLY]
+
+646
+00:30:48,015 --> 00:30:49,617
+Oh, you mean,
+like, your principles?
+
+647
+00:30:49,651 --> 00:30:50,951
+-MJ: Yes.
+-Sorry.
+
+648
+00:30:50,984 --> 00:30:52,286
+I don't know.
+I know it sounds cheesy,
+
+649
+00:30:52,319 --> 00:30:54,622
+but something
+is just telling me
+
+650
+00:30:54,656 --> 00:30:56,290
+that I'm
+supposed to be waiting
+
+651
+00:30:56,323 --> 00:30:58,258
+for something great,
+you know?
+
+652
+00:30:59,426 --> 00:31:01,195
+NED: Okay. Well, um,
+
+653
+00:31:01,228 --> 00:31:04,031
+to, uh,
+waiting for something great.
+
+654
+00:31:04,064 --> 00:31:05,099
+MJ: To waiting
+for something great.
+
+655
+00:31:05,132 --> 00:31:06,166
+[CLINKING]
+
+656
+00:31:06,200 --> 00:31:08,035
+BOYFRIEND: Well,
+the wait is over.
+
+657
+00:31:08,068 --> 00:31:10,104
+-Uh-oh. [LAUGHS]
+-To your new home.
+
+658
+00:31:10,137 --> 00:31:11,438
+Dude, this is top-shelf.
+
+659
+00:31:11,472 --> 00:31:12,540
+BOYFRIEND: Just like you.
+
+660
+00:31:12,574 --> 00:31:15,976
+-MJ: Aw!
+-Aw! Dude. [GRUNTS]
+
+661
+00:31:16,009 --> 00:31:17,344
+-I'm gonna hide this.
+-[SNAPS FINGERS]
+
+662
+00:31:19,346 --> 00:31:20,881
+I lifted this
+off of him again.
+
+663
+00:31:22,584 --> 00:31:25,319
+But what if Ned needs
+the fire of a thousand sharks?
+
+664
+00:31:25,352 --> 00:31:28,590
+-You mean heart palpitations?
+-[LAUGHING]
+
+665
+00:31:28,623 --> 00:31:30,391
+-You can't save everyone.
+-I can try.
+
+666
+00:31:33,026 --> 00:31:34,027
+BOYFRIEND: That's my girl.
+
+667
+00:31:37,297 --> 00:31:39,433
+[POIGNANT MUSIC PLAYING]
+
+668
+00:31:44,171 --> 00:31:45,939
+[BREATHING HEAVILY]
+
+669
+00:31:50,545 --> 00:31:51,579
+I'm sorry. I gotta...
+
+670
+00:31:56,684 --> 00:31:57,552
+[GRUNTS]
+
+671
+00:31:59,353 --> 00:32:01,355
+[POIGNANT MUSIC CONTINUES]
+
+672
+00:32:12,667 --> 00:32:16,270
+When we get into MIT,
+we should live together.
+
+673
+00:32:16,303 --> 00:32:18,506
+PETER: <i>Yeah, for sure.</i>
+MJ: <i>Yeah, I'd love that.</i>
+
+674
+00:32:18,540 --> 00:32:21,341
+Be a fresh start.
+And we'll all be together.
+
+675
+00:32:23,076 --> 00:32:24,411
+Yeah, no, you're right.
+Yeah. [CHUCKLES]
+
+676
+00:32:24,445 --> 00:32:25,547
+Fresh start.
+
+677
+00:32:28,616 --> 00:32:30,718
+PETER: <i>You're gonna</i>
+<i>forget who I am.</i>
+
+678
+00:32:30,752 --> 00:32:32,620
+MJ: <i>Forget who you are?</i>
+<i>What are you talking about?</i>
+
+679
+00:32:32,654 --> 00:32:35,590
+PETER: <i>It's okay.</i>
+<i>I'm gonna come and find you,</i>
+
+680
+00:32:35,623 --> 00:32:36,990
+<i>and I'll explain everything.</i>
+
+681
+00:32:38,225 --> 00:32:40,595
+-I love...
+-Just wait. [SNIFFLES]
+
+682
+00:32:40,628 --> 00:32:42,664
+[VOICE SHAKING] Wait and tell me
+when you see me again.
+
+683
+00:32:47,301 --> 00:32:51,338
+My name is Peter Parker,
+and I would like a coffee.
+
+684
+00:32:53,040 --> 00:32:55,175
+Is there anything else?
+
+685
+00:32:57,211 --> 00:32:59,112
+[MUSIC CONTINUES]
+
+686
+00:33:04,519 --> 00:33:05,520
+No.
+
+687
+00:33:14,194 --> 00:33:15,697
+[BREATHING HEAVILY]
+
+688
+00:33:19,333 --> 00:33:20,568
+[RAIN PATTERING]
+
+689
+00:33:36,718 --> 00:33:38,252
+[GRUNTING]
+
+690
+00:33:47,729 --> 00:33:49,363
+[BREATHING HEAVILY]
+
+691
+00:34:05,613 --> 00:34:07,281
+[KNOCK ON DOOR]
+
+692
+00:34:07,314 --> 00:34:08,382
+MAY: <i>Hey.</i>
+
+693
+00:34:09,584 --> 00:34:10,585
+Hey.
+
+694
+00:34:12,820 --> 00:34:14,856
+You think
+you don't have to listen to me
+
+695
+00:34:14,889 --> 00:34:16,558
+now that you've got powers?
+
+696
+00:34:16,591 --> 00:34:18,593
+[BOTH CHUCKLE]
+
+697
+00:34:21,461 --> 00:34:23,698
+You know, this...
+
+698
+00:34:23,731 --> 00:34:26,601
+this whole thing
+can get really scary.
+
+699
+00:34:27,434 --> 00:34:28,435
+You know that?
+
+700
+00:34:29,737 --> 00:34:31,405
+Well, yeah,
+it's already pretty scary.
+
+701
+00:34:33,641 --> 00:34:34,876
+Yeah.
+
+702
+00:34:34,909 --> 00:34:38,245
+And things can change, like...
+[SNAPS FINGERS] ...very quickly,
+
+703
+00:34:38,278 --> 00:34:40,480
+in ways that we can't
+even imagine right now.
+
+704
+00:34:41,214 --> 00:34:42,482
+Believe me, I know.
+
+705
+00:34:45,753 --> 00:34:47,220
+I don't think you do know.
+
+706
+00:34:49,724 --> 00:34:50,692
+What do you mean?
+
+707
+00:34:50,725 --> 00:34:53,561
+-[GASPS, PANTS]
+-[SIRENS WAILING DISTANTLY]
+
+708
+00:35:10,210 --> 00:35:12,212
+[GRUNTS, BREATHES HEAVILY]
+
+709
+00:35:12,245 --> 00:35:13,548
+[GROANING]
+
+710
+00:35:16,416 --> 00:35:18,151
+Oh, God. Whoa!
+
+711
+00:35:18,720 --> 00:35:21,288
+[YELPING]
+
+712
+00:35:23,524 --> 00:35:25,325
+[BREATHING HEAVILY]
+
+713
+00:35:25,359 --> 00:35:27,327
+[TENSE MUSIC PLAYING]
+
+714
+00:35:32,900 --> 00:35:35,302
+[EXCLAIMS, YELPS]
+
+715
+00:35:35,335 --> 00:35:36,203
+[THUDS]
+
+716
+00:35:39,574 --> 00:35:40,875
+[EXCLAIMING IN PAIN]
+
+717
+00:35:48,650 --> 00:35:49,751
+[GROANS]
+
+718
+00:35:59,761 --> 00:36:00,762
+[SOFTLY] What?
+
+719
+00:36:01,963 --> 00:36:03,497
+[SIREN WAILS]
+
+720
+00:36:05,767 --> 00:36:07,267
+[GRUNTING]
+
+721
+00:36:09,871 --> 00:36:11,238
+[GROANS]
+
+722
+00:36:13,407 --> 00:36:14,408
+[WINCES]
+
+723
+00:36:16,476 --> 00:36:18,713
+[QUIRKY MUSIC PLAYING]
+
+724
+00:36:18,746 --> 00:36:19,747
+Oh, I, uh...
+
+725
+00:36:20,948 --> 00:36:22,249
+I live here. I just, um...
+
+726
+00:36:24,652 --> 00:36:25,687
+I'm gonna grab my stuff.
+
+727
+00:36:28,956 --> 00:36:30,223
+[ELEVATOR DINGS]
+
+728
+00:36:44,471 --> 00:36:45,506
+Is that my shirt?
+
+729
+00:36:46,473 --> 00:36:47,942
+[CHUCKLES]
+
+730
+00:36:47,975 --> 00:36:48,976
+No.
+
+731
+00:36:49,777 --> 00:36:50,978
+-Oh, cute dog.
+-[BARKS]
+
+732
+00:36:51,012 --> 00:36:52,212
+Oh, sh...
+
+733
+00:36:52,947 --> 00:36:55,315
+[MASHING BUTTON]
+
+734
+00:36:55,348 --> 00:36:56,884
+-[CHUCKLES AWKWARDLY]
+-[ELEVATOR DINGS]
+
+735
+00:36:57,652 --> 00:36:58,986
+PETER: [SIGHS] Okay.
+
+736
+00:37:03,057 --> 00:37:04,625
+[GRUNTS, PANTING]
+
+737
+00:37:04,659 --> 00:37:06,661
+[MYSTERIOUS MUSIC PLAYING]
+
+738
+00:37:19,574 --> 00:37:22,877
+E.V.: <i>Hi, Peter.</i>
+<i>You have 107 new alerts.</i>
+
+739
+00:37:22,910 --> 00:37:24,545
+<i>Please check backlog.</i>
+
+740
+00:37:25,613 --> 00:37:27,582
+[MACHINE WHIRRING]
+
+741
+00:37:27,615 --> 00:37:28,683
+[MACHINE STOPS]
+
+742
+00:37:30,985 --> 00:37:34,421
+What is happening?
+
+743
+00:37:35,489 --> 00:37:36,958
+E.V.: <i>The results</i>
+<i>of your body scan</i>
+
+744
+00:37:36,991 --> 00:37:38,626
+<i>show a surge in the hormones</i>
+
+745
+00:37:38,659 --> 00:37:40,995
+<i>associated with</i>
+<i>your arachnid DNA,</i>
+
+746
+00:37:41,028 --> 00:37:43,898
+<i>resulting in the formation</i>
+<i>of organic web spinnerets</i>
+
+747
+00:37:43,931 --> 00:37:46,934
+<i>and dangerously heightened</i>
+<i>sensory receptors.</i>
+
+748
+00:37:46,968 --> 00:37:47,869
+[STUTTERS] Okay,
+
+749
+00:37:47,902 --> 00:37:49,070
+-but I feel fine.
+-[WEB SHOOTER CLICKING]
+
+750
+00:37:49,103 --> 00:37:51,706
+E.V.: <i>Prolonged isolation</i>
+<i>or emotional trauma</i>
+
+751
+00:37:51,739 --> 00:37:54,341
+<i>could be contributing</i>
+<i>to this sudden change.</i>
+
+752
+00:37:54,374 --> 00:37:56,911
+<i>Have you experienced any</i>
+<i>recent traumatic events?</i>
+
+753
+00:37:59,781 --> 00:38:01,448
+<i>Peter?</i>
+
+754
+00:38:01,481 --> 00:38:02,950
+SPIDER-MAN: I'm fine, E.V.
+
+755
+00:38:02,984 --> 00:38:04,519
+E.V.: <i>You don't seem fine.</i>
+
+756
+00:38:04,552 --> 00:38:05,553
+<i>I recommend you take</i>
+
+757
+00:38:05,586 --> 00:38:07,088
+<i>-some time to rebalance.</i>
+-[GADGET BEEPS]
+
+758
+00:38:07,121 --> 00:38:08,923
+Well, that's not really
+an option, is it?
+
+759
+00:38:12,026 --> 00:38:14,529
+-[FOREBODING MUSIC PLAYING]
+-[CLATTERING]
+
+760
+00:38:15,395 --> 00:38:17,397
+[SQUELCHING]
+
+761
+00:38:19,901 --> 00:38:20,935
+[CLANKING]
+
+762
+00:38:20,968 --> 00:38:21,969
+[OBJECTS SHATTER]
+
+763
+00:38:25,540 --> 00:38:27,875
+E.V.: <i>Mechanical web shooters</i>
+<i>and organic webs</i>
+
+764
+00:38:27,909 --> 00:38:30,044
+<i>cannot be used simultaneously.</i>
+
+765
+00:38:31,646 --> 00:38:32,847
+SPIDER-MAN: Come on, Peter.
+
+766
+00:38:34,081 --> 00:38:35,850
+[CAR HORN HONKING]
+
+767
+00:38:35,883 --> 00:38:39,386
+-[BREATHING DEEPLY]
+-[TIME SLOWS DOWN]
+
+768
+00:38:39,419 --> 00:38:42,455
+-[SLOWED WATER DRIPPING]
+-[BREATHING HEAVILY]
+
+769
+00:38:46,093 --> 00:38:48,663
+[REVERBERATES]
+
+770
+00:38:48,696 --> 00:38:50,731
+[PRONOUNCED CRINKLING]
+
+771
+00:38:52,733 --> 00:38:55,368
+E.V.: <i>Alert.</i>
+<i>Senses are overloaded.</i>
+
+772
+00:38:55,402 --> 00:38:57,404
+-[WINGS FLAPPING SHARPLY]
+-[SIREN CHIRPS, WAILS SHARPLY]
+
+773
+00:38:57,437 --> 00:38:58,139
+-[PANTING]
+-E.V.: <i>Alert.</i>
+
+774
+00:38:58,172 --> 00:38:59,707
+<i>Senses are overloaded.</i>
+
+775
+00:38:59,740 --> 00:39:01,976
+[GARBLED, OVERLAPPING SOUNDS]
+
+776
+00:39:02,009 --> 00:39:05,012
+E.V.: [ECHOING] <i>Alert. Alert.</i>
+<i>Senses are overloaded. Alert.</i>
+
+777
+00:39:05,046 --> 00:39:07,782
+-[SPIDER-MAN GROANS, PANTS]
+-[SOUNDS SUBSIDE]
+
+778
+00:39:08,783 --> 00:39:10,885
+What the hell was that?
+
+779
+00:39:10,918 --> 00:39:12,086
+E.V.: <i>Your heightened senses</i>
+
+780
+00:39:12,119 --> 00:39:14,822
+<i>are taking in</i>
+<i>too much information at once.</i>
+
+781
+00:39:14,856 --> 00:39:18,059
+SPIDER-MAN: [BREATHING HEAVILY]
+Okay. It's okay.
+
+782
+00:39:18,092 --> 00:39:18,993
+It's okay.
+
+783
+00:39:19,026 --> 00:39:21,896
+All right, organic webs.
+Peter Two had 'em.
+
+784
+00:39:21,929 --> 00:39:23,764
+He was cool. You're cool.
+
+785
+00:39:24,599 --> 00:39:27,535
+[SQUELCHING]
+
+786
+00:39:27,568 --> 00:39:29,704
+[GAGS, RETCHES]
+
+787
+00:39:29,737 --> 00:39:31,672
+[COUGHS]
+
+788
+00:39:31,706 --> 00:39:34,008
+Ugh! Oh, my God, that's hideous.
+
+789
+00:39:34,041 --> 00:39:35,910
+[EXCLAIMS] Okay, here we go.
+
+790
+00:39:36,677 --> 00:39:38,079
+[GRUNTS]
+
+791
+00:39:38,112 --> 00:39:40,915
+Okay, that didn't work.
+[GRUNTS, GROANS]
+
+792
+00:39:40,948 --> 00:39:43,084
+Organic webs. Come on!
+And web!
+
+793
+00:39:43,117 --> 00:39:44,986
+[GROANING]
+
+794
+00:39:46,754 --> 00:39:47,755
+No, no!
+
+795
+00:39:50,791 --> 00:39:52,660
+Stop! [PANTING]
+
+796
+00:39:53,995 --> 00:39:56,864
+-[SUIT BEEPING]
+-What's going on, E.V.?
+
+797
+00:39:56,898 --> 00:39:59,567
+E.V.: <i>Shots fired at</i>
+<i>the Damage Control Data Center</i>
+
+798
+00:39:59,600 --> 00:40:00,568
+<i>in Manhattan.</i>
+
+799
+00:40:00,601 --> 00:40:03,004
+<i>Suspect facial match</i>
+<i>with Scorpion.</i>
+
+800
+00:40:03,037 --> 00:40:04,505
+SPIDER-MAN: Okay,
+I'm on my way.
+
+801
+00:40:05,072 --> 00:40:07,074
+Come on. Three, two...
+
+802
+00:40:07,108 --> 00:40:08,142
+Web! [GRUNTS]
+
+803
+00:40:08,175 --> 00:40:11,612
+[STRAINING, SCREAMING]
+
+804
+00:40:11,646 --> 00:40:14,582
+-Web, stop! [GROANS]
+-[QUIRKY MUSIC PLAYING]
+
+805
+00:40:14,615 --> 00:40:15,683
+[SCREAMS]
+
+806
+00:40:15,716 --> 00:40:17,785
+Web! Stop! Birds, birds, birds!
+
+807
+00:40:17,818 --> 00:40:19,654
+[GROANING] Web! Stop.
+
+808
+00:40:19,687 --> 00:40:22,056
+-[PIGEON COOS]
+-[SPIDER-MAN GROANING]
+
+809
+00:40:23,925 --> 00:40:25,159
+I'm sorry. I'm sorry.
+
+810
+00:40:25,993 --> 00:40:27,628
+Web! Stop.
+
+811
+00:40:27,662 --> 00:40:29,496
+Oh, God! [GROANS]
+
+812
+00:40:29,530 --> 00:40:32,133
+-Web! Stop, stop, stop. [YELLS]
+-[MUSIC ENDS]
+
+813
+00:40:32,166 --> 00:40:33,935
+-[PEOPLE SCREAMING]
+-[SIREN WAILING]
+
+814
+00:40:33,968 --> 00:40:35,970
+[TENSE MUSIC PLAYING]
+
+815
+00:40:37,638 --> 00:40:39,707
+[PEOPLE CLAMORING]
+
+816
+00:40:39,740 --> 00:40:41,208
+[GUARD SCREAMS, GROANS]
+
+817
+00:40:42,543 --> 00:40:43,544
+[GUNS FIRING]
+
+818
+00:40:45,780 --> 00:40:47,114
+[BULLETS RICOCHETING]
+
+819
+00:40:48,883 --> 00:40:51,085
+-[OFFICERS SCREAMING]
+-[CAR ALARMS BLARING]
+
+820
+00:40:51,118 --> 00:40:52,787
+[INDISTINCT CHATTER]
+
+821
+00:40:55,256 --> 00:40:57,490
+I don't know
+what you're looking for.
+
+822
+00:40:57,525 --> 00:40:59,492
+I'm looking for V-Max.
+
+823
+00:41:00,227 --> 00:41:01,929
+[GUARD GASPING]
+
+824
+00:41:01,963 --> 00:41:04,131
+I don't know anything.
+
+825
+00:41:04,165 --> 00:41:05,766
+SCORPION: I'll see for myself.
+
+826
+00:41:06,634 --> 00:41:08,836
+[SPIDER-MAN SCREAMING]
+
+827
+00:41:08,869 --> 00:41:10,938
+-Oh, God, oh, God!
+-[THUDDING]
+
+828
+00:41:10,972 --> 00:41:12,974
+[SPIDER-MAN YELPING]
+
+829
+00:41:14,141 --> 00:41:15,643
+-[GROANS]
+-Hmm.
+
+830
+00:41:16,610 --> 00:41:18,546
+-[GUARD YELPS]
+-[BODY THUDS]
+
+831
+00:41:18,579 --> 00:41:19,647
+SPIDER-MAN:
+I'm sorry I'm late.
+
+832
+00:41:19,680 --> 00:41:21,082
+I've had a really crazy day.
+
+833
+00:41:22,717 --> 00:41:24,518
+[GROANING]
+
+834
+00:41:29,557 --> 00:41:31,025
+[BOTH GRUNTING]
+
+835
+00:41:39,767 --> 00:41:41,569
+SPIDER-MAN: Scorpion, do we
+really gotta keep doing this?
+
+836
+00:41:41,602 --> 00:41:43,070
+My head is killing me.
+
+837
+00:41:44,105 --> 00:41:45,673
+You think I'm Scorpion?
+
+838
+00:41:47,274 --> 00:41:48,275
+-Web!
+-[SQUIRTS]
+
+839
+00:41:50,277 --> 00:41:52,146
+What's happening to you?
+
+840
+00:41:52,179 --> 00:41:53,614
+[BOTH GRUNTING]
+
+841
+00:41:58,152 --> 00:41:59,687
+Huh.
+
+842
+00:41:59,720 --> 00:42:01,689
+You can't sense me anymore.
+
+843
+00:42:01,722 --> 00:42:03,024
+[BOTH GRUNTING]
+
+844
+00:42:04,725 --> 00:42:05,559
+SPIDER-MAN: You.
+
+845
+00:42:05,593 --> 00:42:07,661
+What's going on with you,
+Spider-Man?
+
+846
+00:42:07,695 --> 00:42:09,697
+-[METAL CREAKING]
+-[SPIDER-MAN GRUNTING]
+
+847
+00:42:16,904 --> 00:42:19,607
+E.V.: <i>Warning.</i>
+<i>Arachnid hormones increasing.</i>
+
+848
+00:42:19,640 --> 00:42:21,108
+-[SUIT BEEPING]
+-[SPIDER-MAN GRUNTING]
+
+849
+00:42:21,142 --> 00:42:22,143
+[DISTORTED WARBLE]
+
+850
+00:42:23,744 --> 00:42:25,746
+[DRAMATIC MUSIC PLAYING]
+
+851
+00:42:27,882 --> 00:42:29,817
+[SCORPION GROANING]
+
+852
+00:42:33,954 --> 00:42:35,156
+[GROANS]
+
+853
+00:42:35,189 --> 00:42:36,223
+SPIDER-MAN: Who are you?
+
+854
+00:42:37,191 --> 00:42:38,726
+Do you know who you are?
+
+855
+00:42:38,759 --> 00:42:40,094
+[SIREN WAILING]
+
+856
+00:42:42,630 --> 00:42:43,931
+[SPIDER-MAN GRUNTING]
+
+857
+00:42:48,302 --> 00:42:50,971
+[SIRENS APPROACHING]
+
+858
+00:42:51,005 --> 00:42:53,340
+-[CRACKLING]
+-[SPIDER-MAN GRUNTING]
+
+859
+00:42:57,244 --> 00:42:58,813
+[SCORPION GROANING]
+
+860
+00:43:02,850 --> 00:43:03,918
+OFFICER 1: We need some help
+over here.
+
+861
+00:43:03,951 --> 00:43:04,852
+OFFICER 2: Get back!
+Coming through.
+
+862
+00:43:04,885 --> 00:43:06,287
+[BOTH GRUNT]
+
+863
+00:43:08,789 --> 00:43:10,091
+-[EXHALES]
+-[WHOOSHES]
+
+864
+00:43:10,958 --> 00:43:12,793
+[GASPS, BREATHES DEEPLY]
+
+865
+00:43:13,861 --> 00:43:14,929
+Spider-Man.
+
+866
+00:43:16,030 --> 00:43:17,631
+[EXHALES]
+
+867
+00:43:17,665 --> 00:43:18,999
+What the hell?
+
+868
+00:43:19,033 --> 00:43:20,634
+DEWOLFF: Somebody get a medic.
+
+869
+00:43:20,668 --> 00:43:22,736
+[SPIDER-MAN BREATHING HEAVILY]
+
+870
+00:43:22,770 --> 00:43:24,805
+[PENSIVE MUSIC PLAYING]
+
+871
+00:43:24,839 --> 00:43:26,841
+[CHATTER ECHOING]
+
+872
+00:43:37,418 --> 00:43:38,919
+[SPIDER-MAN EXHALES]
+
+873
+00:43:40,921 --> 00:43:41,956
+DeWolff, is she hurt?
+
+874
+00:43:43,090 --> 00:43:44,391
+Is she okay?
+
+875
+00:43:44,425 --> 00:43:45,926
+-Is she okay?
+-DEWOLFF: No!
+
+876
+00:43:45,960 --> 00:43:46,994
+-SPIDER-MAN: Just let me go...
+-Don't!
+
+877
+00:43:47,027 --> 00:43:47,928
+What is going on with you?
+
+878
+00:43:47,962 --> 00:43:49,263
+SPIDER-MAN: That wasn't
+Scorpion, okay?
+
+879
+00:43:49,296 --> 00:43:50,431
+[STUTTERING] I mean it was,
+
+880
+00:43:50,464 --> 00:43:53,200
+but he was possessed by whatever
+hijacked that tank, okay?
+
+881
+00:43:53,234 --> 00:43:55,369
+-Look, please can I just...
+-All right, listen. Slow down.
+
+882
+00:43:55,402 --> 00:43:57,938
+[SPIDER-MAN GROANING IN PAIN]
+
+883
+00:43:57,972 --> 00:43:59,874
+Listen, I don't know
+what this is,
+
+884
+00:43:59,907 --> 00:44:02,243
+but I need you
+to pull it together.
+
+885
+00:44:02,276 --> 00:44:03,878
+You almost killed a cop.
+
+886
+00:44:06,714 --> 00:44:08,182
+This isn't you.
+
+887
+00:44:08,215 --> 00:44:09,884
+SPIDER-MAN: I know. I'm sorry.
+
+888
+00:44:09,917 --> 00:44:13,354
+If you act like this again,
+I cannot protect you.
+
+889
+00:44:13,387 --> 00:44:16,223
+Whatever this is,
+you need to fix it.
+
+890
+00:44:16,257 --> 00:44:18,259
+[SPIDER-MAN PANTING]
+
+891
+00:44:27,234 --> 00:44:28,235
+[GRUNTS]
+
+892
+00:44:31,839 --> 00:44:32,873
+[GROANS SOFTLY]
+
+893
+00:44:35,075 --> 00:44:37,378
+[INDISTINCT CHATTER]
+
+894
+00:44:37,411 --> 00:44:39,847
+PROFESSOR: <i>Through lattice</i>
+<i>chromodynamics,</i>
+
+895
+00:44:41,148 --> 00:44:44,952
+we can arrange time and space
+in a grid.
+
+896
+00:44:44,985 --> 00:44:47,721
+Which allows us to simulate
+
+897
+00:44:47,755 --> 00:44:49,957
+the quarks binding
+into the protons.
+
+898
+00:44:50,991 --> 00:44:53,227
+Cindy, is this
+a question about protons
+
+899
+00:44:53,260 --> 00:44:55,362
+-or more stuff about Avengers?
+-[SCATTERED LAUGHTER]
+
+900
+00:44:55,396 --> 00:44:58,933
+[CHUCKLES] Okay.
+Guys, I love to tell stories,
+
+901
+00:44:58,966 --> 00:45:00,234
+but you know I...
+I gotta teach you
+
+902
+00:45:00,267 --> 00:45:02,002
+some physics
+at some point here.
+
+903
+00:45:02,036 --> 00:45:03,971
+[STUDENTS BOOING, JEERING]
+
+904
+00:45:06,273 --> 00:45:08,510
+All right. Let it rip, Cindy.
+
+905
+00:45:08,543 --> 00:45:11,912
+If Thanos was so worried
+about over-population,
+
+906
+00:45:11,946 --> 00:45:13,747
+why didn't he
+just use the magic glove
+
+907
+00:45:13,781 --> 00:45:14,949
+to make more food?
+
+908
+00:45:15,816 --> 00:45:17,751
+[STUDENTS MURMURING]
+
+909
+00:45:19,019 --> 00:45:21,121
+Arthur, you wanna
+answer that question?
+
+910
+00:45:21,989 --> 00:45:25,426
+Hulk smash!
+
+911
+00:45:25,459 --> 00:45:27,294
+[STUDENTS CHEERING]
+
+912
+00:45:28,996 --> 00:45:30,097
+There you have it.
+
+913
+00:45:30,565 --> 00:45:31,799
+[BANNER HUMMING]
+
+914
+00:45:31,832 --> 00:45:33,801
+Uh, excuse me, Dr. Banner,
+I, um...
+
+915
+00:45:34,468 --> 00:45:36,103
+Uh...
+
+916
+00:45:36,136 --> 00:45:37,037
+-You okay?
+-Yeah,
+
+917
+00:45:37,071 --> 00:45:38,038
+sorry, it's just a headache.
+
+918
+00:45:38,072 --> 00:45:39,073
+Um, have you got a minute?
+
+919
+00:45:39,106 --> 00:45:41,543
+I wanted to talk to you
+about your inhibitor.
+
+920
+00:45:41,576 --> 00:45:45,547
+Oh. Sure. Don't worry.
+It's got fail-safes.
+
+921
+00:45:45,580 --> 00:45:46,681
+I'm not gonna turn into
+
+922
+00:45:46,715 --> 00:45:50,351
+the big green raging monster
+machine in the cafeteria.
+
+923
+00:45:50,384 --> 00:45:53,020
+But if you do see me
+with this thing off, run.
+
+924
+00:45:53,053 --> 00:45:55,289
+-[GROWLS]
+-[BOTH LAUGHING]
+
+925
+00:45:56,423 --> 00:45:58,125
+No, but you're
+using target-specific
+
+926
+00:45:58,158 --> 00:45:59,860
+short interfering RNA, right?
+
+927
+00:46:01,262 --> 00:46:02,229
+It's like gene silencing,
+
+928
+00:46:02,263 --> 00:46:04,198
+you're just incorporating
+the gamma radiation?
+
+929
+00:46:06,900 --> 00:46:08,002
+What'd you say your name was?
+
+930
+00:46:09,236 --> 00:46:12,406
+Uh, Ned... Leeds.
+
+931
+00:46:12,439 --> 00:46:15,510
+So you found a way to suppress
+the expression of DNA
+
+932
+00:46:15,543 --> 00:46:17,411
+even as
+it's undergoing the mutation
+
+933
+00:46:17,444 --> 00:46:18,546
+due to gamma radiation, right?
+
+934
+00:46:18,580 --> 00:46:21,982
+-Yes.
+-Okay, so my question is,
+
+935
+00:46:22,016 --> 00:46:25,152
+would that same thing
+be possible with DNA
+
+936
+00:46:25,185 --> 00:46:26,954
+that's mutating
+for another reason?
+
+937
+00:46:29,023 --> 00:46:29,890
+What's the reason?
+
+938
+00:46:31,425 --> 00:46:34,028
+[CHUCKLING] I don't know.
+Uh... [SNIFFS]
+
+939
+00:46:34,061 --> 00:46:35,195
+Let's say that the...
+
+940
+00:46:35,229 --> 00:46:38,065
+the host genome is mixed with
+some kind of foreign DNA.
+
+941
+00:46:38,098 --> 00:46:39,133
+Theoretically.
+
+942
+00:46:40,067 --> 00:46:43,871
+Theoretically?
+Yes, that's possible. Yes.
+
+943
+00:46:43,904 --> 00:46:47,141
+So, could you suppress only some
+parts of that DNA expression?
+
+944
+00:46:47,174 --> 00:46:50,477
+Like the bad aspects but just
+keep all of the good stuff?
+
+945
+00:46:50,512 --> 00:46:52,446
+You mean,
+like, if I wanted to keep
+
+946
+00:46:52,479 --> 00:46:53,548
+some parts of Hulk
+but not others?
+
+947
+00:46:53,581 --> 00:46:55,249
+Right.
+
+948
+00:46:55,282 --> 00:47:00,487
+It would be enormously
+dangerous and complex, but...
+
+949
+00:47:00,522 --> 00:47:04,358
+if you were able to target
+the correct mRNA strand...
+
+950
+00:47:05,259 --> 00:47:06,427
+Possibly.
+
+951
+00:47:06,460 --> 00:47:08,996
+Wait, so you could just turn
+the mutating gene on and off
+
+952
+00:47:09,029 --> 00:47:11,465
+as long as you do it
+before the mRNA transcription?
+
+953
+00:47:12,166 --> 00:47:13,167
+Maybe.
+
+954
+00:47:15,369 --> 00:47:18,272
+I mean, if you apply the same
+thinking, you could even...
+
+955
+00:47:18,305 --> 00:47:20,374
+develop some kind of
+automatic inhibitor
+
+956
+00:47:20,407 --> 00:47:24,411
+that would just adjust
+to any type of mutation.
+
+957
+00:47:24,445 --> 00:47:27,348
+Well, now you're talking about
+a universal inhibitor
+
+958
+00:47:27,381 --> 00:47:30,484
+that would control anyone
+who has any powers.
+
+959
+00:47:31,985 --> 00:47:33,153
+It's a dangerous idea.
+
+960
+00:47:34,321 --> 00:47:36,323
+Well, yeah.
+But it's theoretical, right?
+
+961
+00:47:39,093 --> 00:47:40,494
+You're not
+one of my students, are ya?
+
+962
+00:47:43,097 --> 00:47:45,332
+-No. I'm a grad student.
+-Hmm.
+
+963
+00:47:45,366 --> 00:47:47,401
+I've, uh... [CLEARS THROAT]
+
+964
+00:47:47,434 --> 00:47:48,369
+I've taken enough of your time.
+
+965
+00:47:48,402 --> 00:47:51,138
+I gotta get some books
+back to the library.
+
+966
+00:47:51,171 --> 00:47:52,439
+The library is that way.
+
+967
+00:47:54,441 --> 00:47:56,611
+Right. Right. [CHUCKLES] Duh.
+
+968
+00:47:56,644 --> 00:47:58,112
+How would you decide?
+
+969
+00:47:59,012 --> 00:48:01,048
+What's that?
+
+970
+00:48:01,081 --> 00:48:03,685
+Well, what parts of nature
+are good or bad?
+
+971
+00:48:03,718 --> 00:48:05,687
+What if you're trying
+to control the expression
+
+972
+00:48:05,720 --> 00:48:07,921
+of something that
+needs to be expressed?
+
+973
+00:48:08,956 --> 00:48:10,924
+[INTRIGUING MUSIC PLAYING]
+
+974
+00:48:13,561 --> 00:48:15,129
+Good luck
+with your studies, Ned.
+
+975
+00:48:17,131 --> 00:48:18,465
+Thank you, Professor.
+
+976
+00:48:19,333 --> 00:48:20,267
+NARRATOR: <i>Like reptiles...</i>
+
+977
+00:48:20,300 --> 00:48:23,036
+-PETER: Oh, God.
+<i>-...amphibians and arthropods,</i>
+
+978
+00:48:23,070 --> 00:48:24,271
+<i>spiders shed skin</i>
+
+979
+00:48:24,304 --> 00:48:25,406
+<i>at key points</i>
+
+980
+00:48:25,439 --> 00:48:26,039
+<i>-in their life cycles.</i>
+<i>-</i> [CRACKLING]
+
+981
+00:48:26,073 --> 00:48:27,241
+<i>The process is known</i>
+
+982
+00:48:27,274 --> 00:48:28,409
+<i>-as molting.</i>
+<i>-</i> [COMPUTER TRILLS, BEEPS]
+
+983
+00:48:28,442 --> 00:48:31,211
+E.V.: <i>Fourth inhibitor</i>
+<i>prototype complete.</i>
+
+984
+00:48:31,245 --> 00:48:32,580
+NARRATOR: <i>While molting</i>
+<i>is a natural part</i>
+
+985
+00:48:32,614 --> 00:48:34,649
+<i>-of a spider's life cycle...</i>
+-PETER: Okay, come on. Come on.
+
+986
+00:48:34,682 --> 00:48:35,683
+NARRATOR: <i>...it can</i>
+<i>leave the spider</i>
+
+987
+00:48:35,717 --> 00:48:36,684
+<i>vulnerable to threats.</i>
+
+988
+00:48:36,718 --> 00:48:39,219
+Upload inhibitor
+beta build seven.
+
+989
+00:48:39,253 --> 00:48:40,254
+NARRATOR:
+<i>...process is initiated by</i>
+
+990
+00:48:40,287 --> 00:48:41,054
+<i>-hormonal changes...</i>
+-E.V.: <i>Uploaded.</i>
+
+991
+00:48:41,088 --> 00:48:42,657
+<i>Would you like to run a test?</i>
+
+992
+00:48:43,390 --> 00:48:44,458
+Yeah, run it.
+
+993
+00:48:44,491 --> 00:48:45,693
+NARRATOR: <i>...few hours</i>
+<i>to several days.</i>
+
+994
+00:48:45,727 --> 00:48:50,197
+<i>Spiders have three stages</i>
+<i>in their life cycle.</i>
+
+995
+00:48:50,230 --> 00:48:53,434
+<i>Each stage is characterized</i>
+<i>by physical changes,</i>
+
+996
+00:48:53,467 --> 00:48:55,703
+<i>with the largest changes</i>
+<i>occurring during</i>
+
+997
+00:48:55,737 --> 00:48:58,640
+<i>the beautiful transition</i>
+<i>to adulthood.</i>
+
+998
+00:49:01,308 --> 00:49:03,177
+<i>For those who make it through,</i>
+
+999
+00:49:03,210 --> 00:49:05,479
+<i>molting amounts to</i>
+<i>a kind of rebirth.</i>
+
+1000
+00:49:05,513 --> 00:49:07,047
+Can you turn
+that spider stuff off?
+
+1001
+00:49:07,080 --> 00:49:09,249
+E.V.: <i>Turning off video.</i>
+
+1002
+00:49:09,283 --> 00:49:10,685
+<i>-Inhibitor active.</i>
+-Okay, here we go.
+
+1003
+00:49:10,718 --> 00:49:12,720
+Come on. Come on. [SNIFFS]
+
+1004
+00:49:13,655 --> 00:49:15,255
+Keep an eye on my vitals.
+
+1005
+00:49:16,423 --> 00:49:17,592
+-[DEVICE BEEPS]
+-[PETER GROANS]
+
+1006
+00:49:17,625 --> 00:49:19,259
+E.V.: <i>Inhibitor engaged.</i>
+
+1007
+00:49:19,293 --> 00:49:21,295
+[SOFT MUSIC PLAYING]
+
+1008
+00:49:23,230 --> 00:49:26,701
+<i>Suppressing arachnid hormones</i>
+<i>to your baseline levels.</i>
+
+1009
+00:49:27,434 --> 00:49:28,736
+[SIGHS SOFTLY]
+
+1010
+00:49:29,604 --> 00:49:30,605
+Okay.
+
+1011
+00:49:33,440 --> 00:49:34,609
+[GRUNTS]
+
+1012
+00:49:34,642 --> 00:49:36,276
+All right, E.V.,
+let's do this.
+
+1013
+00:49:36,310 --> 00:49:38,278
+E.V.: <i>Initiating</i>
+<i>field test one.</i>
+
+1014
+00:49:40,247 --> 00:49:41,583
+SPIDER-MAN: That's working.
+E.V.: <i>Alert.</i>
+
+1015
+00:49:41,616 --> 00:49:44,184
+<i>-</i> [SUIT BEEPING RAPIDLY]
+<i>-Inhibitor is overheating.</i>
+
+1016
+00:49:44,218 --> 00:49:45,385
+<i>Functionality reducing.</i>
+
+1017
+00:49:45,419 --> 00:49:47,221
+SPIDER-MAN: Yeah,
+I'm sensing that.
+
+1018
+00:49:47,254 --> 00:49:48,523
+E.V.: <i>Alert.</i>
+
+1019
+00:49:48,556 --> 00:49:49,657
+<i>-Senses are overloaded.</i>
+<i>-</i> [SPIDER-MAN GROANS]
+
+1020
+00:49:49,691 --> 00:49:50,792
+E.V.: [ECHOING] <i>Alert.</i>
+<i>Senses are overloaded.</i>
+
+1021
+00:49:50,825 --> 00:49:53,360
+<i>-Senses are overloaded. Alert.</i>
+-[SPIDER-MAN GROANING]
+
+1022
+00:49:53,393 --> 00:49:55,797
+-[WEB CARTRIDGES CLINK, CLATTER]
+-E.V.: <i>Web grenades activated.</i>
+
+1023
+00:49:55,830 --> 00:49:57,030
+[BEEPING RAPIDLY]
+
+1024
+00:49:57,832 --> 00:49:59,534
+-SPIDER-MAN: Oh, sh...
+-[EXPLOSION]
+
+1025
+00:49:59,567 --> 00:50:01,669
+-[PEOPLE GASPING]
+-[CLATTERING]
+
+1026
+00:50:03,771 --> 00:50:06,608
+-[SPIDER-MAN GROANING]
+-[INDISTINCT CHATTER]
+
+1027
+00:50:11,411 --> 00:50:13,748
+E.V.: <i>Inhibitor field test</i>
+<i>one, failure.</i>
+
+1028
+00:50:13,781 --> 00:50:16,551
+-[DEVICE POWERS OFF]
+-[SPIDER-MAN GROANS]
+
+1029
+00:50:16,584 --> 00:50:20,153
+Yo, Spider-Man, you okay?
+
+1030
+00:50:20,187 --> 00:50:22,657
+SPIDER-MAN: Yeah. I'm just
+trying out some new tech.
+
+1031
+00:50:22,690 --> 00:50:26,260
+Oh, yeah. To get rid
+of that monster inside you?
+
+1032
+00:50:26,293 --> 00:50:28,295
+[SUSPENSEFUL MUSIC PLAYING]
+
+1033
+00:50:31,164 --> 00:50:32,499
+Still can't sense me, huh?
+
+1034
+00:50:34,234 --> 00:50:37,237
+Guess your technology
+isn't working.
+
+1035
+00:50:37,271 --> 00:50:39,541
+You know, you're the only
+person I've met that I can't...
+
+1036
+00:50:40,575 --> 00:50:42,577
+hop into.
+
+1037
+00:50:42,610 --> 00:50:44,646
+SPIDER-MAN: I'm sure that's
+really frustrating for you.
+
+1038
+00:50:44,679 --> 00:50:46,246
+Oh, I'll get in there one day.
+
+1039
+00:50:46,280 --> 00:50:47,447
+SPIDER-MAN: What do you want?
+
+1040
+00:50:47,481 --> 00:50:49,249
+Oh, boy.
+
+1041
+00:50:49,283 --> 00:50:52,587
+I wanna know why
+a half-human, half-spider
+
+1042
+00:50:52,620 --> 00:50:54,656
+would decide to
+work for an organization
+
+1043
+00:50:54,689 --> 00:50:58,358
+whose sworn mission is to hunt
+down anybody who's different.
+
+1044
+00:50:58,392 --> 00:51:00,695
+SPIDER-MAN: [SCOFFS]
+Damage Control isn't after you
+
+1045
+00:51:00,728 --> 00:51:02,530
+because you're different.
+
+1046
+00:51:02,564 --> 00:51:04,498
+They're hunting you down
+because you're dangerous.
+
+1047
+00:51:04,532 --> 00:51:06,734
+Now, what do you want?
+
+1048
+00:51:06,768 --> 00:51:09,436
+Since you're
+a very simple spider,
+
+1049
+00:51:09,469 --> 00:51:10,805
+let me spell it out for you.
+
+1050
+00:51:11,906 --> 00:51:15,342
+Damage Control
+has something that I need.
+
+1051
+00:51:15,375 --> 00:51:16,678
+SPIDER-MAN: Oh,
+you mean V-Max?
+
+1052
+00:51:19,681 --> 00:51:21,381
+I was planning to use Scorpion
+to get it,
+
+1053
+00:51:21,415 --> 00:51:23,618
+but you keep
+getting in my way.
+
+1054
+00:51:23,651 --> 00:51:26,286
+SPIDER-MAN: I will always
+be in your way.
+
+1055
+00:51:26,320 --> 00:51:29,456
+Oh, you sure about that,
+Peter Parker?
+
+1056
+00:51:29,489 --> 00:51:31,491
+[SUSPENSEFUL MUSIC CRESCENDOES]
+
+1057
+00:51:33,928 --> 00:51:37,230
+<i>You know, your apartment</i>
+<i>is kinda like a parody</i>
+
+1058
+00:51:37,264 --> 00:51:40,835
+of where you think a sad single
+guy in his 20s might live.
+
+1059
+00:51:40,868 --> 00:51:45,640
+Take-out containers,
+free weights, protein powder.
+
+1060
+00:51:46,841 --> 00:51:49,209
+[LAUGHING]
+
+1061
+00:51:50,511 --> 00:51:51,813
+SPIDER-MAN: You're bluffing.
+
+1062
+00:51:51,846 --> 00:51:54,414
+You know, you're not hard
+to track down, Peter.
+
+1063
+00:51:54,448 --> 00:51:57,484
+Well, at least
+not for someone like me.
+
+1064
+00:51:58,720 --> 00:52:00,788
+I did find
+one interesting thing, though.
+
+1065
+00:52:02,189 --> 00:52:03,423
+<i>In of all places...</i>
+
+1066
+00:52:05,593 --> 00:52:06,628
+coffee cup.
+
+1067
+00:52:09,329 --> 00:52:10,898
+SPIDER-MAN: E.V.,
+display home work station.
+
+1068
+00:52:13,534 --> 00:52:14,702
+MAN: You spent four years
+
+1069
+00:52:14,736 --> 00:52:17,872
+erasing Peter Parker
+from existence?
+
+1070
+00:52:17,905 --> 00:52:21,174
+No wonder the spider's
+trying to swallow up the man.
+
+1071
+00:52:21,208 --> 00:52:23,176
+I wonder if MJ
+would even recognize you.
+
+1072
+00:52:24,378 --> 00:52:26,514
+-[GROANS]
+-[WHOOSHES]
+
+1073
+00:52:26,547 --> 00:52:28,281
+I think I might
+go see how she's doing.
+
+1074
+00:52:28,315 --> 00:52:29,449
+SPIDER-MAN: I'm not gonna
+let that happen.
+
+1075
+00:52:29,483 --> 00:52:31,451
+No, her roommate
+was nice enough
+
+1076
+00:52:31,485 --> 00:52:33,621
+-to post a new address online.
+-[WHOOSHES]
+
+1077
+00:52:33,655 --> 00:52:36,758
+How about this?
+I'll race you there.
+
+1078
+00:52:36,791 --> 00:52:37,792
+SPIDER-MAN: If you touch her...
+
+1079
+00:52:38,526 --> 00:52:40,227
+Better start swinging.
+
+1080
+00:52:40,260 --> 00:52:41,596
+I'm fast.
+
+1081
+00:52:41,629 --> 00:52:42,730
+[PEOPLE SCREAMING]
+
+1082
+00:52:42,764 --> 00:52:45,198
+-[WHOOSHING]
+-[PEOPLE GROANING]
+
+1083
+00:52:49,871 --> 00:52:51,539
+[SPIDER-MAN GRUNTS]
+
+1084
+00:52:51,572 --> 00:52:53,941
+[GRIPPING MUSIC PLAYING]
+
+1085
+00:52:55,743 --> 00:52:58,278
+[SPIDER-MAN GROANING]
+
+1086
+00:53:02,282 --> 00:53:04,217
+[YELLS, GRUNTS]
+
+1087
+00:53:04,852 --> 00:53:05,953
+MAN: Hey.
+
+1088
+00:53:05,987 --> 00:53:08,255
+It's a long way to MJ's.
+
+1089
+00:53:08,288 --> 00:53:10,692
+-[WHOOSHES]
+-You better pick up the pace.
+
+1090
+00:53:10,725 --> 00:53:13,326
+-[WHOOSHING]
+-[PEOPLE GROANING]
+
+1091
+00:53:17,598 --> 00:53:19,600
+SPIDER-MAN: E.V.,
+track physical anomalies.
+
+1092
+00:53:20,735 --> 00:53:22,302
+E.V.: <i>Searching</i>
+<i>for physical anomalies</i>
+
+1093
+00:53:22,335 --> 00:53:23,738
+<i>-between subjects.</i>
+-[COMPUTER BEEPING]
+
+1094
+00:53:23,771 --> 00:53:24,839
+<i>Please stand by.</i>
+
+1095
+00:53:24,872 --> 00:53:27,575
+[SPIDER-MAN GROANING, SCREAMING]
+
+1096
+00:53:28,408 --> 00:53:29,276
+[SPIDER-MAN EXCLAIMS]
+
+1097
+00:53:29,309 --> 00:53:31,879
+Thank you all so much
+for coming today.
+
+1098
+00:53:31,913 --> 00:53:34,682
+-[SHATTERING]
+-[PEOPLE EXCLAIMING]
+
+1099
+00:53:34,716 --> 00:53:36,651
+[SPIDER-MAN GROANING]
+
+1100
+00:53:37,752 --> 00:53:40,320
+Uh... I'm sorry about that.
+
+1101
+00:53:40,353 --> 00:53:42,355
+Give it up for Spider-Man,
+
+1102
+00:53:42,389 --> 00:53:43,925
+in a race
+for the love of his life,
+
+1103
+00:53:43,958 --> 00:53:45,626
+and it's not looking good.
+
+1104
+00:53:45,660 --> 00:53:47,762
+-[WHOOSHES]
+-[BRIDE GASPS]
+
+1105
+00:53:47,795 --> 00:53:49,997
+Come on, Spidey. Keep up.
+
+1106
+00:53:51,065 --> 00:53:52,299
+SPIDER-MAN: Excuse me. Sorry.
+
+1107
+00:53:52,332 --> 00:53:54,769
+-[WHOOSHING]
+-[PEOPLE GROANING]
+
+1108
+00:53:57,939 --> 00:53:59,941
+[SPIDER-MAN PANTING]
+
+1109
+00:54:00,975 --> 00:54:02,009
+WOMAN: Spider-Man!
+
+1110
+00:54:02,043 --> 00:54:03,778
+[TRACKER BEEPING]
+
+1111
+00:54:05,713 --> 00:54:07,582
+SPIDER-MAN: E.V., run these
+numbers with the others.
+
+1112
+00:54:08,950 --> 00:54:10,785
+[GRUNTS]
+
+1113
+00:54:10,818 --> 00:54:13,320
+E.V.: <i>Analyzing jump distances</i>
+<i>for patterns.</i>
+
+1114
+00:54:13,353 --> 00:54:15,556
+[SPIDER-MAN GROANING]
+
+1115
+00:54:15,590 --> 00:54:17,357
+Get me that jump data.
+
+1116
+00:54:17,390 --> 00:54:18,425
+E.V.: <i>Calculating.</i>
+
+1117
+00:54:18,458 --> 00:54:19,727
+[SPIDER-MAN SCREAMING]
+
+1118
+00:54:22,096 --> 00:54:23,831
+Come on, I need an answer!
+
+1119
+00:54:23,865 --> 00:54:25,465
+[COMPUTER BEEPING]
+
+1120
+00:54:25,499 --> 00:54:26,968
+E.V.: <i>Calculations complete.</i>
+
+1121
+00:54:30,738 --> 00:54:32,907
+-[SPIDER-MAN GRUNTS]
+-[MAN GRUNTS]
+
+1122
+00:54:42,650 --> 00:54:44,786
+SPIDER-MAN: You have a limit
+to your jump radius, don't ya?
+
+1123
+00:54:45,452 --> 00:54:47,487
+Thirty-three feet.
+
+1124
+00:54:47,522 --> 00:54:49,724
+I don't see anybody up here
+for you to hop into.
+
+1125
+00:54:51,025 --> 00:54:52,660
+Very clever.
+
+1126
+00:54:52,693 --> 00:54:55,830
+Like I said,
+you're not getting near her.
+
+1127
+00:54:56,697 --> 00:54:58,966
+[HEROIC MUSIC PLAYING]
+
+1128
+00:55:06,406 --> 00:55:09,811
+[UPBEAT SONG
+PLAYING OVER HEADPHONES]
+
+1129
+00:55:09,844 --> 00:55:12,013
+-[THUDS]
+-MJ: [GASPS] Hey, hey, hey.
+
+1130
+00:55:12,046 --> 00:55:13,047
+SPIDER-MAN: I'm sorry,
+but you're in danger.
+
+1131
+00:55:13,080 --> 00:55:14,115
+-Where's your roommate?
+-What?
+
+1132
+00:55:14,148 --> 00:55:15,382
+SPIDER-MAN: Where's Ned?
+
+1133
+00:55:15,415 --> 00:55:16,449
+Uh, in Boston
+with friends. Why?
+
+1134
+00:55:16,483 --> 00:55:17,552
+SPIDER-MAN: Okay, good.
+You gotta come with me.
+
+1135
+00:55:17,585 --> 00:55:19,720
+What? I don't know if
+you're the real Spider-Man.
+
+1136
+00:55:19,754 --> 00:55:21,388
+-I'm not coming with you.
+-We don't have time for this.
+
+1137
+00:55:21,421 --> 00:55:22,223
+Please. Come on.
+
+1138
+00:55:22,256 --> 00:55:23,591
+You need to get out
+of my apartment.
+
+1139
+00:55:23,624 --> 00:55:24,959
+Look, this is gonna
+sound insane,
+
+1140
+00:55:24,992 --> 00:55:26,359
+but there is someone
+who is after you
+
+1141
+00:55:26,393 --> 00:55:27,628
+who is really dangerous,
+okay?
+
+1142
+00:55:27,662 --> 00:55:29,530
+And I promised you
+that I would keep you safe.
+
+1143
+00:55:29,564 --> 00:55:32,533
+[PANTING] Please, you just
+have to trust me. Come on.
+
+1144
+00:55:35,903 --> 00:55:37,004
+Fine.
+
+1145
+00:55:37,038 --> 00:55:39,472
+[SOMBER INSTRUMENTAL PLAYING]
+
+1146
+00:55:39,507 --> 00:55:42,076
+-[CARS HONKING]
+-[SIREN WAILING]
+
+1147
+00:55:43,711 --> 00:55:44,846
+SPIDER-MAN: [SOFTLY]
+Web. Stop.
+
+1148
+00:55:48,448 --> 00:55:49,449
+Web. Stop.
+
+1149
+00:55:53,588 --> 00:55:54,655
+Web. Stop.
+
+1150
+00:55:59,026 --> 00:56:01,662
+-[GRUNTS] Are you okay?
+-MJ: Yeah, yeah, I'm fine.
+
+1151
+00:56:01,696 --> 00:56:04,131
+SPIDER-MAN: Okay.
+Uh, we should be safe up here.
+
+1152
+00:56:04,165 --> 00:56:05,465
+MJ: Okay, well, safe from what?
+
+1153
+00:56:05,498 --> 00:56:08,002
+SPIDER-MAN: Uh,
+I'm not entirely sure.
+
+1154
+00:56:08,035 --> 00:56:09,704
+Okay, well,
+what do they want with me?
+
+1155
+00:56:09,737 --> 00:56:10,972
+SPIDER-MAN: [STUTTERS]
+I don't know.
+
+1156
+00:56:11,005 --> 00:56:12,607
+MJ: You don't know?
+
+1157
+00:56:12,640 --> 00:56:14,108
+[STUTTERS]
+It doesn't make any sense.
+
+1158
+00:56:14,141 --> 00:56:15,743
+Why would they choose me?
+
+1159
+00:56:15,776 --> 00:56:17,945
+SPIDER-MAN: Um, I wish
+I could tell you. I just...
+
+1160
+00:56:17,979 --> 00:56:18,980
+Uh...
+
+1161
+00:56:20,681 --> 00:56:22,116
+We knew each other, didn't we?
+
+1162
+00:56:25,853 --> 00:56:26,854
+SPIDER-MAN: What?
+
+1163
+00:56:27,855 --> 00:56:29,123
+It's the only explanation.
+
+1164
+00:56:30,591 --> 00:56:31,726
+It's been driving me crazy
+for years,
+
+1165
+00:56:31,759 --> 00:56:34,996
+all the times that Spider-Man
+saved either me or Ned.
+
+1166
+00:56:35,029 --> 00:56:36,130
+It was the Washington Monument,
+
+1167
+00:56:36,163 --> 00:56:37,698
+and then it was London
+and Prague
+
+1168
+00:56:37,732 --> 00:56:39,700
+and the Night Monkey.
+
+1169
+00:56:39,734 --> 00:56:42,069
+I mean, twice is a coincidence,
+but over and over again...
+
+1170
+00:56:44,605 --> 00:56:46,173
+We knew each other.
+Tell me I'm wrong.
+
+1171
+00:56:48,209 --> 00:56:49,510
+SPIDER-MAN: Well, you're wrong.
+
+1172
+00:56:49,543 --> 00:56:50,978
+What were we?
+Were we classmates
+
+1173
+00:56:51,012 --> 00:56:52,813
+or friends or something?
+
+1174
+00:56:52,847 --> 00:56:53,881
+SPIDER-MAN: [STUTTERS]
+Look, I... I don't know
+
+1175
+00:56:53,915 --> 00:56:55,149
+what you're talking about.
+
+1176
+00:56:55,182 --> 00:56:56,517
+MJ: Were we something more?
+
+1177
+00:56:58,653 --> 00:57:00,988
+I just, I can't...
+I can't remember.
+
+1178
+00:57:01,022 --> 00:57:03,057
+And I feel like
+someone scrambled my brain.
+
+1179
+00:57:03,090 --> 00:57:05,660
+And you're the only one
+who would know why.
+
+1180
+00:57:05,693 --> 00:57:07,528
+SPIDER-MAN: [EXHALES]
+This is crazy. I can't...
+
+1181
+00:57:07,561 --> 00:57:09,496
+MJ: I know that you can't
+tell me the truth.
+
+1182
+00:57:12,266 --> 00:57:13,668
+But I need to know.
+
+1183
+00:57:14,602 --> 00:57:16,671
+[SOFT MUSIC PLAYING]
+
+1184
+00:57:18,806 --> 00:57:20,808
+Maybe there's a part of me
+that still remembers.
+
+1185
+00:58:01,315 --> 00:58:02,516
+Peter.
+
+1186
+00:58:04,552 --> 00:58:05,653
+MJ.
+
+1187
+00:58:05,686 --> 00:58:06,754
+MJ: Hey, Peter.
+
+1188
+00:58:09,290 --> 00:58:10,624
+[PETER CRYING]
+
+1189
+00:58:12,960 --> 00:58:14,729
+PETER: I've missed you
+so much.
+
+1190
+00:58:19,700 --> 00:58:21,268
+I can't believe
+you figured it out.
+
+1191
+00:58:21,802 --> 00:58:22,837
+MJ: I did.
+
+1192
+00:58:28,642 --> 00:58:31,012
+Go ahead, Peter. Touch her.
+
+1193
+00:58:32,346 --> 00:58:33,781
+Hold her.
+
+1194
+00:58:35,082 --> 00:58:36,684
+You've been wanting to
+for so long.
+
+1195
+00:58:36,717 --> 00:58:38,719
+[OMINOUS MUSIC PLAYING]
+
+1196
+00:58:45,359 --> 00:58:47,962
+True love's kiss
+breaks the spell
+
+1197
+00:58:47,995 --> 00:58:49,864
+and reunites
+the star-crossed lovers.
+
+1198
+00:58:52,066 --> 00:58:53,200
+MJ would vomit.
+
+1199
+00:58:56,003 --> 00:58:57,705
+You really are
+a simple spider, aren't you?
+
+1200
+00:59:01,142 --> 00:59:02,143
+I see why you like her.
+
+1201
+00:59:02,877 --> 00:59:03,911
+She's, uh...
+
+1202
+00:59:05,046 --> 00:59:06,580
+she's smart...
+
+1203
+00:59:07,014 --> 00:59:08,049
+funny...
+
+1204
+00:59:08,949 --> 00:59:10,184
+and a little dark and twisted.
+
+1205
+00:59:11,986 --> 00:59:12,987
+[CHUCKLES]
+
+1206
+00:59:14,221 --> 00:59:16,357
+I mean, it is sad.
+
+1207
+00:59:16,390 --> 00:59:19,693
+There is, like,
+no thoughts of you in here...
+
+1208
+00:59:20,995 --> 00:59:22,163
+whatsoever.
+
+1209
+00:59:23,798 --> 00:59:25,066
+But you knew that, didn't you?
+
+1210
+00:59:26,367 --> 00:59:28,736
+You're a monster.
+
+1211
+00:59:28,769 --> 00:59:30,638
+If you loved someone
+the way that I love her,
+
+1212
+00:59:30,671 --> 00:59:32,173
+then you'd know that
+what you're doing right now
+
+1213
+00:59:32,206 --> 00:59:33,340
+is unforgivable.
+
+1214
+00:59:33,374 --> 00:59:34,642
+Oh, is that so?
+
+1215
+00:59:41,649 --> 00:59:42,850
+You know, some people would kill
+
+1216
+00:59:42,883 --> 00:59:44,685
+to hold the person they love
+one last time.
+
+1217
+00:59:46,420 --> 00:59:47,922
+Stop it now.
+
+1218
+00:59:50,658 --> 00:59:51,659
+[GROANING]
+
+1219
+00:59:52,893 --> 00:59:54,228
+[DISTORTED WARBLE]
+
+1220
+00:59:55,229 --> 00:59:56,230
+Oof.
+
+1221
+00:59:57,765 --> 00:59:59,066
+You're running out of time,
+Peter.
+
+1222
+01:00:00,201 --> 01:00:02,203
+Soon enough,
+it won't just be your friends
+
+1223
+01:00:02,236 --> 01:00:03,804
+who don't remember
+Peter Parker.
+
+1224
+01:00:05,206 --> 01:00:06,974
+Maybe you should write
+a letter to yourself.
+
+1225
+01:00:07,408 --> 01:00:08,943
+[GRUNTING]
+
+1226
+01:00:11,679 --> 01:00:12,713
+Get out of her.
+
+1227
+01:00:14,148 --> 01:00:15,649
+Who's the monster now, Peter?
+
+1228
+01:00:17,451 --> 01:00:20,321
+-[PETER GRUNTS]
+-[GRIPPING MUSIC PLAYING]
+
+1229
+01:00:22,857 --> 01:00:24,425
+[WHOOSHES]
+
+1230
+01:00:24,458 --> 01:00:26,627
+[GASPS, WHIMPERS]
+
+1231
+01:00:33,134 --> 01:00:34,768
+[MJ SCREAMS]
+
+1232
+01:00:36,937 --> 01:00:38,906
+[SPIDER-MAN GRUNTS, PANTS]
+
+1233
+01:00:38,939 --> 01:00:40,407
+MJ.
+
+1234
+01:00:40,441 --> 01:00:42,943
+MJ. No, no, no. Oh, God.
+
+1235
+01:00:42,977 --> 01:00:44,712
+Oh, God, please, no, come on.
+
+1236
+01:00:44,745 --> 01:00:46,313
+Come on, come on, come on.
+
+1237
+01:00:46,347 --> 01:00:49,016
+Oh, thank God. Oh, thank God.
+
+1238
+01:00:49,049 --> 01:00:52,019
+Oh, you're okay.
+Oh, you're okay.
+
+1239
+01:00:52,052 --> 01:00:53,921
+-Oh, I'm so sorry.
+-[CAR DOOR CLOSES]
+
+1240
+01:00:55,823 --> 01:00:58,058
+Stop. Wait, wait, stop, stop,
+please, I'll quit.
+
+1241
+01:00:58,092 --> 01:01:00,194
+You... You win, you win,
+you win. Just don't hurt her.
+
+1242
+01:01:03,230 --> 01:01:04,798
+You're a mess, Spider-Man.
+
+1243
+01:01:07,368 --> 01:01:09,036
+Anytime I want...
+
+1244
+01:01:09,069 --> 01:01:10,337
+I can be anyone I want.
+
+1245
+01:01:11,739 --> 01:01:13,340
+So you can't protect MJ,
+
+1246
+01:01:14,842 --> 01:01:16,343
+even from herself.
+
+1247
+01:01:16,377 --> 01:01:18,279
+[SPIDER-MAN BREATHING HEAVILY]
+
+1248
+01:01:23,484 --> 01:01:25,219
+It really is a nice letter.
+
+1249
+01:01:26,187 --> 01:01:27,254
+Little heavy-handed.
+
+1250
+01:01:27,288 --> 01:01:28,422
+But not bad.
+
+1251
+01:01:33,260 --> 01:01:36,197
+[CAR DOOR OPENS, CLOSES]
+
+1252
+01:01:36,230 --> 01:01:38,365
+[SCANNER BEEPING]
+
+1253
+01:01:42,236 --> 01:01:43,904
+[SPIDER-MAN PANTING]
+
+1254
+01:01:47,408 --> 01:01:50,077
+You're okay. I'm gonna
+take you someplace safe.
+
+1255
+01:01:50,110 --> 01:01:51,111
+MJ: [WEAKLY] What?
+
+1256
+01:01:52,446 --> 01:01:53,847
+Take me to 3165...
+
+1257
+01:01:53,881 --> 01:01:55,216
+Lafayette Street.
+
+1258
+01:01:55,249 --> 01:01:57,418
+AUTOMATED VOICE: <i>Navigating</i>
+<i>to Empire State University.</i>
+
+1259
+01:02:02,456 --> 01:02:03,891
+MJ: Wait, wait, wait! Okay.
+
+1260
+01:02:05,926 --> 01:02:06,661
+SPIDER-MAN: I got you.
+I got you.
+
+1261
+01:02:06,695 --> 01:02:07,728
+MJ: Are you sure?
+SPIDER-MAN: Yep.
+
+1262
+01:02:07,761 --> 01:02:09,430
+Okay. 'Cause I feel like
+I'm slipping a little bit.
+
+1263
+01:02:09,463 --> 01:02:10,464
+-You're not slipping.
+-MJ: Okay.
+
+1264
+01:02:11,432 --> 01:02:12,433
+[MJ EXCLAIMS]
+
+1265
+01:02:12,466 --> 01:02:13,400
+SPIDER-MAN: You're okay,
+you're okay, you're okay.
+
+1266
+01:02:13,434 --> 01:02:15,369
+MJ: Yeah, yeah, yeah.
+I'm fine. I'm fine.
+
+1267
+01:02:18,239 --> 01:02:19,840
+-[SPIDER-MAN GRUNTS]
+-MJ: Okay.
+
+1268
+01:02:19,873 --> 01:02:21,041
+Can we just slow down
+
+1269
+01:02:21,075 --> 01:02:22,176
+-for like two seconds, please?
+-Well, we're almost there.
+
+1270
+01:02:22,209 --> 01:02:24,979
+Yeah, yeah, but you just
+told me I was mind controlled.
+
+1271
+01:02:25,012 --> 01:02:26,080
+SPIDER-MAN: Well,
+not technically.
+
+1272
+01:02:26,113 --> 01:02:27,181
+I mean, you're lucky
+I believe in that stuff, okay?
+
+1273
+01:02:27,214 --> 01:02:28,182
+Because governments
+have been doing it for years,
+
+1274
+01:02:28,215 --> 01:02:30,117
+-especially the French.
+-[SPIDER-MAN GROANS]
+
+1275
+01:02:30,150 --> 01:02:31,352
+-Are you okay?
+-SPIDER-MAN: Yeah...
+
+1276
+01:02:31,385 --> 01:02:32,820
+Look. Sorry.
+I'm just trying to take you
+
+1277
+01:02:32,853 --> 01:02:33,921
+someplace safe, okay?
+
+1278
+01:02:33,954 --> 01:02:35,923
+-[WEB CREAKS]
+-[METAL GROANS]
+
+1279
+01:02:37,258 --> 01:02:38,359
+[CLANKING]
+
+1280
+01:02:38,392 --> 01:02:39,827
+I don't feel safe.
+
+1281
+01:02:39,860 --> 01:02:41,829
+-[BOTH PANTING]
+-[CREAKING]
+
+1282
+01:02:41,862 --> 01:02:42,863
+MJ: Oh, shit.
+
+1283
+01:02:43,864 --> 01:02:44,999
+[METAL GROANS]
+
+1284
+01:02:45,032 --> 01:02:46,433
+[MJ SCREAMING]
+
+1285
+01:02:46,467 --> 01:02:47,434
+[BOTH GRUNTING]
+
+1286
+01:02:47,468 --> 01:02:49,503
+SPIDER-MAN: Sorry.
+MJ: Oh, watch out! [YELPS]
+
+1287
+01:02:50,938 --> 01:02:52,873
+[SPIDER-MAN STRAINING]
+
+1288
+01:02:58,513 --> 01:03:00,180
+FRANK: You're losing it, kid.
+
+1289
+01:03:00,214 --> 01:03:02,883
+Thought you'd be able to see
+that coming a mile away.
+
+1290
+01:03:02,916 --> 01:03:03,817
+SPIDER-MAN: What is wrong
+with you?
+
+1291
+01:03:03,851 --> 01:03:05,520
+-You could've killed us.
+-FRANK: Excuse me.
+
+1292
+01:03:05,553 --> 01:03:07,154
+You show up
+to my house unannounced,
+
+1293
+01:03:07,187 --> 01:03:08,255
+what do you think's
+gonna happen?
+
+1294
+01:03:08,289 --> 01:03:09,256
+MJ: Wait, this is your house?
+SPIDER-MAN: No, no.
+
+1295
+01:03:09,290 --> 01:03:10,924
+-Don't, don't, don't.
+-Who the hell is that?
+
+1296
+01:03:10,958 --> 01:03:11,992
+Who the hell are you?
+
+1297
+01:03:12,026 --> 01:03:13,528
+SPIDER-MAN: [STUTTERS]
+She's, um...
+
+1298
+01:03:13,561 --> 01:03:15,496
+Uh, you know.
+
+1299
+01:03:15,530 --> 01:03:17,831
+No, I don't know.
+That's why I just asked you.
+
+1300
+01:03:17,865 --> 01:03:19,166
+SPIDER-MAN:
+She's in danger, Frank.
+
+1301
+01:03:19,199 --> 01:03:20,568
+Look, I need your help, okay?
+
+1302
+01:03:20,602 --> 01:03:21,468
+FRANK: Yeah, looks like it.
+
+1303
+01:03:21,502 --> 01:03:22,403
+SPIDER-MAN: Well, come on.
+You owe me.
+
+1304
+01:03:22,436 --> 01:03:24,572
+Ah, for...
+Aren't you sick of this story?
+
+1305
+01:03:24,606 --> 01:03:25,839
+SPIDER-MAN: Staten Island!
+
+1306
+01:03:25,873 --> 01:03:27,274
+Nah, Staten Island.
+
+1307
+01:03:27,308 --> 01:03:28,309
+SPIDER-MAN: What more
+do you want me to do?
+
+1308
+01:03:28,342 --> 01:03:29,910
+I literally saved your life.
+
+1309
+01:03:29,943 --> 01:03:30,811
+You're out of your mind, kid!
+
+1310
+01:03:30,844 --> 01:03:31,945
+SPIDER-MAN: What,
+I gotta save it twice
+
+1311
+01:03:31,979 --> 01:03:33,347
+-to get a favor out of you?
+-That guy couldn't hit me
+
+1312
+01:03:33,380 --> 01:03:34,448
+-with a handful of rice.
+-I mean,
+
+1313
+01:03:34,481 --> 01:03:35,482
+what does that
+sound like to you?
+
+1314
+01:03:35,517 --> 01:03:36,383
+I had him exactly
+where I want him.
+
+1315
+01:03:36,417 --> 01:03:37,619
+A drug dealer was gonna
+shoot a guy...
+
+1316
+01:03:37,652 --> 01:03:38,653
+-I'm seein' him right there.
+-...then I webbed the gun out of
+
+1317
+01:03:38,687 --> 01:03:39,654
+-the drug dealer's hand...
+-I know exactly what
+
+1318
+01:03:39,688 --> 01:03:41,989
+-I'm completely up for.
+-...and then kicked
+
+1319
+01:03:42,022 --> 01:03:43,057
+-that drug dealer back into...
+-Okay, fine, go ahead.
+
+1320
+01:03:43,090 --> 01:03:43,857
+-...a storage container.
+-What would you call that?
+
+1321
+01:03:43,891 --> 01:03:44,726
+What does that
+sound like to you?
+
+1322
+01:03:44,759 --> 01:03:46,628
+I don't care.
+I just wanna go home.
+
+1323
+01:03:46,661 --> 01:03:49,063
+That's an excellent idea.
+Kick rocks.
+
+1324
+01:03:49,096 --> 01:03:50,197
+-Go home.
+-SPIDER-MAN: No, no, wait, wait.
+
+1325
+01:03:50,230 --> 01:03:51,832
+Frank, Frank, Frank, wait.
+Please.
+
+1326
+01:03:52,966 --> 01:03:54,569
+I have got to
+keep her safe, okay?
+
+1327
+01:03:54,602 --> 01:03:56,470
+And I don't have
+anywhere else to go.
+
+1328
+01:04:00,441 --> 01:04:01,442
+You like chili?
+
+1329
+01:04:02,644 --> 01:04:03,844
+I made chili.
+
+1330
+01:04:05,479 --> 01:04:06,480
+All right. Just...
+
+1331
+01:04:07,348 --> 01:04:08,516
+watch out for the claymores.
+
+1332
+01:04:08,550 --> 01:04:11,218
+Don't wanna pick up pieces
+of you for the next two weeks.
+
+1333
+01:04:12,554 --> 01:04:14,622
+SPIDER-MAN: Hey, I definitely
+would not eat that chili.
+
+1334
+01:04:16,524 --> 01:04:18,392
+FRANK: So,
+you telling me that maniac
+
+1335
+01:04:18,425 --> 01:04:20,060
+behind all that tank nonsense
+
+1336
+01:04:20,094 --> 01:04:21,929
+is nothing but
+a goddamn teenager?
+
+1337
+01:04:21,962 --> 01:04:23,063
+SPIDER-MAN:
+And it's not just the tank,
+
+1338
+01:04:23,097 --> 01:04:25,600
+it's every attack on
+Damage Control this past month.
+
+1339
+01:04:25,633 --> 01:04:27,602
+And how does a kid learn
+how to drive a tank?
+
+1340
+01:04:27,635 --> 01:04:28,703
+SPIDER-MAN:
+I don't know, Frank.
+
+1341
+01:04:28,737 --> 01:04:30,505
+FRANK: Beat your ass
+all over the street like that.
+
+1342
+01:04:30,538 --> 01:04:31,573
+SPIDER-MAN: She did not
+beat my ass.
+
+1343
+01:04:31,606 --> 01:04:32,973
+-FRANK: Eh.
+-[SPIDER-MAN SIGHS]
+
+1344
+01:04:33,006 --> 01:04:34,074
+This your family?
+
+1345
+01:04:37,077 --> 01:04:39,413
+Would you get
+the hell away from that?
+
+1346
+01:04:39,446 --> 01:04:41,649
+Look, I got one rule
+in this house.
+
+1347
+01:04:41,683 --> 01:04:44,519
+You don't touch anything.
+You don't move anything.
+
+1348
+01:04:44,552 --> 01:04:45,419
+You sure as shit don't ask me
+
+1349
+01:04:45,452 --> 01:04:47,522
+any goddamn questions
+about anything.
+
+1350
+01:04:49,223 --> 01:04:51,158
+-So, three rules?
+-[FRANK GRUNTS]
+
+1351
+01:04:53,460 --> 01:04:54,962
+I see why you like her.
+
+1352
+01:04:55,996 --> 01:04:57,264
+I'll go put some pants on.
+
+1353
+01:04:58,700 --> 01:05:01,034
+-Don't touch the chili.
+-[SPIDER-MAN SIGHS]
+
+1354
+01:05:02,102 --> 01:05:03,103
+MJ: I like him.
+
+1355
+01:05:03,971 --> 01:05:05,005
+SPIDER-MAN: Of course you do.
+
+1356
+01:05:06,473 --> 01:05:08,643
+So I managed to pull
+this image from my HUD
+
+1357
+01:05:08,676 --> 01:05:10,144
+and run it through the system.
+
+1358
+01:05:10,177 --> 01:05:12,212
+[COMPUTER BEEPING]
+
+1359
+01:05:13,247 --> 01:05:14,248
+MJ: Who is she?
+
+1360
+01:05:14,281 --> 01:05:17,652
+SPIDER-MAN: Until a couple
+months ago, nobody.
+
+1361
+01:05:17,685 --> 01:05:20,354
+She was in and out of
+foster care, psych hospitals,
+
+1362
+01:05:20,387 --> 01:05:22,657
+and then eventually she ran
+away and dropped off the grid.
+
+1363
+01:05:22,690 --> 01:05:23,625
+There's hardly
+any information about her
+
+1364
+01:05:23,658 --> 01:05:24,958
+that hasn't been scrubbed.
+
+1365
+01:05:24,992 --> 01:05:26,561
+But she's classified
+as a telepath.
+
+1366
+01:05:26,594 --> 01:05:28,996
+And now we have a name.
+
+1367
+01:05:32,634 --> 01:05:33,635
+"Jean Grey."
+
+1368
+01:05:35,603 --> 01:05:36,805
+SPIDER-MAN: Yeah.
+
+1369
+01:05:36,838 --> 01:05:39,406
+These are the Damage Control
+sites that she hasn't hit yet,
+
+1370
+01:05:39,440 --> 01:05:41,008
+so if she surfaces,
+
+1371
+01:05:41,041 --> 01:05:42,943
+then my facial tracking program
+will pick her up.
+
+1372
+01:05:44,044 --> 01:05:45,145
+Right.
+
+1373
+01:05:45,179 --> 01:05:46,480
+FRANK: Oh, yeah? What then?
+
+1374
+01:05:49,016 --> 01:05:50,652
+SPIDER-MAN: Well, don't worry
+about "what then."
+
+1375
+01:05:50,685 --> 01:05:51,619
+-Just look after her.
+-[CHUCKLES]
+
+1376
+01:05:51,653 --> 01:05:53,320
+Don't worry about it, huh?
+
+1377
+01:05:53,353 --> 01:05:55,322
+I'm just supposed to sit here
+and babysit your girlfriend?
+
+1378
+01:05:55,355 --> 01:05:56,356
+I don't need to
+
+1379
+01:05:56,390 --> 01:05:57,458
+-be babysat, so yeah.
+-She's not my girlfriend.
+
+1380
+01:05:57,491 --> 01:05:58,660
+All right, all right.
+Look, what's the plan, huh?
+
+1381
+01:05:58,693 --> 01:06:03,130
+Just gonna hope that your facial
+tracking program works?
+
+1382
+01:06:03,163 --> 01:06:03,997
+And you get yourself killed,
+
+1383
+01:06:04,031 --> 01:06:04,965
+I gotta watch her
+the rest of my life?
+
+1384
+01:06:04,998 --> 01:06:06,701
+SPIDER-MAN: I'm not gonna
+get killed, Frank.
+
+1385
+01:06:06,734 --> 01:06:07,635
+I can catch her, okay?
+
+1386
+01:06:07,669 --> 01:06:08,903
+I just...
+
+1387
+01:06:08,937 --> 01:06:11,773
+I just have to fix my inhibitor
+and then I'll be good to go.
+
+1388
+01:06:11,806 --> 01:06:13,340
+Well, what do you need
+to do that?
+
+1389
+01:06:13,373 --> 01:06:14,475
+[SPIDER-MAN CHUCKLES]
+
+1390
+01:06:14,509 --> 01:06:18,278
+Frank. You do not have
+what I need to do that, okay?
+
+1391
+01:06:19,714 --> 01:06:21,281
+You know you've got
+some mouth on you.
+
+1392
+01:06:21,315 --> 01:06:23,283
+What do you think, you have
+an anti-static mat,
+
+1393
+01:06:23,317 --> 01:06:24,985
+a tonal probe,
+and micro tools?
+
+1394
+01:06:25,553 --> 01:06:27,054
+I got all that shit.
+
+1395
+01:06:27,522 --> 01:06:28,556
+What for?
+
+1396
+01:06:28,590 --> 01:06:30,224
+-Bombs.
+-Bingo.
+
+1397
+01:06:31,526 --> 01:06:33,661
+SPIDER-MAN: [SIGHS]
+Unbelievable.
+
+1398
+01:06:34,361 --> 01:06:36,363
+[SIZZLING]
+
+1399
+01:06:41,769 --> 01:06:43,638
+[KEYBOARD CLACKING]
+
+1400
+01:06:45,540 --> 01:06:47,742
+Hey, do you think it's safe
+to maybe call someone
+
+1401
+01:06:47,775 --> 01:06:49,476
+and let them know I'm okay?
+
+1402
+01:06:52,079 --> 01:06:53,080
+Uh...
+
+1403
+01:06:54,081 --> 01:06:55,082
+Like your boyfriend?
+
+1404
+01:06:55,817 --> 01:06:58,485
+Mmm, no. Like my roommate.
+
+1405
+01:06:59,152 --> 01:07:00,420
+Oh, um...
+
+1406
+01:07:02,524 --> 01:07:03,825
+I don't think
+that's such a good idea,
+
+1407
+01:07:03,858 --> 01:07:05,058
+you know, because...
+
+1408
+01:07:06,159 --> 01:07:07,595
+she already knows who he is,
+
+1409
+01:07:07,629 --> 01:07:09,496
+and she can inhabit anyone
+she wants, so...
+
+1410
+01:07:09,531 --> 01:07:10,632
+Right. Yeah.
+
+1411
+01:07:10,665 --> 01:07:12,132
+Yeah, yeah, yeah.
+You're right.
+
+1412
+01:07:12,165 --> 01:07:13,635
+-Sorry.
+-MJ: No, it's fine.
+
+1413
+01:07:13,668 --> 01:07:14,702
+I totally get it.
+
+1414
+01:07:16,838 --> 01:07:19,172
+If I called my boyfriend,
+
+1415
+01:07:19,206 --> 01:07:20,374
+he'd just ask me
+a bunch of questions
+
+1416
+01:07:20,407 --> 01:07:21,509
+that I couldn't answer,
+
+1417
+01:07:21,543 --> 01:07:24,779
+and then he'd tell me
+I was being withholding again.
+
+1418
+01:07:24,812 --> 01:07:26,781
+PETER: Withholding?
+MJ: Yep.
+
+1419
+01:07:26,814 --> 01:07:28,716
+Sounds like your boyfriend's
+kind of a jerk.
+
+1420
+01:07:28,750 --> 01:07:30,284
+[CHUCKLING]
+
+1421
+01:07:31,553 --> 01:07:32,687
+But why'd he think
+you're withholding?
+
+1422
+01:07:33,655 --> 01:07:35,289
+I don't know. You tell me,
+
+1423
+01:07:35,322 --> 01:07:38,392
+masked vigilante
+behind the curtain.
+
+1424
+01:07:38,425 --> 01:07:39,727
+-Um... [CHUCKLES]
+-[MJ CHUCKLES]
+
+1425
+01:07:39,761 --> 01:07:41,495
+Okay, I see your point.
+
+1426
+01:07:43,497 --> 01:07:45,232
+So what about you?
+
+1427
+01:07:45,265 --> 01:07:47,200
+PETER: What about me?
+
+1428
+01:07:47,234 --> 01:07:50,404
+Well, do you have
+a Mrs. Spider-Man?
+
+1429
+01:07:52,540 --> 01:07:55,075
+Do I have a Mrs. Spider-Man?
+Um...
+
+1430
+01:07:58,378 --> 01:07:59,847
+No. No.
+
+1431
+01:08:01,148 --> 01:08:02,249
+MJ: Why not?
+
+1432
+01:08:02,282 --> 01:08:03,818
+Why not? Because I'm...
+
+1433
+01:08:05,620 --> 01:08:08,523
+I'm too withholding, obviously.
+
+1434
+01:08:08,556 --> 01:08:10,858
+-Welcome to the club.
+-[PETER LAUGHS]
+
+1435
+01:08:16,631 --> 01:08:17,699
+There was someone.
+
+1436
+01:08:19,166 --> 01:08:20,400
+-MJ: Really?
+-Yeah, yeah, yeah.
+
+1437
+01:08:23,470 --> 01:08:24,539
+What happened?
+
+1438
+01:08:25,339 --> 01:08:26,340
+I, uh...
+
+1439
+01:08:27,875 --> 01:08:29,409
+I had to let her go.
+
+1440
+01:08:30,678 --> 01:08:31,779
+To keep her safe.
+
+1441
+01:08:31,813 --> 01:08:33,815
+[GENTLE MUSIC PLAYING]
+
+1442
+01:08:36,216 --> 01:08:38,218
+I'm sorry. That must have been
+really hard for you.
+
+1443
+01:08:39,554 --> 01:08:41,488
+Yeah, it was. Yeah. It is.
+
+1444
+01:08:42,624 --> 01:08:43,658
+It is really hard.
+
+1445
+01:08:45,927 --> 01:08:47,929
+-[CRACKLES]
+-Oh. [BLOWS AIR]
+
+1446
+01:08:47,962 --> 01:08:49,296
+Are you okay?
+
+1447
+01:08:49,329 --> 01:08:50,263
+PETER: Yeah. Yeah, yeah,
+I'm okay. I, uh...
+
+1448
+01:08:50,297 --> 01:08:51,431
+MJ: You know what,
+I'm just gonna come over.
+
+1449
+01:08:51,465 --> 01:08:53,768
+PETER: Uh, hold on, hold on,
+hold on, hold on, hold on.
+
+1450
+01:08:55,670 --> 01:08:56,704
+-What's going on?
+-SPIDER-MAN: Um...
+
+1451
+01:08:56,738 --> 01:08:59,439
+It just keeps overheating on me.
+
+1452
+01:08:59,473 --> 01:09:01,809
+It's been stumping me for days.
+
+1453
+01:09:01,843 --> 01:09:02,810
+Before I switched to aerospace,
+
+1454
+01:09:02,844 --> 01:09:04,679
+I was gonna major
+in biochemical engineering,
+
+1455
+01:09:04,712 --> 01:09:07,180
+so, do you mind if I...
+
+1456
+01:09:07,214 --> 01:09:08,448
+SPIDER-MAN: Oh, yeah, for sure.
+
+1457
+01:09:08,482 --> 01:09:09,917
+Here. There you go.
+
+1458
+01:09:11,886 --> 01:09:13,688
+[SPIDER-MAN EXHALES]
+
+1459
+01:09:13,721 --> 01:09:14,722
+Wow.
+
+1460
+01:09:17,759 --> 01:09:19,827
+So, does the device itself...
+
+1461
+01:09:19,861 --> 01:09:21,963
+I mean, does it generate
+any kind of radiation
+
+1462
+01:09:21,996 --> 01:09:23,631
+or a magnetic field?
+
+1463
+01:09:23,665 --> 01:09:25,298
+'Cause that would
+definitely interfere.
+
+1464
+01:09:25,332 --> 01:09:27,300
+SPIDER-MAN: Oh, yeah,
+it has a micro magnetic field,
+
+1465
+01:09:27,334 --> 01:09:29,336
+but I accounted for that
+in the design.
+
+1466
+01:09:29,369 --> 01:09:31,304
+Okay, well,
+what about your suit?
+
+1467
+01:09:31,338 --> 01:09:33,240
+SPIDER-MAN: Oh, it actually
+dissipates into the fabric,
+
+1468
+01:09:33,273 --> 01:09:34,609
+which is pretty cool.
+
+1469
+01:09:35,576 --> 01:09:36,577
+Okay.
+
+1470
+01:09:39,614 --> 01:09:40,715
+What about those?
+
+1471
+01:09:41,816 --> 01:09:42,817
+SPIDER-MAN: What about what?
+
+1472
+01:09:45,485 --> 01:09:47,955
+Your goggles,
+or whatever you call 'em.
+
+1473
+01:09:47,989 --> 01:09:49,991
+SPIDER-MAN: Uh,
+they would create a field.
+
+1474
+01:09:50,024 --> 01:09:51,793
+It would be tiny, but...
+
+1475
+01:09:53,460 --> 01:09:54,294
+But it's on your head,
+
+1476
+01:09:54,327 --> 01:09:55,429
+which is very close
+to the inhibitor.
+
+1477
+01:09:55,462 --> 01:09:58,231
+SPIDER-MAN: Which is probably
+why it's overheating.
+
+1478
+01:09:58,265 --> 01:09:59,967
+Oh, MJ, that is genius.
+
+1479
+01:10:00,001 --> 01:10:01,736
+[KEYBOARD CLACKING]
+
+1480
+01:10:01,769 --> 01:10:03,004
+Okay, this has to work.
+
+1481
+01:10:03,037 --> 01:10:05,873
+[WISTFUL MUSIC PLAYING]
+
+1482
+01:10:05,907 --> 01:10:08,609
+<i>-</i> [DEVICE BEEPS]
+-E.V.: <i>Inhibitor engaged.</i>
+
+1483
+01:10:10,343 --> 01:10:13,881
+<i>Suppressing selected</i>
+<i>arachnid hormones.</i>
+
+1484
+01:10:13,915 --> 01:10:15,950
+SPIDER-MAN: Okay.
+That feels better.
+
+1485
+01:10:15,983 --> 01:10:17,852
+That feels totally better.
+
+1486
+01:10:17,885 --> 01:10:20,688
+Oh, my head feels so clear.
+[SIGHS]
+
+1487
+01:10:20,722 --> 01:10:21,956
+[SOFTLY] Web, web.
+
+1488
+01:10:21,989 --> 01:10:24,291
+[NORMALLY] And I'm not
+shooting organic webs.
+
+1489
+01:10:24,324 --> 01:10:27,528
+Oh, my God, MJ,
+that, like, totally worked.
+
+1490
+01:10:27,562 --> 01:10:28,896
+You know, this is some
+really intense stuff
+
+1491
+01:10:28,930 --> 01:10:29,997
+you're working on here.
+
+1492
+01:10:30,031 --> 01:10:32,800
+[MUSIC CONTINUES]
+
+1493
+01:10:32,834 --> 01:10:34,569
+SPIDER-MAN: Well, yeah,
+it's really important.
+
+1494
+01:10:36,938 --> 01:10:38,740
+Yeah, but this is like,
+
+1495
+01:10:38,773 --> 01:10:41,843
+I mean, this is like
+altering your DNA.
+
+1496
+01:10:41,876 --> 01:10:43,644
+I mean, this is the kind of
+stuff you put on, like,
+
+1497
+01:10:43,678 --> 01:10:45,445
+I don't know, like a monster.
+
+1498
+01:10:47,648 --> 01:10:49,416
+SPIDER-MAN: Well, if you've seen
+what's been happening to me
+
+1499
+01:10:49,449 --> 01:10:52,754
+over the last couple days,
+then you might understand.
+
+1500
+01:10:52,787 --> 01:10:54,354
+Yeah, well, I've been with you
+for the last few hours
+
+1501
+01:10:54,387 --> 01:10:56,323
+and that's not what I've seen.
+
+1502
+01:10:56,356 --> 01:10:57,390
+SPIDER-MAN:
+And what have you seen?
+
+1503
+01:10:58,626 --> 01:10:59,594
+From my side of the curtain?
+
+1504
+01:11:01,829 --> 01:11:05,365
+A really good guy
+who might just be changing.
+
+1505
+01:11:10,538 --> 01:11:11,639
+Well, I don't mean to overstep.
+
+1506
+01:11:11,672 --> 01:11:14,307
+I'll, uh,
+let you get back to it.
+
+1507
+01:11:18,646 --> 01:11:21,314
+-[SOMBER MUSIC PLAYING]
+-[SEAGULL SQUAWKS]
+
+1508
+01:11:29,624 --> 01:11:31,926
+[DOOR OPENS, CLOSES]
+
+1509
+01:11:35,563 --> 01:11:36,798
+Can't sleep either, huh?
+
+1510
+01:11:37,632 --> 01:11:38,633
+You want coffee?
+
+1511
+01:11:39,534 --> 01:11:40,568
+SPIDER-MAN: Sure.
+
+1512
+01:11:41,736 --> 01:11:43,838
+You get your shit fixed?
+
+1513
+01:11:43,871 --> 01:11:46,674
+SPIDER-MAN: Yeah. I've been
+wearing it all night.
+
+1514
+01:11:46,707 --> 01:11:47,775
+So far, so good.
+
+1515
+01:11:48,709 --> 01:11:50,545
+I made this other one universal.
+
+1516
+01:11:50,578 --> 01:11:52,513
+So if I could get it on Jean,
+
+1517
+01:11:52,547 --> 01:11:54,982
+it should completely
+shut down her powers.
+
+1518
+01:11:55,016 --> 01:11:57,618
+FRANK: Hmm.
+You know what else would work?
+
+1519
+01:11:57,652 --> 01:11:58,953
+You just shoot her.
+
+1520
+01:11:58,986 --> 01:12:00,087
+SPIDER-MAN: Nice.
+
+1521
+01:12:00,855 --> 01:12:02,857
+[CHUCKLES]
+
+1522
+01:12:02,890 --> 01:12:04,759
+Jesus Christ.
+
+1523
+01:12:04,792 --> 01:12:06,794
+[LAUGHS] That has gotta be
+the goofiest shit
+
+1524
+01:12:06,828 --> 01:12:07,662
+I ever seen in my life.
+
+1525
+01:12:07,695 --> 01:12:09,864
+What, you can't even
+take the mask off
+
+1526
+01:12:09,897 --> 01:12:10,932
+to drink a cup of coffee?
+
+1527
+01:12:10,965 --> 01:12:12,133
+[SPIDER-MAN CHUCKLES]
+
+1528
+01:12:12,166 --> 01:12:15,102
+Don't take it personally, Frank.
+It stays on for everybody.
+
+1529
+01:12:16,137 --> 01:12:17,370
+Even her?
+
+1530
+01:12:19,740 --> 01:12:20,875
+Who is she, kid?
+
+1531
+01:12:20,908 --> 01:12:21,943
+SPIDER-MAN: I don't know.
+
+1532
+01:12:21,976 --> 01:12:24,045
+Eh! That's horseshit.
+Who is she?
+
+1533
+01:12:24,078 --> 01:12:25,412
+I'm telling you,
+I don't know who she is.
+
+1534
+01:12:25,445 --> 01:12:26,581
+What are you doin'?
+You care about her.
+
+1535
+01:12:26,614 --> 01:12:27,515
+-You're pretending not to. Why?
+-I don't care about her.
+
+1536
+01:12:27,548 --> 01:12:29,784
+Look, I don't know
+who she is, Frank. Okay?
+
+1537
+01:12:29,817 --> 01:12:31,152
+I don't have anybody.
+I'm like you.
+
+1538
+01:12:31,185 --> 01:12:32,653
+I just keep to myself.
+
+1539
+01:12:32,687 --> 01:12:33,721
+You're like me?
+
+1540
+01:12:34,989 --> 01:12:36,456
+What do you know
+about me, kid?
+
+1541
+01:12:37,457 --> 01:12:38,693
+You think this is a choice?
+
+1542
+01:12:38,726 --> 01:12:40,161
+Living like this,
+it's a lifestyle?
+
+1543
+01:12:40,194 --> 01:12:41,428
+Is that what you think?
+
+1544
+01:12:41,963 --> 01:12:43,564
+Kid, this is a sentence.
+
+1545
+01:12:44,699 --> 01:12:45,700
+You know somethin'...
+
+1546
+01:12:46,534 --> 01:12:48,803
+If I had one second,
+
+1547
+01:12:48,836 --> 01:12:50,137
+people I love
+were still breathing,
+
+1548
+01:12:50,171 --> 01:12:52,640
+you think I'd be hiding
+behind a mask?
+
+1549
+01:12:52,673 --> 01:12:54,842
+You think I'd pretend
+to be something that I'm not,
+
+1550
+01:12:54,876 --> 01:12:56,677
+acting like a goddamn coward?
+
+1551
+01:12:57,812 --> 01:12:59,547
+[ALERT CHIRPING ON COMPUTER]
+
+1552
+01:13:02,183 --> 01:13:03,150
+SPIDER-MAN:
+I got a facial match.
+
+1553
+01:13:03,184 --> 01:13:04,051
+[KEYBOARD CLACKING]
+
+1554
+01:13:07,788 --> 01:13:09,991
+She's at the Damage Control HQ
+in Manhattan.
+
+1555
+01:13:10,024 --> 01:13:11,391
+I gotta go. Okay.
+
+1556
+01:13:15,796 --> 01:13:17,832
+She's gonna be okay.
+
+1557
+01:13:17,865 --> 01:13:18,966
+I'll see to it.
+
+1558
+01:13:22,003 --> 01:13:23,104
+SPIDER-MAN: Thanks, Frank.
+
+1559
+01:13:25,640 --> 01:13:26,874
+[FRANK SIGHS]
+
+1560
+01:13:27,775 --> 01:13:28,809
+[DOOR CREAKS]
+
+1561
+01:13:29,911 --> 01:13:30,912
+Hey.
+
+1562
+01:13:31,579 --> 01:13:32,380
+FRANK: Hey.
+
+1563
+01:13:34,115 --> 01:13:35,783
+You just gonna let him
+go by himself?
+
+1564
+01:13:37,184 --> 01:13:38,686
+You know,
+I think he might need you.
+
+1565
+01:13:39,086 --> 01:13:40,521
+Eh.
+
+1566
+01:13:41,622 --> 01:13:43,157
+Kinda like you needed him
+on Staten Island.
+
+1567
+01:13:47,128 --> 01:13:48,428
+[SOFTLY] Yeah.
+
+1568
+01:13:49,664 --> 01:13:51,666
+[DRAMATIC MUSIC PLAYING]
+
+1569
+01:13:56,704 --> 01:13:58,438
+[THUDDING]
+
+1570
+01:14:06,013 --> 01:14:07,949
+-[SYSTEM TRILLING]
+-[THUDDING CONTINUES]
+
+1571
+01:14:14,588 --> 01:14:16,724
+-[THUDDING]
+-[ELECTRICITY CRACKLING]
+
+1572
+01:14:18,192 --> 01:14:20,061
+[THUDDING]
+
+1573
+01:14:21,796 --> 01:14:22,997
+[ELECTRICITY CRACKLING]
+
+1574
+01:14:23,030 --> 01:14:24,231
+[RADIO CHIRPS]
+
+1575
+01:14:24,265 --> 01:14:25,666
+[THUDDING]
+
+1576
+01:14:25,700 --> 01:14:28,202
+You can't hide from me
+forever, Bill.
+
+1577
+01:14:28,235 --> 01:14:29,804
+[OVER RADIO]
+<i>You've got a strong door,</i>
+
+1578
+01:14:29,837 --> 01:14:31,639
+<i>but it's the wall</i>
+<i>you have to worry about.</i>
+
+1579
+01:14:32,640 --> 01:14:34,508
+Who are you
+and what do you want?
+
+1580
+01:14:34,542 --> 01:14:36,177
+[THUDDING CONTINUES]
+
+1581
+01:14:39,246 --> 01:14:40,648
+I'm Jean Grey...
+
+1582
+01:14:41,716 --> 01:14:43,184
+and you know what I want.
+
+1583
+01:14:49,290 --> 01:14:50,992
+[SPIDER-MAN SIGHS]
+
+1584
+01:14:51,025 --> 01:14:52,660
+[DISTANT THUDDING]
+
+1585
+01:14:57,999 --> 01:15:00,034
+[MYSTERIOUS MUSIC PLAYING]
+
+1586
+01:15:00,067 --> 01:15:02,670
+[INDISTINCT CONVERSATION]
+
+1587
+01:15:04,572 --> 01:15:06,140
+[DISTANT THUDDING CONTINUES]
+
+1588
+01:15:18,285 --> 01:15:20,221
+[THUDDING INTENSIFIES]
+
+1589
+01:15:23,124 --> 01:15:24,558
+[THUDDING STOPS]
+
+1590
+01:15:29,663 --> 01:15:31,999
+[SUSPENSEFUL MUSIC PLAYING]
+
+1591
+01:15:43,944 --> 01:15:45,746
+SPIDER-MAN: Jean?
+
+1592
+01:15:45,780 --> 01:15:49,683
+You looked me up?
+I'm blushing.
+
+1593
+01:15:49,717 --> 01:15:52,953
+I told you what would happen to
+your girl if you got in my way.
+
+1594
+01:15:52,987 --> 01:15:55,122
+SPIDER-MAN: You're not getting
+near her again.
+
+1595
+01:15:55,156 --> 01:15:57,224
+And you're definitely
+not getting inside that vault.
+
+1596
+01:15:57,858 --> 01:15:59,026
+Hmm, maybe not.
+
+1597
+01:15:59,060 --> 01:16:00,628
+[DEVICE CRACKLING]
+
+1598
+01:16:03,798 --> 01:16:05,032
+[SPIDER-MAN GRUNTS]
+
+1599
+01:16:06,233 --> 01:16:07,635
+But this guy might.
+
+1600
+01:16:10,337 --> 01:16:13,107
+SPIDER-MAN: Jean, you don't know
+what you're dealing with.
+
+1601
+01:16:13,140 --> 01:16:15,976
+You know, you and Banner
+have a lot in common.
+
+1602
+01:16:16,010 --> 01:16:17,878
+Both fighting a losing battle
+
+1603
+01:16:17,912 --> 01:16:20,648
+against the monster
+that lives inside you.
+
+1604
+01:16:20,681 --> 01:16:22,616
+SPIDER-MAN: Jean, this is
+the Hulk, you can't just...
+
+1605
+01:16:22,650 --> 01:16:24,752
+-[HULK GRUNTING]
+-[SPIDER-MAN GROANS]
+
+1606
+01:16:27,221 --> 01:16:29,356
+-[HULK GRUNTS]
+-[SPIDER-MAN GROANS]
+
+1607
+01:16:31,058 --> 01:16:33,360
+-HULK: What the hell?
+-[GRUNTS]
+
+1608
+01:16:33,394 --> 01:16:35,396
+Oh, I see.
+
+1609
+01:16:35,429 --> 01:16:37,264
+-[GRUNTS]
+-[SPIDER-MAN GASPS]
+
+1610
+01:16:37,298 --> 01:16:40,835
+Trying to muzzle me
+like you muzzle yourself?
+
+1611
+01:16:40,868 --> 01:16:42,303
+SPIDER-MAN:
+I can't let you in there.
+
+1612
+01:16:42,336 --> 01:16:44,972
+Whatever V-Max is,
+you're not getting it.
+
+1613
+01:16:45,005 --> 01:16:46,407
+Like hell I'm not.
+
+1614
+01:16:46,440 --> 01:16:47,942
+-[ROARS]
+-SPIDER-MAN: Oh, crap.
+
+1615
+01:16:47,975 --> 01:16:49,643
+-[HULK GRUNTS]
+-[SPIDER-MAN PANTING]
+
+1616
+01:16:52,179 --> 01:16:53,380
+-[SPIDER-MAN GRUNTS]
+-[HULK GROANS]
+
+1617
+01:16:53,414 --> 01:16:55,683
+-[HIGH-PITCHED RINGING]
+-[WINCES]
+
+1618
+01:16:56,417 --> 01:16:57,785
+[GROANS]
+
+1619
+01:16:59,053 --> 01:17:00,154
+[SPIDER-MAN GROANS]
+
+1620
+01:17:00,187 --> 01:17:02,756
+Jean, don't do this.
+
+1621
+01:17:02,790 --> 01:17:04,191
+-Save your breath.
+-[SPIDER-MAN GROANS]
+
+1622
+01:17:04,225 --> 01:17:05,392
+[SPIDER-MAN GROANS]
+
+1623
+01:17:05,426 --> 01:17:07,695
+-[HULK GRUNTING]
+-[GROANING]
+
+1624
+01:17:07,728 --> 01:17:09,396
+[CLANGING]
+
+1625
+01:17:09,430 --> 01:17:11,098
+[SPIDER-MAN GASPS]
+
+1626
+01:17:11,132 --> 01:17:12,933
+-[GUN FIRING]
+-[GROANING]
+
+1627
+01:17:13,934 --> 01:17:16,003
+[FRANK ROARING]
+
+1628
+01:17:24,111 --> 01:17:25,379
+[GUN CLICKS]
+
+1629
+01:17:29,150 --> 01:17:31,051
+SPIDER-MAN: Frank,
+what are you doing here?
+
+1630
+01:17:31,085 --> 01:17:32,786
+What you think I'm doing?
+I'm saving your ass.
+
+1631
+01:17:32,820 --> 01:17:34,889
+SPIDER-MAN: This is way above
+your pay grade, dude.
+
+1632
+01:17:34,922 --> 01:17:36,223
+-We're fighting the Hulk.
+-Oh, shit!
+
+1633
+01:17:36,257 --> 01:17:37,124
+[GRUNTS]
+
+1634
+01:17:37,858 --> 01:17:39,426
+[FRANK GROANS]
+
+1635
+01:17:39,460 --> 01:17:41,428
+[GRUNTS]
+
+1636
+01:17:41,462 --> 01:17:42,963
+[SPIDER-MAN GRUNTS]
+
+1637
+01:17:42,997 --> 01:17:44,031
+[FRANK GRUNTS]
+
+1638
+01:17:45,199 --> 01:17:47,201
+[HULK ROARING]
+
+1639
+01:17:55,075 --> 01:17:55,943
+[BEEPS]
+
+1640
+01:17:57,411 --> 01:17:58,345
+[GRUNTS]
+
+1641
+01:17:58,979 --> 01:17:59,980
+Really?
+
+1642
+01:18:01,348 --> 01:18:02,383
+[GROANS]
+
+1643
+01:18:02,416 --> 01:18:04,385
+-[WHOOSHES]
+-[GASPS, PANTS]
+
+1644
+01:18:05,486 --> 01:18:07,354
+[GROANS]
+
+1645
+01:18:09,423 --> 01:18:10,824
+[WHOOSHING]
+
+1646
+01:18:10,858 --> 01:18:13,260
+-[HIGH-PITCHED RINGING]
+-[GROANING] Get out!
+
+1647
+01:18:13,294 --> 01:18:15,896
+-[WHOOSHES]
+-[BREATHING HEAVILY]
+
+1648
+01:18:18,199 --> 01:18:19,466
+[GUN FIRING]
+
+1649
+01:18:19,500 --> 01:18:20,868
+SPIDER-MAN: Stop shooting him!
+
+1650
+01:18:20,901 --> 01:18:22,136
+Are you out of your
+goddamn mind?
+
+1651
+01:18:22,169 --> 01:18:23,470
+SPIDER-MAN: He's...
+Banner's not the problem!
+
+1652
+01:18:23,504 --> 01:18:24,371
+She is.
+
+1653
+01:18:27,107 --> 01:18:29,043
+[INAUDIBLE CONVERSATION]
+
+1654
+01:18:34,114 --> 01:18:35,716
+[BREATHING HEAVILY]
+
+1655
+01:18:36,383 --> 01:18:38,085
+[BANNER GROANING]
+
+1656
+01:18:38,118 --> 01:18:39,920
+SPIDER-MAN: I thought I told you
+to stay home and watch MJ.
+
+1657
+01:18:39,954 --> 01:18:40,955
+FRANK: Yeah, you did.
+
+1658
+01:18:40,988 --> 01:18:43,057
+And then she tells me
+I gotta come watch you.
+
+1659
+01:18:43,090 --> 01:18:44,225
+[SPIDER-MAN PANTING]
+
+1660
+01:18:44,258 --> 01:18:45,926
+Wait, did she actually
+say that to you?
+
+1661
+01:18:45,960 --> 01:18:48,095
+-[OBJECTS CLATTERING]
+-Are you blushing, daffodil?
+
+1662
+01:18:48,996 --> 01:18:50,130
+SPIDER-MAN: I'm not blushing.
+
+1663
+01:18:50,164 --> 01:18:52,032
+-[THUDDING]
+-[SPIDER-MAN GASPS]
+
+1664
+01:18:52,066 --> 01:18:54,868
+Goddamn it. I knew I should
+have brought a bigger gun.
+
+1665
+01:18:54,902 --> 01:18:56,103
+SPIDER-MAN: That's a good idea,
+"Bring a bigger gun."
+
+1666
+01:18:56,136 --> 01:18:57,304
+What are you gonna do,
+tickle him to death?
+
+1667
+01:18:57,338 --> 01:18:58,472
+No. Look, change of plan.
+
+1668
+01:18:58,506 --> 01:19:01,475
+First, we get this on the Hulk,
+then we go after Jean.
+
+1669
+01:19:01,509 --> 01:19:02,476
+FRANK: I got one better.
+
+1670
+01:19:02,510 --> 01:19:04,845
+That's the highest
+casualty-producing threat.
+
+1671
+01:19:04,878 --> 01:19:06,514
+You contain it.
+I go find the source.
+
+1672
+01:19:06,548 --> 01:19:08,516
+I take it down. You got it?
+
+1673
+01:19:08,550 --> 01:19:10,451
+SPIDER-MAN: Are you just trying
+to get out of fighting the Hulk?
+
+1674
+01:19:12,152 --> 01:19:13,187
+-I guess so.
+-SPIDER-MAN: Okay,
+
+1675
+01:19:13,220 --> 01:19:15,256
+whatever, dude.
+I got this.
+
+1676
+01:19:15,289 --> 01:19:17,091
+-Wait, no, Frank, Frank, Frank.
+-What?
+
+1677
+01:19:17,124 --> 01:19:18,359
+SPIDER-MAN: Do not kill her!
+
+1678
+01:19:18,392 --> 01:19:20,562
+Don't start with that
+soft serve bullshit.
+
+1679
+01:19:20,595 --> 01:19:21,563
+You know something?
+I'm gonna do this,
+
+1680
+01:19:21,596 --> 01:19:22,496
+I'm gonna do it my way.
+
+1681
+01:19:22,530 --> 01:19:25,065
+Just... just go, just go.
+
+1682
+01:19:25,099 --> 01:19:26,367
+SPIDER-MAN: And don't get
+within 33 feet!
+
+1683
+01:19:26,400 --> 01:19:27,301
+FRANK: Eh...
+
+1684
+01:19:27,334 --> 01:19:28,536
+SPIDER-MAN: So frustrating.
+
+1685
+01:19:33,107 --> 01:19:35,109
+[LIQUID BUBBLING]
+
+1686
+01:19:43,518 --> 01:19:44,552
+JEAN: Hey.
+
+1687
+01:19:44,586 --> 01:19:46,186
+-[WHOOSHES]
+-[GRUNTS]
+
+1688
+01:19:46,220 --> 01:19:48,222
+[EERIE MUSIC PLAYING]
+
+1689
+01:19:49,123 --> 01:19:50,391
+Whoa!
+
+1690
+01:19:50,424 --> 01:19:52,560
+This guy's got issues.
+
+1691
+01:19:54,061 --> 01:19:57,031
+BANNER: No. Oh, no.
+
+1692
+01:19:57,064 --> 01:20:00,434
+No, not again. Oh, no.
+
+1693
+01:20:00,467 --> 01:20:03,137
+SPIDER-MAN: Dr. Banner?
+Is that you?
+
+1694
+01:20:03,170 --> 01:20:06,273
+[BREATHING HEAVILY]
+Spider-Man. What happened?
+
+1695
+01:20:06,307 --> 01:20:07,341
+Where am I?
+
+1696
+01:20:07,374 --> 01:20:09,310
+-SPIDER-MAN: Hey, hey, hey.
+-Did I do all this?
+
+1697
+01:20:09,343 --> 01:20:10,911
+-SPIDER-MAN: You...
+-Did I hurt anyone?
+
+1698
+01:20:10,944 --> 01:20:12,446
+SPIDER-MAN: It's not your fault.
+She was in your mind.
+
+1699
+01:20:12,479 --> 01:20:13,581
+You weren't in control.
+
+1700
+01:20:13,615 --> 01:20:15,416
+-I lost my inhibitor.
+-SPIDER-MAN: Look here, here.
+
+1701
+01:20:15,449 --> 01:20:17,885
+BANNER: It's the only thing
+keeping the monster inside.
+
+1702
+01:20:17,918 --> 01:20:18,687
+SPIDER-MAN: It's okay.
+I got another one here.
+
+1703
+01:20:18,720 --> 01:20:19,621
+I just need you
+to put this on.
+
+1704
+01:20:19,654 --> 01:20:21,455
+-What is it?
+-SPIDER-MAN: It's universal.
+
+1705
+01:20:21,488 --> 01:20:22,923
+It should work on you.
+
+1706
+01:20:28,195 --> 01:20:29,229
+FRANK: Hmm.
+
+1707
+01:20:32,232 --> 01:20:33,867
+SPIDER-MAN: Please, sir,
+there's people in the building.
+
+1708
+01:20:33,901 --> 01:20:34,569
+Just put it on.
+
+1709
+01:20:37,371 --> 01:20:39,473
+-[GROANS]
+-SPIDER-MAN: You okay?
+
+1710
+01:20:39,507 --> 01:20:42,943
+My head.
+I think she broke something!
+
+1711
+01:20:42,976 --> 01:20:44,178
+SPIDER-MAN:
+Is she still in there?
+
+1712
+01:20:44,211 --> 01:20:45,446
+BANNER: No.
+
+1713
+01:20:45,479 --> 01:20:46,648
+It's the other guy.
+
+1714
+01:20:46,681 --> 01:20:48,415
+SPIDER-MAN: Bruce?
+
+1715
+01:20:48,449 --> 01:20:49,983
+Look, I can get you
+out of here, okay?
+
+1716
+01:20:50,017 --> 01:20:51,418
+I just need you to put
+that inhibitor on.
+
+1717
+01:20:51,452 --> 01:20:52,587
+-Get away from me!
+-[SPIDER-MAN GRUNTS]
+
+1718
+01:20:54,455 --> 01:20:55,923
+BANNER: He's coming.
+
+1719
+01:20:56,457 --> 01:20:58,459
+I can't control.
+
+1720
+01:20:58,492 --> 01:21:00,394
+SPIDER-MAN: Yes, you can,
+Bruce! Yes, you can!
+
+1721
+01:21:00,427 --> 01:21:02,062
+Get out of the building!
+
+1722
+01:21:02,096 --> 01:21:03,997
+Get out of the building!
+
+1723
+01:21:04,031 --> 01:21:06,601
+[VOICE GROWS DEEPER] Get
+everyone out of the... [GROANS]
+
+1724
+01:21:06,634 --> 01:21:09,269
+[ROARING]
+
+1725
+01:21:09,303 --> 01:21:11,205
+No! No!
+
+1726
+01:21:11,238 --> 01:21:13,006
+SPIDER-MAN: Banner, please.
+Look at me.
+
+1727
+01:21:13,040 --> 01:21:15,476
+[HULK ROARING]
+
+1728
+01:21:15,510 --> 01:21:18,379
+[HOARSELY] No Banner.
+No girl.
+
+1729
+01:21:19,647 --> 01:21:21,482
+Only Hulk.
+
+1730
+01:21:21,516 --> 01:21:23,384
+[HULK GROWLING]
+
+1731
+01:21:25,085 --> 01:21:26,487
+[GROWLS]
+
+1732
+01:21:27,622 --> 01:21:29,089
+[SNARLS]
+
+1733
+01:21:31,325 --> 01:21:33,127
+SPIDER-MAN: I didn't know
+you could get that big.
+
+1734
+01:21:33,160 --> 01:21:35,162
+[GROWLING]
+
+1735
+01:21:37,231 --> 01:21:39,133
+FRANK: Whoa!
+
+1736
+01:21:39,166 --> 01:21:40,401
+Good luck with that, Peter.
+
+1737
+01:21:42,403 --> 01:21:44,905
+-[HULK GRUNTING]
+-[SPIDER-MAN GROANING]
+
+1738
+01:21:48,676 --> 01:21:50,512
+-[HULK SNARLS]
+-SPIDER-MAN: There you are.
+
+1739
+01:21:52,246 --> 01:21:53,113
+Just hold still.
+Just hold still...
+
+1740
+01:21:53,147 --> 01:21:55,349
+-[SPIDER-MAN GRUNTING]
+-[HULK ROARING]
+
+1741
+01:21:56,718 --> 01:21:57,918
+SPIDER-MAN: Stay!
+
+1742
+01:22:03,490 --> 01:22:05,292
+[ROARS]
+
+1743
+01:22:06,594 --> 01:22:08,128
+SPIDER-MAN: [PANTS] Oh, God.
+
+1744
+01:22:09,396 --> 01:22:11,599
+[SCREAMS, GROANS]
+
+1745
+01:22:12,332 --> 01:22:14,067
+[GROANS, PANTS]
+
+1746
+01:22:14,101 --> 01:22:16,270
+[FRANK WHISTLING]
+
+1747
+01:22:16,303 --> 01:22:17,572
+[BOMB BEEPS, ARMS]
+
+1748
+01:22:19,440 --> 01:22:21,108
+[BOMB BEEPS, ARMS]
+
+1749
+01:22:21,141 --> 01:22:22,710
+[GUN COCKING]
+
+1750
+01:22:22,744 --> 01:22:23,977
+No lethal rounds.
+
+1751
+01:22:24,011 --> 01:22:26,013
+[DRAMATIC MUSIC PLAYING]
+
+1752
+01:22:30,685 --> 01:22:32,554
+[SPIDER-MAN GROANING]
+
+1753
+01:22:36,758 --> 01:22:39,026
+E.V.: <i>Tracking time</i>
+<i>to detonation.</i>
+
+1754
+01:22:39,059 --> 01:22:40,227
+[HULK ROARING]
+
+1755
+01:22:40,260 --> 01:22:41,563
+[FOOTSTEPS APPROACHING]
+
+1756
+01:22:42,530 --> 01:22:43,698
+[SPIDER-MAN GRUNTS]
+
+1757
+01:22:46,233 --> 01:22:48,969
+[SPIDER-MAN SCREAMING]
+
+1758
+01:22:49,737 --> 01:22:52,372
+[SPIDER-MAN GRUNTING, GROANING]
+
+1759
+01:22:58,613 --> 01:22:59,647
+[GRUNTS]
+
+1760
+01:23:07,522 --> 01:23:09,423
+E.V.: <i>Ninety seconds</i>
+<i>to detonation.</i>
+
+1761
+01:23:09,456 --> 01:23:11,559
+SPIDER-MAN: I know! I know!
+[GRUNTING]
+
+1762
+01:23:11,593 --> 01:23:12,660
+[SNARLING]
+
+1763
+01:23:14,094 --> 01:23:16,129
+[BOTH GRUNTING]
+
+1764
+01:23:16,163 --> 01:23:17,498
+SPIDER-MAN: Come on. Come on.
+
+1765
+01:23:17,532 --> 01:23:19,199
+Why is your skin so thick?
+
+1766
+01:23:19,233 --> 01:23:20,400
+E.V.: <i>Inhibitor cannot attach.</i>
+
+1767
+01:23:20,434 --> 01:23:22,069
+-SPIDER-MAN: Oh, come on!
+-[SNARLS]
+
+1768
+01:23:27,642 --> 01:23:28,643
+[HULK ROARING]
+
+1769
+01:23:32,814 --> 01:23:34,081
+[GRUNTS]
+
+1770
+01:23:37,652 --> 01:23:38,653
+[GRUNTING]
+
+1771
+01:23:42,824 --> 01:23:44,491
+[GAUNTLET POWERING UP]
+
+1772
+01:23:44,526 --> 01:23:47,094
+-[MUSIC CRESCENDOES]
+-[SPIDER-MAN GRUNTS]
+
+1773
+01:23:47,562 --> 01:23:49,162
+[GRUNTS]
+
+1774
+01:23:54,636 --> 01:23:56,704
+[SPIDER-MAN GROANING]
+
+1775
+01:23:59,674 --> 01:24:01,441
+SPIDER-MAN: [GROANING]
+Dr. Banner...
+
+1776
+01:24:02,744 --> 01:24:04,077
+please.
+
+1777
+01:24:04,111 --> 01:24:05,379
+[GROANING]
+
+1778
+01:24:05,412 --> 01:24:06,446
+Bruce.
+
+1779
+01:24:06,480 --> 01:24:07,649
+[BREATHING HEAVILY]
+
+1780
+01:24:07,682 --> 01:24:09,651
+-SPIDER-MAN: It's Peter.
+-[GROWLS]
+
+1781
+01:24:10,450 --> 01:24:12,185
+I'm your friend.
+
+1782
+01:24:14,288 --> 01:24:15,422
+[GRUNTS SOFTLY]
+
+1783
+01:24:23,765 --> 01:24:25,432
+[GRUNTS SOFTLY]
+
+1784
+01:24:29,537 --> 01:24:30,672
+[GROANING]
+
+1785
+01:24:35,409 --> 01:24:37,444
+[SPIDER-MAN COUGHING]
+
+1786
+01:24:41,448 --> 01:24:42,449
+Bruce.
+
+1787
+01:24:45,218 --> 01:24:47,421
+-[PANTING]
+-[CRASHING]
+
+1788
+01:24:47,454 --> 01:24:48,690
+[TIMER BEEPING]
+
+1789
+01:24:50,223 --> 01:24:51,793
+[DISTANT EXPLOSION]
+
+1790
+01:24:53,695 --> 01:24:54,729
+[GUNSHOTS]
+
+1791
+01:24:54,762 --> 01:24:56,463
+[GUARDS GROANING]
+
+1792
+01:25:01,536 --> 01:25:02,670
+Throw down your guns,
+
+1793
+01:25:02,704 --> 01:25:04,371
+or you'll get the next one
+in the head.
+
+1794
+01:25:15,617 --> 01:25:17,184
+Where is she?
+
+1795
+01:25:22,389 --> 01:25:23,524
+[FRANK GRUNTS]
+
+1796
+01:25:26,259 --> 01:25:27,895
+[INHIBITOR BEEPS, TRILLING]
+
+1797
+01:25:27,929 --> 01:25:29,831
+-[WHOOSHES]
+-[GROANS]
+
+1798
+01:25:30,531 --> 01:25:31,566
+What did you...
+
+1799
+01:25:31,599 --> 01:25:32,767
+SPIDER-MAN: It's over, Jean.
+
+1800
+01:25:33,568 --> 01:25:35,369
+-[GUN FIRES]
+-[GRUNTS]
+
+1801
+01:25:40,340 --> 01:25:42,376
+[JEAN GRUNTING, GASPING]
+
+1802
+01:25:48,248 --> 01:25:49,249
+Sara.
+
+1803
+01:26:00,494 --> 01:26:02,764
+Is that my gun?
+
+1804
+01:26:02,797 --> 01:26:05,933
+-[SIREN WAILING IN DISTANCE]
+-[SOMBER MUSIC PLAYING]
+
+1805
+01:26:10,605 --> 01:26:13,373
+Is anyone hurt? It's just me?
+
+1806
+01:26:14,341 --> 01:26:15,510
+Is anyone hurt?
+
+1807
+01:26:17,011 --> 01:26:18,211
+METZGER: Spider-Man...
+
+1808
+01:26:20,815 --> 01:26:22,784
+You saved my life.
+
+1809
+01:26:22,817 --> 01:26:24,519
+And you saved
+God knows how many lives
+
+1810
+01:26:24,552 --> 01:26:25,586
+by making sure she didn't find
+
+1811
+01:26:25,620 --> 01:26:27,320
+what she was looking for
+in there.
+
+1812
+01:26:27,354 --> 01:26:28,623
+EMT: Still inside.
+We got her coming through.
+
+1813
+01:26:29,724 --> 01:26:30,625
+SPIDER-MAN:
+Before she passed out,
+
+1814
+01:26:30,658 --> 01:26:32,694
+she tried to say something.
+
+1815
+01:26:32,727 --> 01:26:35,462
+A name, Sara. Does that
+mean something to you?
+
+1816
+01:26:36,731 --> 01:26:39,567
+Before you got
+the inhibitor on her,
+
+1817
+01:26:39,600 --> 01:26:41,602
+she managed to get in my mind
+for a moment.
+
+1818
+01:26:43,037 --> 01:26:44,539
+Sara was the name of someone
+
+1819
+01:26:44,572 --> 01:26:47,274
+I worked closely with
+that recently passed.
+
+1820
+01:26:47,307 --> 01:26:48,375
+SPIDER-MAN: I'm sorry
+to hear that.
+
+1821
+01:26:49,777 --> 01:26:53,614
+Somehow the memory of Sara
+must have affected her.
+
+1822
+01:26:56,617 --> 01:26:58,452
+SPIDER-MAN: Well, I'd love to
+talk to her when she wakes up,
+
+1823
+01:26:58,485 --> 01:26:59,520
+if that's all right.
+
+1824
+01:26:59,554 --> 01:27:01,288
+Of course. She'll be transferred
+
+1825
+01:27:01,321 --> 01:27:03,558
+to our facility
+on Roosevelt Island.
+
+1826
+01:27:03,591 --> 01:27:05,893
+Now, I'm just as eager
+to get her talking as you are,
+
+1827
+01:27:05,927 --> 01:27:08,529
+but let's not strain her
+too much in one day.
+
+1828
+01:27:08,563 --> 01:27:10,397
+SPIDER-MAN: Yeah, of course.
+
+1829
+01:27:10,430 --> 01:27:11,733
+METZGER: Thank you, Spider-Man.
+
+1830
+01:27:11,766 --> 01:27:12,767
+SPIDER-MAN: My pleasure.
+
+1831
+01:27:13,868 --> 01:27:15,870
+[SOMBER MUSIC PLAYING]
+
+1832
+01:27:24,712 --> 01:27:25,747
+SPIDER-MAN: MJ!
+
+1833
+01:27:25,780 --> 01:27:28,049
+It worked. She's in custody.
+
+1834
+01:27:28,082 --> 01:27:29,416
+You're safe now.
+
+1835
+01:27:32,520 --> 01:27:33,521
+You left this.
+
+1836
+01:27:41,763 --> 01:27:42,964
+Did you want me to find it?
+
+1837
+01:27:45,066 --> 01:27:47,535
+SPIDER-MAN: No. No. Um...
+
+1838
+01:27:48,335 --> 01:27:49,369
+Look, I can explain, I...
+
+1839
+01:27:49,402 --> 01:27:50,738
+Can you take that off, please?
+
+1840
+01:27:52,640 --> 01:27:53,641
+SPIDER-MAN: What?
+
+1841
+01:27:54,675 --> 01:27:55,676
+The mask.
+
+1842
+01:27:57,745 --> 01:27:59,547
+I think I deserve to
+have this conversation
+
+1843
+01:27:59,580 --> 01:28:02,415
+with "Peter Parker."
+
+1844
+01:28:10,691 --> 01:28:11,692
+[SIGHS]
+
+1845
+01:28:28,408 --> 01:28:30,310
+You came to the party at our
+apartment the other night.
+
+1846
+01:28:36,751 --> 01:28:38,786
+And the donut shop. [SCOFFS]
+
+1847
+01:28:40,087 --> 01:28:41,556
+The year I went off to school.
+
+1848
+01:28:44,457 --> 01:28:46,127
+Why didn't you tell me then?
+
+1849
+01:28:46,160 --> 01:28:48,428
+I was trying to protect you.
+
+1850
+01:28:48,461 --> 01:28:49,530
+Yeah, well,
+I've almost been killed,
+
+1851
+01:28:49,564 --> 01:28:51,364
+like, five times
+in the past 24 hours,
+
+1852
+01:28:51,398 --> 01:28:53,701
+so it's not really
+working that well.
+
+1853
+01:28:53,734 --> 01:28:55,002
+PETER: I know.
+I'm sorry. I...
+
+1854
+01:28:56,537 --> 01:28:57,772
+Were you ever gonna tell me?
+
+1855
+01:29:04,712 --> 01:29:05,713
+Right.
+
+1856
+01:29:07,114 --> 01:29:09,650
+So you just were gonna
+make that decision for me.
+
+1857
+01:29:10,450 --> 01:29:11,619
+I know. I'm sorry.
+
+1858
+01:29:11,652 --> 01:29:13,554
+I don't really need you to
+keep saying that you're sorry.
+
+1859
+01:29:13,588 --> 01:29:14,655
+I don't know
+what you want me to tell you.
+
+1860
+01:29:14,689 --> 01:29:16,724
+I want you to tell me
+why you would do this to me.
+
+1861
+01:29:22,830 --> 01:29:24,031
+I lost someone.
+
+1862
+01:29:28,002 --> 01:29:30,104
+And they'd still be here
+if it wasn't for me.
+
+1863
+01:29:34,942 --> 01:29:36,644
+I didn't read you
+that letter because...
+
+1864
+01:29:37,879 --> 01:29:40,181
+I didn't want anything like that
+to happen to you.
+
+1865
+01:29:40,214 --> 01:29:41,616
+But that's not really
+your decision to make.
+
+1866
+01:29:41,649 --> 01:29:42,884
+PETER: I know it's not,
+but...
+
+1867
+01:29:45,186 --> 01:29:46,654
+You mean everything to me.
+
+1868
+01:29:49,857 --> 01:29:52,392
+And I've been trying to live
+my life without you, but I...
+
+1869
+01:29:54,095 --> 01:29:55,096
+I can't.
+
+1870
+01:30:01,468 --> 01:30:02,469
+I love you.
+
+1871
+01:30:09,610 --> 01:30:10,845
+[MJ SIGHS]
+
+1872
+01:30:14,548 --> 01:30:17,618
+This spell or whatever it is
+that you did...
+
+1873
+01:30:21,155 --> 01:30:21,956
+It worked.
+
+1874
+01:30:25,126 --> 01:30:26,794
+All these memories
+that you're saying
+
+1875
+01:30:26,827 --> 01:30:28,529
+that we have together,
+I don't...
+
+1876
+01:30:30,731 --> 01:30:31,832
+I don't have them.
+
+1877
+01:30:35,670 --> 01:30:37,838
+And I do see why, you know,
+she would love you,
+
+1878
+01:30:37,872 --> 01:30:40,641
+the girl you wrote
+that letter to, but...
+
+1879
+01:30:45,246 --> 01:30:47,515
+I understand...
+
+1880
+01:30:47,548 --> 01:30:50,483
+that you did what
+you had to do to protect her.
+
+1881
+01:30:52,720 --> 01:30:55,488
+And for that I'm so grateful.
+
+1882
+01:30:58,893 --> 01:30:59,894
+But I...
+
+1883
+01:31:03,931 --> 01:31:05,166
+I don't love you.
+
+1884
+01:31:09,670 --> 01:31:11,138
+Because I don't...
+
+1885
+01:31:11,172 --> 01:31:12,840
+I don't even know you.
+
+1886
+01:31:21,615 --> 01:31:23,918
+I should probably go now.
+
+1887
+01:31:30,257 --> 01:31:31,859
+I really am sorry, Peter.
+
+1888
+01:31:50,144 --> 01:31:51,512
+I don't have a phone.
+
+1889
+01:31:52,213 --> 01:31:53,214
+Um...
+
+1890
+01:31:54,682 --> 01:31:55,950
+Do you mind taking me home?
+
+1891
+01:31:58,819 --> 01:31:59,920
+Yeah, of course.
+
+1892
+01:31:59,954 --> 01:32:00,955
+Thank you.
+
+1893
+01:32:02,857 --> 01:32:04,859
+[MELANCHOLIC MUSIC PLAYING]
+
+1894
+01:32:40,761 --> 01:32:41,896
+[MJ GRUNTS]
+
+1895
+01:32:43,064 --> 01:32:45,366
+-[SIGHS] Thank you.
+-SPIDER-MAN: Yeah, sure.
+
+1896
+01:32:45,399 --> 01:32:47,835
+Um, I'm going to, uh...
+
+1897
+01:32:47,868 --> 01:32:49,270
+Uh, yeah, yeah. Yeah, of course.
+
+1898
+01:32:52,273 --> 01:32:53,808
+[SPIDER-MAN SIGHS]
+
+1899
+01:32:58,879 --> 01:32:59,947
+Do you wanna come up?
+
+1900
+01:33:02,083 --> 01:33:04,285
+Just to say hi to Ned. Maybe.
+
+1901
+01:33:07,822 --> 01:33:08,823
+SPIDER-MAN: I would love that.
+
+1902
+01:33:09,790 --> 01:33:11,058
+MJ: Okay.
+
+1903
+01:33:11,092 --> 01:33:13,160
+FEMALE REPORTER: <i>The Hulk,</i>
+<i>a.k.a. Dr. Bruce Banner,</i>
+
+1904
+01:33:13,194 --> 01:33:14,428
+<i>is in custody,</i>
+
+1905
+01:33:14,462 --> 01:33:16,397
+<i>currently being transferred</i>
+<i>to a psychiatric ward.</i>
+
+1906
+01:33:16,430 --> 01:33:17,698
+NED: Oh! So sad.
+
+1907
+01:33:17,731 --> 01:33:20,067
+FEMALE REPORTER: <i>After years</i>
+<i>as a peaceful academic,</i>
+
+1908
+01:33:20,101 --> 01:33:23,003
+<i>the question</i>
+<i>the world asked today is,</i>
+
+1909
+01:33:23,037 --> 01:33:24,638
+<i>"What finally snapped?"</i>
+
+1910
+01:33:24,672 --> 01:33:26,273
+-[PHONE VIBRATES]
+-[ <i>SPIDER-MA</i> THEME PLAYS]
+
+1911
+01:33:26,307 --> 01:33:27,675
+[GASPS]
+
+1912
+01:33:27,708 --> 01:33:28,976
+[PHONE VIBRATING]
+
+1913
+01:33:29,777 --> 01:33:30,811
+[DOOR OPENS]
+
+1914
+01:33:30,845 --> 01:33:32,746
+APP VOICE: <i>Hey, I'm nearby.</i>
+
+1915
+01:33:32,780 --> 01:33:34,348
+<i>-Hey, I'm nearby.</i>
+-MJ?
+
+1916
+01:33:34,381 --> 01:33:35,850
+MJ: Yeah.
+APP VOICE: <i>Hey, I'm nearby.</i>
+
+1917
+01:33:35,883 --> 01:33:36,917
+[DOOR CLOSES]
+
+1918
+01:33:36,951 --> 01:33:38,185
+<i>-Hey, I'm nearby.</i>
+-Uh...
+
+1919
+01:33:38,219 --> 01:33:39,521
+You're not gonna
+believe this...
+
+1920
+01:33:39,554 --> 01:33:40,921
+-APP VOICE: <i>Hey, I'm nearby.</i>
+-...but the Spidey Tracker app
+
+1921
+01:33:40,955 --> 01:33:42,256
+-says that Spider-Man...
+<i>-</i> APP VOICE: <i>Hey, I'm nearby.</i>
+
+1922
+01:33:42,289 --> 01:33:44,758
+-...is in the direct vicinity.
+-APP VOICE: <i>Hey, I'm nearby.</i>
+
+1923
+01:33:44,792 --> 01:33:46,026
+SPIDER-MAN: Oh, yeah? No way.
+
+1924
+01:33:46,060 --> 01:33:46,794
+-That's crazy.
+<i>-</i> APP VOICE: <i>Hey, I'm nearby.</i>
+
+1925
+01:33:46,827 --> 01:33:49,196
+[DISTORTED] <i>Hey, I'm nearby.</i>
+
+1926
+01:33:49,230 --> 01:33:52,199
+Uh, Ned, Spider-Man.
+Spider-Man, Ned.
+
+1927
+01:33:52,233 --> 01:33:53,334
+It's nice to meet you, Ned.
+
+1928
+01:33:53,367 --> 01:33:55,236
+Hello. [CHUCKLES]
+
+1929
+01:33:55,269 --> 01:33:56,203
+I'm not, like, a weirdo
+
+1930
+01:33:56,237 --> 01:33:57,972
+-or anything, I'm...
+-He's a little weird.
+
+1931
+01:33:58,005 --> 01:34:00,741
+Why, uh...
+Why are you here? [CHUCKLES]
+
+1932
+01:34:00,774 --> 01:34:02,376
+-SPIDER-MAN: Oh, I...
+-I was...
+
+1933
+01:34:02,409 --> 01:34:03,844
+-I was on a subway platform.
+-SPIDER-MAN: She was in the...
+
+1934
+01:34:03,878 --> 01:34:04,879
+Platform. Right.
+
+1935
+01:34:04,912 --> 01:34:05,813
+-And she was on her phone.
+-Yeah, and... Yeah,
+
+1936
+01:34:05,846 --> 01:34:06,814
+I got a little distracted.
+And the train
+
+1937
+01:34:06,847 --> 01:34:07,616
+-was coming and he...
+-SPIDER-MAN: I mean...
+
+1938
+01:34:07,648 --> 01:34:09,450
+And I just
+swooped her right up.
+
+1939
+01:34:09,483 --> 01:34:10,951
+-Yep. Saved me.
+-SPIDER-MAN: Yeah.
+
+1940
+01:34:12,720 --> 01:34:14,188
+Oh, my God.
+
+1941
+01:34:15,256 --> 01:34:16,857
+Why has that
+never happened to me?
+
+1942
+01:34:16,891 --> 01:34:19,260
+-[INTRIGUING MUSIC PLAYING]
+-So what if you're mid-swing
+
+1943
+01:34:19,293 --> 01:34:20,861
+and you decide
+you need to pee?
+
+1944
+01:34:20,895 --> 01:34:22,363
+Do you just land
+on top of a building?
+
+1945
+01:34:22,396 --> 01:34:23,731
+SPIDER-MAN: What?
+
+1946
+01:34:23,764 --> 01:34:24,665
+Do you drop down
+to ground level
+
+1947
+01:34:24,698 --> 01:34:25,567
+and run into a coffee shop
+and you're like,
+
+1948
+01:34:25,600 --> 01:34:27,234
+"Hey, it's Spider-Man.
+I need to pee"?
+
+1949
+01:34:27,268 --> 01:34:29,103
+Or do you find
+a rooftop somewhere?
+
+1950
+01:34:29,136 --> 01:34:31,038
+SPIDER-MAN: No, I don't find
+a rooftop somewhere, Ned.
+
+1951
+01:34:31,071 --> 01:34:33,107
+Is this really what you wanna
+be asking him right now?
+
+1952
+01:34:33,140 --> 01:34:34,775
+SPIDER-MAN: Yeah, dude, come on,
+you can ask me anything.
+
+1953
+01:34:34,808 --> 01:34:36,243
+You wanna know
+how my web shooters work?
+
+1954
+01:34:36,277 --> 01:34:37,945
+I mean, I already know
+how the web shooters work.
+
+1955
+01:34:37,978 --> 01:34:39,180
+SPIDER-MAN: Is that right?
+
+1956
+01:34:39,213 --> 01:34:42,349
+Well, there's obviously some
+sort of a shear-thinning fluid
+
+1957
+01:34:42,383 --> 01:34:44,785
+that is cycling
+within a chamber, right?
+
+1958
+01:34:44,818 --> 01:34:46,020
+So it can keep
+its liquid form.
+
+1959
+01:34:46,053 --> 01:34:48,355
+And then, when you activate it
+by pressing on the triggers,
+
+1960
+01:34:48,389 --> 01:34:50,090
+it runs through
+a Teflon turbine,
+
+1961
+01:34:50,124 --> 01:34:53,961
+and then it hardens when it
+interacts with the air. Right?
+
+1962
+01:34:56,197 --> 01:34:59,066
+SPIDER-MAN: Uh...
+I mean, not exactly, but...
+
+1963
+01:34:59,099 --> 01:35:01,368
+Okay, okay, well, then tell me
+what's in the web fluid.
+
+1964
+01:35:01,402 --> 01:35:04,371
+I would guess something
+like a long chain polymer.
+
+1965
+01:35:04,405 --> 01:35:05,906
+Uh, nylon?
+
+1966
+01:35:05,940 --> 01:35:06,907
+SPIDER-MAN:
+That's pretty close.
+
+1967
+01:35:06,941 --> 01:35:09,977
+Okay, okay. What about
+Nomex or, oh, Kevlar?
+
+1968
+01:35:12,446 --> 01:35:14,348
+[IMITATES FRODO] "All right,
+then. Keep your secrets."
+
+1969
+01:35:14,381 --> 01:35:15,482
+SPIDER-MAN: [IMITATES GANDALF]
+"If you're referring
+
+1970
+01:35:15,517 --> 01:35:16,518
+"to the incident
+
+1971
+01:35:16,551 --> 01:35:17,519
+-with the dragon..."
+-[CHUCKLES]
+
+1972
+01:35:17,552 --> 01:35:18,986
+"...I was barely involved."
+
+1973
+01:35:19,019 --> 01:35:20,788
+[IMITATES GANDALF]
+"All I did was simply
+
+1974
+01:35:20,821 --> 01:35:22,823
+"give your uncle a little nudge
+out the door."
+
+1975
+01:35:22,856 --> 01:35:25,192
+[ALL LAUGH]
+
+1976
+01:35:25,226 --> 01:35:26,327
+NED: Solid reference.
+
+1977
+01:35:26,360 --> 01:35:27,428
+[WATCH CHIMES]
+
+1978
+01:35:27,461 --> 01:35:29,263
+Ooh, banh mi time.
+
+1979
+01:35:29,296 --> 01:35:30,831
+You ordered banh mis?
+
+1980
+01:35:30,864 --> 01:35:32,066
+I ordered five banh mis.
+
+1981
+01:35:32,099 --> 01:35:33,133
+We have Spider-Man
+in the apartment.
+
+1982
+01:35:33,167 --> 01:35:33,867
+He's gonna get fed.
+
+1983
+01:35:33,901 --> 01:35:35,903
+-[CHUCKLES]
+-[NED CHUCKLES]
+
+1984
+01:35:37,572 --> 01:35:39,073
+Sorry about him.
+He's just, like,
+
+1985
+01:35:39,106 --> 01:35:40,808
+very excited that you're here.
+
+1986
+01:35:40,841 --> 01:35:41,543
+SPIDER-MAN: You kidding?
+This is, like,
+
+1987
+01:35:41,576 --> 01:35:43,143
+the most fun I've had in years.
+
+1988
+01:35:43,177 --> 01:35:45,246
+-[MJ CHUCKLES SOFTLY]
+-I really missed you guys.
+
+1989
+01:35:47,181 --> 01:35:49,216
+You guys really do
+look like best friends.
+
+1990
+01:35:49,250 --> 01:35:50,251
+SPIDER-MAN: What do you mean?
+
+1991
+01:35:59,893 --> 01:36:00,894
+You should tell him.
+
+1992
+01:36:01,495 --> 01:36:02,496
+He can handle it.
+
+1993
+01:36:04,398 --> 01:36:06,066
+SPIDER-MAN: Yeah, I know.
+[SIGHS]
+
+1994
+01:36:08,168 --> 01:36:09,136
+Um...
+
+1995
+01:36:12,507 --> 01:36:15,976
+When she was inhabiting you
+on the rooftop,
+
+1996
+01:36:17,311 --> 01:36:18,479
+she kissed me...
+
+1997
+01:36:19,514 --> 01:36:21,248
+and I kissed her back,
+
+1998
+01:36:21,282 --> 01:36:24,418
+because I... I thought
+it was you, but I didn't know.
+
+1999
+01:36:24,451 --> 01:36:26,287
+And I'm... I'm really sorry.
+
+2000
+01:36:27,589 --> 01:36:29,023
+I just thought you should know.
+
+2001
+01:36:31,358 --> 01:36:32,359
+Thanks for telling me.
+
+2002
+01:36:36,063 --> 01:36:38,866
+I mean, it's not like I
+remember anything anyway, so...
+
+2003
+01:36:40,200 --> 01:36:41,302
+SPIDER-MAN: Really?
+
+2004
+01:36:41,335 --> 01:36:42,870
+Yeah. It was weird,
+it was like,
+
+2005
+01:36:42,903 --> 01:36:44,238
+one second
+I was sitting at my desk,
+
+2006
+01:36:44,271 --> 01:36:46,974
+and the next second
+I was lying on the street.
+
+2007
+01:36:47,007 --> 01:36:48,475
+I don't know,
+like a light switch went off.
+
+2008
+01:36:48,510 --> 01:36:51,045
+[TENSE MUSIC PLAYING]
+
+2009
+01:36:51,078 --> 01:36:51,979
+What?
+
+2010
+01:36:52,012 --> 01:36:53,515
+SPIDER-MAN: So you don't
+remember anything?
+
+2011
+01:36:55,550 --> 01:36:56,417
+No. Why?
+
+2012
+01:36:56,450 --> 01:36:58,052
+SPIDER-MAN:
+Metzger said he remembered
+
+2013
+01:36:58,085 --> 01:36:59,621
+thinking about
+someone named Sara,
+
+2014
+01:36:59,654 --> 01:37:01,088
+but what you're saying is that
+
+2015
+01:37:01,121 --> 01:37:03,057
+you don't remember
+anything at all?
+
+2016
+01:37:05,159 --> 01:37:07,494
+I mean, yeah,
+it was instantaneous.
+
+2017
+01:37:07,529 --> 01:37:08,862
+That's what made it so scary.
+
+2018
+01:37:10,898 --> 01:37:12,099
+SPIDER-MAN: He lied to me.
+
+2019
+01:37:13,535 --> 01:37:15,102
+[LINE RINGING]
+
+2020
+01:37:15,135 --> 01:37:16,604
+<i>I heard you caught leshy.</i>
+
+2021
+01:37:16,638 --> 01:37:17,772
+SPIDER-MAN: Yeah.
+Her name's Jean Grey.
+
+2022
+01:37:17,806 --> 01:37:20,474
+I need some help determining
+the size of some potatoes.
+
+2023
+01:37:20,508 --> 01:37:21,308
+Potatoes?
+
+2024
+01:37:21,342 --> 01:37:22,409
+[SOFTLY]
+I think that's Black Widow.
+
+2025
+01:37:22,443 --> 01:37:24,411
+SPIDER-MAN: I think Metzger
+lied to me about a name.
+
+2026
+01:37:24,445 --> 01:37:25,879
+<i>Can you see</i>
+<i>if there's a connection</i>
+
+2027
+01:37:25,913 --> 01:37:28,482
+<i>between Jean</i>
+<i>and someone named Sara?</i>
+
+2028
+01:37:28,516 --> 01:37:30,951
+Hmm. These potatoes
+sound meager.
+
+2029
+01:37:30,984 --> 01:37:32,419
+-[KEYBOARD CLACKING]
+-[LAPTOP TRILLING]
+
+2030
+01:37:32,453 --> 01:37:34,254
+SPIDER-MAN: Oh, wow.
+That really is your office.
+
+2031
+01:37:35,022 --> 01:37:36,123
+Well, well, well.
+
+2032
+01:37:36,156 --> 01:37:38,492
+Internet, government records,
+
+2033
+01:37:38,526 --> 01:37:40,628
+and a lot of data
+related to Jean Grey
+
+2034
+01:37:40,662 --> 01:37:43,330
+has been scrubbed
+by Damage Control.
+
+2035
+01:37:43,364 --> 01:37:44,365
+SPIDER-MAN: <i>Data about what?</i>
+
+2036
+01:37:45,332 --> 01:37:47,067
+Her sister.
+
+2037
+01:37:47,101 --> 01:37:48,435
+SPIDER-MAN: Wait,
+Jean has a sister?
+
+2038
+01:37:50,137 --> 01:37:52,139
+Hmm. Sara Grey.
+
+2039
+01:37:52,172 --> 01:37:53,974
+<i>Also a telepath.</i>
+
+2040
+01:37:54,007 --> 01:37:55,943
+<i>Damage Control</i>
+<i>took her into custody</i>
+
+2041
+01:37:55,976 --> 01:37:57,679
+<i>for study and observation.</i>
+
+2042
+01:37:57,712 --> 01:37:59,213
+<i>Wow. I mean,</i>
+<i>you can probably guess</i>
+
+2043
+01:37:59,246 --> 01:38:00,247
+<i>what they mean by that.</i>
+
+2044
+01:38:00,280 --> 01:38:02,449
+Experimentation and other
+human rights violations.
+
+2045
+01:38:02,483 --> 01:38:04,351
+Hmm. Yes, exactly.
+Wait, who are you?
+
+2046
+01:38:04,385 --> 01:38:06,220
+<i>-Hi. Ned Leeds. Big fan.</i>
+-MJ: <i>I'm...</i>
+
+2047
+01:38:06,253 --> 01:38:07,421
+Hi.
+
+2048
+01:38:07,454 --> 01:38:09,156
+SPIDER-MAN: <i>Uh, I'm sorry.</i>
+<i>Uh...</i> [GRUNTS]
+
+2049
+01:38:09,189 --> 01:38:12,192
+I'm just so happy
+that the sad man has friends.
+
+2050
+01:38:13,060 --> 01:38:14,294
+[SPIDER-MAN CHUCKLES]
+
+2051
+01:38:14,328 --> 01:38:16,497
+Thanks. I, uh...
+I owe you one.
+
+2052
+01:38:17,599 --> 01:38:19,066
+YELENA: <i>Good luck, Spider-Man.</i>
+
+2053
+01:38:19,099 --> 01:38:20,134
+Bye.
+
+2054
+01:38:20,167 --> 01:38:21,603
+SPIDER-MAN: She was
+just looking for her sister
+
+2055
+01:38:21,636 --> 01:38:23,971
+and I handed her
+to the people that took her.
+
+2056
+01:38:24,004 --> 01:38:25,507
+-I gotta go.
+-MJ: Hey, Peter...
+
+2057
+01:38:25,540 --> 01:38:26,541
+SPIDER-MAN: Yeah?
+
+2058
+01:38:27,575 --> 01:38:28,643
+Just be careful, all right?
+
+2059
+01:38:30,545 --> 01:38:31,546
+SPIDER-MAN: Yeah, I will.
+
+2060
+01:38:35,015 --> 01:38:36,383
+[WEB SHOOTER CLICKS]
+
+2061
+01:38:36,417 --> 01:38:38,152
+Spider-Man's name is Peter?
+
+2062
+01:38:40,254 --> 01:38:42,289
+[DRAMATIC MUSIC PLAYING]
+
+2063
+01:38:51,699 --> 01:38:54,134
+Jean, who do you want to be?
+
+2064
+01:38:56,571 --> 01:38:58,071
+Her. Pink jacket.
+
+2065
+01:38:59,574 --> 01:39:00,575
+She's too far.
+
+2066
+01:39:01,609 --> 01:39:02,644
+You're gonna have to hop.
+
+2067
+01:39:02,677 --> 01:39:04,211
+JEAN: Hop?
+
+2068
+01:39:04,244 --> 01:39:06,280
+First, pick someone close.
+
+2069
+01:39:07,014 --> 01:39:08,015
+And then...
+
+2070
+01:39:10,150 --> 01:39:12,219
+[HIGH-PITCHED RINGING]
+
+2071
+01:39:13,454 --> 01:39:14,955
+[WHOOSHING]
+
+2072
+01:39:20,728 --> 01:39:22,129
+[JEAN LAUGHS]
+
+2073
+01:39:22,162 --> 01:39:23,665
+Each hop has a limit.
+
+2074
+01:39:23,698 --> 01:39:25,600
+But you can
+string them together
+
+2075
+01:39:25,633 --> 01:39:27,569
+and go as far as you want.
+
+2076
+01:39:27,602 --> 01:39:30,204
+-And when you let go...
+-[WHOOSHES]
+
+2077
+01:39:30,237 --> 01:39:32,607
+You're right back
+where you started.
+
+2078
+01:39:32,640 --> 01:39:35,042
+Could you do that to everyone
+in this park at once?
+
+2079
+01:39:35,810 --> 01:39:38,011
+Well, yeah, maybe one day.
+
+2080
+01:39:38,045 --> 01:39:39,213
+If you get really good.
+
+2081
+01:39:41,148 --> 01:39:42,449
+[GIRL LAUGHING]
+
+2082
+01:39:44,652 --> 01:39:46,654
+[BOTH LAUGHING]
+
+2083
+01:39:52,727 --> 01:39:53,728
+How could she just...
+
+2084
+01:39:55,128 --> 01:39:56,163
+send us away?
+
+2085
+01:39:57,665 --> 01:39:59,132
+She wasn't really a mom.
+
+2086
+01:40:01,301 --> 01:40:02,402
+Not like that, anyway.
+
+2087
+01:40:02,436 --> 01:40:04,471
+She was, before we changed.
+
+2088
+01:40:04,505 --> 01:40:05,472
+Yeah, well,
+if that's all it takes
+
+2089
+01:40:05,507 --> 01:40:06,406
+for you to stop being a mom,
+
+2090
+01:40:06,440 --> 01:40:08,342
+then you're not a mom.
+
+2091
+01:40:08,375 --> 01:40:10,477
+What would you do
+if you had daughters like us?
+
+2092
+01:40:11,078 --> 01:40:12,145
+I'd love them.
+
+2093
+01:40:15,617 --> 01:40:17,384
+-Especially the redhead one.
+-Shut up.
+
+2094
+01:40:20,220 --> 01:40:21,523
+We have each other.
+
+2095
+01:40:22,690 --> 01:40:23,791
+Mmm.
+
+2096
+01:40:25,359 --> 01:40:27,060
+SARA: And we have ice cream.
+
+2097
+01:40:28,763 --> 01:40:30,264
+-One mint chip, one chocolate?
+-Yeah.
+
+2098
+01:40:34,268 --> 01:40:35,537
+-[INDISTINCT CHATTER]
+-[WOMAN GRUNTS]
+
+2099
+01:40:36,604 --> 01:40:37,605
+WOMAN: Okay.
+
+2100
+01:40:39,239 --> 01:40:40,742
+Now I know how you're playing.
+
+2101
+01:40:40,775 --> 01:40:42,476
+-[GIRL LAUGHING]
+-Oh.
+
+2102
+01:40:48,482 --> 01:40:49,617
+[SARA WINCES]
+
+2103
+01:40:54,388 --> 01:40:55,590
+[VEHICLE APPROACHING]
+
+2104
+01:40:58,258 --> 01:40:59,426
+GUARD 1: Get down!
+GUARD 2: Get down!
+
+2105
+01:40:59,459 --> 01:41:00,828
+GUARD 3: Get down! Get down!
+GUARD 1: Get down! Get down!
+
+2106
+01:41:00,862 --> 01:41:01,829
+GUARD 2: Get down
+on the ground now!
+
+2107
+01:41:01,863 --> 01:41:02,764
+GUARD 3: Get down! Get down!
+
+2108
+01:41:02,797 --> 01:41:04,064
+[GASPS]
+
+2109
+01:41:05,265 --> 01:41:06,266
+Sara!
+
+2110
+01:41:08,570 --> 01:41:10,103
+[PANTING]
+
+2111
+01:41:11,739 --> 01:41:13,273
+SARA: <i>I'm sorry, Jean.</i>
+
+2112
+01:41:14,141 --> 01:41:15,543
+<i>I have to keep you safe.</i>
+
+2113
+01:41:15,577 --> 01:41:18,145
+[HIGH-PITCHED RINGING]
+
+2114
+01:41:18,178 --> 01:41:19,279
+[WHOOSHES]
+
+2115
+01:41:19,313 --> 01:41:21,148
+[SOMBER MUSIC PLAYING]
+
+2116
+01:41:25,853 --> 01:41:27,722
+[MUSIC CRESCENDOES]
+
+2117
+01:41:28,656 --> 01:41:30,290
+[GASPS, PANTS]
+
+2118
+01:41:33,427 --> 01:41:35,329
+[BREATHING HEAVILY]
+
+2119
+01:41:43,470 --> 01:41:45,472
+[DRAMATIC MUSIC PLAYING]
+
+2120
+01:41:46,908 --> 01:41:49,109
+[BREATHING HEAVILY]
+
+2121
+01:41:57,952 --> 01:42:01,254
+METZGER: Subject is awake.
+Heart rate is 94 bpm.
+
+2122
+01:42:01,723 --> 01:42:03,825
+[FAINT TRILLING]
+
+2123
+01:42:03,858 --> 01:42:05,760
+Jean, that's not
+gonna work anymore,
+
+2124
+01:42:05,793 --> 01:42:07,528
+thanks to Spider-Man.
+
+2125
+01:42:08,228 --> 01:42:10,464
+[GRUNTS, PANTING]
+
+2126
+01:42:10,497 --> 01:42:11,899
+-[JEAN GRUNTS SOFTLY]
+-Jean?
+
+2127
+01:42:12,499 --> 01:42:13,901
+[GRUNTING]
+
+2128
+01:42:13,935 --> 01:42:16,904
+[JEAN GRUNTS, PANTS]
+
+2129
+01:42:21,542 --> 01:42:22,777
+I need you to breathe.
+
+2130
+01:42:22,810 --> 01:42:24,579
+I need you to look at me
+and breathe.
+
+2131
+01:42:24,612 --> 01:42:26,380
+-[BREATHES DEEPLY]
+-METZGER: Okay?
+
+2132
+01:42:26,413 --> 01:42:27,815
+You're safe. Breathe.
+
+2133
+01:42:30,484 --> 01:42:31,619
+Where is she?
+
+2134
+01:42:32,954 --> 01:42:34,922
+Like your sister, you've been
+blessed with a power
+
+2135
+01:42:34,956 --> 01:42:37,792
+that has the potential to do
+tremendous good in the world,
+
+2136
+01:42:38,593 --> 01:42:40,795
+or tremendous damage.
+
+2137
+01:42:40,828 --> 01:42:43,296
+A power like yours
+in the hands of a child
+
+2138
+01:42:43,330 --> 01:42:44,832
+is an impossible burden.
+
+2139
+01:42:45,600 --> 01:42:47,735
+But imagine...
+
+2140
+01:42:47,769 --> 01:42:50,337
+if that power was placed
+in the hands of people
+
+2141
+01:42:50,370 --> 01:42:51,673
+who actually know
+what to do with it.
+
+2142
+01:43:00,682 --> 01:43:02,482
+Where is my sister?
+
+2143
+01:43:05,385 --> 01:43:07,387
+METZGER: You're gonna change
+the world, Jean.
+
+2144
+01:43:07,689 --> 01:43:08,690
+Hey!
+
+2145
+01:43:09,489 --> 01:43:11,491
+Hey! [GRUNTING]
+
+2146
+01:43:12,994 --> 01:43:15,195
+-[MACHINERY WHIRRING]
+-[GASPS]
+
+2147
+01:43:17,364 --> 01:43:19,366
+[SINISTER MUSIC PLAYING]
+
+2148
+01:43:29,844 --> 01:43:31,679
+[DRAMATIC MUSIC PLAYING]
+
+2149
+01:43:31,713 --> 01:43:33,548
+-[PHONE RINGING]
+-SPIDER-MAN: Frank.
+
+2150
+01:43:33,581 --> 01:43:35,550
+I know where you are,
+what you're doing.
+
+2151
+01:43:35,583 --> 01:43:37,350
+SPIDER-MAN: <i>Oh, yeah?</i>
+<i>And how's that?</i>
+
+2152
+01:43:37,384 --> 01:43:38,720
+I got eyes everywhere, kid.
+
+2153
+01:43:38,753 --> 01:43:40,253
+[BEEPING]
+
+2154
+01:43:40,287 --> 01:43:41,122
+SPIDER-MAN: Look, Frank.
+
+2155
+01:43:41,155 --> 01:43:42,824
+Damage Control kidnapped
+Jean's sister.
+
+2156
+01:43:42,857 --> 01:43:43,925
+Jean was just
+trying to find her.
+
+2157
+01:43:43,958 --> 01:43:45,459
+We were wrong
+about everything.
+
+2158
+01:43:45,492 --> 01:43:47,695
+Sentimental horseshit.
+
+2159
+01:43:47,729 --> 01:43:49,831
+You've seen what she can do
+and what she's capable of.
+
+2160
+01:43:49,864 --> 01:43:51,398
+What, you're gonna
+let her loose?
+
+2161
+01:43:51,431 --> 01:43:52,499
+Is that what you're gonna do?
+
+2162
+01:43:53,668 --> 01:43:55,937
+I'll tell you right now,
+you do that,
+
+2163
+01:43:55,970 --> 01:43:57,638
+I handle it my way.
+
+2164
+01:43:57,672 --> 01:43:58,573
+SPIDER-MAN: <i>Frank, please,</i>
+<i>can you just...</i>
+
+2165
+01:43:58,606 --> 01:43:59,507
+-Eh...
+-[CALL ENDS]
+
+2166
+01:43:59,540 --> 01:44:00,742
+SPIDER-MAN: Frank!
+
+2167
+01:44:00,775 --> 01:44:02,777
+[DRAMATIC MUSIC CONTINUES]
+
+2168
+01:44:13,087 --> 01:44:14,021
+Distance check?
+
+2169
+01:44:14,055 --> 01:44:15,656
+-[KEYBOARD CLACKING]
+-Forty-foot clearance.
+
+2170
+01:44:15,690 --> 01:44:17,058
+METZGER:
+Locking down the room.
+
+2171
+01:44:17,091 --> 01:44:17,992
+GUARD: Locking down.
+
+2172
+01:44:18,025 --> 01:44:19,660
+[DOOR BUZZES]
+
+2173
+01:44:23,497 --> 01:44:24,498
+METZGER: <i>Disengage inhibitor.</i>
+
+2174
+01:44:27,400 --> 01:44:28,703
+[GROANS SOFTLY]
+
+2175
+01:44:28,736 --> 01:44:31,304
+METZGER: <i>Jean, your powers</i>
+<i>are now fully operational.</i>
+
+2176
+01:44:31,338 --> 01:44:33,541
+-[HIGH-PITCHED RINGING]
+-[WARBLING]
+
+2177
+01:44:34,909 --> 01:44:36,010
+[JEAN STRAINING]
+
+2178
+01:44:38,079 --> 01:44:39,914
+[GRUNTS, GROANS]
+
+2179
+01:44:40,715 --> 01:44:41,682
+METZGER: <i>As you can tell,</i>
+
+2180
+01:44:41,716 --> 01:44:44,051
+<i>we are beyond</i>
+<i>your jump radius.</i>
+
+2181
+01:44:44,085 --> 01:44:47,454
+[BREATHING HEAVILY]
+Tell me what V-Max is.
+
+2182
+01:44:47,487 --> 01:44:50,057
+You're the second person
+to ask me about that. I...
+
+2183
+01:44:50,091 --> 01:44:51,759
+I have no idea what that means.
+
+2184
+01:44:51,793 --> 01:44:53,928
+JEAN: <i>She sent me a message.</i>
+
+2185
+01:44:53,961 --> 01:44:56,764
+She was trying to help me
+find her.
+
+2186
+01:44:56,798 --> 01:44:58,733
+She communicated
+with you telepathically
+
+2187
+01:44:58,766 --> 01:45:00,668
+across all that distance?
+
+2188
+01:45:00,701 --> 01:45:03,738
+We did register a huge spike
+in that session.
+
+2189
+01:45:05,606 --> 01:45:06,707
+Fascinating.
+
+2190
+01:45:06,741 --> 01:45:08,910
+What does it mean, asshole?
+
+2191
+01:45:10,678 --> 01:45:11,712
+I don't know.
+
+2192
+01:45:12,680 --> 01:45:13,981
+Let's begin.
+
+2193
+01:45:14,015 --> 01:45:15,650
+[DEVICE BUZZES]
+
+2194
+01:45:17,450 --> 01:45:19,921
+[DEVICE POWERING UP]
+
+2195
+01:45:22,089 --> 01:45:24,559
+METZGER: <i>Our work with Sara</i>
+<i>centered on two areas,</i>
+
+2196
+01:45:24,592 --> 01:45:26,861
+identifying the source
+of her power
+
+2197
+01:45:26,894 --> 01:45:29,530
+and identifying a path
+towards copying it.
+
+2198
+01:45:29,564 --> 01:45:31,398
+-[SYSTEM TRILLING]
+-If we could find a way
+
+2199
+01:45:31,431 --> 01:45:33,868
+to record a telepathic brain
+during a jump,
+
+2200
+01:45:33,901 --> 01:45:36,971
+then perhaps we could
+replicate those pathways
+
+2201
+01:45:37,004 --> 01:45:38,806
+in a mind of our choosing.
+
+2202
+01:45:40,141 --> 01:45:44,512
+<i>This instrument</i>
+<i>is your sister's legacy.</i>
+
+2203
+01:45:44,545 --> 01:45:47,447
+<i>We built this together over</i>
+<i>many months of trial and error.</i>
+
+2204
+01:45:48,649 --> 01:45:50,751
+I hope you and I
+can honor her sacrifice.
+
+2205
+01:45:53,888 --> 01:45:55,355
+What are you talking about?
+
+2206
+01:45:56,757 --> 01:45:58,025
+Trigger the first jump.
+
+2207
+01:45:59,594 --> 01:46:01,428
+[DEVICE TRILLING]
+
+2208
+01:46:02,797 --> 01:46:05,432
+Tell me what V-Max is.
+
+2209
+01:46:05,465 --> 01:46:06,968
+I know that's where
+you're hiding her.
+
+2210
+01:46:07,001 --> 01:46:08,803
+-[WHOOSHES]
+-[HIGH-PITCHED RINGING]
+
+2211
+01:46:08,836 --> 01:46:09,904
+[DEVICE TRILLING]
+
+2212
+01:46:11,438 --> 01:46:12,773
+[GASPS, PANTS]
+
+2213
+01:46:16,077 --> 01:46:17,979
+-[DEVICE TRILLING]
+-[WHOOSHES]
+
+2214
+01:46:18,012 --> 01:46:19,780
+[SYSTEM CRACKLING]
+
+2215
+01:46:22,149 --> 01:46:23,184
+She's jumping.
+
+2216
+01:46:23,217 --> 01:46:25,553
+[DRAMATIC MUSIC CRESCENDOES,
+ENDS]
+
+2217
+01:46:25,586 --> 01:46:26,988
+Copy.
+
+2218
+01:46:27,021 --> 01:46:30,057
+We're in full lockdown.
+Process has commenced.
+
+2219
+01:46:30,091 --> 01:46:31,092
+SPIDER-MAN: What process?
+
+2220
+01:46:32,660 --> 01:46:35,796
+Hey, whoa, that's a pretty
+serious look there, dude.
+
+2221
+01:46:35,830 --> 01:46:37,497
+Hey, hey, whoa!
+What the hell, man?
+
+2222
+01:46:37,531 --> 01:46:38,699
+Come on. I'm a friend
+of Damage Control.
+
+2223
+01:46:38,733 --> 01:46:39,600
+What are you doin'?
+
+2224
+01:46:42,970 --> 01:46:43,804
+Huh.
+
+2225
+01:46:43,838 --> 01:46:45,740
+It's gonna be like that.
+You wanna go.
+
+2226
+01:46:45,773 --> 01:46:47,141
+All right.
+
+2227
+01:46:47,174 --> 01:46:48,776
+All right, well,
+just give me a sec.
+
+2228
+01:46:49,210 --> 01:46:51,078
+Give me a sec.
+
+2229
+01:46:51,112 --> 01:46:52,780
+I'm not in high school anymore.
+
+2230
+01:46:52,813 --> 01:46:54,849
+[GRUNTING]
+
+2231
+01:46:54,882 --> 01:46:56,517
+Do you stretch?
+You a big stretcher?
+
+2232
+01:46:56,550 --> 01:46:58,552
+I mean, you should do
+in your line of work.
+
+2233
+01:46:58,586 --> 01:47:00,187
+What about you?
+You guys stretch?
+
+2234
+01:47:00,221 --> 01:47:01,722
+It's so good for you.
+
+2235
+01:47:01,756 --> 01:47:03,157
+[GROANING]
+
+2236
+01:47:03,190 --> 01:47:04,225
+You ready?
+
+2237
+01:47:04,258 --> 01:47:06,560
+-[GUNSHOTS]
+-[SPIDER-MAN GRUNTING]
+
+2238
+01:47:13,901 --> 01:47:14,902
+Watch your head!
+
+2239
+01:47:19,807 --> 01:47:21,008
+[SPIDER-MAN GROANING]
+
+2240
+01:47:23,010 --> 01:47:24,145
+[GROANING]
+
+2241
+01:47:25,913 --> 01:47:27,148
+-[GUARD GRUNTING]
+-[SPIDER-MAN GRUNTING]
+
+2242
+01:47:34,822 --> 01:47:36,624
+Where is Jean Grey?
+
+2243
+01:47:36,657 --> 01:47:37,658
+[WHOOSHES]
+
+2244
+01:47:37,692 --> 01:47:39,492
+-[DEVICE TRILLING]
+-TECHNICIAN: That's jump 26.
+
+2245
+01:47:39,527 --> 01:47:40,761
+-Recordings look good.
+-[WHOOSHING CONTINUES]
+
+2246
+01:47:40,795 --> 01:47:41,929
+GUARD: Excuse me, sir.
+
+2247
+01:47:42,830 --> 01:47:43,898
+We have an intruder.
+
+2248
+01:47:44,732 --> 01:47:45,833
+[WHOOSHING]
+
+2249
+01:47:47,101 --> 01:47:48,936
+[DOOR BEEPS, CLICKS]
+
+2250
+01:47:48,970 --> 01:47:50,171
+-TECHNICIAN: You were right.
+-[WHOOSHING]
+
+2251
+01:47:50,204 --> 01:47:52,239
+She's much stronger
+than her sister.
+
+2252
+01:47:53,240 --> 01:47:54,675
+Increase the frequency.
+
+2253
+01:47:54,709 --> 01:47:56,010
+[DEVICE AMPLIFIES, WARBLES]
+
+2254
+01:47:56,043 --> 01:47:57,545
+You're doing very well, Jean.
+
+2255
+01:47:57,578 --> 01:47:58,913
+-[DEVICE TRILLING]
+-[WHOOSHING RAPIDLY]
+
+2256
+01:47:58,946 --> 01:48:02,616
+-[DRAMATIC MUSIC PLAYING]
+-[SYSTEM CRACKLING RAPIDLY]
+
+2257
+01:48:02,650 --> 01:48:05,485
+-[DEVICE TRILLING]
+-[WHOOSHING RAPIDLY]
+
+2258
+01:48:06,654 --> 01:48:08,022
+[SILENCE]
+
+2259
+01:48:09,256 --> 01:48:11,926
+[PANTING STEADILY]
+
+2260
+01:48:13,661 --> 01:48:15,563
+[RATTLING OVERHEAD]
+
+2261
+01:48:19,967 --> 01:48:21,836
+[VENT RATTLING FAINTLY]
+
+2262
+01:48:29,677 --> 01:48:31,212
+[VENT RATTLING]
+
+2263
+01:48:31,245 --> 01:48:32,847
+[LABEL RUSTLING]
+
+2264
+01:48:34,081 --> 01:48:35,216
+[SCOFFS WEAKLY]
+
+2265
+01:48:36,717 --> 01:48:38,052
+[LABEL RUSTLING]
+
+2266
+01:48:45,292 --> 01:48:46,761
+METZGER: <i>Jean?</i>
+
+2267
+01:48:48,963 --> 01:48:51,065
+-[SUSPENSEFUL MUSIC PLAYING]
+-[SYSTEM CRACKLING]
+
+2268
+01:48:51,098 --> 01:48:52,266
+METZGER: Jean,
+can you hear me?
+
+2269
+01:48:52,299 --> 01:48:54,735
+[SYSTEM CHIMING,
+CRACKLING RAPIDLY]
+
+2270
+01:48:56,303 --> 01:48:58,773
+[BREATHING HEAVILY]
+
+2271
+01:48:58,806 --> 01:48:59,840
+Jean?
+
+2272
+01:48:59,874 --> 01:49:01,609
+[HIGH-PITCHED RINGING]
+
+2273
+01:49:04,278 --> 01:49:05,679
+You're a murderer.
+
+2274
+01:49:05,713 --> 01:49:07,882
+[SYSTEM BEEPING RAPIDLY]
+
+2275
+01:49:07,915 --> 01:49:11,018
+-Her frequencies are evolving.
+-[SYSTEM CRACKLING]
+
+2276
+01:49:11,052 --> 01:49:13,187
+This doesn't make sense.
+
+2277
+01:49:13,220 --> 01:49:17,591
+The last thing
+my sister saw was this room.
+
+2278
+01:49:17,625 --> 01:49:18,859
+TECHNICIAN:
+Her brainwaves are somehow
+
+2279
+01:49:18,893 --> 01:49:20,161
+affecting the objects
+around her.
+
+2280
+01:49:20,194 --> 01:49:21,228
+Shut it down.
+
+2281
+01:49:21,262 --> 01:49:22,663
+I'm trying, sir.
+
+2282
+01:49:22,696 --> 01:49:24,065
+What do you mean
+you're trying?
+
+2283
+01:49:24,098 --> 01:49:29,203
+The last thing my sister saw
+was this goddamn room!
+
+2284
+01:49:29,236 --> 01:49:31,138
+-Shut it down!
+-I can't, sir.
+
+2285
+01:49:32,206 --> 01:49:33,207
+Move.
+
+2286
+01:49:33,908 --> 01:49:35,743
+[ALARM BLARING]
+
+2287
+01:49:35,776 --> 01:49:37,745
+I can't let you
+do that, Bill.
+
+2288
+01:49:37,778 --> 01:49:39,780
+[OMINOUS MUSICAL STING]
+
+2289
+01:49:41,282 --> 01:49:43,284
+-[FIELD WARBLING]
+-The only hands
+
+2290
+01:49:43,317 --> 01:49:45,352
+that will wield this power...
+
+2291
+01:49:45,386 --> 01:49:48,756
+-[HIGH-PITCHED RINGING STOPS]
+-...are mine.
+
+2292
+01:49:48,789 --> 01:49:50,825
+-[WHOOSHES]
+-[ALL GRUNTING]
+
+2293
+01:49:52,359 --> 01:49:54,361
+[FIELD WARBLING]
+
+2294
+01:49:55,329 --> 01:49:57,598
+[ALL SCREAMING, GRUNTING]
+
+2295
+01:49:58,799 --> 01:50:01,001
+-[HORN HONKING]
+-[PEOPLE GRUNTING]
+
+2296
+01:50:01,035 --> 01:50:02,069
+[ALL GRUNTING]
+
+2297
+01:50:02,103 --> 01:50:03,771
+[OBJECTS CLATTERING]
+
+2298
+01:50:03,804 --> 01:50:06,140
+-[TIRES SCREECH]
+-[CAR ALARM BLARING]
+
+2299
+01:50:07,675 --> 01:50:09,043
+[BRAKES SQUEAL]
+
+2300
+01:50:10,144 --> 01:50:12,713
+[INDISTINCT SHOUTING]
+
+2301
+01:50:12,746 --> 01:50:14,348
+-[EERIE MUSIC PLAYING]
+-WOMAN: What is happening?
+
+2302
+01:50:15,850 --> 01:50:17,184
+MAN 1: Get inside.
+
+2303
+01:50:19,854 --> 01:50:20,888
+[DOG BARKING]
+
+2304
+01:50:24,125 --> 01:50:25,159
+MAN 2: Wait for me!
+
+2305
+01:50:25,192 --> 01:50:26,861
+[BARKING]
+
+2306
+01:50:27,962 --> 01:50:29,697
+[FIELD WARBLING]
+
+2307
+01:50:35,870 --> 01:50:37,638
+-[WHOOSHES]
+-[PEOPLE SCREAM]
+
+2308
+01:50:43,010 --> 01:50:45,012
+[FIELD WARBLING]
+
+2309
+01:50:47,381 --> 01:50:49,383
+[BREATHES HEAVILY]
+
+2310
+01:50:57,158 --> 01:50:59,994
+-[HIGH-PITCHED RINGING]
+-[WHOOSHES]
+
+2311
+01:51:06,233 --> 01:51:08,068
+[HIGH-PITCHED RINGING]
+
+2312
+01:51:09,870 --> 01:51:11,872
+[SOMBER MUSIC PLAYING]
+
+2313
+01:51:53,113 --> 01:51:55,249
+[EERIE MUSIC PLAYING]
+
+2314
+01:52:00,522 --> 01:52:02,189
+-What...
+-ALL: What do you want?
+
+2315
+01:52:05,960 --> 01:52:08,929
+SPIDER-MAN: Jean,
+I'm here to help you.
+
+2316
+01:52:10,197 --> 01:52:12,199
+You put me here.
+
+2317
+01:52:12,233 --> 01:52:14,134
+SPIDER-MAN: I know,
+and I'm sorry about Sara,
+
+2318
+01:52:14,168 --> 01:52:16,237
+and I'm sorry
+that I got it so wrong.
+
+2319
+01:52:17,004 --> 01:52:18,405
+[DOOR SLAMS]
+
+2320
+01:52:18,439 --> 01:52:19,406
+JEAN: If you came here
+
+2321
+01:52:19,440 --> 01:52:21,875
+to save a helpless girl
+from Damage Control,
+
+2322
+01:52:21,909 --> 01:52:22,910
+you're too late.
+
+2323
+01:52:23,978 --> 01:52:25,846
+They're the ones
+who need saving.
+
+2324
+01:52:25,879 --> 01:52:27,181
+And now...
+
+2325
+01:52:27,848 --> 01:52:28,849
+so do you.
+
+2326
+01:52:30,050 --> 01:52:31,185
+[SPIDER-MAN SIGHS]
+
+2327
+01:52:31,218 --> 01:52:32,253
+Here we go.
+
+2328
+01:52:32,286 --> 01:52:33,754
+[SPIDER-MAN GRUNTING]
+
+2329
+01:52:41,462 --> 01:52:43,097
+-[MALE NINJA GRUNTS]
+-[SPIDER-MAN GROANS]
+
+2330
+01:52:46,834 --> 01:52:48,202
+SPIDER-MAN: God, that's cool.
+
+2331
+01:52:49,537 --> 01:52:50,971
+[SPIDER-MAN GRUNTING]
+
+2332
+01:52:54,074 --> 01:52:55,776
+[SPIDER-MAN BREATHING HEAVILY]
+
+2333
+01:53:03,551 --> 01:53:05,052
+SPIDER-MAN: Ow! Ow!
+
+2334
+01:53:09,256 --> 01:53:11,292
+Jean! Jean, please!
+
+2335
+01:53:11,325 --> 01:53:13,127
+[THUDDING]
+
+2336
+01:53:24,104 --> 01:53:25,506
+[SPIDER-MAN GRUNTING]
+
+2337
+01:53:25,540 --> 01:53:27,308
+Come on! Come on! Come on!
+
+2338
+01:53:30,545 --> 01:53:32,212
+-[FEMALE NINJA GRUNTS]
+-[SPIDER-MAN GROANS]
+
+2339
+01:53:32,246 --> 01:53:33,314
+[GROANS]
+
+2340
+01:53:33,347 --> 01:53:35,583
+[SINISTER MUSIC PLAYING]
+
+2341
+01:53:37,619 --> 01:53:39,386
+[FIELD WARBLING]
+
+2342
+01:53:42,056 --> 01:53:43,257
+[WEAPONS ENERGIZING]
+
+2343
+01:53:48,062 --> 01:53:49,163
+SPIDER-MAN: What the...
+
+2344
+01:53:49,196 --> 01:53:50,297
+[NINJAS GRUNTING]
+
+2345
+01:53:51,031 --> 01:53:52,066
+JEAN: Isn't it funny
+
+2346
+01:53:52,099 --> 01:53:54,201
+how your friends
+from Damage Control
+
+2347
+01:53:54,234 --> 01:53:55,502
+developed a special weapon
+
+2348
+01:53:55,537 --> 01:53:56,970
+just for you?
+
+2349
+01:53:57,004 --> 01:53:58,138
+[SPIDER-MAN PANTING]
+
+2350
+01:53:58,172 --> 01:54:00,941
+They've got
+a whole task force ready.
+
+2351
+01:54:00,974 --> 01:54:02,876
+Just in case
+you ever get out of line.
+
+2352
+01:54:02,910 --> 01:54:05,045
+-[FIELD WARBLING]
+-[METZGER GRUNTS]
+
+2353
+01:54:07,314 --> 01:54:08,616
+People are monsters.
+
+2354
+01:54:12,419 --> 01:54:13,521
+[BOTH GRUNTING]
+
+2355
+01:54:13,555 --> 01:54:16,924
+You shouldn't trust them
+any more than they trust you.
+
+2356
+01:54:16,957 --> 01:54:18,125
+[NINJA GRUNTING]
+
+2357
+01:54:19,493 --> 01:54:20,494
+[GROANS]
+
+2358
+01:54:23,097 --> 01:54:25,099
+-[HORN BLARES]
+-[PEOPLE SCREAM]
+
+2359
+01:54:27,401 --> 01:54:29,169
+-[PHONE RINGING]
+-[NINJAS GRUNTING]
+
+2360
+01:54:30,437 --> 01:54:31,606
+SPIDER-MAN:
+I'm a little busy, Frank.
+
+2361
+01:54:31,639 --> 01:54:33,073
+We got a problem, kid.
+
+2362
+01:54:33,107 --> 01:54:34,308
+<i>She got ahold of everyone</i>
+
+2363
+01:54:34,341 --> 01:54:35,976
+<i>within a kilometer</i>
+<i>of the island.</i>
+
+2364
+01:54:36,009 --> 01:54:37,411
+SPIDER-MAN: [SIGHS]
+Wait, what?
+
+2365
+01:54:37,444 --> 01:54:39,246
+[FIELD WARBLING]
+
+2366
+01:54:39,279 --> 01:54:40,548
+[GROANS SOFTLY]
+
+2367
+01:54:42,316 --> 01:54:43,450
+[WHIMPERING SOFTLY]
+
+2368
+01:54:43,484 --> 01:54:44,952
+Hey, look,
+if you're gonna do something,
+
+2369
+01:54:44,985 --> 01:54:45,687
+you better do it now.
+
+2370
+01:54:45,720 --> 01:54:46,987
+SPIDER-MAN: I'm trying!
+
+2371
+01:54:52,393 --> 01:54:53,595
+[SPIDER-MAN GROANING]
+
+2372
+01:54:57,398 --> 01:54:58,499
+[SPIDER-MAN GRUNTS]
+
+2373
+01:55:02,269 --> 01:55:04,606
+-[SPIDER-MAN GROANING]
+-[NINJAS GRUNTING]
+
+2374
+01:55:06,440 --> 01:55:08,475
+[SPIDER-MAN GROANING]
+
+2375
+01:55:12,479 --> 01:55:14,047
+-[LINE DISCONNECTS]
+-Kid?
+
+2376
+01:55:14,081 --> 01:55:15,949
+Shit! Goddamn it.
+
+2377
+01:55:15,983 --> 01:55:17,985
+[DRAMATIC MUSIC PLAYING]
+
+2378
+01:55:18,018 --> 01:55:19,420
+[TIRES SCREECHING]
+
+2379
+01:55:19,453 --> 01:55:21,021
+[HORN HONKING]
+
+2380
+01:55:21,054 --> 01:55:22,524
+[PEOPLE CLAMORING]
+
+2381
+01:55:23,691 --> 01:55:25,292
+[SPIDER-MAN GROANING]
+
+2382
+01:55:26,260 --> 01:55:27,928
+[BREATHING HEAVILY]
+
+2383
+01:55:35,102 --> 01:55:36,437
+[COUGHING]
+
+2384
+01:55:38,472 --> 01:55:39,973
+[GASPS]
+
+2385
+01:55:40,007 --> 01:55:41,975
+[BREATHING HEAVILY]
+
+2386
+01:55:49,584 --> 01:55:50,984
+JEAN: My sister died
+
+2387
+01:55:51,018 --> 01:55:52,219
+in this room,
+
+2388
+01:55:53,521 --> 01:55:55,222
+surrounded by these men.
+
+2389
+01:55:56,490 --> 01:55:57,659
+And her only crime
+
+2390
+01:55:57,692 --> 01:55:59,359
+was that she was special.
+
+2391
+01:56:00,427 --> 01:56:02,362
+-[PANTING]
+-JEAN: Just like you.
+
+2392
+01:56:03,731 --> 01:56:05,098
+Just like me.
+
+2393
+01:56:07,635 --> 01:56:10,638
+People like us don't get to
+live a normal life.
+
+2394
+01:56:13,641 --> 01:56:16,977
+We don't get to have friends
+or a family.
+
+2395
+01:56:18,780 --> 01:56:20,280
+Those people are gone.
+
+2396
+01:56:23,150 --> 01:56:24,719
+That life is over.
+
+2397
+01:56:24,752 --> 01:56:27,087
+[MELANCHOLIC MUSIC PLAYING]
+
+2398
+01:56:38,566 --> 01:56:41,034
+[MELANCHOLIC MUSIC CONTINUES]
+
+2399
+01:56:50,845 --> 01:56:53,380
+So why don't you just
+be honest with yourself?
+
+2400
+01:56:56,350 --> 01:56:57,619
+Are you Peter Parker?
+
+2401
+01:56:59,754 --> 01:57:01,255
+Or are you Spider-Man?
+
+2402
+01:57:13,535 --> 01:57:15,502
+[INHIBITOR BEEPS, POWERS DOWN]
+
+2403
+01:57:18,238 --> 01:57:20,173
+[EXHALES DEEPLY]
+
+2404
+01:57:21,709 --> 01:57:23,377
+[DISTORTED WARBLE]
+
+2405
+01:57:26,313 --> 01:57:28,315
+[SUSPENSEFUL MUSIC PLAYING]
+
+2406
+01:57:34,254 --> 01:57:35,289
+I'm both.
+
+2407
+01:57:35,322 --> 01:57:37,559
+[DRAMATIC MUSIC PLAYING]
+
+2408
+01:57:42,730 --> 01:57:44,464
+[NINJA GASPS]
+
+2409
+01:57:44,498 --> 01:57:46,500
+[HEROIC MUSIC PLAYING]
+
+2410
+01:57:49,804 --> 01:57:50,805
+[WHOOSHES]
+
+2411
+01:58:08,590 --> 01:58:09,824
+[NINJA GRUNTS]
+
+2412
+01:58:12,292 --> 01:58:13,761
+-[WEAPONS ENERGIZING]
+-[GRUNTS]
+
+2413
+01:58:18,365 --> 01:58:19,366
+[GUARD GRUNTS]
+
+2414
+01:58:25,940 --> 01:58:27,508
+[NINJAS GRUNTING]
+
+2415
+01:58:55,837 --> 01:58:57,739
+[TENSE MUSIC PLAYING]
+
+2416
+01:59:07,548 --> 01:59:09,416
+[FIELD WARBLING]
+
+2417
+01:59:17,659 --> 01:59:19,894
+[PETER BREATHING HEAVILY]
+
+2418
+01:59:19,927 --> 01:59:22,162
+Jean, please.
+
+2419
+01:59:23,397 --> 01:59:24,732
+This won't make it right.
+
+2420
+01:59:26,868 --> 01:59:28,803
+Oh, come on.
+You're not a killer, Jean.
+
+2421
+01:59:28,836 --> 01:59:30,270
+You have no idea what I am.
+
+2422
+01:59:31,873 --> 01:59:33,574
+I know that
+you loved your sister.
+
+2423
+01:59:36,844 --> 01:59:39,847
+And I know that losing her
+felt like you'd lost everything.
+
+2424
+01:59:39,881 --> 01:59:42,884
+If you come any closer,
+he dies! They all do!
+
+2425
+01:59:42,917 --> 01:59:44,519
+[FIELD WARBLING]
+
+2426
+01:59:45,920 --> 01:59:47,922
+[SIRENS WAILING]
+
+2427
+01:59:58,866 --> 02:00:01,268
+[PETER PANTING]
+
+2428
+02:00:01,301 --> 02:00:02,737
+You know this won't
+bring her back, right, Jean?
+
+2429
+02:00:02,770 --> 02:00:04,572
+-You... [GRUNTING]
+-[FIELD WARBLING]
+
+2430
+02:00:04,605 --> 02:00:06,373
+[TENSE MUSIC PLAYING]
+
+2431
+02:00:11,012 --> 02:00:12,780
+[HIGH-PITCHED RINGING]
+
+2432
+02:00:20,487 --> 02:00:22,990
+Don't be so sure
+I can't get into your mind.
+
+2433
+02:00:23,024 --> 02:00:24,692
+[PETER GRUNTING SOFTLY]
+
+2434
+02:00:24,726 --> 02:00:26,928
+I'm a lot more powerful
+since I last tried.
+
+2435
+02:00:28,796 --> 02:00:30,464
+[FIELD WARBLING]
+
+2436
+02:00:37,038 --> 02:00:38,438
+[STRAINING] Go ahead.
+
+2437
+02:00:40,074 --> 02:00:41,308
+[EXHALES]
+
+2438
+02:00:45,613 --> 02:00:46,714
+[KNOCK ON DOOR]
+
+2439
+02:00:47,481 --> 02:00:48,482
+MAY: Hey.
+
+2440
+02:00:49,784 --> 02:00:50,785
+Hey.
+
+2441
+02:00:53,054 --> 02:00:55,022
+You think
+you don't have to listen to me
+
+2442
+02:00:55,056 --> 02:00:56,791
+now that you've got powers?
+
+2443
+02:00:56,824 --> 02:00:58,492
+[BOTH CHUCKLE]
+
+2444
+02:01:01,529 --> 02:01:07,001
+You know, this... this whole
+thing can get really scary.
+
+2445
+02:01:07,034 --> 02:01:08,035
+You know that?
+
+2446
+02:01:10,671 --> 02:01:12,807
+[FIELD WARBLING]
+
+2447
+02:01:14,709 --> 02:01:17,277
+[SERENE MUSIC PLAYING]
+
+2448
+02:01:26,754 --> 02:01:28,421
+It's already pretty scary.
+
+2449
+02:01:29,757 --> 02:01:31,324
+MAY: Yeah.
+
+2450
+02:01:31,358 --> 02:01:32,693
+And things can change,
+
+2451
+02:01:32,727 --> 02:01:34,361
+like, very quickly...
+[SNAPS FINGERS]
+
+2452
+02:01:34,394 --> 02:01:37,430
+...in ways that we can't
+even imagine right now.
+
+2453
+02:01:37,464 --> 02:01:38,566
+I know.
+
+2454
+02:01:38,599 --> 02:01:39,867
+MAY: No. [CHUCKLES]
+
+2455
+02:01:42,402 --> 02:01:43,971
+I don't think you do know.
+
+2456
+02:01:45,840 --> 02:01:47,508
+What do you mean?
+
+2457
+02:01:50,611 --> 02:01:52,379
+You're a really special person.
+
+2458
+02:01:53,881 --> 02:01:55,382
+And I would hope
+that that will always
+
+2459
+02:01:55,415 --> 02:01:56,784
+make you feel
+really great about yourself,
+
+2460
+02:01:57,885 --> 02:02:00,788
+but I know
+sometimes it doesn't.
+
+2461
+02:02:00,822 --> 02:02:03,356
+Sometimes,
+you'll be really lonely.
+
+2462
+02:02:06,861 --> 02:02:08,029
+And sometimes,
+
+2463
+02:02:09,496 --> 02:02:10,898
+because you're special,
+
+2464
+02:02:13,433 --> 02:02:16,971
+people can do dark,
+monstrous things to you.
+
+2465
+02:02:19,173 --> 02:02:20,440
+But...
+
+2466
+02:02:21,876 --> 02:02:23,410
+this is what
+I want you to know.
+
+2467
+02:02:25,412 --> 02:02:27,114
+You're beautiful,
+
+2468
+02:02:27,148 --> 02:02:28,749
+and the people who love you,
+
+2469
+02:02:28,783 --> 02:02:30,785
+we love you
+not because you're special,
+
+2470
+02:02:30,818 --> 02:02:32,653
+we love you
+because you're you.
+
+2471
+02:02:34,755 --> 02:02:36,123
+I want you to remember that.
+
+2472
+02:02:38,526 --> 02:02:40,528
+Even when it feels like
+you're totally alone.
+
+2473
+02:02:43,531 --> 02:02:45,465
+That's your
+deepest responsibility.
+
+2474
+02:02:48,703 --> 02:02:49,770
+Never forget that,
+
+2475
+02:02:49,804 --> 02:02:51,906
+no matter how powerful
+you become.
+
+2476
+02:02:52,940 --> 02:02:55,109
+[SOMBER PIANO INSTRUMENTAL
+PLAYS]
+
+2477
+02:03:08,089 --> 02:03:09,156
+PETER: Hey.
+
+2478
+02:03:18,733 --> 02:03:20,601
+-[JEAN EXHALES SHAKILY]
+-[SIGHS]
+
+2479
+02:03:24,939 --> 02:03:26,574
+I'm sorry about your sister.
+
+2480
+02:03:31,812 --> 02:03:33,648
+I'm sorry about your aunt.
+
+2481
+02:03:37,018 --> 02:03:38,219
+Yeah, you would've loved her.
+
+2482
+02:03:42,089 --> 02:03:44,025
+Just because
+we've lost someone...
+
+2483
+02:03:47,161 --> 02:03:49,163
+It doesn't mean
+we have to do this alone.
+
+2484
+02:03:51,198 --> 02:03:54,168
+I mean, we can't.
+
+2485
+02:03:54,201 --> 02:03:55,903
+Trust me, I've been trying.
+
+2486
+02:03:59,106 --> 02:04:00,473
+It doesn't work.
+
+2487
+02:04:05,146 --> 02:04:06,514
+Even if that's true...
+
+2488
+02:04:10,818 --> 02:04:11,953
+I have no one.
+
+2489
+02:04:16,724 --> 02:04:17,792
+You have me.
+
+2490
+02:04:25,866 --> 02:04:29,070
+-[MUSIC FADES]
+-[SPIDER-SENSE TINGLING]
+
+2491
+02:04:33,774 --> 02:04:37,044
+-[SPIDER-SENSE TINGLING]
+-[GUN COCK ECHOING]
+
+2492
+02:04:37,078 --> 02:04:37,979
+[GUN FIRES]
+
+2493
+02:04:42,850 --> 02:04:44,819
+[PETER GRUNTS]
+
+2494
+02:04:44,852 --> 02:04:46,287
+-[FIELD WARBLES, DISSIPATES]
+-[METZGER GRUNTS]
+
+2495
+02:04:46,320 --> 02:04:47,888
+[ALL GRUNTING]
+
+2496
+02:04:47,922 --> 02:04:49,256
+[ALL GRUNTING]
+
+2497
+02:04:50,224 --> 02:04:52,226
+[FIELD WARBLES, DISSIPATES]
+
+2498
+02:04:54,895 --> 02:04:57,064
+[GASPS, PANTS]
+
+2499
+02:04:57,098 --> 02:04:58,599
+[BREATHING HEAVILY]
+
+2500
+02:05:02,303 --> 02:05:03,838
+Are you hurt?
+
+2501
+02:05:03,871 --> 02:05:05,873
+No, I'm fine.
+[BREATHING HEAVILY]
+
+2502
+02:05:06,741 --> 02:05:08,142
+[GASPS]
+
+2503
+02:05:10,878 --> 02:05:12,780
+I'm okay.
+
+2504
+02:05:12,813 --> 02:05:14,215
+-JEAN: Peter.
+-I'm okay, I'm okay, I'm okay.
+
+2505
+02:05:14,248 --> 02:05:15,516
+JEAN: Peter. No.
+
+2506
+02:05:19,620 --> 02:05:21,589
+-Peter, Peter. No, no.
+-[PETER GROANING]
+
+2507
+02:05:21,622 --> 02:05:22,857
+-[COUGHS]
+-JEAN: No, no, no, Peter.
+
+2508
+02:05:22,890 --> 02:05:24,658
+-Peter.
+-[GASPS]
+
+2509
+02:05:24,692 --> 02:05:27,061
+Jean, you gotta get outta here.
+They'll be looking for you.
+
+2510
+02:05:27,094 --> 02:05:28,896
+No, no, no, no, no.
+Please, just stay with me.
+
+2511
+02:05:28,929 --> 02:05:30,164
+Come on, hold on.
+Come on, please!
+
+2512
+02:05:30,197 --> 02:05:31,532
+Jean, you're...
+
+2513
+02:05:32,233 --> 02:05:33,834
+You're gonna be okay.
+
+2514
+02:05:35,069 --> 02:05:36,103
+Just go.
+
+2515
+02:05:36,137 --> 02:05:37,705
+-[SNIFFLES]
+-[GROANS]
+
+2516
+02:05:38,239 --> 02:05:39,840
+Look at me.
+
+2517
+02:05:39,874 --> 02:05:41,976
+[GROANS, BREATHES RAGGEDLY]
+
+2518
+02:05:42,009 --> 02:05:44,145
+-[INHALES]
+-[PETER MUTTERING]
+
+2519
+02:05:45,880 --> 02:05:47,181
+[EXHALES]
+
+2520
+02:05:49,383 --> 02:05:51,585
+[SOMBER MUSIC PLAYING]
+
+2521
+02:05:52,787 --> 02:05:54,655
+[INAUDIBLE]
+
+2522
+02:05:57,058 --> 02:05:58,626
+MALE REPORTER: <i>Shock today,</i>
+
+2523
+02:05:58,659 --> 02:06:00,728
+<i>as Spider-Man arrived</i>
+<i>at Bellevue Hospital</i>
+
+2524
+02:06:00,761 --> 02:06:02,329
+<i>with a bullet wound,</i>
+
+2525
+02:06:02,363 --> 02:06:04,098
+<i>seemingly at death's door.</i>
+
+2526
+02:06:06,267 --> 02:06:09,003
+<i>The reclusive crime fighter</i>
+<i>is in critical condition,</i>
+
+2527
+02:06:09,036 --> 02:06:11,939
+<i>as the city's top medical</i>
+<i>experts work to save him.</i>
+
+2528
+02:06:15,409 --> 02:06:18,212
+<i>Tonight, all eyes</i>
+<i>are on Spider-Man.</i>
+
+2529
+02:06:20,247 --> 02:06:23,084
+<i>The hero who saved</i>
+<i>New York so many times...</i>
+
+2530
+02:06:23,117 --> 02:06:25,686
+<i>is now in the hands</i>
+<i>of its best and brightest.</i>
+
+2531
+02:06:28,089 --> 02:06:31,058
+<i>And the people of New York</i>
+<i>hold their breath.</i>
+
+2532
+02:06:42,136 --> 02:06:44,138
+[EKG MACHINE BEEPING STEADILY]
+
+2533
+02:06:49,043 --> 02:06:51,178
+[BREATHING DEEPLY]
+
+2534
+02:06:56,016 --> 02:06:58,719
+[FIELD WARBLING FAINTLY]
+
+2535
+02:07:06,961 --> 02:07:09,430
+[INHALES, EXHALES]
+
+2536
+02:07:09,463 --> 02:07:11,765
+-[WARBLING STOPS]
+-[BIRD CHIRPING]
+
+2537
+02:07:16,203 --> 02:07:18,205
+[EKG MACHINE BEEPING FAINTLY]
+
+2538
+02:07:34,221 --> 02:07:35,656
+[SNORING]
+
+2539
+02:07:37,958 --> 02:07:38,959
+PETER: Frank?
+
+2540
+02:07:42,329 --> 02:07:43,664
+Where am I?
+
+2541
+02:07:45,432 --> 02:07:46,734
+FRANK: No, no, no, no, no.
+
+2542
+02:07:46,767 --> 02:07:47,935
+-Hey.
+-Where's my mask?
+
+2543
+02:07:47,968 --> 02:07:49,236
+Don't worry about that.
+I got you covered.
+
+2544
+02:07:49,270 --> 02:07:50,871
+Hey, you're good.
+
+2545
+02:07:50,905 --> 02:07:52,239
+PETER: Where's Jean?
+Is she okay?
+
+2546
+02:07:52,273 --> 02:07:54,241
+Yeah, she's okay. [CHUCKLES]
+She's okay.
+
+2547
+02:07:54,275 --> 02:07:55,442
+PETER: Where is she?
+
+2548
+02:07:56,877 --> 02:07:58,312
+I think maybe she just left.
+
+2549
+02:07:59,747 --> 02:08:03,050
+She was, uh,
+using her magic voodoo shit
+
+2550
+02:08:03,083 --> 02:08:05,019
+to keep you alive.
+
+2551
+02:08:05,052 --> 02:08:08,055
+[CHUCKLES] Yeah...
+she's all right.
+
+2552
+02:08:14,795 --> 02:08:15,796
+I'm sorry.
+
+2553
+02:08:20,501 --> 02:08:22,036
+-Frank.
+-Just... Just... I'm...
+
+2554
+02:08:22,069 --> 02:08:22,970
+-Frank, it's okay.
+-I'm really sorry
+
+2555
+02:08:23,003 --> 02:08:23,938
+for what I did.
+
+2556
+02:08:23,971 --> 02:08:24,972
+-No, Frank, it's okay.
+-FRANK: And it's...
+
+2557
+02:08:25,005 --> 02:08:25,940
+No, it's a lot of things,
+
+2558
+02:08:25,973 --> 02:08:27,708
+but it sure as shit
+ain't okay, all right?
+
+2559
+02:08:31,245 --> 02:08:32,246
+I've seen...
+
+2560
+02:08:34,114 --> 02:08:37,785
+I've seen real bravery, kid,
+in my day.
+
+2561
+02:08:39,386 --> 02:08:40,387
+But that...
+
+2562
+02:08:41,956 --> 02:08:43,290
+that was something else.
+
+2563
+02:08:46,827 --> 02:08:48,128
+-You crying, Frank?
+-[LAUGHS]
+
+2564
+02:08:48,162 --> 02:08:49,797
+No. I ain't...
+
+2565
+02:08:49,830 --> 02:08:51,432
+[LAUGHING]
+
+2566
+02:08:52,066 --> 02:08:53,968
+[LAUGHING]
+
+2567
+02:08:56,370 --> 02:08:58,305
+You know, you look the exact
+way I thought you would.
+
+2568
+02:08:59,406 --> 02:09:00,941
+You know.
+
+2569
+02:09:00,975 --> 02:09:02,109
+A nice kid.
+
+2570
+02:09:04,512 --> 02:09:05,980
+Never had a friend like that.
+
+2571
+02:09:07,848 --> 02:09:09,283
+Are we friends now?
+
+2572
+02:09:16,257 --> 02:09:17,958
+I can't believe
+I just saw you cry.
+
+2573
+02:09:17,992 --> 02:09:19,059
+-[PETER LAUGHS]
+-[LAUGHS] I didn't cry.
+
+2574
+02:09:19,093 --> 02:09:19,994
+What are you talking about?
+
+2575
+02:09:20,027 --> 02:09:21,428
+Bullshit.
+
+2576
+02:09:21,462 --> 02:09:23,364
+[DISTANT SHOUTING]
+
+2577
+02:09:23,397 --> 02:09:25,099
+Oh, yeah, this.
+
+2578
+02:09:25,132 --> 02:09:26,867
+They've been doing it
+all night.
+
+2579
+02:09:26,900 --> 02:09:28,435
+They've been here since
+you walked in.
+
+2580
+02:09:28,469 --> 02:09:29,336
+Just take a look.
+
+2581
+02:09:37,077 --> 02:09:38,245
+[INDISTINCT CHATTER]
+
+2582
+02:09:40,147 --> 02:09:41,982
+Yo, kid, when you came in,
+
+2583
+02:09:42,016 --> 02:09:43,150
+they had to
+cut through the suit,
+
+2584
+02:09:43,183 --> 02:09:46,086
+but when you're ready
+to split...
+
+2585
+02:09:46,120 --> 02:09:47,522
+[SMACKS LIPS] ...I got a plan.
+
+2586
+02:10:09,476 --> 02:10:12,379
+-MAN: Hey, it's Spider-Man!
+-[ALL CHEERING]
+
+2587
+02:10:14,081 --> 02:10:15,449
+MAN 2: Spider-Man!
+
+2588
+02:10:15,482 --> 02:10:17,552
+[ALL CHEERING]
+
+2589
+02:10:19,253 --> 02:10:20,321
+MAN 3: Hey!
+
+2590
+02:10:21,922 --> 02:10:22,990
+[CHUCKLES]
+
+2591
+02:10:23,023 --> 02:10:24,358
+MAN 3: Yeah, Spider-Man!
+
+2592
+02:10:25,893 --> 02:10:27,494
+MAN 4: You're the best,
+Spider-Man!
+
+2593
+02:10:28,563 --> 02:10:29,997
+MAN 5: Spider-Man!
+
+2594
+02:10:31,566 --> 02:10:32,900
+MAN 2: Over here!
+
+2595
+02:10:33,901 --> 02:10:35,102
+WOMAN: Thank you!
+
+2596
+02:10:35,135 --> 02:10:36,370
+MAN 6: Spider-Man!
+
+2597
+02:10:49,216 --> 02:10:51,218
+[PLEASANT MUSIC PLAYING]
+
+2598
+02:11:01,696 --> 02:11:03,197
+[FRANK GRUNTING]
+
+2599
+02:11:03,230 --> 02:11:05,299
+[ALL CHEERING]
+
+2600
+02:11:06,934 --> 02:11:09,169
+CROWD: [CHANTING]
+Spider-Man! Spider-Man!
+
+2601
+02:11:09,203 --> 02:11:13,307
+Spider-Man! Spider-Man!
+Spider-Man!
+
+2602
+02:11:13,340 --> 02:11:18,412
+Spider-Man! Spider-Man!
+Spider-Man! Spider-Man!
+
+2603
+02:11:20,447 --> 02:11:21,882
+[BLOWS AIR SHARPLY]
+
+2604
+02:11:28,523 --> 02:11:32,560
+BOY: [CHANTING] Spider-Man!
+Spider-Man! Spider-Man!
+
+2605
+02:11:32,594 --> 02:11:36,531
+CROWD: [CHANTING] Spider-Man!
+Spider-Man! Spider-Man!
+
+2606
+02:11:36,564 --> 02:11:39,099
+Spider-Man! Spider-Man!
+
+2607
+02:11:39,133 --> 02:11:41,201
+[SERENE MUSIC PLAYING]
+
+2608
+02:12:14,536 --> 02:12:16,538
+[SERENE MUSIC CONTINUES]
+
+2609
+02:12:42,564 --> 02:12:43,565
+I've, uh...
+
+2610
+02:12:46,568 --> 02:12:48,536
+Been thinking a lot
+about what you said.
+
+2611
+02:12:51,171 --> 02:12:53,741
+And you'd be happy to know
+that I've decided I'm not...
+
+2612
+02:12:55,476 --> 02:12:57,478
+I'm not gonna do this
+alone anymore.
+
+2613
+02:13:03,383 --> 02:13:04,519
+[CHUCKLES SOFTLY]
+
+2614
+02:13:07,087 --> 02:13:08,288
+I miss you, May.
+
+2615
+02:13:16,631 --> 02:13:18,666
+PETER: I mean, I've still got
+a little pain in my back,
+
+2616
+02:13:18,700 --> 02:13:20,602
+but I could probably
+get back out there
+
+2617
+02:13:20,635 --> 02:13:21,736
+if you need me for anything.
+
+2618
+02:13:21,769 --> 02:13:24,338
+DEWOLFF: <i>No. What I need you</i>
+<i>to do is rest.</i>
+
+2619
+02:13:24,371 --> 02:13:26,440
+I know, I know, but come on,
+you gotta give me something.
+
+2620
+02:13:26,473 --> 02:13:28,442
+I mean,
+how's the investigation going?
+
+2621
+02:13:28,475 --> 02:13:31,445
+DEWOLFF: <i>Well,</i>
+<i>Metzger's still missing,</i>
+
+2622
+02:13:31,478 --> 02:13:34,081
+but your friend, Black Widow,
+
+2623
+02:13:34,114 --> 02:13:36,651
+she's been helping us
+dig through all the records
+
+2624
+02:13:36,684 --> 02:13:39,353
+Damage Control tried to
+have scrubbed.
+
+2625
+02:13:39,386 --> 02:13:41,756
+<i>Had me drop by her office</i>
+<i>the other day.</i>
+
+2626
+02:13:41,789 --> 02:13:43,357
+And how was that?
+
+2627
+02:13:43,390 --> 02:13:45,827
+Well, uh,
+my skin feels amazing.
+
+2628
+02:13:45,860 --> 02:13:47,461
+[ALARM BEEPS]
+
+2629
+02:13:47,494 --> 02:13:48,696
+DISPATCHER: [ON PHONE]
+<i>Attention, all units.</i>
+
+2630
+02:13:48,730 --> 02:13:50,698
+<i>We have a confirmed</i>
+<i>bank robbery in progress.</i>
+
+2631
+02:13:50,732 --> 02:13:51,733
+Hey, are you getting this?
+
+2632
+02:13:53,467 --> 02:13:54,569
+Yeah, I'm on it.
+
+2633
+02:13:54,602 --> 02:13:55,670
+Hey, it's not that far
+from me.
+
+2634
+02:13:55,703 --> 02:13:57,104
+I could probably
+meet you down there.
+
+2635
+02:13:57,137 --> 02:14:00,407
+No. We can handle a robbery.
+
+2636
+02:14:00,440 --> 02:14:03,243
+Just try to
+take care of yourself.
+
+2637
+02:14:04,812 --> 02:14:05,813
+Okay.
+
+2638
+02:14:07,281 --> 02:14:08,282
+You too.
+
+2639
+02:14:09,316 --> 02:14:11,385
+Say hello
+to EJ and Marley for me.
+
+2640
+02:14:11,418 --> 02:14:13,387
+[CHUCKLES] Okay.
+
+2641
+02:14:15,422 --> 02:14:16,758
+Spider-Man says hello.
+
+2642
+02:14:18,358 --> 02:14:19,527
+[DOOR BELL CHIMES]
+
+2643
+02:14:27,802 --> 02:14:29,236
+[DEVICE CHIMES]
+
+2644
+02:14:30,270 --> 02:14:31,706
+[CRUNCHING]
+
+2645
+02:14:39,814 --> 02:14:42,215
+[SERENE MUSIC PLAYING]
+
+2646
+02:14:53,160 --> 02:14:54,194
+Hi.
+
+2647
+02:14:54,227 --> 02:14:55,630
+NED: Uh, hey.
+
+2648
+02:14:57,599 --> 02:15:00,802
+Oh, oh. Uh, flower guy, right,
+from... from the party?
+
+2649
+02:15:00,835 --> 02:15:01,836
+Yeah.
+
+2650
+02:15:02,604 --> 02:15:03,705
+I'm Peter.
+
+2651
+02:15:04,772 --> 02:15:06,273
+Okay. Hello.
+
+2652
+02:15:09,711 --> 02:15:11,779
+[SENTIMENTAL MUSIC PLAYING]
+
+2653
+02:15:24,726 --> 02:15:25,793
+Peter.
+
+2654
+02:15:31,198 --> 02:15:33,668
+[MELLOW,
+MID-TEMPO SONG PLAYING]
+
+2655
+02:15:49,717 --> 02:15:51,552
+[INAUDIBLE CONVERSATION]
+
+2656
+02:16:16,476 --> 02:16:18,245
+[INAUDIBLE CONVERSATION]
+
+2657
+02:16:26,486 --> 02:16:29,691
+-[SONG CONTINUES]
+-[INAUDIBLE CONVERSATION]
+
+2658
+02:16:46,506 --> 02:16:48,442
+[INAUDIBLE SINGING]
+
+2659
+02:17:19,807 --> 02:17:20,875
+[SONG ENDS]
+
+2660
+02:17:21,976 --> 02:17:24,244
+[SERENE MUSIC PLAYING]
+
+2661
+02:19:22,429 --> 02:19:24,497
+[SERENE MUSIC CONTINUES]
+
+2662
+02:21:26,721 --> 02:21:28,723
+[UPBEAT MUSIC PLAYING]
+
+2663
+02:22:55,843 --> 02:22:57,845
+[TRIUMPHANT MUSIC PLAYING]
+
+2664
+02:23:53,834 --> 02:23:55,836
+[SOMBER MUSIC PLAYING]
+
+2665
+02:24:22,329 --> 02:24:24,331
+[BEEPING]
+
+2666
+02:24:26,867 --> 02:24:28,169
+APP VOICE:
+<i>New Spider-Man sighting.</i>
+
+2667
+02:24:28,202 --> 02:24:30,971
+<i>Location unknown.</i>
+
+2668
+02:24:31,005 --> 02:24:32,439
+<i>-Location unknown.</i>
+<i>-</i> [DEVICE BUZZING]
+
+2669
+02:24:32,473 --> 02:24:33,807
+[BEEPING CONTINUES]
+
+2670
+02:24:33,841 --> 02:24:35,342
+<i>Location unknown.</i>
+
+2671
+02:24:36,377 --> 02:24:38,078
+<i>Location unknown.</i>
+
+2672
+02:24:39,180 --> 02:24:40,681
+<i>Location unknown.</i>
+
+2673
+02:24:45,085 --> 02:24:47,788
+<i>-Location found.</i>
+<i>-</i> [BEEPING RAPIDLY]

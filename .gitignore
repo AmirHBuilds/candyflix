@@ -1,57 +1,20 @@
-# --- Environment / secrets ---
-# Real env files are never committed — only the checked-in .env.example /
-# .env.local.example templates are. If you're seeing this ignore rule for
-# the first time on a repo that already has a real .env committed, adding
-# this file alone does NOT remove it from git — see the note in the PR/issue
-# for the `git rm --cached` + secret-rotation steps.
+# secrets / local config
 .env
-.env.*
-!.env.example
-!.env.local.example
-!.env.prod.example
+data/
+*.db
+*.sqlite3
 
-# --- Node / frontend ---
-node_modules/
-.next/
-out/
-*.tsbuildinfo
-npm-debug.log*
-
-# --- Python / backend ---
+# python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
-*.egg-info/
 .pytest_cache/
-.coverage
-htmlcov/
+.mypy_cache/
+.ruff_cache/
 
-# --- Redis ---
-# Local dump left behind by running redis-server with a CWD inside the repo.
-dump.rdb
-
-# --- Mock playback fixtures ---
-# Personal test video — see backend/mock-videos/README.md. Keep the
-# README itself tracked. (backend/mock-subtitles/ is no longer used as
-# of Phase 5b — subtitles now come from OpenSubtitles, not local files.)
-backend/mock-videos/*
-!backend/mock-videos/README.md
-
-# --- Online subtitle cache (Phase 5b) ---
-# Downloaded from OpenSubtitles on demand — never something to commit.
-backend/subtitle-cache/
-
-# --- OS / editor cruft ---
-.DS_Store
-Thumbs.db
+# editors / OS
 .idea/
 .vscode/
-
-# profile pictures uploaded by users
-backend/avatars/*
-!backend/avatars/.gitkeep
-
-# --- Synced subtitles' speech maps (regenerable cache) ---
-backend/sync-cache/*
-!backend/sync-cache/.gitkeep
+.DS_Store
+Thumbs.db

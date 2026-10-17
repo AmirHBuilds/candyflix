@@ -1,55 +1,57 @@
-# Running CandyFlix on a VPS
+# Deploying candyresolver on a VPS
 
-Development stays exactly as it is (`docker compose up`). The server uses its own files:
-`docker-compose.prod.yml`, `Caddyfile`, `.env.prod`, `backend/.env.prod`, `deploy.sh`.
+## First install
+```bash
+# Docker + compose plugin installed, then, in the project folder:
+cp .env.example .env && nano .env        # set TMDB_API_KEY; recommended: PUBLIC_BASE_URL, CORS_ORIGINS, API_MEM_LIMIT
+docker compose up -d --build --wait
+docker compose exec -T api python -c "from app.config import settings, ensure_secrets; ensure_secrets(); print(settings.admin_token)"
+./deploy_check.sh http://localhost:8000 <admin token>
+```
+- `API_MEM_LIMIT`: set to about 70% of the VPS RAM (e.g. `1400m` on 2 GB). A browser source needs ~400 MB.
+- `POSTGRES_PASSWORD`: on a NEW install set your own. On an existing install do **not** change it (the database keeps the old one).
 
-## One-time setup
+## Update an existing install (keeps all data)
+Data lives in Docker volumes (`pgdata` = database, `candy_data` = secrets + downloads), so rebuilding never touches it.
+```bash
+docker compose exec -T db pg_dump -U candy candyresolver > backup_$(date +%F).sql   # 1. backup (10 seconds)
+# 2. replace the project files with the new version (keep your .env)
+docker compose up -d --build --wait                                                  # 3. rebuild + restart
+docker compose logs --tail 50 api | grep -i migrat                                   # new columns are added automatically
+./deploy_check.sh http://localhost:8000 <admin token>                                # 4. verify
+```
+Rollback: put the old files back, `docker compose up -d --build`. The new columns are additive, so the old version still runs on the migrated database.
+Restore a backup (only if needed): `docker compose exec -T db psql -U candy candyresolver < backup_YYYY-MM-DD.sql`.
 
-1. A small Linux VPS (2 GB RAM is comfortable) with Docker and the Docker Compose plugin.
-2. A domain with an **A record** pointing at the server's IP. Open ports 80 and 443 in the firewall.
-3. Copy the project to the server (git clone, or unzip), then:
-   ```
-   cp .env.prod.example .env.prod                 # DOMAIN and POSTGRES_PASSWORD
-   cp backend/.env.prod.example backend/.env.prod # SESSION_SECRET (openssl rand -hex 32), TMDB, Telegram, resolver...
-   ./deploy.sh
-   ```
-   Caddy gets the HTTPS certificate by itself the first time (give it a minute).
-4. Make the first people:
-   ```
-   docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend python -m app.cli create-user dad "Dad" --admin
-   ```
+## HTTPS (recommended): Caddy in front
+Set `BIND_ADDRESS=127.0.0.1` and `PUBLIC_BASE_URL=https://candy.example.com` in `.env`, restart, then:
+```
+# /etc/caddy/Caddyfile
+candy.example.com {
+    reverse_proxy 127.0.0.1:8000 {
+        flush_interval -1        # do not buffer streamed audio/video
+    }
+}
+```
+Also set `CORS_ORIGINS` to your site (e.g. `https://candyflix.example.com`) instead of `*`.
 
-The backend refuses to start in production with the placeholder `SESSION_SECRET`.
+## Disk space on the VPS
+- **Inside the app** (automatic, every 6 h by default): admin -> **Files on disk -> Clean disk -> Automatic clean**. You can also press Scan / Clean disk by hand.
+- **The host itself** (Docker leftovers, system logs, apt, temp files): `scripts/host_cleanup.sh`.
+```bash
+sudo ./scripts/host_cleanup.sh --dry-run        # look first: changes nothing
+sudo ./scripts/host_cleanup.sh                  # clean now
+sudo ./scripts/host_cleanup.sh --install        # and run it every Sunday 04:17 (add --daily, or --aggressive for ALL unused Docker images older than 7 days)
+sudo ./scripts/host_cleanup.sh --uninstall      # stop the schedule
+```
+It never touches Docker volumes (database, secrets, library), running containers, or images that a container uses. Log of scheduled runs: `/var/log/candyresolver-host-cleanup.log`.
+`--app-clean` (with `CANDY_ADMIN_TOKEN` set) also makes the app run its own disk clean first.
+- **From the admin panel (Clean disk / Automatic clean, "Also clean the host")**: install the host agent once: `sudo ./scripts/host_cleanup.sh --install-agent`
+  (the compose file mounts `./hostclean` into the app; the agent checks it every minute and runs the same host cleanup). Remove it with `--uninstall-agent`.
 
-## Every update
+## Daily operation
+- Logs: `docker compose logs -f api` (rotated: 5 x 10 MB per container)
+- Disk: library files auto-delete after `LIBRARY_TTL_HOURS`; admin panel -> Files on disk shows usage.
+- Firewall: open only 80/443 (and SSH). With `BIND_ADDRESS=127.0.0.1` port 8000 is not reachable from outside.
 
-Push your changes, then on the server run `./deploy.sh`. It pulls, rebuilds, restarts, and runs new migrations.
-Your data (database, avatars, synced subtitles) lives in Docker volumes and is not touched.
-
-## Candy Resolver
-
-Put `RESOLVER_URL` and `RESOLVER_API_KEY` in `backend/.env.prod`. With the site on a real domain you can keep
-`RESOLVER_STREAM_MODE=proxy` (works with no extra setup), or switch to `direct` once CORS on the resolver allows
-`https://<your domain>`. Subtitle sync needs ffmpeg, which is already in the backend image.
-
-## Countries for devices and sign-ins (optional)
-Admin and Settings show the country next to each address when the server has an offline IP-to-country file. Without it everything works and countries just show as unknown.
-1. Download the free "IP to Country Lite" database in **MMDB** format from https://db-ip.com/db/download/ip-to-country-lite (it asks for a credit to db-ip.com, which the site's footer or your own notes can carry).
-2. Unzip it and save it on the server as `backend/geoip/country.mmdb`.
-3. `docker compose -f docker-compose.prod.yml restart backend`. The Security tab stops saying "Countries show as unknown".
-No address is ever sent to an outside service: the lookup reads that file only. The file is updated monthly; replace it now and then. Private and local addresses show as "Local network".
-
-## Logs, backups, restore
-
-- Logs: `docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend`
-- Backup the database: 
-  `docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T db pg_dump -U candyflix candyflix | gzip > candyflix-$(date +%F).sql.gz`
-- Restore (empty database): 
-  `gunzip -c candyflix-DATE.sql.gz | docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T db psql -U candyflix candyflix`
-- Profile pictures live in the `avatars` volume; they are small, but include them in server snapshots.
-
-## Notes
-
-- Only Caddy is public. Postgres, Redis, the backend and the site are on the private Docker network.
-- Same address for the site and the API (`/api`), so there are no CORS settings to manage.
-- Sessions use secure cookies in production, so the site must be reached over `https://`.
+What changed for API clients: see `docs/CANDYFLIX_NOTES.md`.
